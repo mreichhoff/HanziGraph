@@ -1,5 +1,16 @@
 (function(){
     var maxExamples = 5;
+    var getZhTts = function(){
+	//use the first-encountered zh-CN voice for now
+	return speechSynthesis.getVoices().find(voice => voice.lang === "zh-CN");
+    };
+    var zhTts = getZhTts();
+    //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
+    speechSynthesis.onvoiceschanged = function() {
+	if(!zhTts){
+	    zhTts = getZhTts();
+	}
+    };
     var levelColor = function(element){
 	let level = element.data('level');
 	switch(level) {
@@ -24,6 +35,17 @@
 	    roots: [root],
 	    padding: 6,
 	    spacingFactor: 0.85
+	}
+    };
+
+    var runTextToSpeech = function(text){
+	zhTts = zhTts || getZhTts();
+	//TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
+	if(zhTts){
+	    var utterance = new SpeechSynthesisUtterance(text);
+	    utterance.lang = "zh-CN";
+	    utterance.voice = zhTts;
+	    speechSynthesis.speak(utterance);
 	}
     };
 
@@ -56,6 +78,12 @@
 		var zhHolder = document.createElement('p');
 		zhHolder.textContent = examples[j].zh;
 		zhHolder.className = 'zh-example example-line';
+
+		var textToSpeechButton = document.createElement('span');
+		textToSpeechButton.className = 'text-button';
+		textToSpeechButton.textContent = '[listen]';
+		zhHolder.addEventListener('click', runTextToSpeech.bind(this, examples[j].zh), false);
+		zhHolder.appendChild(textToSpeechButton);
 		exampleHolder.appendChild(zhHolder);
 		if(examples[j].pinyin){
 		    var pinyinHolder = document.createElement('p');

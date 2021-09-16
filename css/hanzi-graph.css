@@ -72,6 +72,7 @@ p.example-line {
 }
 p.zh-example {
     font-size: 20px;
+    cursor: pointer;
 }
 .pinyin-example {
     display: none;
@@ -85,15 +86,21 @@ p.zh-example {
 #example-container {
     flex-grow: 1;
 }
-.toggle-label {
-    font-size: 12px;
-    background-color: #00008B;
-}
-.toggle-label:hover {
-    background-color: white;
-    color: black;
-}
 .walkthrough p {
     margin-top: 20px;
     margin-bottom: 20px;
+}
+
+.walkthrough a {
+    color: #eee;
+}
+
+.text-button {
+    font-size: 12px;
+    background-color: #00008B;
+}
+.text-button:hover {
+    background-color: white;
+    color: black;
+    cursor: pointer;
 }
