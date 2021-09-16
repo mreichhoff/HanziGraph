@@ -49,6 +49,14 @@
 	}
     };
 
+    var addTextToSpeech = function(holder, text){
+	var textToSpeechButton = document.createElement('span');
+	textToSpeechButton.className = 'text-button';
+	textToSpeechButton.textContent = '[listen]';
+	holder.addEventListener('click', runTextToSpeech.bind(this, text), false);
+	holder.appendChild(textToSpeechButton);
+    };
+
     var setupExamples = function(words){
 	//todo this mixes markup modification and example finding
 	var examplesList = document.getElementById('examples');
@@ -70,6 +78,7 @@
 	    var item = document.createElement('li');
 	    var wordHolder = document.createElement('h2');
 	    wordHolder.textContent = words[i];
+	    addTextToSpeech(wordHolder, words[i]);
 	    item.appendChild(wordHolder);
 	    var exampleList = document.createElement('ul');
 	    item.appendChild(exampleList);
@@ -78,12 +87,7 @@
 		var zhHolder = document.createElement('p');
 		zhHolder.textContent = examples[j].zh;
 		zhHolder.className = 'zh-example example-line';
-
-		var textToSpeechButton = document.createElement('span');
-		textToSpeechButton.className = 'text-button';
-		textToSpeechButton.textContent = '[listen]';
-		zhHolder.addEventListener('click', runTextToSpeech.bind(this, examples[j].zh), false);
-		zhHolder.appendChild(textToSpeechButton);
+		addTextToSpeech(zhHolder, examples[j].zh);
 		exampleHolder.appendChild(zhHolder);
 		if(examples[j].pinyin){
 		    var pinyinHolder = document.createElement('p');

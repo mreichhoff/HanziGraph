@@ -38,6 +38,7 @@ h1 {
 }
 h2 {
     margin-bottom: 0;
+    cursor: pointer;
 }
 .circle {
     width: 32px;
@@ -98,6 +99,7 @@ p.zh-example {
 .text-button {
     font-size: 12px;
     background-color: #00008B;
+    margin-left: 4px;
 }
 .text-button:hover {
     background-color: white;
