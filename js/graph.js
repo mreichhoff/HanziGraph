@@ -125,9 +125,7 @@
 	var curr = hanzi[start];
 	//todo does javascript have a set?
 	visited[start] = true;
-	var minLevel = 6;
-	for(const [key, value] of Object.entries(curr)){
-	    minLevel = Math.min(minLevel, value.level);
+	for(const [key, value] of Object.entries(curr.edges)){
 	    //don't add outgoing edges when we won't process the next layer
 	    if(maxDepth > 0 && value.level <= maxLevel){
 		if(!visited[key]){		
@@ -135,8 +133,8 @@
 		}
 	    }
 	}
-	elements.nodes.push({data: {id: start, level: minLevel}});
-	for(const [key, value] of Object.entries(curr)){
+	elements.nodes.push({data: {id: start, level: curr.node.level}});
+	for(const [key, value] of Object.entries(curr.edges)){
 	    if(!visited[key] && value.level <= maxLevel){
 		dfs(key, elements, maxDepth-1, visited, maxLevel);
 	    }
