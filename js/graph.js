@@ -75,6 +75,7 @@
 		    }
 		}
 	    }
+	    examples.sort((a, b) => a.zh.length - b.zh.length);
 	    var item = document.createElement('li');
 	    var wordHolder = document.createElement('h2');
 	    wordHolder.textContent = words[i];
