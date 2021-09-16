@@ -12,7 +12,7 @@ body {
     height: 100%;
 }
 #control-pane {
-    width: 25%;
+    width: 30%;
     height: 100%;
     background: #121212;
     display: flex;
@@ -24,7 +24,7 @@ body {
     width: 50px;
 }
 #graph {
-    width: 75%;
+    width: 70%;
     height: 100%;
     background: #333333;
 }
@@ -64,6 +64,7 @@ h2 {
 }
 #examples ul {
     margin-left: 0px;
+    margin-right: 4px;
 }
 p.example-line {
     margin-top: 4px;
