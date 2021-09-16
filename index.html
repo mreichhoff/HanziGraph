@@ -1,0 +1,182 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.1/cytoscape.min.js" integrity="sha512-REr7ZKldLo2Lx6UiQ6autPWZR+j4u1/7ElYsrcwFe3ZmT/TKXCF/vXqNP/d2BQ78k0tapdZFccpFkku9bwrS3w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!--TODO convert to fetches -->
+    <script src="./data/hanzi.js"></script>
+    <script src="./data/sentences.js"></script>
+    <style>
+      body { 
+	  width: 100%;
+	  height: 100%;
+	  margin: 0;
+	  padding: 0;
+	  color: #eee;
+	  background: #121212;
+      }
+      #container {
+	  display: flex;
+	  width: 100%;
+	  height: 100%;
+      }
+      #control-pane {
+	  width: 25%;
+	  height: 100%;
+	  background: #121212;
+	  display: flex;
+	  flex-direction: column;
+	  overflow: auto;
+      }
+
+      #control-pane input[type=text]{
+	  width: 50px;
+      }
+      #graph {
+	  width: 75%;
+	  height: 100%;
+	  background: #333333;
+      }
+      ul {
+	  list-style-type: none;
+	  margin-left: 12px;
+	  padding: 0;
+      }
+      h1 {
+	  margin-left: 10px;
+      }
+      h2 {
+	  margin-bottom: 0;
+      }
+      .circle {
+	  width: 32px;
+	  height: 32px;
+	  border-radius: 50%;
+	  margin-bottom: 4px;
+	  font-size: 10px;
+	  text-align: center;
+	  line-height: 32px;
+	  color: black;
+      }
+      #legend {
+	  margin-left: 10px;
+	  font-size: 12px;
+      }
+      #level-container {
+	  display: flex;
+	  justify-content: center;
+	  align-items: center;
+      }
+      #examples ul li {
+	  font-size: 12px;
+	  margin-bottom: 12px;
+      }
+      #examples ul {
+	  margin-left: 0px;
+      }
+      p.example-line {
+	  margin-top: 4px;
+	  margin-bottom: 4px;
+      }
+      p.zh-example {
+	  font-size: 20px;
+      }
+      .pinyin-example {
+	  display: none;
+      }
+      #show-pinyin:checked ~ * .pinyin-example {
+	  display: block;
+      }
+      #controls {
+	  margin-bottom: 0;
+      }
+      #example-container {
+	  flex-grow: 1;
+      }
+      .toggle-label {
+	  font-size: 12px;
+	  background-color: #00008B;
+      }
+      .toggle-label:hover {
+	  background-color: white;
+	  color: black;
+      }
+      .walkthrough p {
+	  margin-top: 20px;
+	  margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <!-- lol, like control plane -->
+      <div id="control-pane">
+	<h1>Hanzi Graph</h1>
+	<ul id="controls">
+	  <li>
+	    <form id="hanzi-choose">
+	      <!-- i18n? what's that? -->
+	      <label for="hanzi-box">Choose a hanzi:</label>
+	      <input id="hanzi-box" type="text" maxlength="1"/>
+	      <input type="submit" value="go!"/>
+	    </form>
+	  </li>
+	  <li>
+	    <label for="level-selector">Choose max HSK level:</label>
+	    <select id="level-selector">
+	      <option>1</option>
+	      <option>2</option>
+	      <option>3</option>
+	      <option>4</option>
+	      <option>5</option>
+	      <option selected>6</option>
+	    </select>
+	  </li>
+	  <li>
+	    <label class="toggle-label" for="show-pinyin">
+	      [Toggle pinyin in examples]
+	    </label>
+	  </li>
+	</ul>
+	<div id="example-container">
+	  <input id="show-pinyin" type="checkbox" style="display:none"/>
+	  <ul id="examples">
+	    <li class="walkthrough">
+	      <!-- i18n :-( -->
+	      <p>
+		To begin, search for a hanzi. A graph will appear to the right.
+		You can then click on hanzi or the lines that connect them. 
+		Example sentences will then appear here!
+	      </p>
+	      <p>
+		Circles (nodes) correspond to individual hanzi characters.
+	      </p>
+	      <p>
+		Connecting lines (edges) represent a relationship among hanzi.
+		Namely, by connecting the two linked hanzi, a word can be formed
+		(or partially formed in the case of 3+ character words).
+	      </p>
+	      <p>
+		Note that you can zoom, drag, and re-arrange the diagram however you please.
+	      </p>
+	    </li>
+	  </ul>
+	</div>
+	<div id="legend">
+	  <p>
+	    The color of a given hanzi or connection indicates the level at which it first appears in the HSK exam.
+	  </p>
+	  <div id="level-container">
+	    <div class="circle" style="background:red">HSK 1</div>
+	    <div class="circle" style="background:orange">HSK 2</div>
+	    <div class="circle" style="background:yellow">HSK 3</div>
+	    <div class="circle" style="background:green">HSK 4</div>
+	    <div class="circle" style="background:purple">HSK 5</div>
+	    <div class="circle" style="background:blue">HSK 6</div>
+	  </div>
+	</div>
+      </div>
+      <div id="graph"></div>
+    </div>
+    <script src="./js/graph.js"></script>
+  </body>
+</html>
