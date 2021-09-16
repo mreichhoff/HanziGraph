@@ -5,106 +5,7 @@
     <!--TODO convert to fetches -->
     <script src="./data/hanzi.js"></script>
     <script src="./data/sentences.js"></script>
-    <style>
-      body { 
-	  width: 100%;
-	  height: 100%;
-	  margin: 0;
-	  padding: 0;
-	  color: #eee;
-	  background: #121212;
-      }
-      #container {
-	  display: flex;
-	  width: 100%;
-	  height: 100%;
-      }
-      #control-pane {
-	  width: 25%;
-	  height: 100%;
-	  background: #121212;
-	  display: flex;
-	  flex-direction: column;
-	  overflow: auto;
-      }
-
-      #control-pane input[type=text]{
-	  width: 50px;
-      }
-      #graph {
-	  width: 75%;
-	  height: 100%;
-	  background: #333333;
-      }
-      ul {
-	  list-style-type: none;
-	  margin-left: 12px;
-	  padding: 0;
-      }
-      h1 {
-	  margin-left: 10px;
-      }
-      h2 {
-	  margin-bottom: 0;
-      }
-      .circle {
-	  width: 32px;
-	  height: 32px;
-	  border-radius: 50%;
-	  margin-bottom: 4px;
-	  font-size: 10px;
-	  text-align: center;
-	  line-height: 32px;
-	  color: black;
-      }
-      #legend {
-	  margin-left: 10px;
-	  font-size: 12px;
-      }
-      #level-container {
-	  display: flex;
-	  justify-content: center;
-	  align-items: center;
-      }
-      #examples ul li {
-	  font-size: 12px;
-	  margin-bottom: 12px;
-      }
-      #examples ul {
-	  margin-left: 0px;
-      }
-      p.example-line {
-	  margin-top: 4px;
-	  margin-bottom: 4px;
-      }
-      p.zh-example {
-	  font-size: 20px;
-      }
-      .pinyin-example {
-	  display: none;
-      }
-      #show-pinyin:checked ~ * .pinyin-example {
-	  display: block;
-      }
-      #controls {
-	  margin-bottom: 0;
-      }
-      #example-container {
-	  flex-grow: 1;
-      }
-      .toggle-label {
-	  font-size: 12px;
-	  background-color: #00008B;
-      }
-      .toggle-label:hover {
-	  background-color: white;
-	  color: black;
-      }
-      .walkthrough p {
-	  margin-top: 20px;
-	  margin-bottom: 20px;
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="css/hanzi-graph.css">
   </head>
   <body>
     <div id="container">
@@ -157,6 +58,13 @@
 	      </p>
 	      <p>
 		Note that you can zoom, drag, and re-arrange the diagram however you please.
+	      </p>
+	      <p>
+		Example sentences and pinyin transcriptions
+		were pulled from
+		<a href="https://tatoeba.org">Tatoeba</a>, which
+		releases data under
+		<a href="https://creativecommons.org/licenses/by/2.0/fr/">CC-BY 2.0 FR</a>.
 	      </p>
 	    </li>
 	  </ul>
