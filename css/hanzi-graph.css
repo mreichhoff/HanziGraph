@@ -106,3 +106,10 @@ p.zh-example {
     color: black;
     cursor: pointer;
 }
+
+/*TODO refactor this...too much repetition, selectors too specific */
+#examples ul.definition li {
+    margin-top: 4px;
+    margin-bottom: 4px;
+    font-size: 12px;
+}

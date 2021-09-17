@@ -58,7 +58,8 @@
     };
 
     var setupExamples = function(words){
-	//todo this mixes markup modification and example finding
+	//TODO this mixes markup modification and example finding
+	//refactor needed
 	var examplesList = document.getElementById('examples');
 	while (examplesList.firstChild) {
 	    examplesList.firstChild.remove()
@@ -81,6 +82,18 @@
 	    wordHolder.textContent = words[i];
 	    addTextToSpeech(wordHolder, words[i]);
 	    item.appendChild(wordHolder);
+
+	    var definitionHolder = document.createElement('ul');
+	    var definitionList = definitions[words[i]];
+	    for(var j = 0; j < definitionList.length; j++){
+		var definitionItem = document.createElement('li');
+		definitionItem.textContent = definitionList[j].pinyin + ': ' + definitionList[j].en;
+		definitionHolder.appendChild(definitionItem);
+	    }
+
+	    definitionHolder.className = 'definition';
+	    item.appendChild(definitionHolder);
+
 	    var exampleList = document.createElement('ul');
 	    item.appendChild(exampleList);
 	    for(var j = 0; j < examples.length; j++){
