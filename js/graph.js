@@ -132,7 +132,6 @@
 			'curve-style': 'straight',
 			'label': 'data(words)',
 			'color': '#eee',
-			'edge-text-rotation': 'autorotate',
 			'font-size': '8px',
 			'text-background-color': '#333333',
 			'text-background-opacity': '1',
