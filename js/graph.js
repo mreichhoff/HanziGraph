@@ -117,11 +117,10 @@
 		    style: {
 			'background-color': levelColor,
 			'label': 'data(id)',
-			'color': '#eee',
+			'color': (element => element.data('level') > 3 ? '#eee' : '#333333'),
 			'font-size': '16px',
-			'text-background-color': '#333333',
-			'text-background-opacity': '1',
-			'text-background-shape': 'round-rectangle'
+			'text-valign': 'center',
+			'text-halign': 'center'
 		    }
 		},
 		{
