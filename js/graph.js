@@ -66,17 +66,25 @@
 	}
 	for(var i = 0; i < words.length; i++){
 	    var examples = [];
+	    //used for e.g., missing translation
+	    var lessDesirableExamples = [];
 	    //TODO consider indexing up front
 	    //can also reuse inner loop...consider inverting
 	    for(var j = 0; j < sentences.length; j++){
 		if(sentences[j].zh.includes(words[i])){
-		    examples.push(sentences[j]);
-		    if(examples.length === maxExamples){
-			break;
+		    if(sentences[j].en && sentences[j].pinyin){
+			examples.push(sentences[j]);
+			if(examples.length === maxExamples){
+			    break;
+			}
+		    } else if(lessDesirableExamples.length < maxExamples){
+			lessDesirableExamples.push(sentences[j]);
 		    }
 		}
 	    }
-	    examples.sort((a, b) => a.zh.length - b.zh.length);
+	    if(examples.length < maxExamples && lessDesirableExamples.length > 0) {
+		examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (maxExamples - examples.length)));
+	    }
 	    var item = document.createElement('li');
 	    var wordHolder = document.createElement('h2');
 	    wordHolder.textContent = words[i];
@@ -99,9 +107,9 @@
 	    for(var j = 0; j < examples.length; j++){
 		var exampleHolder = document.createElement('li');
 		var zhHolder = document.createElement('p');
-		zhHolder.textContent = examples[j].zh;
+		zhHolder.textContent = examples[j].zh.join('');
 		zhHolder.className = 'zh-example example-line';
-		addTextToSpeech(zhHolder, examples[j].zh);
+		addTextToSpeech(zhHolder, zhHolder.textContent);
 		exampleHolder.appendChild(zhHolder);
 		if(examples[j].pinyin){
 		    var pinyinHolder = document.createElement('p');
