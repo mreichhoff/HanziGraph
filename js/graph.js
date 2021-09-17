@@ -85,6 +85,15 @@
 	    if(examples.length < maxExamples && lessDesirableExamples.length > 0) {
 		examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (maxExamples - examples.length)));
 	    }
+	    examples.sort((a, b) => {
+		if(a.en && !b.en){
+		    return -1;
+		} else if(!a.en && b.en){
+		    return 1;
+		} else {
+		    return a.zh.length - b.zh.length;
+		}
+	    });
 	    var item = document.createElement('li');
 	    var wordHolder = document.createElement('h2');
 	    wordHolder.textContent = words[i];
