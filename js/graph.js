@@ -1,5 +1,7 @@
 (function(){
+    //refactor badly needed...hacks on top of hacks at this point
     var maxExamples = 5;
+    var currentExamples = {};
     var getZhTts = function(){
 	//use the first-encountered zh-CN voice for now
 	return speechSynthesis.getVoices().find(voice => voice.lang === "zh-CN");
@@ -53,11 +55,24 @@
 	var textToSpeechButton = document.createElement('span');
 	textToSpeechButton.className = 'text-button';
 	textToSpeechButton.textContent = '[listen]';
-	holder.addEventListener('click', runTextToSpeech.bind(this, text), false);
+	textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text), false);
 	holder.appendChild(textToSpeechButton);
+    };
+    var addSaveToListButton = function(holder, text){
+	var saveToListButton = document.createElement('span');
+	saveToListButton.className = 'text-button';
+	saveToListButton.textContent = '[add this word (and examples) to study list]';
+	saveToListButton.addEventListener('click', function(){
+	    var studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
+	    studyList[text] =  currentExamples[text];
+	    localStorage.setItem('studyList', JSON.stringify(studyList));
+	    document.getElementById('exportStudyListButton').style.display = 'inline';
+	});
+	holder.appendChild(saveToListButton);
     };
 
     var setupExamples = function(words){
+	currentExamples = {};
 	//TODO this mixes markup modification and example finding
 	//refactor needed
 	var examplesList = document.getElementById('examples');
@@ -66,6 +81,7 @@
 	}
 	for(var i = 0; i < words.length; i++){
 	    var examples = [];
+	    currentExamples[words[i]] = [];
 	    //used for e.g., missing translation
 	    var lessDesirableExamples = [];
 	    //TODO consider indexing up front
@@ -85,6 +101,7 @@
 	    if(examples.length < maxExamples && lessDesirableExamples.length > 0) {
 		examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (maxExamples - examples.length)));
 	    }
+	    //TODO...improve
 	    examples.sort((a, b) => {
 		if(a.en && !b.en){
 		    return -1;
@@ -94,19 +111,27 @@
 		    return a.zh.length - b.zh.length;
 		}
 	    });
+
 	    var item = document.createElement('li');
 	    var wordHolder = document.createElement('h2');
 	    wordHolder.textContent = words[i];
 	    addTextToSpeech(wordHolder, words[i]);
+	    addSaveToListButton(wordHolder, words[i]);
 	    item.appendChild(wordHolder);
 
 	    var definitionHolder = document.createElement('ul');
-	    var definitionList = definitions[words[i]];
+	    var definitionList = definitions[words[i]] || [];
 	    for(var j = 0; j < definitionList.length; j++){
 		var definitionItem = document.createElement('li');
-		definitionItem.textContent = definitionList[j].pinyin + ': ' + definitionList[j].en;
+		var definitionContent = definitionList[j].pinyin + ': ' + definitionList[j].en;
+		definitionItem.textContent = definitionContent;
 		definitionHolder.appendChild(definitionItem);
 	    }
+
+	    //setup current examples for potential future export
+	    //TODO: definition list doesn't have the same interface (missing zh field)
+	    currentExamples[words[i]].push(...examples);
+	    currentExamples[words[i]].push(...definitionList);
 
 	    definitionHolder.className = 'definition';
 	    item.appendChild(definitionHolder);
@@ -225,8 +250,38 @@
     };
     document.getElementById('hanzi-choose').addEventListener('submit', function(event){
 	event.preventDefault();
-	updateGraph();
-	setupExamples([document.getElementById('hanzi-box').value]);
+	if(document.getElementById('hanzi-box').value){
+	    updateGraph();
+	    setupExamples([document.getElementById('hanzi-box').value]);
+	}
     });
     document.getElementById('level-selector').addEventListener('change', updateGraph);
+    document.getElementById('exportStudyListButton').style.display = localStorage.getItem('studyList') ? 'inline' : 'none';
+    document.getElementById('exportStudyListButton').addEventListener('click', function(){
+	let content = "data:text/plain;charset=utf-8,";
+	var studyList = JSON.parse(localStorage.getItem('studyList'));
+	for(const [key, value] of Object.entries(studyList)){
+	    //hack for the definition vs example api incompatibility
+	    for(var i = 0; i < value.length; i++){
+		value[i].zh = value[i].zh || [key];
+		value[i].zh = value[i].zh.join('');
+		//flashcards not possible without both
+		if(value[i].en && value[i].zh){
+		    //replace is a hack for flashcard field separator...TODO could escape
+		    content += [value[i].zh.replace(';', ''), value[i].en.replace(';', '')].join(';');
+		    content += '\n';
+		}
+	    }
+	}
+	//wow, surely it can't be this absurd
+	var encodedUri = encodeURI(content);
+	var link = document.createElement("a");
+	link.setAttribute("href", encodedUri);
+	link.setAttribute("download", "hanzi-graph-export-" + Date.now() + ".txt");
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+	localStorage.removeItem('studyList');
+	document.getElementById('exportStudyListButton').style.display = 'none';
+    });
 })();
