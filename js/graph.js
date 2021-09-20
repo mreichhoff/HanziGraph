@@ -233,14 +233,12 @@
 	    }
 	}
     };
-    var updateGraph = function() {
+    var updateGraph = function(value, maxLevel) {
 	document.getElementById('graph').remove();
 	var nextGraph = document.createElement("div");
 	nextGraph.id = 'graph';
 	document.getElementById('container').append(nextGraph);
 
-	var value = document.getElementById('hanzi-box').value;
-	var maxLevel = document.getElementById('level-selector').value;
 	if(value && hanzi[value]){
 	    var result = {'nodes':[], 'edges':[]};
 	    var maxDepth = 1;
@@ -248,14 +246,23 @@
 	    setupCytoscape(value, result);
 	}
     };
+    //add a default graph on page load to illustrate the concept
+    var defaultHanzi = ["围", "显", "故", "商", "店"];
+    updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], document.getElementById('level-selector').value);
+
     document.getElementById('hanzi-choose').addEventListener('submit', function(event){
 	event.preventDefault();
-	if(document.getElementById('hanzi-box').value){
-	    updateGraph();
+	var value = document.getElementById('hanzi-box').value;
+	var maxLevel = document.getElementById('level-selector').value;
+	if(value){
+	    updateGraph(value, maxLevel);
 	    setupExamples([document.getElementById('hanzi-box').value]);
 	}
     });
-    document.getElementById('level-selector').addEventListener('change', updateGraph);
+    document.getElementById('level-selector').addEventListener('change', function(){
+	//TODO hide edges in existing graph rather than rebuilding
+	updateGraph(document.getElementById('hanzi-box').value, document.getElementById('level-selector').value);
+    });
     document.getElementById('exportStudyListButton').style.display = localStorage.getItem('studyList') ? 'inline' : 'none';
     document.getElementById('exportStudyListButton').addEventListener('click', function(){
 	let content = "data:text/plain;charset=utf-8,";
