@@ -113,7 +113,7 @@ p.zh-example {
 
 .text-button {
     font-size: 14px;
-    background-color: cornflowerblue;
+    background-color: darkblue;
     margin-left: 4px;
     padding: 6px;
     color: #eee;
@@ -134,19 +134,17 @@ p.zh-example {
 
 .tabs ul {
     padding-bottom: 6px;
-    border-bottom: 1px solid cornflowerblue;
+    border-bottom: 12px solid darkblue;
 }
 .tab {
-    border-right: 1px solid;
-    border-left: 1px solid;
-    border-top: 1px solid;
+    font-size: 20px;
     display: inline;
     text-align: center;
     cursor: pointer;
     margin-left: 4px;
     margin-right: 4px;
-    padding: 8px;
-    background-color: cornflowerblue;
+    padding: 12px;
+    background-color: darkblue;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
 }
@@ -171,7 +169,7 @@ p.zh-example {
 .study-call-to-action {
     width: 100%;
     text-align: center;
-    background-color: cornflowerblue;
+    background-color: darkblue;
     padding: 8px;
     cursor: pointer;
     font-size: 20px;
