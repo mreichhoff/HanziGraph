@@ -227,6 +227,8 @@
 	cy.on('tap', 'edge', function(evt){
 	    words = evt.target.data('words');
 	    setupExamples(words);
+	    //TODO toggle functions
+	    document.getElementById('show-explore').click();
 	});
     };
 
