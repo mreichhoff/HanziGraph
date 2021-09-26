@@ -26,7 +26,7 @@ body {
 #graph {
     width: 65%;
     height: 100%;
-    background: #333333;
+    background: #3333;
 }
 ul {
     list-style-type: none;
@@ -134,7 +134,7 @@ p.zh-example {
 
 .tabs ul {
     padding-bottom: 6px;
-    border-bottom: 12px solid darkblue;
+    border-bottom: 8px solid darkblue;
 }
 .tab {
     font-size: 20px;
@@ -178,14 +178,15 @@ p.zh-example {
     width: 100%;
 }
 #result-buttons li {
-    width: 66%;
+    width: 75%;
     padding: 8px;
     text-align: center;
     cursor: pointer;
-    margin-bottom: 4px;
+    margin-bottom: 12px;
     border-radius: 10px;
     margin-right: auto;
     margin-left: auto;
+    font-size: 20px;
 }
 #result-buttons li:hover {
     color: white;
