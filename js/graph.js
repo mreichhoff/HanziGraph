@@ -339,11 +339,13 @@
 	document.getElementById('card-due-count').textContent = counter;
 	document.getElementById('card-question-container').innerHTML = '';
 	if(counter === 0){
-	    document.getElementById('study-call-to-action').textContent = 'Studying complete. You can add more cards by exploring the graph!';
+	    document.getElementById('task-complete').style.display = 'inline';
+	    document.getElementById('task-description').style.display = 'none';
 	    document.getElementById('show-answer-button').style.display = 'none';
 	    return;
 	} else {
-	    document.getElementById('study-call-to-action').textContent = 'What does this sentence mean?';
+	    document.getElementById('task-complete').style.display = 'none';
+	    document.getElementById('task-description').style.display = 'inline';
 	    document.getElementById('show-answer-button').style.display = 'block';
 	}
 	question = currentCard.zh.join('');

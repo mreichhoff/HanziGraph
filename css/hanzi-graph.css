@@ -123,6 +123,7 @@ p.zh-example {
 .text-button:hover {
     color: white;
     cursor: pointer;
+    border: 1px solid white;
 }
 
 /*TODO refactor this...too much repetition, selectors too specific */
@@ -164,6 +165,10 @@ p.zh-example {
 #study-call-to-action {
     cursor: default;
     margin-left: -8px;
+}
+
+#study-call-to-action a {
+    color: #eee;
 }
 
 .study-call-to-action {
