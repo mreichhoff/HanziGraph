@@ -1,5 +1,6 @@
 (function(){
     //refactor badly needed...hacks on top of hacks at this point
+    var studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
     var maxExamples = 5;
     var currentExamples = {};
     var getZhTts = function(){
@@ -54,17 +55,23 @@
     var addTextToSpeech = function(holder, text){
 	var textToSpeechButton = document.createElement('span');
 	textToSpeechButton.className = 'text-button';
-	textToSpeechButton.textContent = '[listen]';
+	textToSpeechButton.textContent = 'Listen';
 	textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text), false);
 	holder.appendChild(textToSpeechButton);
     };
     var addSaveToListButton = function(holder, text){
 	var saveToListButton = document.createElement('span');
 	saveToListButton.className = 'text-button';
-	saveToListButton.textContent = '[add this word (and examples) to study list]';
+	saveToListButton.textContent = 'Add this to my study list!';
 	saveToListButton.addEventListener('click', function(){
-	    var studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
-	    studyList[text] =  currentExamples[text];
+	    var newCards = currentExamples[text].map(x=>({...x, due: Date.now()}));
+	    for(var i = 0; i < newCards.length; i++){
+		var zhJoined = newCards[i].zh.join('');
+		if(!studyList[zhJoined] && newCards[i].en){
+		    studyList[zhJoined] = {en: newCards[i].en, due: newCards[i].due, zh: newCards[i].zh};
+		}
+	    }
+	    //update it whenever it changes
 	    localStorage.setItem('studyList', JSON.stringify(studyList));
 	    document.getElementById('exportStudyListButton').style.display = 'inline';
 	});
@@ -127,11 +134,10 @@
 		definitionItem.textContent = definitionContent;
 		definitionHolder.appendChild(definitionItem);
 	    }
-
-	    //setup current examples for potential future export
 	    //TODO: definition list doesn't have the same interface (missing zh field)
+	    currentExamples[words[i]].push(getCardFromDefinitions(words[i], definitionList));
+	    //setup current examples for potential future export
 	    currentExamples[words[i]].push(...examples);
-	    currentExamples[words[i]].push(...definitionList);
 
 	    definitionHolder.className = 'definition';
 	    item.appendChild(definitionHolder);
@@ -141,9 +147,10 @@
 	    for(var j = 0; j < examples.length; j++){
 		var exampleHolder = document.createElement('li');
 		var zhHolder = document.createElement('p');
-		zhHolder.textContent = examples[j].zh.join('');
+		var exampleText = examples[j].zh.join('');
+		makeSentenceNavigable(exampleText, zhHolder);
 		zhHolder.className = 'zh-example example-line';
-		addTextToSpeech(zhHolder, zhHolder.textContent);
+		addTextToSpeech(zhHolder, exampleText);
 		exampleHolder.appendChild(zhHolder);
 		if(examples[j].pinyin){
 		    var pinyinHolder = document.createElement('p');
@@ -160,6 +167,18 @@
 	    
 	    examplesList.append(item);
 	}
+    };
+    //TODO can this be combined with the definition rendering part?
+    var getCardFromDefinitions = function(text, definitionList){
+	//this assumes definitionList non null
+	var result = {zh: [text]};
+	var answer = '';
+	for(var j = 0; j < definitionList.length; j++){
+	    answer += definitionList[j].pinyin + ': ' + definitionList[j].en;
+	    answer += j == definitionList.length-1 ? '' : ', ';
+	}
+	result['en'] = answer;
+	return result;
     };
     var setupCytoscape = function(root, elements){
 	var cy = cytoscape({
@@ -263,22 +282,13 @@
 	//TODO hide edges in existing graph rather than rebuilding
 	updateGraph(document.getElementById('hanzi-box').value, document.getElementById('level-selector').value);
     });
-    document.getElementById('exportStudyListButton').style.display = localStorage.getItem('studyList') ? 'inline' : 'none';
+    document.getElementById('exportStudyListButton').style.display = (Object.keys(studyList).length > 0) ? 'inline' : 'none';
     document.getElementById('exportStudyListButton').addEventListener('click', function(){
 	let content = "data:text/plain;charset=utf-8,";
-	var studyList = JSON.parse(localStorage.getItem('studyList'));
 	for(const [key, value] of Object.entries(studyList)){
-	    //hack for the definition vs example api incompatibility
-	    for(var i = 0; i < value.length; i++){
-		value[i].zh = value[i].zh || [key];
-		value[i].zh = value[i].zh.join('');
-		//flashcards not possible without both
-		if(value[i].en && value[i].zh){
-		    //replace is a hack for flashcard field separator...TODO could escape
-		    content += [value[i].zh.replace(';', ''), value[i].en.replace(';', '')].join(';');
-		    content += '\n';
-		}
-	    }
+	    //replace is a hack for flashcard field separator...TODO could escape
+	    content += [key.replace(';', ''), value.en.replace(';', '')].join(';');
+	    content += '\n';
 	}
 	//wow, surely it can't be this absurd
 	var encodedUri = encodeURI(content);
@@ -288,7 +298,90 @@
 	document.body.appendChild(link);
 	link.click();
 	document.body.removeChild(link);
-	localStorage.removeItem('studyList');
-	document.getElementById('exportStudyListButton').style.display = 'none';
+    });
+
+    var makeSentenceNavigable = function(text, container){
+	for(var i = 0; i < text.length; i++){
+	    (function(character) {
+		var a = document.createElement('a');
+		a.textContent = character;
+		a.addEventListener('click', function(){
+		    if(hanzi[character]){
+			updateGraph(character, document.getElementById('level-selector').value);
+			//enable seamless switching
+			setupExamples([character]);
+		    }
+		});
+		container.appendChild(a);
+	    }(text[i]));
+	}
+    };
+
+    //study mode code...could move to a separate file
+    var currentCard = null;
+    var currentKey = null;
+    var setupStudyMode = function(){
+	currentCard = null;
+	currentKey = null;
+	document.getElementById('card-answer-container').style.display = 'none';
+	var counter = 0;
+	for(const [key, value] of Object.entries(studyList)){
+	    if(value.due <= Date.now()){
+		if(!currentCard){
+		    currentCard = value;
+		    currentKey = key;
+		}
+		counter++;
+	    }
+	}
+	document.getElementById('card-due-count').textContent = counter;
+	document.getElementById('card-question-container').innerHTML = '';
+	if(counter === 0){
+	    document.getElementById('study-call-to-action').textContent = 'Studying complete. You can add more cards by exploring the graph!';
+	    document.getElementById('show-answer-button').style.display = 'none';
+	    return;
+	} else {
+	    document.getElementById('study-call-to-action').textContent = 'What does this sentence mean?';
+	    document.getElementById('show-answer-button').style.display = 'block';
+	}
+	question = currentCard.zh.join('');
+	makeSentenceNavigable(question, document.getElementById('card-question-container'));
+	addTextToSpeech(document.getElementById('card-question-container'), question);
+	document.getElementById('card-answer').textContent = currentCard.en;
+    };
+    document.getElementById('show-answer-button').addEventListener('click', function(){
+	document.getElementById('card-answer-container').style.display = 'block';
+    });
+    document.getElementById('wrong-button').addEventListener('click', function(){
+	studyList[currentKey].nextJump = 0.5;
+	studyList[currentKey].due = Date.now() + 15*60*1000;
+	localStorage.setItem('studyList', JSON.stringify(studyList));
+	setupStudyMode();
+    });
+    document.getElementById('right-button').addEventListener('click', function(){
+	var nextJump = studyList[currentKey].nextJump || 0.5;
+	studyList[currentKey].nextJump = nextJump*2;
+	studyList[currentKey].due = Date.now() + (nextJump*24*60*60*1000);
+	localStorage.setItem('studyList', JSON.stringify(studyList));
+	setupStudyMode();
+    });
+    document.getElementById('show-explore').addEventListener('click', function(){
+	document.getElementById('example-container').style.display = 'block';
+	document.getElementById('study-container').style.display = 'none';
+	//TODO could likely do all of this with CSS
+	document.getElementById('show-explore').classList.add('active');
+	document.getElementById('show-study').classList.remove('active');
+    });
+    document.getElementById('show-study').addEventListener('click', function(){
+	document.getElementById('example-container').style.display = 'none';
+	document.getElementById('study-container').style.display = 'block';
+	document.getElementById('show-study').classList.add('active');
+	document.getElementById('show-explore').classList.remove('active');
+	setupStudyMode();
+    });
+    document.getElementById('delete-card-button').addEventListener('click', function(){
+	delete studyList[currentKey];
+	localStorage.setItem('studyList', JSON.stringify(studyList));
+	setupStudyMode();
     });
 })();

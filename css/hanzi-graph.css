@@ -12,7 +12,7 @@ body {
     height: 100%;
 }
 #control-pane {
-    width: 30%;
+    width: 35%;
     height: 100%;
     background: #121212;
     display: flex;
@@ -24,21 +24,24 @@ body {
     width: 50px;
 }
 #graph {
-    width: 70%;
+    width: 65%;
     height: 100%;
     background: #333333;
 }
 ul {
     list-style-type: none;
-    margin-left: 12px;
     padding: 0;
 }
 h1 {
     margin-left: 10px;
+    margin-bottom: 0;
 }
 h2 {
     margin-bottom: 0;
     cursor: pointer;
+}
+h2 span {
+    font-weight: normal;
 }
 .circle {
     width: 32px;
@@ -83,9 +86,21 @@ p.zh-example {
 }
 #controls {
     margin-bottom: 0;
+    margin-top: 0;
+}
+#controls li {
+    margin-bottom: 6px;
+}
+#controls li form {
+    margin-bottom: 4px;
 }
 #example-container {
     flex-grow: 1;
+    margin-left: 12px;
+}
+#study-container {
+    flex-grow: 1;
+    margin-left: 12px;
 }
 .walkthrough p {
     margin-top: 20px;
@@ -97,13 +112,16 @@ p.zh-example {
 }
 
 .text-button {
-    font-size: 12px;
-    background-color: #00008B;
+    font-size: 14px;
+    background-color: cornflowerblue;
     margin-left: 4px;
+    padding: 6px;
+    color: #eee;
+    vertical-align: text-top;
+    border-radius: 2px;
 }
 .text-button:hover {
-    background-color: white;
-    color: black;
+    color: white;
     cursor: pointer;
 }
 
@@ -112,4 +130,86 @@ p.zh-example {
     margin-top: 4px;
     margin-bottom: 4px;
     font-size: 12px;
+}
+
+.tabs ul {
+    padding-bottom: 6px;
+    border-bottom: 1px solid cornflowerblue;
+}
+.tab {
+    border-right: 1px solid;
+    border-left: 1px solid;
+    border-top: 1px solid;
+    display: inline;
+    text-align: center;
+    cursor: pointer;
+    margin-left: 4px;
+    margin-right: 4px;
+    padding: 8px;
+    background-color: cornflowerblue;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.tab.active {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.tab.active:hover {
+    color: #eee;
+}
+
+.tab:hover {
+    color: white;
+}
+
+#study-call-to-action {
+    cursor: default;
+    margin-left: -8px;
+}
+
+.study-call-to-action {
+    width: 100%;
+    text-align: center;
+    background-color: cornflowerblue;
+    padding: 8px;
+    cursor: pointer;
+    font-size: 20px;
+}
+#result-buttons{
+    width: 100%;
+}
+#result-buttons li {
+    width: 66%;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    margin-right: auto;
+    margin-left: auto;
+}
+#result-buttons li:hover {
+    color: white;
+}
+#wrong-button {
+    background-color: red;
+}
+#right-button {
+    background-color: green;
+}
+#card-question-container a {
+    font-size: 24px;
+    vertical-align: text-top;
+    cursor: pointer;
+}
+#card-answer {
+    font-size: 24px;
+}
+#delete-card-button {
+    margin-right: auto;
+    margin-left: auto;
+    text-align: center;
+    width: 50%;
 }

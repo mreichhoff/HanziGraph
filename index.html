@@ -16,34 +16,41 @@
       <!-- lol, like control plane -->
       <div id="control-pane">
 	<h1>Hanzi Graph</h1>
-	<ul id="controls">
-	  <li>
-	    <form id="hanzi-choose">
-	      <!-- i18n? what's that? -->
-	      <label for="hanzi-box">Choose a hanzi:</label>
-	      <input id="hanzi-box" type="text" maxlength="1"/>
-	      <input type="submit" value="go!"/>
-	    </form>
-	  </li>
-	  <li>
-	    <label for="level-selector">Choose max HSK level:</label>
-	    <select id="level-selector">
-	      <option>1</option>
-	      <option>2</option>
-	      <option>3</option>
-	      <option>4</option>
-	      <option>5</option>
-	      <option selected>6</option>
-	    </select>
-	  </li>
-	  <li>
-	    <label class="text-button" for="show-pinyin">
-	      [Toggle pinyin in examples]
-	    </label>
-	    <span class="text-button" id="exportStudyListButton">[Export (and clear) study list]</span>
-	  </li>
-	</ul>
+	<div class="tabs">
+	  <ul>
+	    <li id="show-explore" class="tab active">Explore mode</li>
+	    <li id="show-study" class="tab">Study mode</li>
+	  </ul>
+	</div>
 	<div id="example-container">
+	  <ul id="controls">
+	    <li>
+	      <form id="hanzi-choose">
+		<!-- i18n? what's that? -->
+		<label for="hanzi-box">Choose a hanzi:</label>
+		<input id="hanzi-box" type="text" maxlength="1"/>
+		<input type="submit" value="Go!"/>
+	      </form>
+	    </li>
+	    <li>
+	      <label for="level-selector">Choose max HSK level:</label>
+	      <select id="level-selector">
+		<option>1</option>
+		<option>2</option>
+		<option>3</option>
+		<option>4</option>
+		<option>5</option>
+		<option selected>6</option>
+	      </select>
+	    </li>
+	    <li style="margin-left:-4px">
+	      <!-- don't judge me-->
+	      <label class="text-button" for="show-pinyin">
+		Toggle pinyin in examples
+	      </label>
+	      <span class="text-button" id="exportStudyListButton">Export study list</span>
+	    </li>
+	  </ul>
 	  <input id="show-pinyin" type="checkbox" style="display:none"/>
 	  <ul id="examples">
 	    <li class="walkthrough">
@@ -79,6 +86,20 @@
 	    </li>
 	  </ul>
 	</div>
+	<div id="study-container" style="display:none">
+	  <p>Cards due: <span id="card-due-count"></span></p>
+	  <p id="study-call-to-action" class="study-call-to-action">What does this sentence mean?</p>
+	  <p id="card-question-container"></p>
+	  <span id="show-answer-button" class="study-call-to-action">Show Answer</span>
+	  <div id="card-answer-container" style="display:none">
+	    <p id="card-answer"></p>
+	    <ul id="result-buttons">
+	      <li id="wrong-button">Wrong</li>
+	      <li id="right-button">Right</li>
+	    </ul>
+	    <p id="delete-card-button" class="text-button">Delete this card</p>
+	  </div>
+	</div>
 	<div id="legend">
 	  <p>
 	    The color of a given hanzi or connection indicates the level at which it first appears in the HSK exam.
@@ -95,6 +116,6 @@
       </div>
       <div id="graph"></div>
     </div>
-    <script src="./js/graph.js"></script>
+    <script src="./js/hanzi-graph-min.js"></script>
   </body>
 </html>
