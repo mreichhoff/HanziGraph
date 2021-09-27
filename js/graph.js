@@ -60,9 +60,10 @@
 	holder.appendChild(textToSpeechButton);
     };
     var addSaveToListButton = function(holder, text){
+	var buttonTexts = ['In your study list!', 'Add this to my study list!'];
 	var saveToListButton = document.createElement('span');
 	saveToListButton.className = 'text-button';
-	saveToListButton.textContent = 'Add this to my study list!';
+	saveToListButton.textContent = studyList[text] ? buttonTexts[0] : buttonTexts[1];
 	saveToListButton.addEventListener('click', function(){
 	    var newCards = currentExamples[text].map(x=>({...x, due: Date.now()}));
 	    for(var i = 0; i < newCards.length; i++){
@@ -74,6 +75,7 @@
 	    //update it whenever it changes
 	    localStorage.setItem('studyList', JSON.stringify(studyList));
 	    document.getElementById('exportStudyListButton').style.display = 'inline';
+	    saveToListButton.textContent = buttonTexts[0];
 	});
 	holder.appendChild(saveToListButton);
     };
