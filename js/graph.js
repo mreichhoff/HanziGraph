@@ -1,6 +1,8 @@
 (function(){
     //refactor badly needed...hacks on top of hacks at this point
     var studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
+    var undoChain = [];
+    var currentHanzi = null;
     var maxExamples = 5;
     var currentExamples = {};
     var getZhTts = function(){
@@ -224,6 +226,9 @@
 	    dfs(id, result, maxDepth, {}, maxLevel);
 	    cy.add(result);
 	    cy.layout(layout(id)).run();
+	    //TODO this is unfortunate
+	    undoChain.push(currentHanzi);
+	    currentHanzi = id;
 	    setupExamples([id]);
 	});
 	cy.on('tap', 'edge', function(evt){
@@ -256,7 +261,7 @@
 	    }
 	}
     };
-    var updateGraph = function(value, maxLevel) {
+    var updateGraph = function(value, maxLevel, isUndo) {
 	document.getElementById('graph').remove();
 	var nextGraph = document.createElement("div");
 	nextGraph.id = 'graph';
@@ -267,6 +272,10 @@
 	    var maxDepth = 1;
 	    dfs(value, result, maxDepth, {}, maxLevel);
 	    setupCytoscape(value, result);
+	    if(currentHanzi && !isUndo){
+		undoChain.push(currentHanzi);
+	    }
+	    currentHanzi = value;
 	}
     };
     //add a default graph on page load to illustrate the concept
@@ -320,6 +329,16 @@
 	    }(text[i]));
 	}
     };
+
+    document.getElementById('previousHanziButton').addEventListener('click', function(){
+	if(!undoChain.length){
+	    return;
+	}
+	var next = undoChain.pop();
+	updateGraph(next, document.getElementById('level-selector').value, true);
+	setupExamples([next]);
+	currentHanzi = next;
+    });
 
     //study mode code...could move to a separate file
     var currentCard = null;
