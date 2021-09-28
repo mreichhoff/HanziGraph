@@ -39,6 +39,7 @@ h1 {
 h2 {
     margin-bottom: 0;
     cursor: pointer;
+    font-size: 26px;
 }
 h2 span {
     font-weight: normal;
@@ -63,7 +64,7 @@ h2 span {
     align-items: center;
 }
 #examples ul li {
-    font-size: 12px;
+    font-size: 14px;
     margin-bottom: 12px;
 }
 #examples ul {
@@ -75,7 +76,7 @@ p.example-line {
     margin-bottom: 4px;
 }
 p.zh-example {
-    font-size: 20px;
+    font-size: 24px;
     cursor: pointer;
 }
 .pinyin-example {
@@ -112,7 +113,7 @@ p.zh-example {
 }
 
 .text-button {
-    font-size: 14px;
+    font-size: 16px;
     background-color: darkblue;
     margin-left: 4px;
     padding: 6px;
@@ -123,7 +124,7 @@ p.zh-example {
 .text-button:hover {
     color: white;
     cursor: pointer;
-    border: 1px solid white;
+    background-color: cornflowerblue;
 }
 
 /*TODO refactor this...too much repetition, selectors too specific */
@@ -156,10 +157,12 @@ p.zh-example {
 
 .tab.active:hover {
     color: #eee;
+    background-color: darkblue;
 }
 
 .tab:hover {
     color: white;
+    background-color: cornflowerblue;
 }
 
 #study-call-to-action {
@@ -214,4 +217,7 @@ p.zh-example {
     margin-left: auto;
     text-align: center;
     width: 50%;
+}
+#show-answer-button:hover {
+    background-color: cornflowerblue;
 }
