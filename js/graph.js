@@ -152,7 +152,7 @@
 		var exampleHolder = document.createElement('li');
 		var zhHolder = document.createElement('p');
 		var exampleText = examples[j].zh.join('');
-		makeSentenceNavigable(exampleText, zhHolder);
+		makeSentenceNavigable(exampleText, zhHolder, true);
 		zhHolder.className = 'zh-example example-line';
 		addTextToSpeech(zhHolder, exampleText);
 		exampleHolder.appendChild(zhHolder);
@@ -313,7 +313,7 @@
 	document.body.removeChild(link);
     });
 
-    var makeSentenceNavigable = function(text, container){
+    var makeSentenceNavigable = function(text, container, noExampleChange){
 	for(var i = 0; i < text.length; i++){
 	    (function(character) {
 		var a = document.createElement('a');
@@ -322,7 +322,9 @@
 		    if(hanzi[character]){
 			updateGraph(character, document.getElementById('level-selector').value);
 			//enable seamless switching
-			setupExamples([character]);
+			if(!noExampleChange){
+			    setupExamples([character]);
+			}
 		    }
 		});
 		container.appendChild(a);
