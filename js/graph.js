@@ -3,6 +3,7 @@
     var studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
     var undoChain = [];
     var currentHanzi = null;
+    var currentWord = null;
     var maxExamples = 5;
     var currentExamples = {};
     var getZhTts = function(){
@@ -80,6 +81,16 @@
 	    saveToListButton.textContent = buttonTexts[0];
 	});
 	holder.appendChild(saveToListButton);
+    };
+
+    var persistState = function(){
+	var localUndoChain = undoChain.length > 5 ? undoChain.slice(0, 5) : undoChain;
+	sessionStorage.setItem('state', JSON.stringify({
+	    hanzi: currentHanzi,
+	    word: currentWord,
+	    level: document.getElementById('level-selector').value,
+	    undoChain: localUndoChain
+	}));
     };
 
     var setupExamples = function(words){
@@ -227,13 +238,18 @@
 	    cy.add(result);
 	    cy.layout(layout(id)).run();
 	    //TODO this is unfortunate
-	    undoChain.push(currentHanzi);
+	    undoChain.push({hanzi: currentHanzi, word: currentWord});
 	    currentHanzi = id;
+	    currentWord = [id];
 	    setupExamples([id]);
+	    persistState();
 	});
 	cy.on('tap', 'edge', function(evt){
 	    words = evt.target.data('words');
 	    setupExamples(words);
+	    undoChain.push({hanzi: currentHanzi, word: currentWord});
+	    currentWord = words;
+	    persistState();
 	    //TODO toggle functions
 	    document.getElementById('show-explore').click();
 	});
@@ -273,14 +289,28 @@
 	    dfs(value, result, maxDepth, {}, maxLevel);
 	    setupCytoscape(value, result);
 	    if(currentHanzi && !isUndo){
-		undoChain.push(currentHanzi);
+		undoChain.push({hanzi: currentHanzi, word: currentWord});
 	    }
 	    currentHanzi = value;
+	    currentWord = [value];
+	    persistState();
 	}
     };
-    //add a default graph on page load to illustrate the concept
-    var defaultHanzi = ["围", "显", "故", "商", "店"];
-    updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], document.getElementById('level-selector').value);
+
+    var initialize = function(){
+	var oldState = JSON.parse(sessionStorage.getItem('state'));
+	if(!oldState){
+	    //add a default graph on page load to illustrate the concept
+	    var defaultHanzi = ["围", "显", "故", "商", "店"];
+	    updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], document.getElementById('level-selector').value);
+	} else {
+	    document.getElementById('level-selector').value = oldState.level;
+	    //TODO: it's correct that this doesn't add to undoChain once inside, right?
+	    updateGraph(oldState.hanzi, oldState.level);
+	    setupExamples(oldState.word);
+	    undoChain = oldState.undoChain;
+	}
+    };
 
     document.getElementById('hanzi-choose').addEventListener('submit', function(event){
 	event.preventDefault();
@@ -293,7 +323,8 @@
     });
     document.getElementById('level-selector').addEventListener('change', function(){
 	//TODO hide edges in existing graph rather than rebuilding
-	updateGraph(document.getElementById('hanzi-box').value, document.getElementById('level-selector').value);
+	//TODO refresh after level change can be weird
+	updateGraph(document.getElementById('hanzi-box').value || currentHanzi, document.getElementById('level-selector').value);
     });
     document.getElementById('exportStudyListButton').style.display = (Object.keys(studyList).length > 0) ? 'inline' : 'none';
     document.getElementById('exportStudyListButton').addEventListener('click', function(){
@@ -320,6 +351,7 @@
 		a.textContent = character;
 		a.addEventListener('click', function(){
 		    if(hanzi[character]){
+			//TODO undochain here if you click multiple then undo repeatedly
 			updateGraph(character, document.getElementById('level-selector').value);
 			//enable seamless switching
 			if(!noExampleChange){
@@ -337,9 +369,11 @@
 	    return;
 	}
 	var next = undoChain.pop();
-	updateGraph(next, document.getElementById('level-selector').value, true);
-	setupExamples([next]);
-	currentHanzi = next;
+	updateGraph(next.hanzi, document.getElementById('level-selector').value, true);
+	setupExamples(next.word);
+	currentHanzi = next.hanzi;
+	currentWord = next.word;
+	persistState();
     });
 
     //study mode code...could move to a separate file
@@ -411,4 +445,6 @@
 	localStorage.setItem('studyList', JSON.stringify(studyList));
 	setupStudyMode();
     });
+
+    initialize();
 })();
