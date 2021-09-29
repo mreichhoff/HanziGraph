@@ -1,2 +1,2 @@
 # HanziGraph
-A webapp to visualize relationships among Chinese characters and to see example sentences that illustrate their use.
+A webapp meant for Chinese learners to visualize and explore word-forming relationships among Chinese characters and to see example sentences that illustrate their use. See [the site](https://mreichhoff.github.io/HanziGraph/), currently hosted on github pages, to learn more.
