@@ -352,7 +352,7 @@
 	var counter = 0;
 	for(const [key, value] of Object.entries(studyList)){
 	    if(value.due <= Date.now()){
-		if(!currentCard){
+		if(!currentCard || currentCard.due > value.due){
 		    currentCard = value;
 		    currentKey = key;
 		}
