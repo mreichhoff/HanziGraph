@@ -114,7 +114,7 @@ p.zh-example {
 
 .text-button {
     font-size: 16px;
-    background-color: darkblue;
+    background-color: blue;
     margin-left: 4px;
     padding: 6px;
     color: #eee;
@@ -135,8 +135,8 @@ p.zh-example {
 }
 
 .tabs ul {
-    padding-bottom: 6px;
-    border-bottom: 8px solid darkblue;
+    padding-bottom: 10px;
+    border-bottom: 8px solid blue;
 }
 .tab {
     font-size: 20px;
@@ -146,7 +146,7 @@ p.zh-example {
     margin-left: 4px;
     margin-right: 4px;
     padding: 12px;
-    background-color: darkblue;
+    background-color: blue;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
 }
@@ -157,7 +157,7 @@ p.zh-example {
 
 .tab.active:hover {
     color: #eee;
-    background-color: darkblue;
+    background-color: blue;
 }
 
 .tab:hover {
@@ -176,7 +176,7 @@ p.zh-example {
 .study-call-to-action {
     width: 95%;
     text-align: center;
-    background-color: darkblue;
+    background-color: blue;
     padding: 8px;
     cursor: pointer;
     font-size: 20px;
