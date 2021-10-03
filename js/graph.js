@@ -255,6 +255,7 @@
             addToExistingGraph(id, maxLevel);
             setupExamples([id]);
             persistState();
+            document.getElementById('show-explore').click();
         });
         cy.on('tap', 'edge', function (evt) {
             words = evt.target.data('words');
@@ -348,6 +349,7 @@
             updateUndoChain();
             updateGraph(value, maxLevel);
             setupExamples([document.getElementById('hanzi-box').value]);
+            persistState();
         }
     });
     document.getElementById('level-selector').addEventListener('change', function () {
