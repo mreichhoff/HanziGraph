@@ -4,6 +4,12 @@
     var undoChain = [];
     var currentHanzi = null;
     var currentWord = null;
+    var cy = null;
+    var tabs = {
+        explore: 'explore',
+        study: 'study'
+    };
+    var activeTab = tabs.explore;
     var maxExamples = 5;
     var currentExamples = {};
     var getZhTts = function () {
@@ -89,10 +95,73 @@
             hanzi: currentHanzi,
             word: currentWord,
             level: document.getElementById('level-selector').value,
-            undoChain: localUndoChain
+            undoChain: localUndoChain,
+            activeTab: activeTab
         }));
     };
-
+    var setupDefinitions = function (definitionList, definitionHolder) {
+        for (var i = 0; i < definitionList.length; i++) {
+            var definitionItem = document.createElement('li');
+            var definitionContent = definitionList[i].pinyin + ': ' + definitionList[i].en;
+            definitionItem.textContent = definitionContent;
+            definitionHolder.appendChild(definitionItem);
+        }
+    };
+    var findExamples = function (word) {
+        var examples = [];
+        //used for e.g., missing translation
+        var lessDesirableExamples = [];
+        //TODO consider indexing up front
+        //can also reuse inner loop...consider inverting
+        for (var i = 0; i < sentences.length; i++) {
+            if (sentences[i].zh.includes(word)) {
+                if (sentences[i].en && sentences[i].pinyin) {
+                    examples.push(sentences[i]);
+                    if (examples.length === maxExamples) {
+                        break;
+                    }
+                } else if (lessDesirableExamples.length < maxExamples) {
+                    lessDesirableExamples.push(sentences[i]);
+                }
+            }
+        }
+        if (examples.length < maxExamples && lessDesirableExamples.length > 0) {
+            examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (maxExamples - examples.length)));
+        }
+        //TODO...improve
+        examples.sort((a, b) => {
+            if (a.en && !b.en) {
+                return -1;
+            } else if (!a.en && b.en) {
+                return 1;
+            } else {
+                return a.zh.length - b.zh.length;
+            }
+        });
+        return examples;
+    };
+    var setupExampleElements = function (examples, exampleList) {
+        for (var i = 0; i < examples.length; i++) {
+            var exampleHolder = document.createElement('li');
+            var zhHolder = document.createElement('p');
+            var exampleText = examples[i].zh.join('');
+            makeSentenceNavigable(exampleText, zhHolder, true);
+            zhHolder.className = 'zh-example example-line';
+            addTextToSpeech(zhHolder, exampleText);
+            exampleHolder.appendChild(zhHolder);
+            if (examples[i].pinyin) {
+                var pinyinHolder = document.createElement('p');
+                pinyinHolder.textContent = examples[i].pinyin;
+                pinyinHolder.className = 'pinyin-example example-line';
+                exampleHolder.appendChild(pinyinHolder);
+            }
+            var enHolder = document.createElement('p');
+            enHolder.textContent = examples[i].en;
+            enHolder.className = 'example-line';
+            exampleHolder.appendChild(enHolder);
+            exampleList.appendChild(exampleHolder);
+        }
+    };
     var setupExamples = function (words) {
         currentExamples = {};
         //TODO this mixes markup modification and example finding
@@ -102,37 +171,8 @@
             examplesList.firstChild.remove();
         }
         for (var i = 0; i < words.length; i++) {
-            var examples = [];
+            var examples = findExamples(words[i]);
             currentExamples[words[i]] = [];
-            //used for e.g., missing translation
-            var lessDesirableExamples = [];
-            //TODO consider indexing up front
-            //can also reuse inner loop...consider inverting
-            for (var j = 0; j < sentences.length; j++) {
-                if (sentences[j].zh.includes(words[i])) {
-                    if (sentences[j].en && sentences[j].pinyin) {
-                        examples.push(sentences[j]);
-                        if (examples.length === maxExamples) {
-                            break;
-                        }
-                    } else if (lessDesirableExamples.length < maxExamples) {
-                        lessDesirableExamples.push(sentences[j]);
-                    }
-                }
-            }
-            if (examples.length < maxExamples && lessDesirableExamples.length > 0) {
-                examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (maxExamples - examples.length)));
-            }
-            //TODO...improve
-            examples.sort((a, b) => {
-                if (a.en && !b.en) {
-                    return -1;
-                } else if (!a.en && b.en) {
-                    return 1;
-                } else {
-                    return a.zh.length - b.zh.length;
-                }
-            });
 
             var item = document.createElement('li');
             var wordHolder = document.createElement('h2');
@@ -142,61 +182,41 @@
             item.appendChild(wordHolder);
 
             var definitionHolder = document.createElement('ul');
+            definitionHolder.className = 'definition';
             var definitionList = definitions[words[i]] || [];
-            for (var j = 0; j < definitionList.length; j++) {
-                var definitionItem = document.createElement('li');
-                var definitionContent = definitionList[j].pinyin + ': ' + definitionList[j].en;
-                definitionItem.textContent = definitionContent;
-                definitionHolder.appendChild(definitionItem);
-            }
+            setupDefinitions(definitionList, definitionHolder);
+            item.appendChild(definitionHolder);
             //TODO: definition list doesn't have the same interface (missing zh field)
             currentExamples[words[i]].push(getCardFromDefinitions(words[i], definitionList));
             //setup current examples for potential future export
             currentExamples[words[i]].push(...examples);
 
-            definitionHolder.className = 'definition';
-            item.appendChild(definitionHolder);
-
             var exampleList = document.createElement('ul');
             item.appendChild(exampleList);
-            for (var j = 0; j < examples.length; j++) {
-                var exampleHolder = document.createElement('li');
-                var zhHolder = document.createElement('p');
-                var exampleText = examples[j].zh.join('');
-                makeSentenceNavigable(exampleText, zhHolder, true);
-                zhHolder.className = 'zh-example example-line';
-                addTextToSpeech(zhHolder, exampleText);
-                exampleHolder.appendChild(zhHolder);
-                if (examples[j].pinyin) {
-                    var pinyinHolder = document.createElement('p');
-                    pinyinHolder.textContent = examples[j].pinyin;
-                    pinyinHolder.className = 'pinyin-example example-line';
-                    exampleHolder.appendChild(pinyinHolder);
-                }
-                var enHolder = document.createElement('p');
-                enHolder.textContent = examples[j].en;
-                enHolder.className = 'example-line';
-                exampleHolder.appendChild(enHolder);
-                exampleList.appendChild(exampleHolder);
-            }
+            setupExampleElements(examples, exampleList);
 
             examplesList.append(item);
         }
+        currentWord = words;
+    };
+    var updateUndoChain = function () {
+        //push clones onto the stack
+        undoChain.push({ hanzi: [...currentHanzi], word: (currentWord ? [...currentWord] : currentWord) });
     };
     //TODO can this be combined with the definition rendering part?
     var getCardFromDefinitions = function (text, definitionList) {
         //this assumes definitionList non null
         var result = { zh: [text] };
         var answer = '';
-        for (var j = 0; j < definitionList.length; j++) {
-            answer += definitionList[j].pinyin + ': ' + definitionList[j].en;
-            answer += j == definitionList.length - 1 ? '' : ', ';
+        for (var i = 0; i < definitionList.length; i++) {
+            answer += definitionList[i].pinyin + ': ' + definitionList[i].en;
+            answer += i == definitionList.length - 1 ? '' : ', ';
         }
         result['en'] = answer;
         return result;
     };
     var setupCytoscape = function (root, elements) {
-        var cy = cytoscape({
+        cy = cytoscape({
             container: document.getElementById('graph'),
             elements: elements,
             layout: layout(root),
@@ -231,27 +251,29 @@
         cy.on('tap', 'node', function (evt) {
             var id = evt.target.id();
             var maxLevel = document.getElementById('level-selector').value;
-            var result = { 'nodes': [], 'edges': [] };
-            var maxDepth = 1;
-            dfs(id, result, maxDepth, {}, maxLevel);
-            cy.add(result);
-            cy.layout(layout(id)).run();
-            //TODO this is unfortunate
-            undoChain.push({ hanzi: currentHanzi, word: currentWord });
-            currentHanzi = id;
-            currentWord = [id];
+            updateUndoChain();
+            addToExistingGraph(id, maxLevel);
             setupExamples([id]);
             persistState();
         });
         cy.on('tap', 'edge', function (evt) {
             words = evt.target.data('words');
+            updateUndoChain();
             setupExamples(words);
-            undoChain.push({ hanzi: currentHanzi, word: currentWord });
-            currentWord = words;
             persistState();
             //TODO toggle functions
             document.getElementById('show-explore').click();
         });
+    };
+
+    var addToExistingGraph = function (character, maxLevel) {
+        var result = { 'nodes': [], 'edges': [] };
+        var maxDepth = 1;
+        dfs(character, result, maxDepth, {}, maxLevel);
+        cy.add(result);
+        cy.layout(layout(character)).run();
+        //currentHanzi must be set up before this call
+        currentHanzi.push(character);
     };
 
     var dfs = function (start, elements, maxDepth, visited, maxLevel) {
@@ -276,7 +298,7 @@
             }
         }
     };
-    var updateGraph = function (value, maxLevel, isUndo) {
+    var updateGraph = function (value, maxLevel) {
         document.getElementById('graph').remove();
         var nextGraph = document.createElement("div");
         nextGraph.id = 'graph';
@@ -287,11 +309,7 @@
             var maxDepth = 1;
             dfs(value, result, maxDepth, {}, maxLevel);
             setupCytoscape(value, result);
-            if (currentHanzi && !isUndo) {
-                undoChain.push({ hanzi: currentHanzi, word: currentWord });
-            }
-            currentHanzi = value;
-            currentWord = [value];
+            currentHanzi = [value];
             persistState();
         }
     };
@@ -304,10 +322,21 @@
             updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], document.getElementById('level-selector').value);
         } else {
             document.getElementById('level-selector').value = oldState.level;
-            //TODO: it's correct that this doesn't add to undoChain once inside, right?
-            updateGraph(oldState.hanzi, oldState.level);
-            setupExamples(oldState.word);
+            //oldState.hanzi should always have length >= 1
+            updateGraph(oldState.hanzi[0], oldState.level);
+            for (var i = 1; i < oldState.hanzi.length; i++) {
+                addToExistingGraph(oldState.hanzi[i], oldState.level);
+            }
+            if (oldState.word) {
+                setupExamples(oldState.word);
+            }
             undoChain = oldState.undoChain;
+            if (oldState.activeTab === tabs.study) {
+                //reallllllly need a toggle method
+                //this does set up the current card, etc.
+                document.getElementById('show-study').click();
+            }
+            persistState();
         }
     };
 
@@ -316,6 +345,7 @@
         var value = document.getElementById('hanzi-box').value;
         var maxLevel = document.getElementById('level-selector').value;
         if (value) {
+            updateUndoChain();
             updateGraph(value, maxLevel);
             setupExamples([document.getElementById('hanzi-box').value]);
         }
@@ -323,7 +353,7 @@
     document.getElementById('level-selector').addEventListener('change', function () {
         //TODO hide edges in existing graph rather than rebuilding
         //TODO refresh after level change can be weird
-        updateGraph(document.getElementById('hanzi-box').value || currentHanzi, document.getElementById('level-selector').value);
+        updateGraph(currentHanzi, document.getElementById('level-selector').value);
     });
     document.getElementById('exportStudyListButton').style.display = (Object.keys(studyList).length > 0) ? 'inline' : 'none';
     document.getElementById('exportStudyListButton').addEventListener('click', function () {
@@ -350,12 +380,14 @@
                 a.textContent = character;
                 a.addEventListener('click', function () {
                     if (hanzi[character]) {
+                        updateUndoChain();
                         //TODO undochain here if you click multiple then undo repeatedly
                         updateGraph(character, document.getElementById('level-selector').value);
                         //enable seamless switching
                         if (!noExampleChange) {
                             setupExamples([character]);
                         }
+                        persistState();
                     }
                 });
                 container.appendChild(a);
@@ -368,10 +400,14 @@
             return;
         }
         var next = undoChain.pop();
-        updateGraph(next.hanzi, document.getElementById('level-selector').value, true);
-        setupExamples(next.word);
-        currentHanzi = next.hanzi;
-        currentWord = next.word;
+        var maxLevel = document.getElementById('level-selector').value;
+        updateGraph(next.hanzi[0], maxLevel);
+        for (var i = 1; i < next.hanzi.length; i++) {
+            addToExistingGraph(next.hanzi[i], maxLevel);
+        }
+        if (next.word) {
+            setupExamples(next.word);
+        }
         persistState();
     });
 
@@ -431,6 +467,8 @@
         //TODO could likely do all of this with CSS
         document.getElementById('show-explore').classList.add('active');
         document.getElementById('show-study').classList.remove('active');
+        activeTab = tabs.explore;
+        persistState();
     });
     document.getElementById('show-study').addEventListener('click', function () {
         document.getElementById('example-container').style.display = 'none';
@@ -438,6 +476,8 @@
         document.getElementById('show-study').classList.add('active');
         document.getElementById('show-explore').classList.remove('active');
         setupStudyMode();
+        activeTab = tabs.study;
+        persistState();
     });
     document.getElementById('delete-card-button').addEventListener('click', function () {
         delete studyList[currentKey];
