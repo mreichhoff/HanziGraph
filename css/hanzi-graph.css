@@ -118,7 +118,6 @@ p.zh-example {
     margin-left: 4px;
     padding: 6px;
     color: #eee;
-    vertical-align: text-top;
     border-radius: 2px;
 }
 .text-button:hover {
@@ -126,7 +125,17 @@ p.zh-example {
     cursor: pointer;
     background-color: cornflowerblue;
 }
-
+.sentence-container {
+    display: inline-block;
+    max-width: 80%;
+}
+p .text-button.listen {
+    display: inline-block;
+    vertical-align: top;
+}
+h2 .text-button {
+    vertical-align: middle;
+}
 /*TODO refactor this...too much repetition, selectors too specific */
 #examples ul.definition li {
     margin-top: 4px;

@@ -63,7 +63,7 @@
 
     var addTextToSpeech = function (holder, text) {
         var textToSpeechButton = document.createElement('span');
-        textToSpeechButton.className = 'text-button';
+        textToSpeechButton.className = 'text-button listen';
         textToSpeechButton.textContent = 'Listen';
         textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text), false);
         holder.appendChild(textToSpeechButton);
@@ -374,6 +374,8 @@
     });
 
     var makeSentenceNavigable = function (text, container, noExampleChange) {
+        var sentenceContainer = document.createElement('span');
+        sentenceContainer.className = "sentence-container";
         for (var i = 0; i < text.length; i++) {
             (function (character) {
                 var a = document.createElement('a');
@@ -390,9 +392,10 @@
                         persistState();
                     }
                 });
-                container.appendChild(a);
+                sentenceContainer.appendChild(a);
             }(text[i]));
         }
+        container.appendChild(sentenceContainer);
     };
 
     document.getElementById('previousHanziButton').addEventListener('click', function () {
