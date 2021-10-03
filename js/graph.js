@@ -355,7 +355,7 @@
     document.getElementById('level-selector').addEventListener('change', function () {
         //TODO hide edges in existing graph rather than rebuilding
         //TODO refresh after level change can be weird
-        updateGraph(currentHanzi, document.getElementById('level-selector').value);
+        updateGraph(currentHanzi[currentHanzi.length - 1], document.getElementById('level-selector').value);
     });
     document.getElementById('exportStudyListButton').style.display = (Object.keys(studyList).length > 0) ? 'inline' : 'none';
     document.getElementById('exportStudyListButton').addEventListener('click', function () {
