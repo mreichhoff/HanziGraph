@@ -240,13 +240,15 @@
                         'curve-style': 'straight',
                         'label': 'data(words)',
                         'color': '#eee',
-                        'font-size': '8px',
+                        'font-size': '10px',
                         'text-background-color': '#333333',
                         'text-background-opacity': '1',
                         'text-background-shape': 'round-rectangle'
                     }
                 }
-            ]
+            ],
+            maxZoom: 10,
+            minZoom: 0.5
         });
         cy.on('tap', 'node', function (evt) {
             var id = evt.target.id();
