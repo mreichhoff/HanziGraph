@@ -24,7 +24,7 @@ body {
     height: 100%;
     background: #3333;
 }
-@media (max-width:900px)  {
+@media (max-width:650px)  {
     #container {
         display: block;
     }
