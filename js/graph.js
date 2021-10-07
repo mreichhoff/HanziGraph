@@ -454,7 +454,7 @@
     };
     document.getElementById('show-answer-button').addEventListener('click', function () {
         document.getElementById('card-answer-container').style.display = 'block';
-        document.getElementById('control-pane').scroll({ left: 0, top: window.scrollY + document.querySelector('#delete-card-button').getBoundingClientRect().top });
+        document.getElementById('card-answer-container').scrollIntoView();
     });
     document.getElementById('wrong-button').addEventListener('click', function () {
         studyList[currentKey].nextJump = 0.5;
