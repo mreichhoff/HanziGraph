@@ -230,7 +230,9 @@ h2 .text-button {
 #show-answer-button:hover {
     background-color: cornflowerblue;
 }
-
+#explain-text {
+    margin-top: 0;
+}
 @media (max-width:650px)  {
     #container {
         display: block;
