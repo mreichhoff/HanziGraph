@@ -1,0 +1,11 @@
+autopep8==1.5.7
+click==8.0.1
+jieba==0.42.1
+joblib==1.0.1
+nltk==3.6.3
+pinyin==0.4.0
+pycodestyle==2.7.0
+pydub==0.25.1
+regex==2021.9.30
+toml==0.10.2
+tqdm==4.62.3
