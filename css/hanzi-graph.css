@@ -45,18 +45,19 @@ h2 span {
     font-weight: normal;
 }
 .circle {
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     margin-bottom: 4px;
-    font-size: 10px;
+    font-size: 14px;
     text-align: center;
-    line-height: 32px;
+    line-height: 44px;
     color: black;
 }
 #legend {
     margin-left: 10px;
-    font-size: 12px;
+    font-size: 14px;
+    text-align: center;
 }
 #level-container {
     display: flex;
