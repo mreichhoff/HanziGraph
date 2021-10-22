@@ -1,0 +1,36 @@
+<html>
+
+<head>
+    <title>Log In to HanziGraph</title>
+    <link rel="stylesheet" type="text/css" href="css/hanzi-graph.css">
+    <script type="module" src="./js/modules/init.js"></script>
+</head>
+
+<body>
+    <main class="auth-form">
+        <h1>Sign in or Register</h1>
+        <form id="signin">
+            <ul>
+                <li>
+                    <label for="email">
+                        Enter your email address:
+                        <input id="email" type="email" />
+                    </label>
+                </li>
+                <li>
+                    <label for="email">
+                        Enter your password:
+                        <input id="password" minlength="12" type="password" />
+                    </label>
+                </li>
+                <li>
+                    <input type="submit" value="Sign in!" />
+                    <input id="register" type="button" value="Register" />
+                </li>
+            </ul>
+        </form>
+    </main>
+    <script type="module" src="./js/modules/auth.js"></script>
+</body>
+
+</html>

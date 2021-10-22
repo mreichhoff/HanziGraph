@@ -174,7 +174,17 @@ h2 .text-button {
     color: white;
     background-color: cornflowerblue;
 }
-
+.tabs #signin {
+    float:right;
+    width:120px;
+}
+.tabs .text-button {
+    display: inline-block;
+    width: 100px;
+    text-align: center;
+    margin: 0;
+    text-decoration: none;
+}
 #study-call-to-action {
     cursor: default;
 }
@@ -233,6 +243,39 @@ h2 .text-button {
 }
 #explain-text {
     margin-top: 0;
+}
+main.auth-form {
+    width: 300px;
+    margin-left:auto;
+    margin-right:auto;
+}
+.auth-form li {
+    height: 60px;
+    margin-top: 12px;
+}
+.auth-form input[type=email] {
+    height:28px;
+    width:270px;
+}
+.auth-form input[type=password] {
+    height:28px;
+    width:270px;
+}
+.auth-form input[type=submit] {
+    width: 130px;
+    height: 28px;
+}
+.auth-form input[type=button] {
+    width: 130px;
+    height: 28px;
+    margin-left: 8px;
+}
+.auth-form label {
+    font-size: 22px;
+}
+.welcome-message {
+    font-size: 12px;
+    float: right;
 }
 @media (max-width:650px)  {
     #container {

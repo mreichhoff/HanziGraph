@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.1/cytoscape.min.js"
         integrity="sha512-REr7ZKldLo2Lx6UiQ6autPWZR+j4u1/7ElYsrcwFe3ZmT/TKXCF/vXqNP/d2BQ78k0tapdZFccpFkku9bwrS3w=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="module" src="./js/modules/init.js"></script>
     <!--TODO convert to fetches -->
     <script src="./data/hanzi.js"></script>
     <script src="./data/sentences.js"></script>
@@ -21,11 +22,15 @@
     <div id="container">
         <!-- lol, like control plane -->
         <div id="control-pane">
-            <h1>Hanzi Graph</h1>
+            <h1 id="main-header">Hanzi Graph</h1>
             <div class="tabs">
                 <ul>
                     <li id="show-explore" class="tab active">Explore</li>
                     <li id="show-study" class="tab">Study</li>
+                    <li id="signin">
+                        <a id="signin-button" class="text-button" href="login.html">Sign in</a>
+                        <a id="signout-button" style="display:none" class="text-button">Sign out</a>
+                    </li>
                 </ul>
             </div>
             <div id="example-container">
@@ -133,6 +138,7 @@
         <div id="graph"></div>
     </div>
     <script src="./js/hanzi-graph-min.js"></script>
+    <script type="module" src="./js/modules/auth-state.js"></script>
 </body>
 
 </html>
