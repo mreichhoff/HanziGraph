@@ -30,7 +30,12 @@ onAuthStateChanged(auth, (user) => {
 
 signoutButton.addEventListener('click', function () {
     const auth = getAuth();
-    signOut(auth).catch((error) => {
+    signOut(auth).then(() => {
+        //TODO move to rtdb.js?
+        window.studyList = {};
+        localStorage.removeItem('studyList');
+        document.location.reload();
+    }).catch((error) => {
         console.log(error);
     });
 });

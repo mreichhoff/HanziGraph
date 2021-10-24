@@ -31,7 +31,7 @@ onAuthStateChanged(auth, (user) => {
         window.saveStudyList = saveStudyList;
         onValue(flashcardRef, (snapshot) => {
             const data = snapshot.val();
-            let localStudyList = JSON.parse(localStorage.getItem('studyList') || '{}');
+            let localStudyList = JSON.parse(localStorage.getItem('studyList')) || {};
             if (Object.keys(localStudyList).length > 0) {
                 let updates = [];
                 for (const key in localStudyList) {
@@ -49,12 +49,13 @@ onAuthStateChanged(auth, (user) => {
             }
             if (data) {
                 window.studyList = data;
+                //reallllllly need a toggle method
+                document.getElementById('show-study').click();
             }
         });
     } else {
-        //reset due to the user signing out
-        window.studyList = {};
-        localStorage.removeItem('studyList');
+        //this runs on pageload if user is not signed in
+        //regardless, only clear studyList on explicit signout
         window.saveStudyList = signedOutSaveStudyList;
     }
 });
