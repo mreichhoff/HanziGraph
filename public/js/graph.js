@@ -1,6 +1,6 @@
 (function () {
     //refactor badly needed...hacks on top of hacks at this point
-    var studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
+    window.studyList = window.studyList || JSON.parse(localStorage.getItem('studyList') || '{}');
     var undoChain = [];
     var currentHanzi = null;
     var currentWord = null;
@@ -75,14 +75,22 @@
         saveToListButton.textContent = studyList[text] ? buttonTexts[0] : buttonTexts[1];
         saveToListButton.addEventListener('click', function () {
             var newCards = currentExamples[text].map(x => ({ ...x, due: Date.now() }));
+            var newKeys = [];
             for (var i = 0; i < newCards.length; i++) {
                 var zhJoined = newCards[i].zh.join('');
+                newKeys.push(zhJoined);
                 if (!studyList[zhJoined] && newCards[i].en) {
-                    studyList[zhJoined] = { en: newCards[i].en, due: newCards[i].due, zh: newCards[i].zh };
+                    studyList[zhJoined] = {
+                        en: newCards[i].en,
+                        due: newCards[i].due,
+                        zh: newCards[i].zh,
+                        wrongCount: 0,
+                        rightCount: 0
+                    };
                 }
             }
             //update it whenever it changes
-            localStorage.setItem('studyList', JSON.stringify(studyList));
+            saveStudyList(newKeys);
             document.getElementById('exportStudyListButton').style.display = 'inline';
             saveToListButton.textContent = buttonTexts[0];
         });
@@ -458,15 +466,17 @@
     });
     document.getElementById('wrong-button').addEventListener('click', function () {
         studyList[currentKey].nextJump = 0.5;
+        studyList[currentKey].wrongCount++;
         studyList[currentKey].due = Date.now() + 15 * 60 * 1000;
-        localStorage.setItem('studyList', JSON.stringify(studyList));
+        saveStudyList([currentKey]);
         setupStudyMode();
     });
     document.getElementById('right-button').addEventListener('click', function () {
         var nextJump = studyList[currentKey].nextJump || 0.5;
         studyList[currentKey].nextJump = nextJump * 2;
+        studyList[currentKey].rightCount++;
         studyList[currentKey].due = Date.now() + (nextJump * 24 * 60 * 60 * 1000);
-        localStorage.setItem('studyList', JSON.stringify(studyList));
+        saveStudyList([currentKey]);
         setupStudyMode();
     });
     document.getElementById('show-explore').addEventListener('click', function () {
@@ -489,7 +499,7 @@
     });
     document.getElementById('delete-card-button').addEventListener('click', function () {
         delete studyList[currentKey];
-        localStorage.setItem('studyList', JSON.stringify(studyList));
+        saveStudyList([currentKey]);
         setupStudyMode();
     });
 

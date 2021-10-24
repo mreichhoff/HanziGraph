@@ -20,7 +20,7 @@ document.getElementById('signin').addEventListener('submit', function (event) {
         })
         .catch((error) => {
             const errorMessage = error.message;
-            console.log(errorMessage);
+            alert(errorMessage);
         });
 });
 

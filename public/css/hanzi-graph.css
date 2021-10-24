@@ -65,7 +65,7 @@ h2 span {
     align-items: center;
 }
 #examples ul li {
-    font-size: 14px;
+    font-size: 16px;
     margin-bottom: 12px;
 }
 #examples ul {
@@ -141,7 +141,7 @@ h2 .text-button {
 #examples ul.definition li {
     margin-top: 4px;
     margin-bottom: 4px;
-    font-size: 12px;
+    font-size: 16px;
 }
 
 .tabs ul {
@@ -231,6 +231,7 @@ h2 .text-button {
 }
 #card-answer {
     font-size: 24px;
+    width: 95%;
 }
 #delete-card-button {
     margin-right: auto;
@@ -277,7 +278,7 @@ main.auth-form {
     font-size: 12px;
     float: right;
 }
-@media (max-width:650px)  {
+@media (max-width:864px)  {
     #container {
         display: block;
     }
