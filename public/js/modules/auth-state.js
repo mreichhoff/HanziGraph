@@ -31,7 +31,7 @@ onAuthStateChanged(auth, (user) => {
 signoutButton.addEventListener('click', function () {
     const auth = getAuth();
     signOut(auth).then(() => {
-        //TODO move to rtdb.js?
+        //TODO move to study-list.js?
         window.studyList = {};
         localStorage.removeItem('studyList');
         document.location.reload();
