@@ -4,6 +4,19 @@ import { makeSentenceNavigable, addTextToSpeech } from "./base.js";
 
 window.studyList = window.studyList || JSON.parse(localStorage.getItem('studyList') || '{}');
 
+let addDeletedKey = function (key) {
+    //if there's no user, the key will have been pulled out of localStorage; no further action
+    //if there is a user, write this key to the set of deleted keys, and let the corresponding
+    //update handler clear the key on any other devices
+    if (window.user) {
+        const db = getDatabase();
+        const flashcardRef = ref(db, 'users/' + user.uid + '/deleted/zh-CN');
+        let updates = {};
+        updates[sanitizeKey(key)] = true;
+        update(flashcardRef, updates);
+    }
+};
+
 let inStudyList = function (text) {
     return studyList[text];
 };
@@ -82,6 +95,7 @@ document.getElementById('right-button').addEventListener('click', function () {
 });
 document.getElementById('delete-card-button').addEventListener('click', function () {
     delete studyList[currentKey];
+    addDeletedKey(currentKey);
     saveStudyList([currentKey]);
     setupStudyMode();
 });
@@ -117,7 +131,7 @@ let saveStudyList = function (keys, localStudyList) {
         const flashcardRef = ref(db, 'users/' + user.uid + '/decks/zh-CN');
         let updates = {};
         for (let i = 0; i < keys.length; i++) {
-            //delete if not present
+            //setting to null will delete if not present
             updates[sanitizeKey(keys[i])] = localStudyList[keys[i]] || null;
         }
         update(flashcardRef, updates).then(() => {
@@ -166,6 +180,15 @@ onAuthStateChanged(auth, (user) => {
             if (data) {
                 mergeStudyLists(window.studyList, data);
                 setupStudyMode();
+            }
+        });
+        const deletedFlashcardRef = ref(db, 'users/' + user.uid + '/deleted/zh-CN');
+        onValue(deletedFlashcardRef, (snapshot) => {
+            const data = snapshot.val();
+            for (const key in data) {
+                if (window.studyList[key]) {
+                    delete window.studyList[key];
+                }
             }
         });
     }
