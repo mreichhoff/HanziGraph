@@ -1,10 +1,15 @@
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signInWithRedirect, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 
 let auth = getAuth();
+const googleProvider = new GoogleAuthProvider();
 onAuthStateChanged(auth, (user) => {
     if (user) {
         document.location.href = "/";
     }
+});
+
+document.getElementById('signin-with-google').addEventListener('click', function () {
+    signInWithRedirect(auth, googleProvider);
 });
 
 document.getElementById('signin').addEventListener('submit', function (event) {

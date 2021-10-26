@@ -265,14 +265,19 @@ main.auth-form {
 .auth-form input[type=submit] {
     width: 130px;
     height: 28px;
+    cursor: pointer;
 }
 .auth-form input[type=button] {
     width: 130px;
     height: 28px;
     margin-left: 8px;
+    cursor: pointer;
 }
 .auth-form label {
     font-size: 22px;
+}
+.auth-form img {
+    cursor: pointer;
 }
 .welcome-message {
     font-size: 12px;
