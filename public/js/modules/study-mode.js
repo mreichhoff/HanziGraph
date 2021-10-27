@@ -1,8 +1,41 @@
-import { getDatabase, update, ref, onValue } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
+import { getDatabase, update, ref, onValue, increment } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 import { makeSentenceNavigable, addTextToSpeech } from "./base.js";
 
 window.studyList = window.studyList || JSON.parse(localStorage.getItem('studyList') || '{}');
+
+let studyResult = {
+    CORRECT: 'correct',
+    INCORRECT: 'incorrect'
+};
+let getISODate = function (date) {
+    function pad(number) {
+        if (number < 10) {
+            return '0' + number;
+        }
+        return number;
+    }
+
+    return (
+        date.getFullYear() +
+        '-' +
+        pad(date.getMonth() + 1) +
+        '-' +
+        pad(date.getDate()));
+};
+let recordEvent = function (date, result) {
+    if (window.user) {
+        const db = getDatabase();
+        const resultRef = ref(db, 'users/' + user.uid + '/results/zh-CN/');
+        let updates = {};
+        //using client side date since offline mode is possible (which means a batch could come in well after it happened),
+        //plus I prefer the user's perception of the time to win out, and their machine being incorrect should be rare
+        updates['hourly/' + (date.getHours() + '/' + result)] = increment(1);
+        updates['daily/' + (getISODate(date) + '/' + result)] = increment(1);
+
+        update(resultRef, updates);
+    }
+};
 
 let addDeletedKey = function (key) {
     //if there's no user, the key will have been pulled out of localStorage; no further action
@@ -79,19 +112,23 @@ document.getElementById('show-answer-button').addEventListener('click', function
     document.getElementById('card-answer-container').scrollIntoView();
 });
 document.getElementById('wrong-button').addEventListener('click', function () {
+    let now = new Date();
     studyList[currentKey].nextJump = 0.5;
     studyList[currentKey].wrongCount++;
-    studyList[currentKey].due = Date.now() + 15 * 60 * 1000;
+    studyList[currentKey].due = now.valueOf();
     saveStudyList([currentKey]);
     setupStudyMode();
+    recordEvent(now, studyResult.INCORRECT);
 });
 document.getElementById('right-button').addEventListener('click', function () {
+    let now = new Date();
     let nextJump = studyList[currentKey].nextJump || 0.5;
     studyList[currentKey].nextJump = nextJump * 2;
     studyList[currentKey].rightCount++;
-    studyList[currentKey].due = Date.now() + (nextJump * 24 * 60 * 60 * 1000);
+    studyList[currentKey].due = now.valueOf() + (nextJump * 24 * 60 * 60 * 1000);
     saveStudyList([currentKey]);
     setupStudyMode();
+    recordEvent(now, studyResult.CORRECT);
 });
 document.getElementById('delete-card-button').addEventListener('click', function () {
     delete studyList[currentKey];
