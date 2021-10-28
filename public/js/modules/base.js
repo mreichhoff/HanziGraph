@@ -1,4 +1,5 @@
 import { addCards, setupStudyMode, inStudyList } from "./study-mode.js";
+import { getDatabase, update, ref } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -63,7 +64,18 @@ let runTextToSpeech = function (text) {
         speechSynthesis.speak(utterance);
     }
 };
-
+//nodes will be marked visited when the user searches for or taps a node in the graph
+//for now, avoiding marking nodes visited via clicking a hanzi in an example or card
+//because in those cases no examples are shown
+let markVisited = function (node) {
+    if (window.user) {
+        const db = getDatabase();
+        const nodeRef = ref(db, 'users/' + user.uid + '/visited/zh-CN/');
+        let updates = {};
+        updates[node] = true;
+        update(nodeRef, updates);
+    }
+};
 let addTextToSpeech = function (holder, text) {
     let textToSpeechButton = document.createElement('span');
     textToSpeechButton.className = 'text-button listen';
@@ -253,6 +265,7 @@ let setupCytoscape = function (root, elements) {
         setupExamples([id]);
         persistState();
         document.getElementById('show-explore').click();
+        markVisited(id);
     });
     cy.on('tap', 'edge', function (evt) {
         let words = evt.target.data('words');
@@ -372,6 +385,7 @@ document.getElementById('hanzi-choose').addEventListener('submit', function (eve
         updateGraph(value, maxLevel);
         setupExamples([document.getElementById('hanzi-box').value]);
         persistState();
+        markVisited(value);
     }
 });
 

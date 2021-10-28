@@ -283,6 +283,7 @@ main.auth-form {
 .welcome-message {
     font-size: 12px;
     float: right;
+    margin-right: 2px;
 }
 @media (max-width:864px)  {
     #container {
