@@ -39,7 +39,7 @@ h1 {
 h2 {
     margin-bottom: 0;
     cursor: pointer;
-    font-size: 26px;
+    font-size: 28px;
 }
 h2 span {
     font-weight: normal;
@@ -309,5 +309,14 @@ main.auth-form {
     #result-buttons li {
         padding: 10px;
         font-size: 22px;
+    }
+    h2 {
+        font-size: 30px;
+    }
+    #card-question-container a {
+        font-size: 30px;
+    }
+    p.zh-example {
+        font-size: 30px;
     }
 }
