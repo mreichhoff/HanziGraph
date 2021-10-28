@@ -77,7 +77,7 @@ p.example-line {
     margin-bottom: 4px;
 }
 p.zh-example {
-    font-size: 24px;
+    font-size: 28px;
     cursor: pointer;
 }
 .pinyin-example {
@@ -209,7 +209,7 @@ h2 .text-button {
     padding: 8px;
     text-align: center;
     cursor: pointer;
-    margin-bottom: 12px;
+    margin-bottom: 20px;
     border-radius: 10px;
     margin-right: auto;
     margin-left: auto;
@@ -225,7 +225,7 @@ h2 .text-button {
     background-color: green;
 }
 #card-question-container a {
-    font-size: 24px;
+    font-size: 28px;
     vertical-align: text-top;
     cursor: pointer;
 }
@@ -238,6 +238,7 @@ h2 .text-button {
     margin-left: auto;
     text-align: center;
     width: 50%;
+    margin-top: 30px;
 }
 #show-answer-button:hover {
     background-color: cornflowerblue;
@@ -304,5 +305,9 @@ main.auth-form {
     }
     .study-call-to-action {
         font-size: 18px;
+    }
+    #result-buttons li {
+        padding: 10px;
+        font-size: 22px;
     }
 }
