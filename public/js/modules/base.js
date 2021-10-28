@@ -329,7 +329,7 @@ let initialize = function () {
     let oldState = JSON.parse(sessionStorage.getItem('state'));
     if (!oldState) {
         //add a default graph on page load to illustrate the concept
-        let defaultHanzi = ["围", "显", "故", "商", "店"];
+        let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
         updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], document.getElementById('level-selector').value);
     } else {
         document.getElementById('level-selector').value = oldState.level;
