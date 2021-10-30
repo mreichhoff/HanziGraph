@@ -1,5 +1,5 @@
 import { addCards, setupStudyMode, inStudyList } from "./study-mode.js";
-import { getDatabase, update, ref } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
+import { getDatabase, update, ref, increment } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -72,7 +72,7 @@ let markVisited = function (node) {
         const db = getDatabase();
         const nodeRef = ref(db, 'users/' + user.uid + '/visited/zh-CN/');
         let updates = {};
-        updates[node] = true;
+        updates[node] = increment(1);
         update(nodeRef, updates);
     }
 };

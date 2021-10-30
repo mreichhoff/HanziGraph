@@ -66,7 +66,8 @@ let addCards = function (currentExamples, text) {
                 due: newCards[i].due,
                 zh: newCards[i].zh,
                 wrongCount: 0,
-                rightCount: 0
+                rightCount: 0,
+                added: Date.now()
             };
         }
     }
@@ -83,7 +84,8 @@ let setupStudyMode = function () {
     let counter = 0;
     for (const [key, value] of Object.entries(studyList)) {
         if (value.due <= Date.now()) {
-            if (!currentCard || currentCard.due > value.due) {
+            if (!currentCard || currentCard.due > value.due ||
+                (currentCard.due == value.due && value.zh.length < currentCard.zh.length)) {
                 currentCard = value;
                 currentKey = key;
             }
