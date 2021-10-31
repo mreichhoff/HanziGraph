@@ -280,6 +280,9 @@ main.auth-form {
 .auth-form img {
     cursor: pointer;
 }
+.auth-form h1 {
+    font-size: 30px;
+}
 .welcome-message {
     font-size: 12px;
     float: right;
