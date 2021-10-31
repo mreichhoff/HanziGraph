@@ -247,12 +247,12 @@ h2 .text-button {
     margin-top: 0;
 }
 main.auth-form {
-    width: 300px;
+    width: 275px;
     margin-left:auto;
     margin-right:auto;
 }
 .auth-form li {
-    height: 60px;
+    margin-bottom:30px;
     margin-top: 12px;
 }
 .auth-form input[type=email] {
@@ -282,6 +282,15 @@ main.auth-form {
 }
 .auth-form h1 {
     font-size: 30px;
+}
+.auth-form #forgot-password {
+    font-size: 18px;
+    text-decoration: underline;
+    text-align: center;
+    cursor: pointer;
+}
+.auth-form #alternate-signins {
+    font-size: 18px;
 }
 .welcome-message {
     font-size: 12px;

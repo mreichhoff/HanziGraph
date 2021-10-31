@@ -1,4 +1,4 @@
-# Hanzi Graph FAQ
+# HanziGraph FAQ
 This site is a prototype, but it's decently usable in its current state. Feel free to see the (currently at a hackathon level of quality) [code](https://github.com/mreichhoff/HanziGraph) or contact [the author on github](https://github.com/mreichhoff).
 
 The idea is to emphasize the connections among hanzi to help learners remember them. I've found this more fun and effective than other methods, like studying stroke order, writing each character out 100 times, or doing spaced repetition on cards mapping hanzi to pinyin and English.

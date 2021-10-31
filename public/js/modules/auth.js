@@ -1,4 +1,4 @@
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signInWithRedirect, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signInWithRedirect, GoogleAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 
 let auth = getAuth();
 const googleProvider = new GoogleAuthProvider();
@@ -46,4 +46,18 @@ document.getElementById('register').addEventListener('click', function () {
             const errorMessage = error.message;
             alert(errorMessage);
         });
+});
+
+document.getElementById('forgot-password').addEventListener('click', function () {
+    const auth = getAuth();
+    const email = document.getElementById('email').value;
+    if (!email) {
+        alert('Please enter your email address above. A recovery email will be sent to that address.');
+        return false;
+    }
+    sendPasswordResetEmail(auth, email)
+        .then(() => {
+            alert('A recovery email has been sent.');
+        });
+
 });
