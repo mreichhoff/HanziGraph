@@ -13,6 +13,12 @@ let tabs = {
     explore: 'explore',
     study: 'study'
 };
+let singleCharacterWords = new Set();
+fetch('./data/single-char-words.json')
+    .then(response => response.json())
+    .then(function (data) {
+        singleCharacterWords = new Set(data);
+    });
 let activeTab = tabs.explore;
 
 let getZhTts = function () {
@@ -197,6 +203,17 @@ let setupExamples = function (words) {
         //setup current examples for potential future export
         currentExamples[words[i]].push(...examples);
 
+        if (words[i].length === 1 && !singleCharacterWords.has(words[i])) {
+            let exampleWarning = document.createElement('p');
+            exampleWarning.className = 'example-warning';
+            //I know I shouldn't do this, but I'll refactor any day now
+            exampleWarning.textContent = 'This character does not appear alone in the HSK word list. It appears only as part of other words. Examples seen by clicking the connecting lines may be of higher quality. ';
+            let warningFaqLink = document.createElement('a');
+            warningFaqLink.href = './faq.html';
+            warningFaqLink.textContent = "See the FAQ.";
+            exampleWarning.appendChild(warningFaqLink);
+            item.appendChild(exampleWarning);
+        }
         let exampleList = document.createElement('ul');
         item.appendChild(exampleList);
         setupExampleElements(examples, exampleList);

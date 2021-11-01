@@ -297,6 +297,12 @@ main.auth-form {
     float: right;
     margin-right: 2px;
 }
+.example-warning {
+    max-width: 95%;
+}
+.example-warning a {
+    color: #eee;
+}
 @media (max-width:864px)  {
     #container {
         display: block;
