@@ -52,12 +52,21 @@ let levelColor = function (element) {
 };
 
 let layout = function (root) {
-    return {
-        name: 'breadthfirst',
-        roots: [root],
-        padding: 6,
-        spacingFactor: 0.85
-    };
+    // this hack here due to breadthfirst not being the easist to use on mobile
+    // 864 lines up with the breakpoint in css
+    if (document.getElementById('graph').offsetWidth < 864) {
+        return {
+            name: 'cose',
+            animate: false
+        };
+    } else {
+        return {
+            name: 'breadthfirst',
+            roots: [root],
+            padding: 6,
+            spacingFactor: 0.85
+        };
+    }
 };
 
 let runTextToSpeech = function (text) {
