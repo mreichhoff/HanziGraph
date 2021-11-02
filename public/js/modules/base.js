@@ -73,12 +73,14 @@ let runTextToSpeech = function (text) {
 //nodes will be marked visited when the user searches for or taps a node in the graph
 //for now, avoiding marking nodes visited via clicking a hanzi in an example or card
 //because in those cases no examples are shown
-let markVisited = function (node) {
+let markVisited = function (nodes) {
     if (window.user) {
         const db = getDatabase();
         const nodeRef = ref(db, 'users/' + user.uid + '/visited/zh-CN/');
         let updates = {};
-        updates[node] = increment(1);
+        for (let i = 0; i < nodes.length; i++) {
+            updates[nodes[i]] = increment(1);
+        }
         update(nodeRef, updates);
     }
 };
@@ -282,7 +284,7 @@ let setupCytoscape = function (root, elements) {
         setupExamples([id]);
         persistState();
         document.getElementById('show-explore').click();
-        markVisited(id);
+        markVisited([id]);
     });
     cy.on('tap', 'edge', function (evt) {
         let words = evt.target.data('words');
@@ -291,6 +293,7 @@ let setupCytoscape = function (root, elements) {
         persistState();
         //TODO toggle functions
         document.getElementById('show-explore').click();
+        markVisited([evt.target.source().id(), evt.target.target().id()]);
     });
 };
 
@@ -402,7 +405,7 @@ document.getElementById('hanzi-choose').addEventListener('submit', function (eve
         updateGraph(value, maxLevel);
         setupExamples([document.getElementById('hanzi-box').value]);
         persistState();
-        markVisited(value);
+        markVisited([value]);
     }
 });
 
