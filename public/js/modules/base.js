@@ -289,7 +289,11 @@ let setupCytoscape = function (root, elements) {
         let id = evt.target.id();
         let maxLevel = document.getElementById('level-selector').value;
         updateUndoChain();
-        addToExistingGraph(id, maxLevel);
+        //not needed if currentHanzi contains id, which would mean the nodes have already been added
+        //includes O(N) but currentHanzi almost always < 10 elements
+        if (currentHanzi && !currentHanzi.includes(id)) {
+            addToExistingGraph(id, maxLevel);
+        }
         setupExamples([id]);
         persistState();
         document.getElementById('show-explore').click();
@@ -389,11 +393,17 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
             a.textContent = character;
             a.addEventListener('click', function () {
                 if (hanzi[character]) {
-                    updateUndoChain();
-                    //TODO undochain here if you click multiple then undo repeatedly
-                    updateGraph(character, document.getElementById('level-selector').value);
-                    //enable seamless switching
-                    if (!noExampleChange) {
+                    let updated = false;
+                    if (currentHanzi && !currentHanzi.includes(character)) {
+                        updateUndoChain();
+                        updated = true;
+                        updateGraph(character, document.getElementById('level-selector').value);
+                    }
+                    //enable seamless switching, but don't update if we're already showing examples for character
+                    if (!noExampleChange && (currentWord.length !== 1 || currentWord[0] !== character)) {
+                        if (!updated) {
+                            updateUndoChain();
+                        }
                         setupExamples([character]);
                     }
                     persistState();
