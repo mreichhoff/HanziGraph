@@ -303,6 +303,9 @@ main.auth-form {
 .example-warning a {
     color: #eee;
 }
+#controls select, input {
+    font-size: 16px;
+}
 @media (max-width:864px)  {
     #container {
         display: block;
