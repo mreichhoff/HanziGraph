@@ -21,127 +21,18 @@
     </header>
     <main>
         <section>
-            <h2>Study Stats</h2>
-            <p>Your study list includes:</p>
-            <ul>
-                <li>
-                    <span id="hsk1-totals"></span> characters that appear on HSK1.
-                </li>
-                <li>
-                    <span id="hsk2-totals"></span> characters that appear on HSK2.
-                </li>
-                <li>
-                    <span id="hsk3-totals"></span> characters that appear on HSK3.
-                </li>
-                <li>
-                    <span id="hsk4-totals"></span> characters that appear on HSK4.
-                </li>
-                <li>
-                    <span id="hsk5-totals"></span> characters that appear on HSK5.
-                </li>
-                <li>
-                    <span id="hsk6-totals"></span> characters that appear on HSK6.
-                </li>
-            </ul>
-            <p>Study stats by hour:</p>
-            <ul>
-                <li>
-                    <span id="0results">no studying</span> between midnight and 1am (00:00-01:00).
-                </li>
-                <li>
-                    <span id="1results">no studying</span> between 1am and 2am (01:00-02:00).
-                </li>
-                <li>
-                    <span id="2results">no studying</span> between 2am and 3am (02:00-03:00).
-                </li>
-                <li>
-                    <span id="3results">no studying</span> between 3am and 4am (03:00-04:00).
-                </li>
-                <li>
-                    <span id="4results">no studying</span> between 4am and 5am (04:00-05:00).
-                </li>
-                <li>
-                    <span id="5results">no studying</span> between 5am and 6am (05:00-06:00).
-                </li>
-                <li>
-                    <span id="6results">no studying</span> between 6am and 7am (06:00-07:00).
-                </li>
-                <li>
-                    <span id="7results">no studying</span> between 7am and 8am (07:00-08:00).
-                </li>
-                <li>
-                    <span id="8results">no studying</span> between 8am and 9am (08:00-09:00).
-                </li>
-                <li>
-                    <span id="9results">no studying</span> between 9am and 10am (09:00-10:00).
-                </li>
-                <li>
-                    <span id="10results">no studying</span> between 10am and 11am (10:00-11:00).
-                </li>
-                <li>
-                    <span id="11results">no studying</span> between 11am and noon (11:00-12:00).
-                </li>
-                <li>
-                    <span id="12results">no studying</span> between noon and 1pm (12:00-13:00).
-                </li>
-                <li>
-                    <span id="13results">no studying</span> between 1pm and 2pm (13:00-14:00).
-                </li>
-                <li>
-                    <span id="14results">no studying</span> between 2pm and 3m (14:00-15:00).
-                </li>
-                <li>
-                    <span id="15results">no studying</span> between 3pm and 4pm (15:00-16:00).
-                </li>
-                <li>
-                    <span id="16results">no studying</span> between 4pm and 5pm (16:00-17:00).
-                </li>
-                <li>
-                    <span id="17results">no studying</span> between 5pm and 6pm (17:00-18:00).
-                </li>
-                <li>
-                    <span id="18results">no studying</span> between 6pm and 7pm (18:00-19:00).
-                </li>
-                <li>
-                    <span id="19results">no studying</span> between 7pm and 8pm (19:00-20:00).
-                </li>
-                <li>
-                    <span id="20results">no studying</span> between 8pm and 9pm (20:00-21:00).
-                </li>
-                <li>
-                    <span id="21results">no studying</span> between 9pm and 10pm (21:00-22:00).
-                </li>
-                <li>
-                    <span id="22results">no studying</span> between 10pm and 11pm (22:00-23:00).
-                </li>
-                <li>
-                    <span id="23results">no studying</span> between 11pm and midnight (23:00-00:00).
-                </li>
-            </ul>
+            <h2>Hanzi Seen</h2>
+            <p>You've viewed examples at some point for:</p>
+            <div id="visited-graph"></div>
+            <p>You've studied examples at some point for:</p>
+            <div id="studied-graph"></div>
         </section>
         <section>
-            <h2>Hanzi Visited</h2>
-            <p>You've viewed examples at some point for:</p>
-            <ul>
-                <li>
-                    <span id="hsk1-visited"></span> characters that appear on HSK1.
-                </li>
-                <li>
-                    <span id="hsk2-visited"></span> characters that appear on HSK2.
-                </li>
-                <li>
-                    <span id="hsk3-visited"></span> characters that appear on HSK3.
-                </li>
-                <li>
-                    <span id="hsk4-visited"></span> characters that appear on HSK4.
-                </li>
-                <li>
-                    <span id="hsk5-visited"></span> characters that appear on HSK5.
-                </li>
-                <li>
-                    <span id="hsk6-visited"></span> characters that appear on HSK6.
-                </li>
-            </ul>
+            <h2>Study Stats</h2>
+            <p>Study stats by day:</p>
+            <div id="calendar"></div>
+            <p>Study stats by hour:</p>
+            <div id="hourly-chart"></div>
         </section>
     </main>
     <script type="module" src="./js/modules/stats.js"></script>
