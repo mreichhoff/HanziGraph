@@ -120,6 +120,7 @@ document.getElementById('wrong-button').addEventListener('click', function () {
     studyList[currentKey].due = now.valueOf();
     saveStudyList([currentKey]);
     setupStudyMode();
+    document.getElementById('study-call-to-action').scrollIntoView();
     recordEvent(now, studyResult.INCORRECT);
 });
 document.getElementById('right-button').addEventListener('click', function () {
@@ -130,6 +131,7 @@ document.getElementById('right-button').addEventListener('click', function () {
     studyList[currentKey].due = now.valueOf() + (nextJump * 24 * 60 * 60 * 1000);
     saveStudyList([currentKey]);
     setupStudyMode();
+    document.getElementById('study-call-to-action').scrollIntoView();
     recordEvent(now, studyResult.CORRECT);
 });
 document.getElementById('delete-card-button').addEventListener('click', function () {
