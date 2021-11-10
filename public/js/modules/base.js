@@ -69,13 +69,30 @@ let layout = function (root) {
     }
 };
 
-let runTextToSpeech = function (text) {
+let runTextToSpeech = function (text, anchors) {
     zhTts = zhTts || getZhTts();
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
     if (zhTts) {
         let utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = "zh-CN";
         utterance.voice = zhTts;
+        utterance.addEventListener('boundary', function (event) {
+            if (event.charIndex == null || event.charLength == null) {
+                return false;
+            }
+            anchors.forEach((character, index) => {
+                if (index >= event.charIndex && index < (event.charIndex + (event.charLength || 1))) {
+                    character.style.fontWeight = 'bold';
+                } else {
+                    character.style.fontWeight = 'normal';
+                }
+            });
+        });
+        utterance.addEventListener('end', function () {
+            anchors.forEach(character => {
+                character.style.fontWeight = 'normal';
+            });
+        });
         speechSynthesis.speak(utterance);
     }
 };
@@ -93,11 +110,11 @@ let markVisited = function (nodes) {
         update(nodeRef, updates);
     }
 };
-let addTextToSpeech = function (holder, text) {
+let addTextToSpeech = function (holder, text, aList) {
     let textToSpeechButton = document.createElement('span');
     textToSpeechButton.className = 'text-button listen';
     textToSpeechButton.textContent = 'Listen';
-    textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text), false);
+    textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
     holder.appendChild(textToSpeechButton);
 };
 let addSaveToListButton = function (holder, text) {
@@ -168,9 +185,9 @@ let setupExampleElements = function (examples, exampleList) {
         let exampleHolder = document.createElement('li');
         let zhHolder = document.createElement('p');
         let exampleText = examples[i].zh.join('');
-        makeSentenceNavigable(exampleText, zhHolder, true);
+        let aList = makeSentenceNavigable(exampleText, zhHolder, true);
         zhHolder.className = 'zh-example example-line';
-        addTextToSpeech(zhHolder, exampleText);
+        addTextToSpeech(zhHolder, exampleText, aList);
         exampleHolder.appendChild(zhHolder);
         if (examples[i].pinyin) {
             let pinyinHolder = document.createElement('p');
@@ -200,7 +217,7 @@ let setupExamples = function (words) {
         let item = document.createElement('li');
         let wordHolder = document.createElement('h2');
         wordHolder.textContent = words[i];
-        addTextToSpeech(wordHolder, words[i]);
+        addTextToSpeech(wordHolder, words[i], []);
         addSaveToListButton(wordHolder, words[i]);
         item.appendChild(wordHolder);
 
@@ -387,6 +404,8 @@ let initialize = function () {
 let makeSentenceNavigable = function (text, container, noExampleChange) {
     let sentenceContainer = document.createElement('span');
     sentenceContainer.className = "sentence-container";
+
+    let anchorList = [];
     for (let i = 0; i < text.length; i++) {
         (function (character) {
             let a = document.createElement('a');
@@ -409,10 +428,12 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
                     persistState();
                 }
             });
+            anchorList.push(a);
             sentenceContainer.appendChild(a);
         }(text[i]));
     }
     container.appendChild(sentenceContainer);
+    return anchorList;
 };
 
 document.getElementById('hanzi-choose').addEventListener('submit', function (event) {

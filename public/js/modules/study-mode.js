@@ -105,8 +105,8 @@ let setupStudyMode = function () {
         document.getElementById('show-answer-button').style.display = 'block';
     }
     let question = currentCard.zh.join('');
-    makeSentenceNavigable(question, document.getElementById('card-question-container'));
-    addTextToSpeech(document.getElementById('card-question-container'), question);
+    let aList = makeSentenceNavigable(question, document.getElementById('card-question-container'));
+    addTextToSpeech(document.getElementById('card-question-container'), question, aList);
     document.getElementById('card-answer').textContent = currentCard.en;
 };
 document.getElementById('show-answer-button').addEventListener('click', function () {
