@@ -18,11 +18,41 @@ let getUTCISODate = function (date) {
         '-' +
         pad(date.getUTCDate()));
 };
+let getLocalISODate = function (date) {
+    function pad(number) {
+        if (number < 10) {
+            return '0' + number;
+        }
+        return number;
+    }
+
+    return (
+        date.getFullYear() +
+        '-' +
+        pad(date.getMonth() + 1) +
+        '-' +
+        pad(date.getDate()));
+}
+let fillGapDays = function (daysWithData, originalData, defaultEntry) {
+    let firstDayStudied = daysWithData[0].date;
+    let lastDayStudied = daysWithData[daysWithData.length - 1].date;
+    let diff = ((lastDayStudied.valueOf() - firstDayStudied.valueOf()) / 1000 / 60 / 60 / 24) - 1;
+    for (let i = 1; i <= diff; i++) {
+        if (!(getUTCISODate(new Date(firstDayStudied.valueOf() + (i * 24 * 60 * 60 * 1000))) in originalData)) {
+            daysWithData.push({
+                date: new Date(firstDayStudied.valueOf() + (i * 24 * 60 * 60 * 1000)),
+                ...defaultEntry
+            });
+        }
+    }
+};
 //super rough for now, will be converted to graphs or other visualization
 let auth = getAuth();
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        if (document.getElementById('hourly-chart').childElementCount != 0 || document.getElementById('calendar').childElementCount) {
+        if (document.getElementById('hourly-chart').childElementCount != 0 ||
+            document.getElementById('study-calendar').childElementCount != 0 ||
+            document.getElementById('added-calendar').childElementCount != 0) {
             return;
         }
         //visited section
@@ -60,16 +90,53 @@ onAuthStateChanged(auth, (user) => {
             });
             document.getElementById('studied-graph').appendChild(
                 BarChart(levelData, {
-                    x: (_, i) => i + 1,
+                    x: (_, i) => 'HSK' + (i + 1),
                     y: d => (d.count / d.total),
                     yFormat: "%",
                     yLabel: "↑ Percentage Seen",
                     color: "blue"
                 })
             );
+
+
+            let addedByDay = {};
+            let sortedCards = Object.values(studyList).sort((x, y) => {
+                return (x.added || 0) - (y.added || 0);
+            });
+            for (const card of sortedCards) {
+                //hacky, but truncate to day granularity this way
+                if (card.added) {
+                    let day = getLocalISODate(new Date(card.added));
+                    if (!(day in addedByDay)) {
+                        addedByDay[day] = 0;
+                    }
+                    addedByDay[day]++;
+                }
+            }
+            let dailyAdds = [];
+            for (const [date, total] of Object.entries(addedByDay)) {
+                dailyAdds.push({
+                    date: new Date(date),
+                    total: total
+                });
+            }
+
+            fillGapDays(dailyAdds, addedByDay, { total: 0 });
+
+            document.getElementById('added-calendar').appendChild(
+                Calendar(dailyAdds, {
+                    x: d => d.date,
+                    y: d => d.total,
+                    title: d => `${getUTCISODate(d.date)}: ${d.total} added`,
+                    weekday: 'sunday'
+                })
+            );
         });
         get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
             const visitedCharacters = snapshot.val();
+            if (!visitedCharacters) {
+                return;
+            }
             Object.keys(visitedCharacters).forEach(x => {
                 if (hanzi[x]) {
                     const level = hanzi[x].node.level;
@@ -86,7 +153,7 @@ onAuthStateChanged(auth, (user) => {
             });
             document.getElementById('visited-graph').appendChild(
                 BarChart(levelData, {
-                    x: (_, i) => i + 1,
+                    x: (_, i) => 'HSK' + (i + 1),
                     y: d => (d.count / d.total),
                     yFormat: "%",
                     yLabel: "↑ Percentage Seen",
@@ -127,22 +194,14 @@ onAuthStateChanged(auth, (user) => {
                     incorrect: incorrect
                 });
             }
-            let firstDayStudied = dailyData[0].date;
-            let lastDayStudied = dailyData[dailyData.length - 1].date;
-            let diff = ((lastDayStudied.valueOf() - firstDayStudied.valueOf()) / 1000 / 60 / 60 / 24) - 1;
-            for (let i = 1; i <= diff; i++) {
-                if (!(getUTCISODate(new Date(firstDayStudied.valueOf() + (i * 24 * 60 * 60 * 1000))) in results.daily)) {
-                    dailyData.push({
-                        date: new Date(firstDayStudied.valueOf() + (i * 24 * 60 * 60 * 1000)),
-                        total: 0,
-                        result: 0,
-                        correct: 0,
-                        incorrect: 0
-                    });
-                }
-            }
+            fillGapDays(dailyData, results.daily, {
+                total: 0,
+                result: 0,
+                correct: 0,
+                incorrect: 0
+            });
             dailyData.sort((x, y) => x.date - y.date);
-            document.getElementById('calendar').appendChild(
+            document.getElementById('study-calendar').appendChild(
                 Calendar(dailyData, {
                     x: d => d.date,
                     y: d => d.total,
