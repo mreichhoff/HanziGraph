@@ -477,6 +477,12 @@ document.getElementById('show-explore').addEventListener('click', function () {
     //TODO could likely do all of this with CSS
     document.getElementById('show-explore').classList.add('active');
     document.getElementById('show-study').classList.remove('active');
+    // this hack here due to wanting examples in better view on mobile
+    // but feeling it looks goofy to do this on desktop.
+    // 864 lines up with the breakpoint in css
+    if (document.getElementById('graph').offsetWidth < 864) {
+        document.getElementById('examples').scrollIntoView();
+    }
     activeTab = tabs.explore;
     persistState();
 });
@@ -487,6 +493,7 @@ document.getElementById('show-study').addEventListener('click', function () {
     document.getElementById('show-study').classList.add('active');
     document.getElementById('show-explore').classList.remove('active');
     setupStudyMode();
+    document.getElementById('study-call-to-action').scrollIntoView();
     activeTab = tabs.study;
     persistState();
 });
