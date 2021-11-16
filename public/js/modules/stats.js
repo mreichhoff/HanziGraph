@@ -128,7 +128,14 @@ onAuthStateChanged(auth, (user) => {
                     x: d => d.date,
                     y: d => d.total,
                     title: d => `${getUTCISODate(d.date)}: ${d.total} added`,
-                    weekday: 'sunday'
+                    weekday: 'sunday',
+                    clickHandler: function (_, i) {
+                        let detail = document.getElementById('added-calendar-detail');
+                        detail.innerHTML = '';
+
+                        let data = dailyAdds[i];
+                        detail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total || 0} cards.`;
+                    }
                 })
             );
         });
@@ -206,7 +213,14 @@ onAuthStateChanged(auth, (user) => {
                     x: d => d.date,
                     y: d => d.total,
                     title: d => `${getUTCISODate(d.date)}: ${d.correct} correct and ${d.incorrect} incorrect`,
-                    weekday: 'sunday'
+                    weekday: 'sunday',
+                    clickHandler: function (_, i) {
+                        let detail = document.getElementById('study-calendar-detail');
+                        detail.innerHTML = '';
+
+                        let data = dailyData[i];
+                        detail.innerText = `On ${getUTCISODate(data.date)}, you studied ${data.total || 0} cards. You got ${data.correct} right and ${data.incorrect} wrong.`;
+                    }
                 })
             );
             document.getElementById('hourly-chart').appendChild(

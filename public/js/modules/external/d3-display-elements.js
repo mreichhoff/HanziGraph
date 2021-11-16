@@ -12,7 +12,8 @@ function Calendar(data, {
     formatDay = i => "SMTWTFS"[i], // given a day number in [0, 6], the day-of-week label
     formatMonth = "%b", // format specifier string for months (above the chart)
     yFormat, // format specifier string for values (in the title)
-    colors = d3.interpolatePiYG
+    colors = d3.interpolatePiYG,
+    clickHandler = () => { }
 } = {}) {
     // Compute values.
     const X = d3.map(data, x);
@@ -94,7 +95,8 @@ function Calendar(data, {
         .attr("height", cellSize - 1)
         .attr("x", i => timeWeek.count(d3.utcYear(X[i]), X[i]) * cellSize + 0.5)
         .attr("y", i => countDay(X[i].getUTCDay()) * cellSize + 0.5)
-        .attr("fill", i => color(Y[i]));
+        .attr("fill", i => color(Y[i]))
+        .on('click', clickHandler);
 
     if (title) cell.append("title")
         .text(title);
