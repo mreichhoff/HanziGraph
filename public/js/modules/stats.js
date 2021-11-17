@@ -46,6 +46,14 @@ let fillGapDays = function (daysWithData, originalData, defaultEntry) {
         }
     }
 };
+let barChartClickHandler = function (id, hskTotalsByLevel, prop, index, message) {
+    let detail = document.getElementById(id);
+    detail.innerHTML = '';
+    //TODO: why no built-in difference method?
+    let missingHanzi = new Set([...hskTotalsByLevel[index + 1].characters].filter(x => !hskTotalsByLevel[index + 1][prop].has(x)));
+    missingHanzi.forEach(x => message += x);
+    detail.innerHTML = message;
+};
 //super rough for now, will be converted to graphs or other visualization
 let auth = getAuth();
 onAuthStateChanged(auth, (user) => {
@@ -61,9 +69,10 @@ onAuthStateChanged(auth, (user) => {
         Object.keys(hanzi).forEach(x => {
             let level = hanzi[x].node.level;
             if (!(level in hskTotalsByLevel)) {
-                hskTotalsByLevel[level] = { seen: 0, total: 0, visited: 0 };
+                hskTotalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), characters: new Set() };
             }
             hskTotalsByLevel[level].total++;
+            hskTotalsByLevel[level].characters.add(x);
         });
         const dbRef = ref(getDatabase());
         get(child(dbRef, `users/${user.uid}/decks/zh-CN`)).then((snapshot) => {
@@ -77,14 +86,14 @@ onAuthStateChanged(auth, (user) => {
             studyListCharacters.forEach(x => {
                 if (hanzi[x]) {
                     let level = hanzi[x].node.level;
-                    hskTotalsByLevel[level].seen++;
+                    hskTotalsByLevel[level].seen.add(x);
                 }
             });
             let levelData = [];
             //safe since we don't add keys in the read of /decks/
             Object.keys(hskTotalsByLevel).sort().forEach(x => {
                 levelData.push({
-                    count: hskTotalsByLevel[x].seen || 0,
+                    count: hskTotalsByLevel[x].seen.size || 0,
                     total: hskTotalsByLevel[x].total
                 });
             });
@@ -94,7 +103,16 @@ onAuthStateChanged(auth, (user) => {
                     y: d => (d.count / d.total),
                     yFormat: "%",
                     yLabel: "↑ Percentage Seen",
-                    color: "blue"
+                    color: "blue",
+                    clickHandler: function (_, i) {
+                        barChartClickHandler(
+                            'studied-graph-detail',
+                            hskTotalsByLevel,
+                            'seen',
+                            i,
+                            `In HSK${i + 1}, your study list doesn't yet contain:<br>`
+                        );
+                    }
                 })
             );
 
@@ -147,14 +165,14 @@ onAuthStateChanged(auth, (user) => {
             Object.keys(visitedCharacters).forEach(x => {
                 if (hanzi[x]) {
                     const level = hanzi[x].node.level;
-                    hskTotalsByLevel[level].visited++;
+                    hskTotalsByLevel[level].visited.add(x);
                 }
             });
             let levelData = [];
             //safe since we don't add keys in the read of /decks/
             Object.keys(hskTotalsByLevel).sort().forEach(x => {
                 levelData.push({
-                    count: hskTotalsByLevel[x].visited || 0,
+                    count: hskTotalsByLevel[x].visited.size || 0,
                     total: hskTotalsByLevel[x].total
                 });
             });
@@ -164,7 +182,16 @@ onAuthStateChanged(auth, (user) => {
                     y: d => (d.count / d.total),
                     yFormat: "%",
                     yLabel: "↑ Percentage Seen",
-                    color: "blue"
+                    color: "blue",
+                    clickHandler: function (_, i) {
+                        barChartClickHandler(
+                            'visited-graph-detail',
+                            hskTotalsByLevel,
+                            'visited',
+                            i,
+                            `In HSK${i + 1}, you haven't yet visited:<br>`
+                        );
+                    }
                 })
             );
         });

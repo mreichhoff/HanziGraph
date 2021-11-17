@@ -239,7 +239,8 @@ function BarChart(data, {
     xPadding = 0.1, // amount of x-range to reserve to separate bars
     yFormat, // a format specifier string for the y-axis
     yLabel, // a label for the y-axis
-    color = "currentColor" // bar fill color
+    color = "currentColor", // bar fill color
+    clickHandler = () => { }
 } = {}) {
     // Compute values.
     const X = d3.map(data, x);
@@ -297,7 +298,8 @@ function BarChart(data, {
         .attr("x", i => xScale(X[i]))
         .attr("y", i => yScale(Y[i]))
         .attr("height", i => yScale(0) - yScale(Y[i]))
-        .attr("width", xScale.bandwidth());
+        .attr("width", xScale.bandwidth())
+        .on('click', clickHandler);
 
     if (title) bar.append("title")
         .text(title);
