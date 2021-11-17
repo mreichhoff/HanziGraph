@@ -32,7 +32,7 @@ let getLocalISODate = function (date) {
         pad(date.getMonth() + 1) +
         '-' +
         pad(date.getDate()));
-}
+};
 let fillGapDays = function (daysWithData, originalData, defaultEntry) {
     let firstDayStudied = daysWithData[0].date;
     let lastDayStudied = daysWithData[daysWithData.length - 1].date;
@@ -121,25 +121,43 @@ onAuthStateChanged(auth, (user) => {
             let sortedCards = Object.values(studyList).sort((x, y) => {
                 return (x.added || 0) - (y.added || 0);
             });
+            let seenCharacters = new Set();
             for (const card of sortedCards) {
                 //hacky, but truncate to day granularity this way
                 if (card.added) {
                     let day = getLocalISODate(new Date(card.added));
                     if (!(day in addedByDay)) {
-                        addedByDay[day] = 0;
+                        addedByDay[day] = {
+                            chars: new Set(),
+                            total: 0
+                        };
                     }
-                    addedByDay[day]++;
+                    addedByDay[day].total++;
+                    [...card.zh.join('')].forEach(character => {
+                        if (hanzi[character] && !seenCharacters.has(character)) {
+                            addedByDay[day].chars.add(character);
+                            seenCharacters.add(character);
+                        }
+                    });
+                } else {
+                    //cards are sorted with unknown add date at front, so safe to add all at the start
+                    [...card.zh.join('')].forEach(character => {
+                        if (hanzi[character]) {
+                            seenCharacters.add(character);
+                        }
+                    });
                 }
             }
             let dailyAdds = [];
-            for (const [date, total] of Object.entries(addedByDay)) {
+            for (const [date, result] of Object.entries(addedByDay)) {
                 dailyAdds.push({
                     date: new Date(date),
-                    total: total
+                    chars: result.chars,
+                    total: result.total
                 });
             }
 
-            fillGapDays(dailyAdds, addedByDay, { total: 0 });
+            fillGapDays(dailyAdds, addedByDay, { chars: new Set(), total: 0 });
 
             document.getElementById('added-calendar').appendChild(
                 Calendar(dailyAdds, {
@@ -152,7 +170,15 @@ onAuthStateChanged(auth, (user) => {
                         detail.innerHTML = '';
 
                         let data = dailyAdds[i];
-                        detail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total || 0} cards.`;
+                        let characters = '';
+                        data.chars.forEach(x => characters += x);
+                        if (data.total && data.chars.size) {
+                            detail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with these new characters: ${characters}`;
+                        } else if (data.total) {
+                            detail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with no new characters.`;
+                        } else {
+                            detail.innerText = `On ${getUTCISODate(data.date)}, you added no new cards.`;
+                        }
                     }
                 })
             );
