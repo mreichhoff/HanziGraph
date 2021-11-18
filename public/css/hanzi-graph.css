@@ -342,3 +342,13 @@ main.auth-form {
         font-size: 30px;
     }
 }
+main.stats {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+main.stats section h2 {
+    font-size: 20px;
+}
+main.stats section p {
+    font-size: 18px;
+}

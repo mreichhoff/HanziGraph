@@ -6,14 +6,16 @@ function Calendar(data, {
     x = ([x]) => x, // given d in data, returns the (temporal) x-value
     y = ([, y]) => y, // given d in data, returns the (quantitative) y-value
     title, // given d in data, returns the title text
-    width = 928, // width of the chart, in pixels
+    width = 1000, // width of the chart, in pixels
     cellSize = 17, // width and height of an individual day, in pixels
     weekday = "monday", // either: weekday, sunday, or monday
     formatDay = i => "SMTWTFS"[i], // given a day number in [0, 6], the day-of-week label
     formatMonth = "%b", // format specifier string for months (above the chart)
     yFormat, // format specifier string for values (in the title)
     colors = d3.interpolatePiYG,
-    clickHandler = () => { }
+    clickHandler = () => { },
+    fill = 'white',
+    includeMonthBoundaries = false
 } = {}) {
     // Compute values.
     const X = d3.map(data, x);
@@ -61,7 +63,8 @@ function Calendar(data, {
         .attr("viewBox", [0, 0, width, height * years.length])
         .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
         .attr("font-family", "sans-serif")
-        .attr("font-size", 10);
+        .attr("font-size", 14)
+        .attr('fill', fill);
 
     const year = svg.selectAll("g")
         .data(years)
@@ -106,11 +109,18 @@ function Calendar(data, {
         .data(([, I]) => d3.utcMonths(d3.utcMonth(X[I[0]]), X[I[I.length - 1]]))
         .join("g");
 
-    month.filter((d, i) => i).append("path")
-        .attr("fill", "none")
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 3)
-        .attr("d", pathMonth);
+    if (includeMonthBoundaries) {
+        month.filter((d, i) => i).append("path")
+            .attr("fill", "none")
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 3)
+            .attr("d", pathMonth);
+    } else {
+        month.filter((d, i) => i).append("path")
+            .attr("fill", "none")
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 3);
+    }
 
     month.append("text")
         .attr("x", d => timeWeek.count(d3.utcYear(d), timeWeek.ceil(d)) * cellSize + 2)
@@ -240,7 +250,8 @@ function BarChart(data, {
     yFormat, // a format specifier string for the y-axis
     yLabel, // a label for the y-axis
     color = "currentColor", // bar fill color
-    clickHandler = () => { }
+    clickHandler = () => { },
+    fontSize = 14
 } = {}) {
     // Compute values.
     const X = d3.map(data, x);
@@ -279,6 +290,7 @@ function BarChart(data, {
     svg.append("g")
         .attr("transform", `translate(${marginLeft},0)`)
         .call(yAxis)
+        .attr("font-size", fontSize)
         .call(g => g.select(".domain").remove())
         .call(g => g.selectAll(".tick line").clone()
             .attr("x2", width - marginLeft - marginRight)
@@ -306,7 +318,8 @@ function BarChart(data, {
 
     svg.append("g")
         .attr("transform", `translate(0,${height - marginBottom})`)
-        .call(xAxis);
+        .call(xAxis)
+        .attr('font-size', fontSize);
 
     return svg.node();
 }

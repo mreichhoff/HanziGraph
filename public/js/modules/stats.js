@@ -36,14 +36,20 @@ let getLocalISODate = function (date) {
 let fillGapDays = function (daysWithData, originalData, defaultEntry) {
     let firstDayStudied = daysWithData[0].date;
     let lastDayStudied = daysWithData[daysWithData.length - 1].date;
-    let diff = ((lastDayStudied.valueOf() - firstDayStudied.valueOf()) / 1000 / 60 / 60 / 24) - 1;
-    for (let i = 1; i <= diff; i++) {
-        if (!(getUTCISODate(new Date(firstDayStudied.valueOf() + (i * 24 * 60 * 60 * 1000))) in originalData)) {
+    let firstYearStudied = firstDayStudied.getUTCFullYear();
+    let lastYearStudied = lastDayStudied.getUTCFullYear();
+    let start = new Date(`${firstYearStudied}-01-01`);
+    let end = new Date(`${lastYearStudied}-12-31`);
+    let curr = start.valueOf();
+    while (curr <= end.valueOf()) {
+        let next = new Date(curr);
+        if (!(getUTCISODate(next) in originalData)) {
             daysWithData.push({
-                date: new Date(firstDayStudied.valueOf() + (i * 24 * 60 * 60 * 1000)),
+                date: next,
                 ...defaultEntry
             });
         }
+        curr += (24 * 60 * 60 * 1000);
     }
 };
 let barChartClickHandler = function (id, hskTotalsByLevel, prop, index, message) {
@@ -102,7 +108,7 @@ onAuthStateChanged(auth, (user) => {
                     x: (_, i) => 'HSK' + (i + 1),
                     y: d => (d.count / d.total),
                     yFormat: "%",
-                    yLabel: "↑ Percentage Seen",
+                    yLabel: "↑ Percentage Marked For Study",
                     color: "blue",
                     clickHandler: function (_, i) {
                         barChartClickHandler(
@@ -207,7 +213,7 @@ onAuthStateChanged(auth, (user) => {
                     x: (_, i) => 'HSK' + (i + 1),
                     y: d => (d.count / d.total),
                     yFormat: "%",
-                    yLabel: "↑ Percentage Seen",
+                    yLabel: "↑ Percentage Visited",
                     color: "blue",
                     clickHandler: function (_, i) {
                         barChartClickHandler(
