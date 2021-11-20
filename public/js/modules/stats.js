@@ -2,6 +2,9 @@ import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 import { Calendar, BarChart } from "./external/d3-display-elements.js";
 
+const hanzi = await fetch('/data/hanzi.json')
+    .then(response => response.json());
+
 //TODO: combine with the one in study-mode.js
 let getUTCISODate = function (date) {
     function pad(number) {
@@ -188,10 +191,11 @@ onAuthStateChanged(auth, (user) => {
                     }
                 })
             );
-            //TODO WTF
+            //(more than) slightly WTF
+            let today = new Date(getLocalISODate(new Date())).valueOf()
             let last10Days = dailyAdds.filter(x =>
-                x.date.valueOf() <= (Date.now() - 24 * 60 * 60 * 1000) &&
-                x.date.valueOf() >= (Date.now() - 11 * 24 * 60 * 60 * 1000)).sort((x, y) => y.date.valueOf() - x.date.valueOf());
+                x.date.valueOf() <= today &&
+                x.date.valueOf() >= (today - 10 * 24 * 60 * 60 * 1000)).sort((x, y) => y.date.valueOf() - x.date.valueOf());
             document.getElementById('added-graph').appendChild(
                 BarChart(last10Days, {
                     x: (d, _) => getUTCISODate(d.date).substring(5, 10).replace('-', '/'),

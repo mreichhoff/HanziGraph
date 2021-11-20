@@ -1,6 +1,13 @@
 import { addCards, setupStudyMode, inStudyList } from "./study-mode.js";
 import { getDatabase, update, ref, increment } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 
+const hanzi = await fetch('/data/hanzi.json')
+    .then(response => response.json());
+const sentences = await fetch('/data/sentences.json')
+    .then(response => response.json());
+const definitions = await fetch('/data/definitions.json')
+    .then(response => response.json());
+
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
 let maxExamples = 5;

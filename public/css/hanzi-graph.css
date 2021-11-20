@@ -362,6 +362,9 @@ main.auth-form {
 header.stats-header {
     text-align: center;
 }
+header.stats-header a {
+    color: #eee;
+}
 main.stats {
     margin-left: auto;
     margin-right: auto;
