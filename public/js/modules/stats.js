@@ -332,5 +332,8 @@ onAuthStateChanged(auth, (user) => {
                 })
             );
         });
+    } else {
+        //TODO: make this page work even when signed out via fallback to localStorage or similar
+        document.location.href = './login.html';
     }
 });
