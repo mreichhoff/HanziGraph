@@ -307,6 +307,14 @@ main.auth-form {
     font-size: 16px;
 }
 @media (max-width:864px)  {
+    #control-pane {
+        width: 50%;
+    }
+    #graph {
+        width: 50%;
+    }
+}
+@media (max-width:650px)  {
     #container {
         display: block;
     }
@@ -340,6 +348,11 @@ main.auth-form {
     }
     p.zh-example {
         font-size: 30px;
+    }
+}
+@media (max-width:310px)  {
+    .text-button {
+        font-size: 12px;
     }
 }
 header.stats-header {
