@@ -15,6 +15,12 @@ onAuthStateChanged(auth, (user) => {
             let welcomeMessage = document.createElement('span');
             welcomeMessage.className = 'welcome-message';
             welcomeMessage.textContent = "你好" + user.email;
+            welcomeMessage.appendChild(document.createElement('br'));
+            let statsLink = document.createElement('a');
+            statsLink.href = 'stats.html';
+            statsLink.className = 'stats-link';
+            statsLink.textContent = 'Track my progress';
+            welcomeMessage.appendChild(statsLink);
             mainHeader.appendChild(welcomeMessage);
         }
     } else {

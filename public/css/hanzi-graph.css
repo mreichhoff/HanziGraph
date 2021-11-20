@@ -295,7 +295,7 @@ main.auth-form {
 .welcome-message {
     font-size: 12px;
     float: right;
-    margin-right: 2px;
+    margin-right: 4px;
 }
 .example-warning {
     max-width: 95%;
@@ -305,6 +305,10 @@ main.auth-form {
 }
 #controls select, input {
     font-size: 16px;
+}
+.stats-link {
+    color: #eee;
+    float: right;
 }
 @media (max-width:864px)  {
     #control-pane {
