@@ -1,6 +1,6 @@
 import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
-import { GroupedBarChart, Calendar, BarChart } from "./external/d3-display-elements.js";
+import { Calendar, BarChart } from "./external/d3-display-elements.js";
 
 //TODO: combine with the one in study-mode.js
 let getUTCISODate = function (date) {
@@ -52,7 +52,7 @@ let fillGapDays = function (daysWithData, originalData, defaultEntry) {
         curr += (24 * 60 * 60 * 1000);
     }
 };
-let barChartClickHandler = function (id, hskTotalsByLevel, prop, index, message) {
+let hskBarChartClickHandler = function (id, hskTotalsByLevel, prop, index, message) {
     let detail = document.getElementById(id);
     detail.innerHTML = '';
     //TODO: why no built-in difference method?
@@ -64,7 +64,7 @@ let barChartClickHandler = function (id, hskTotalsByLevel, prop, index, message)
 let auth = getAuth();
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        if (document.getElementById('hourly-chart').childElementCount != 0 ||
+        if (document.getElementById('hourly-graph').childElementCount != 0 ||
             document.getElementById('study-calendar').childElementCount != 0 ||
             document.getElementById('added-calendar').childElementCount != 0) {
             return;
@@ -111,7 +111,7 @@ onAuthStateChanged(auth, (user) => {
                     yLabel: "↑ Percentage Marked For Study",
                     color: "blue",
                     clickHandler: function (_, i) {
-                        barChartClickHandler(
+                        hskBarChartClickHandler(
                             'studied-graph-detail',
                             hskTotalsByLevel,
                             'seen',
@@ -188,6 +188,31 @@ onAuthStateChanged(auth, (user) => {
                     }
                 })
             );
+            //TODO WTF
+            let last10Days = dailyAdds.filter(x =>
+                x.date.valueOf() <= (Date.now() - 24 * 60 * 60 * 1000) &&
+                x.date.valueOf() >= (Date.now() - 11 * 24 * 60 * 60 * 1000)).sort((x, y) => y.date.valueOf() - x.date.valueOf());
+            document.getElementById('added-graph').appendChild(
+                BarChart(last10Days, {
+                    x: (d, _) => getUTCISODate(d.date).substring(5, 10).replace('-', '/'),
+                    y: d => d.chars.size,
+                    yLabel: "↑ Characters Added",
+                    color: "blue",
+                    clickHandler: function (_, i) {
+                        let detail = document.getElementById('added-graph-detail');
+                        let data = last10Days[i];
+                        let characters = '';
+                        data.chars.forEach(x => characters += x);
+                        if (data.total && data.chars.size) {
+                            detail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with these new characters: ${characters}`;
+                        } else if (data.total) {
+                            detail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with no new characters.`;
+                        } else {
+                            detail.innerText = `On ${getUTCISODate(data.date)}, you added no new cards.`;
+                        }
+                    }
+                })
+            );
         });
         get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
             const visitedCharacters = snapshot.val();
@@ -216,7 +241,7 @@ onAuthStateChanged(auth, (user) => {
                     yLabel: "↑ Percentage Visited",
                     color: "blue",
                     clickHandler: function (_, i) {
-                        barChartClickHandler(
+                        hskBarChartClickHandler(
                             'visited-graph-detail',
                             hskTotalsByLevel,
                             'visited',
@@ -236,13 +261,8 @@ onAuthStateChanged(auth, (user) => {
             for (let i = 0; i < 24; i++) {
                 hourlyData.push({
                     hour: i,
-                    count: (i.toString() in results.hourly) ? (results.hourly[i.toString()].correct || 0) : 0,
-                    category: 'correct'
-                });
-                hourlyData.push({
-                    hour: i,
-                    count: (i.toString() in results.hourly) ? (results.hourly[i.toString()].incorrect || 0) : 0,
-                    category: 'incorrect'
+                    correct: (i.toString() in results.hourly) ? (results.hourly[i.toString()].correct || 0) : 0,
+                    incorrect: (i.toString() in results.hourly) ? (results.hourly[i.toString()].incorrect || 0) : 0
                 });
             }
             let daysStudied = Object.keys(results.daily);
@@ -282,14 +302,33 @@ onAuthStateChanged(auth, (user) => {
                     }
                 })
             );
-            document.getElementById('hourly-chart').appendChild(
-                GroupedBarChart(hourlyData, {
-                    x: d => d.hour,
-                    y: d => d.count,
-                    z: d => d.category,
+            //why, you ask? I don't know
+            let getHour = function (hour) { return hour == 0 ? '12am' : (hour < 12 ? `${hour}am` : hour == 12 ? '12pm' : `${hour % 12}pm`) };
+            document.getElementById('hourly-graph').appendChild(
+                BarChart(hourlyData, {
+                    x: d => getHour(d.hour),
+                    y: d => d.correct + d.incorrect,
+                    width: 1000,
                     yLabel: "↑ Count",
-                    zDomain: ['correct', 'incorrect'],
-                    colors: ['green', 'red']
+                    color: i => {
+                        let percentage = (hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100;
+                        if (percentage <= 100 && percentage >= 75) {
+                            return 'green';
+                        }
+                        if (percentage < 75 && percentage >= 50) {
+                            return 'yellow';
+                        }
+                        if (percentage < 50 && percentage >= 25) {
+                            return 'orange';
+                        }
+                        if (percentage < 25) {
+                            return 'red';
+                        }
+                    },
+                    clickHandler: function (_, i) {
+                        let detail = document.getElementById('hourly-graph-detail');
+                        detail.innerText = `In the ${getHour(hourlyData[i].hour)} hour, you've gotten ${hourlyData[i].correct} correct and ${hourlyData[i].incorrect} incorrect, or ${Math.round((hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100)}% correct.`;
+                    }
                 })
             );
         });

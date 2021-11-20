@@ -342,9 +342,14 @@ main.auth-form {
         font-size: 30px;
     }
 }
+header.stats-header {
+    text-align: center;
+}
 main.stats {
-    margin-left: 10px;
-    margin-right: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    max-width:98%;
 }
 main.stats section h2 {
     font-size: 20px;
