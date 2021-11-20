@@ -2,9 +2,6 @@ import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 import { Calendar, BarChart } from "./external/d3-display-elements.js";
 
-const hanzi = await fetch('/data/hanzi.json')
-    .then(response => response.json());
-
 //TODO: combine with the one in study-mode.js
 let getUTCISODate = function (date) {
     function pad(number) {
