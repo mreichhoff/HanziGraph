@@ -1,14 +1,18 @@
 # HanziGraph FAQ
 This site is a prototype, but it's decently usable in its current state. Feel free to see the (currently at a hackathon level of quality) [code](https://github.com/mreichhoff/HanziGraph) or contact [the author on github](https://github.com/mreichhoff).
 
-The idea is to emphasize the connections among hanzi to help learners remember them. I've found this more fun and effective than other methods, like studying stroke order, writing each character out 100 times, or doing spaced repetition on cards mapping hanzi to pinyin and English.
+The idea is to emphasize the word-forming connections among hanzi to help learners remember them. I've found this more fun and effective than other methods, like studying stroke order, learning radicals or components, writing each character out 100 times, or doing spaced repetition on cards mapping hanzi to pinyin and English.
 
 ## General
+* Is there an app?
+  * The site is a progressive web app. This means it uses modern browser APIs to make an installable app. Follow [the directions for your platform](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Installing) to install it. A truly native app downloadable from the app stores may be a future work item.
 * Where did the examples come from?
   * The examples came from [Tatoeba](https://tatoeba.org), which releases data under [CC-BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr), and from [OpenSubtitles](http://www.opensubtitles.org/), pulled from [opus.nlpl.eu](https://opus.nlpl.eu/OpenSubtitles2018.php). 
-  * Definitions and pinyin transcriptions of individual words were pulled from [CEDICT](https://cc-cedict.org/editor/editor.php), which releases data under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+  * Definitions and pinyin transcriptions of individual words were pulled from [CEDICT](https://cc-cedict.org/editor/editor.php), which releases data under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Accordingly, some of the files in `data` should be considered released under that same license.
 
 ## Explore Mode
+* Why are the examples for certain characters a little strange?
+  * Some characters are not commonly used alone. The examples use a process called [tokenization](https://nlp.stanford.edu/IR-book/html/htmledition/tokenization-1.html) to split the sentences into individual words. For example, 他是非常好 might be split into words like: 他, 诗, 非常, 好. Future updates might show any sentences that contain the character, even if it's used as part of another word.
 * Why doesn't this look good on my smartphone?
   * Making it look better is in my TODO list.
 * What if two hanzi can be connected more than one way, like 故事 and 事故?
