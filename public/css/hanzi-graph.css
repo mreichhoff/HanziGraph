@@ -115,14 +115,14 @@ p.zh-example {
 
 .text-button {
     font-size: 16px;
-    background-color: blue;
+    background-color: white;
     margin-left: 4px;
     padding: 6px;
-    color: #eee;
-    border-radius: 2px;
+    color: black;
+    border-radius: 6px;
 }
 .text-button:hover {
-    color: white;
+    color: black;
     cursor: pointer;
     background-color: cornflowerblue;
 }
@@ -146,7 +146,7 @@ h2 .text-button {
 
 .tabs ul {
     padding-bottom: 10px;
-    border-bottom: 8px solid blue;
+    border-bottom: 8px solid white;
 }
 .tab {
     font-size: 20px;
@@ -156,7 +156,8 @@ h2 .text-button {
     margin-left: 4px;
     margin-right: 4px;
     padding: 12px;
-    background-color: blue;
+    background-color: white;
+    color: black;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
 }
@@ -166,12 +167,12 @@ h2 .text-button {
 }
 
 .tab.active:hover {
-    color: #eee;
-    background-color: blue;
+    color: black;
+    background-color: white;
 }
 
 .tab:hover {
-    color: white;
+    color: black;
     background-color: cornflowerblue;
 }
 .tabs #signin {
@@ -188,7 +189,9 @@ h2 .text-button {
 #study-call-to-action {
     cursor: default;
 }
-
+#study-call-to-action span a {
+    color:black;
+}
 #study-container a {
     color: #eee;
 }
@@ -196,7 +199,8 @@ h2 .text-button {
 .study-call-to-action {
     width: 95%;
     text-align: center;
-    background-color: blue;
+    background-color: white;
+    color: black;
     padding: 8px;
     cursor: pointer;
     font-size: 20px;
@@ -310,12 +314,18 @@ main.auth-form {
     color: #eee;
     float: right;
 }
-@media (max-width:864px)  {
+@media (max-width:1024px)  {
     #control-pane {
         width: 50%;
     }
     #graph {
         width: 50%;
+    }
+    h2 {
+        font-size: 30px;
+    }
+    .text-button {
+        font-size: 14px;
     }
 }
 @media (max-width:650px)  {
@@ -354,9 +364,15 @@ main.auth-form {
         font-size: 30px;
     }
 }
-@media (max-width:310px)  {
+@media (max-width:360px)  {
     .text-button {
         font-size: 12px;
+    }
+    .study-call-to-action {
+        font-size: 14px;
+    }
+    h2 {
+        font-size: 24px;
     }
 }
 header.stats-header {
