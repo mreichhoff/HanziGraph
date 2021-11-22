@@ -149,7 +149,7 @@ h2 .text-button {
     border-bottom: 8px solid white;
 }
 .tab {
-    font-size: 20px;
+    font-size: 18px;
     display: inline;
     text-align: center;
     cursor: pointer;
@@ -321,14 +321,11 @@ main.auth-form {
     #graph {
         width: 50%;
     }
-    h2 {
-        font-size: 30px;
-    }
-    .text-button {
-        font-size: 14px;
+    .tab {
+        font-size: 16px;
     }
 }
-@media (max-width:650px)  {
+@media (max-width:664px)  {
     #container {
         display: block;
     }
