@@ -131,7 +131,7 @@ let addSaveToListButton = function (holder, text) {
 
 let persistState = function () {
     let localUndoChain = undoChain.length > 5 ? undoChain.slice(0, 5) : undoChain;
-    sessionStorage.setItem('state', JSON.stringify({
+    localStorage.setItem('state', JSON.stringify({
         hanzi: currentHanzi,
         word: currentWord,
         level: document.getElementById('level-selector').value,
@@ -376,7 +376,7 @@ let updateGraph = function (value, maxLevel) {
 };
 
 let initialize = function () {
-    let oldState = JSON.parse(sessionStorage.getItem('state'));
+    let oldState = JSON.parse(localStorage.getItem('state'));
     if (!oldState) {
         //add a default graph on page load to illustrate the concept
         let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
