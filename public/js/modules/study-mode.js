@@ -55,7 +55,7 @@ let inStudyList = function (text) {
 };
 
 let addCards = function (currentExamples, text) {
-    let newCards = currentExamples[text].map(x => ({ ...x, due: Date.now() }));
+    let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
     let newKeys = [];
     for (let i = 0; i < newCards.length; i++) {
         let zhJoined = newCards[i].zh.join('');
