@@ -376,7 +376,7 @@ header.stats-header {
     text-align: center;
 }
 header.stats-header a {
-    color: #eee;
+    text-decoration: none;
 }
 main.stats {
     margin-left: auto;
