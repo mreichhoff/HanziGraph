@@ -476,8 +476,8 @@ document.getElementById('show-explore').addEventListener('click', function () {
     document.getElementById('show-study').classList.remove('active');
     // this hack here due to wanting examples in better view on mobile
     // but feeling it looks goofy to do this on desktop.
-    // 864 lines up with the breakpoint in css
-    if (document.getElementById('graph').offsetWidth < 864) {
+    // 1024 lines up with the breakpoint in css
+    if (visualViewport.width < 1024) {
         document.getElementById('examples').scrollIntoView();
     }
     activeTab = tabs.explore;

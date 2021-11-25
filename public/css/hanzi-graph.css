@@ -121,11 +121,6 @@ p.zh-example {
     color: black;
     border-radius: 6px;
 }
-.text-button:hover {
-    color: black;
-    cursor: pointer;
-    background-color: cornflowerblue;
-}
 .sentence-container {
     display: inline-block;
     max-width: 80%;
@@ -164,16 +159,6 @@ h2 .text-button {
 
 .tab.active {
     font-weight: bold;
-}
-
-.tab.active:hover {
-    color: black;
-    background-color: white;
-}
-
-.tab:hover {
-    color: black;
-    background-color: cornflowerblue;
 }
 .tabs #signin {
     float:right;
@@ -219,9 +204,6 @@ h2 .text-button {
     margin-left: auto;
     font-size: 20px;
 }
-#result-buttons li:hover {
-    color: white;
-}
 #wrong-button {
     background-color: red;
 }
@@ -243,9 +225,6 @@ h2 .text-button {
     text-align: center;
     width: 50%;
     margin-top: 30px;
-}
-#show-answer-button:hover {
-    background-color: cornflowerblue;
 }
 #explain-text {
     margin-top: 0;
@@ -313,6 +292,7 @@ main.auth-form {
 .stats-link {
     color: #eee;
     float: right;
+    cursor: pointer;
 }
 @media (max-width:1024px)  {
     #control-pane {
@@ -323,6 +303,27 @@ main.auth-form {
     }
     .tab {
         font-size: 16px;
+    }
+}
+@media (hover: hover) {
+    .text-button:hover {
+        color: black;
+        cursor: pointer;
+        background-color: cornflowerblue;
+    }
+    .tab.active:hover {
+        color: black;
+        background-color: white;
+    }
+    .tab:hover {
+        color: black;
+        background-color: cornflowerblue;
+    }
+    #result-buttons li:hover {
+        color: white;
+    }
+    #show-answer-button:hover {
+        background-color: cornflowerblue;
     }
 }
 @media (max-width:664px)  {
@@ -389,4 +390,7 @@ main.stats section h2 {
 }
 main.stats section p {
     font-size: 18px;
+}
+#hourly-graph {
+    margin-bottom: 20px;
 }
