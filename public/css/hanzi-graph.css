@@ -184,7 +184,7 @@ p.zh-example {
 }
 .control {
     margin: 0;
-    line-height: 22px;
+    line-height: 28px;
 }
 .control.center {
     margin-left:auto;
@@ -214,6 +214,8 @@ p.zh-example {
     padding: 6px;
     color: black;
     border-radius: 6px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 .sentence-container {
     display: inline-block;
@@ -237,6 +239,8 @@ h2 .text-button {
     font-size: 18px;
     text-align: center;
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .tab.active {
