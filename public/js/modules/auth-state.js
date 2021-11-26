@@ -3,7 +3,7 @@ import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/fi
 const auth = getAuth();
 const signinButton = document.getElementById('signin-button');
 const signoutButton = document.getElementById('signout-button');
-const mainHeader = document.getElementById('main-header');
+const signinMenuItem = document.getElementById('signin');
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -15,13 +15,7 @@ onAuthStateChanged(auth, (user) => {
             let welcomeMessage = document.createElement('span');
             welcomeMessage.className = 'welcome-message';
             welcomeMessage.textContent = "你好" + user.email;
-            welcomeMessage.appendChild(document.createElement('br'));
-            let statsLink = document.createElement('a');
-            statsLink.href = 'stats.html';
-            statsLink.className = 'stats-link';
-            statsLink.textContent = 'Track my progress';
-            welcomeMessage.appendChild(statsLink);
-            mainHeader.appendChild(welcomeMessage);
+            signinMenuItem.appendChild(welcomeMessage);
         }
     } else {
         window.user = null;

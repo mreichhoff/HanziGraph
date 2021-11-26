@@ -469,7 +469,7 @@ document.getElementById('previousHanziButton').addEventListener('click', functio
 });
 
 document.getElementById('show-explore').addEventListener('click', function () {
-    document.getElementById('example-container').style.display = 'block';
+    document.getElementById('example-container').removeAttribute('style');
     document.getElementById('study-container').style.display = 'none';
     //TODO could likely do all of this with CSS
     document.getElementById('show-explore').classList.add('active');
@@ -486,7 +486,7 @@ document.getElementById('show-explore').addEventListener('click', function () {
 
 document.getElementById('show-study').addEventListener('click', function () {
     document.getElementById('example-container').style.display = 'none';
-    document.getElementById('study-container').style.display = 'block';
+    document.getElementById('study-container').removeAttribute('style');
     document.getElementById('show-study').classList.add('active');
     document.getElementById('show-explore').classList.remove('active');
     setupStudyMode();

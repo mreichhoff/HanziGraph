@@ -24,46 +24,55 @@
     <div id="container">
         <!-- lol, like control plane -->
         <div id="control-pane">
-            <h1 id="main-header">HanziGraph</h1>
+            <header class="header">
+                <div class="menu-container">
+                    <label id="menu-button" for="menu-toggle">
+                        <i class="menu-expand"></i>
+                    </label>
+                </div>
+                <!--TODO get rid of this ID-->
+                <h1 id="main-header" class="main-header">HanziGraph</h1>
+                <div class="stats-container"><a href="stats.html"><i class="stats-button"></i></a></div>
+            </header>
+            <input id="menu-toggle" type="checkbox" style="display: none;" />
+            <div class="menu">
+                <div id="signin" class="menu-item">
+                    <a id="signin-button" class="authn-button" href="login.html">Sign in</a>
+                    <a id="signout-button" class="authn-button" style="display:none">Sign out</a>
+                </div>
+                <div class="menu-item">
+                    <label class="menu-item-text" for="level-selector">Choose max HSK level in the graph:</label>
+                    <select id="level-selector">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                        <option selected>6</option>
+                    </select>
+                </div>
+                <div class="menu-item">
+                    <label class="menu-item-text" for="show-pinyin">
+                        Toggle Pinyin In Examples
+                    </label>
+                </div>
+            </div>
             <div class="tabs">
-                <ul>
-                    <li id="show-explore" class="tab active">Explore</li>
-                    <li id="show-study" class="tab">Study</li>
-                    <li id="signin">
-                        <a id="signin-button" class="text-button" href="login.html">Sign in</a>
-                        <a id="signout-button" style="display:none" class="text-button">Sign out</a>
-                    </li>
-                </ul>
+                <div id="show-explore" class="tab active">Explore</div>
+                <div id="show-study" class="tab">Study</div>
             </div>
             <div id="example-container">
-                <ul id="controls">
-                    <li>
-                        <form id="hanzi-choose">
-                            <!-- i18n? what's that? -->
-                            <label for="hanzi-box">Choose a hanzi:</label>
-                            <input id="hanzi-box" type="text" maxlength="1" />
-                            <input type="submit" value="Go!" />
-                        </form>
-                    </li>
-                    <li>
-                        <label for="level-selector">Choose max HSK level:</label>
-                        <select id="level-selector">
-                            <option>1</option>
-                            <option>2</option>
-                            <option>3</option>
-                            <option>4</option>
-                            <option>5</option>
-                            <option selected>6</option>
-                        </select>
-                    </li>
-                    <li style="margin-left:-4px;margin-top:10px;">
-                        <!-- don't judge me-->
-                        <label class="text-button" for="show-pinyin">
-                            Toggle Pinyin
-                        </label>
+                <div id="controls">
+                    <form id="hanzi-choose" class="control">
+                        <!-- i18n? what's that? -->
+                        <label for="hanzi-box">Choose a hanzi:</label>
+                        <input id="hanzi-box" type="text" maxlength="1" />
+                        <input type="submit" value="Go!" />
+                    </form>
+                    <div class="control center">
                         <span class="text-button" id="previousHanziButton">Previous Hanzi</span>
-                    </li>
-                </ul>
+                    </div>
+                </div>
                 <input id="show-pinyin" type="checkbox" style="display:none" />
                 <ul id="examples">
                     <li class="walkthrough">
