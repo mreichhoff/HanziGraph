@@ -32,7 +32,7 @@
                 </div>
                 <!--TODO get rid of this ID-->
                 <h1 id="main-header" class="main-header">HanziGraph</h1>
-                <div class="stats-container"><a href="stats.html"><i class="stats-button"></i></a></div>
+                <div class="stats-container"><a id="stats-show"><i class="stats-button"></i></a></div>
             </header>
             <input id="menu-toggle" type="checkbox" style="display: none;" />
             <div class="menu">
@@ -149,9 +149,56 @@
         <div id="graph"></div>
     </div>
     <script type="module" src="./js/modules/auth-state.js"></script>
-    <script type="module" src="./js/modules/study-mode.js"></script>
-    <script type="module" src="./js/modules/base.js"></script>
-    <script type="module" src="./js/modules/main.js"></script>
+    <div id="stats-container" style="display:none">
+        <header class="header">
+            <div class="exit-container"><i id="exit-button" class="exit-arrow"></i></div>
+            <!--TODO get rid of this ID-->
+            <h1 class="main-header">HanziGraph</h1>
+            <div class="stats-container"></div>
+        </header>
+        <main class="stats">
+            <section>
+                <div id="visited-container" style="display:none">
+                    <h2>Hanzi Seen</h2>
+                    <p>You've viewed examples at some point for:</p>
+                    <div id="visited-graph"></div>
+                    <p id="visited-graph-detail">Click a bar in the chart for details.</p>
+                </div>
+                <p>You've studied examples at some point for:</p>
+                <div id="studied-graph"></div>
+                <p id="studied-graph-detail">Click a bar in the chart for details.</p>
+            </section>
+            <section>
+                <h2>Study Stats</h2>
+                <div id="study-calendar-container" style="display: none;">
+                    <p>Study stats by day:</p>
+                    <div id="study-calendar"></div>
+                    <p id='study-calendar-detail'>Click a box in the calendar for details. Darker colors mean more
+                        studying.
+                    </p>
+                </div>
+                <p>Characters added, last 10 days:</p>
+                <p id='added-graph-detail'>Click a bar in the chart for details.</p>
+                <div id="added-graph"></div>
+                <p>Cards added by day:</p>
+                <div id="added-calendar"></div>
+                <p id='added-calendar-detail'>Click a box in the calendar for details. Darker colors mean more cards
+                    added.
+                </p>
+                <div id="hourly-container" style="display: none;">
+                    <p>Study stats by hour:</p>
+                    <p id='hourly-graph-detail'>Click a bar in the chart for details. <br />Green: 75% correct or
+                        better.
+                        Yellow:
+                        between 50% and 75%. Orange: between 25% and 50%. Red: less than 25% correct.</p>
+                    <div id="hourly-graph"></div>
+                </div>
+            </section>
+        </main>
+        <script type="module" src="./js/modules/study-mode.js"></script>
+        <script type="module" src="./js/modules/base.js"></script>
+        <script type="module" src="./js/modules/main.js"></script>
+    </div>
 </body>
 
 </html>

@@ -34,6 +34,9 @@ signoutButton.addEventListener('click', function () {
         //TODO move to study-list.js?
         window.studyList = {};
         localStorage.removeItem('studyList');
+        localStorage.removeItem('visited');
+        localStorage.removeItem('studyResults');
+        localStorage.removeItem('state');
         document.location.reload();
     }).catch((error) => {
         console.log(error);

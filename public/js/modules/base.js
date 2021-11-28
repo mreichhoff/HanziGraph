@@ -1,5 +1,6 @@
 import { addCards, setupStudyMode, inStudyList } from "./study-mode.js";
-import { getDatabase, update, ref, increment } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
+import { createVisitedGraphs } from "./stats.js";
+import { getDatabase, update, ref, increment, get, child } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -20,6 +21,7 @@ fetch('./data/single-char-words.json')
         singleCharacterWords = new Set(data);
     });
 let activeTab = tabs.explore;
+let visited = JSON.parse(localStorage.getItem('visited') || '{}');
 
 let getZhTts = function () {
     //use the first-encountered zh-CN voice for now
@@ -97,6 +99,12 @@ let runTextToSpeech = function (text, anchors) {
 //for now, avoiding marking nodes visited via clicking a hanzi in an example or card
 //because in those cases no examples are shown
 let markVisited = function (nodes) {
+    for (let i = 0; i < nodes.length; i++) {
+        if (!visited[nodes[i]]) {
+            visited[nodes[i]] = 0;
+        }
+        visited[nodes[i]]++;
+    }
     if (window.user) {
         const db = getDatabase();
         const nodeRef = ref(db, 'users/' + user.uid + '/visited/zh-CN/');
@@ -105,6 +113,8 @@ let markVisited = function (nodes) {
             updates[nodes[i]] = increment(1);
         }
         update(nodeRef, updates);
+    } else {
+        localStorage.setItem('visited', JSON.stringify(visited));
     }
 };
 let addTextToSpeech = function (holder, text, aList) {
@@ -486,6 +496,29 @@ document.getElementById('show-study').addEventListener('click', function () {
     setupStudyMode();
     activeTab = tabs.study;
     persistState();
+});
+
+let visitedLastUpdated = null;
+document.getElementById('stats-show').addEventListener('click', function () {
+    document.getElementById('container').style.display = 'none';
+    document.getElementById('stats-container').removeAttribute('style');
+    if (window.user && (!visitedLastUpdated || (Date.now() - visitedLastUpdated) >= (60 * 60 * 1000))) {
+        //potentially could still get in here twice, but not super concerned about an extra read or two in rare cases
+        visitedLastUpdated = Date.now();
+        const dbRef = ref(getDatabase());
+        get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
+            visited = snapshot.val();
+            createVisitedGraphs(visited);
+        }).catch((error) => {
+            console.error(error);
+        });
+    } else {
+        createVisitedGraphs(visited);
+    }
+});
+document.getElementById('exit-button').addEventListener('click', function () {
+    document.getElementById('stats-container').style.display = 'none';
+    document.getElementById('container').removeAttribute('style');
 });
 
 export { initialize, makeSentenceNavigable, addTextToSpeech };

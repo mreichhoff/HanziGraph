@@ -1,8 +1,10 @@
-import { getDatabase, update, ref, onValue, increment } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
+import { getDatabase, update, ref, onValue, increment, get, child } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 import { makeSentenceNavigable, addTextToSpeech } from "./base.js";
+import { createStudyResultGraphs, createCardGraphs } from "./stats.js";
 
 window.studyList = window.studyList || JSON.parse(localStorage.getItem('studyList') || '{}');
+let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
 
 let studyResult = {
     CORRECT: 'correct',
@@ -24,16 +26,32 @@ let getISODate = function (date) {
         pad(date.getDate()));
 };
 let recordEvent = function (date, result) {
+    let hour = date.getHours();
+    let day = getISODate(date);
+    if (!studyResults.hourly[hour]) {
+        studyResults.hourly[hour] = {};
+        studyResults.hourly[hour][studyResult.CORRECT] = 0;
+        studyResults.hourly[hour][studyResult.INCORRECT] = 0;
+    }
+    studyResults.hourly[hour][result]++;
+    if (!studyResults.daily[day]) {
+        studyResults.daily[day] = {};
+        studyResults.daily[day][studyResult.CORRECT] = 0;
+        studyResults.daily[day][studyResult.INCORRECT] = 0;
+    }
+    studyResults.daily[day][result]++;
     if (window.user) {
         const db = getDatabase();
         const resultRef = ref(db, 'users/' + user.uid + '/results/zh-CN/');
         let updates = {};
         //using client side date since offline mode is possible (which means a batch could come in well after it happened),
         //plus I prefer the user's perception of the time to win out, and their machine being incorrect should be rare
-        updates['hourly/' + (date.getHours() + '/' + result)] = increment(1);
-        updates['daily/' + (getISODate(date) + '/' + result)] = increment(1);
+        updates['hourly/' + (hour + '/' + result)] = increment(1);
+        updates['daily/' + (day + '/' + result)] = increment(1);
 
         update(resultRef, updates);
+    } else {
+        localStorage.setItem('studyResults', JSON.stringify(studyResults));
     }
 };
 
@@ -195,6 +213,24 @@ let mergeStudyLists = function (baseStudyList, targetStudyList) {
     window.studyList = baseStudyList;
     document.getElementById('exportStudyListButton').style.display = (Object.keys(studyList).length > 0) ? 'inline' : 'none';
 };
+
+let studyResultsLastUpdated = null;
+document.getElementById('stats-show').addEventListener('click', function () {
+    createCardGraphs(studyList);
+    if (window.user && (!studyResultsLastUpdated || (Date.now() - studyResultsLastUpdated) >= (60 * 60 * 1000))) {
+        //potentially could still get in here twice, but not super concerned about an extra read or two in rare cases
+        studyResultsLastUpdated = Date.now();
+        const dbRef = ref(getDatabase());
+        get(child(dbRef, `users/${user.uid}/results/zh-CN`)).then((snapshot) => {
+            studyResults = snapshot.val();
+            createStudyResultGraphs(studyResults);
+        }).catch((error) => {
+            console.error(error);
+        });
+    } else {
+        createStudyResultGraphs(studyResults);
+    }
+});
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
