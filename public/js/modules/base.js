@@ -477,7 +477,14 @@ document.getElementById('previousHanziButton').addEventListener('click', functio
     }
     persistState();
 });
-
+document.getElementById('show-pinyin').addEventListener('change', function () {
+    let toggleLabel = document.getElementById('toggle-pinyin-label');
+    if (document.getElementById('show-pinyin').checked) {
+        toggleLabel.innerText = 'Turn off pinyin in examples';
+    } else {
+        toggleLabel.innerText = 'Turn on pinyin in examples';
+    }
+});
 document.getElementById('show-explore').addEventListener('click', function () {
     document.getElementById('example-container').removeAttribute('style');
     document.getElementById('study-container').style.display = 'none';
