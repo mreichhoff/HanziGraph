@@ -109,7 +109,8 @@
                 </ul>
             </div>
             <div id="study-container" style="display:none">
-                <p id="explain-text">Not sure how this works? See <a href="faq.html">the FAQ.</a></p>
+                <p id="explain-text">Not sure how this works? <a class="faq-link" id="show-study-faq">Learn
+                        more.</a></p>
                 <p>
                     Cards due: <span id="card-due-count"></span>
                     <span class="text-button" id="exportStudyListButton">Export study list</span>
@@ -117,8 +118,7 @@
                 <p id="study-call-to-action" class="study-call-to-action">
                     <span id="task-description">What does the sentence or word below mean?</span>
                     <span id="task-complete">Studying complete. Check back later for more reviews. <br />You can also
-                        add more cards by exploring the graph! <br />See <a href="faq.html">the FAQ</a> for more
-                        info.</span>
+                        add more cards by exploring the graph!</span>
                 </p>
                 <p id="card-question-container"></p>
                 <span id="show-answer-button" class="study-call-to-action">Show Answer</span>
@@ -152,7 +152,6 @@
     <div id="stats-container" style="display:none">
         <header class="header">
             <div class="exit-container"><i id="exit-button" class="exit-arrow"></i></div>
-            <!--TODO get rid of this ID-->
             <h1 class="main-header">HanziGraph</h1>
             <div class="stats-container"></div>
         </header>
@@ -195,10 +194,106 @@
                 </div>
             </section>
         </main>
-        <script type="module" src="./js/modules/study-mode.js"></script>
-        <script type="module" src="./js/modules/base.js"></script>
-        <script type="module" src="./js/modules/main.js"></script>
     </div>
+    <div id="faq-container" style="display:none">
+        <header class="header">
+            <div class="exit-container"><i id="faq-exit-button" class="exit-arrow"></i></div>
+            <h1 class="main-header">HanziGraph</h1>
+            <div class="stats-container"></div>
+        </header>
+        <main class="faq">
+            <section id="faq-study-mode" style="display:none">
+                <ul>
+                    <li>
+                        <h3>How does this work?</h3>
+                        <ul>
+                            <li>When you add words to your study list, they will be presented to you as flashcards.
+                                You&#39;ll
+                                be
+                                shown the sentence and asked what it means; click &quot;Show Answer&quot; to see how
+                                tatoeba
+                                translated it. When you click &quot;I didn&#39;t know that&quot;, the card will be added
+                                back to
+                                the
+                                end of your to-study list. When you click &quot;I knew that!&quot;, it will be shown one
+                                day
+                                later,
+                                then two days if you get it right again, then four, and so on. It is meant to be a very,
+                                very
+                                basic
+                                <a href="https://en.wikipedia.org/wiki/Spaced_repetition">spaced repetition system</a>.
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>What does the export button do?</h3>
+                        <ul>
+                            <li>The export button downloads a file that can be imported into a different (better) spaced
+                                repetition
+                                system, like Anki.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>What happens when I click a hanzi in study mode?</h3>
+                        <ul>
+                            <li>The graph will be updated to show the hanzi you clicked and its connections. The explore
+                                panel
+                                is
+                                also updated. </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>What happens when I click an edge in study mode?</h3>
+                        <ul>
+                            <li>If you click an edge, the examples are updated and you&#39;ll be brought back to the
+                                explore
+                                tab.
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>Where are the flashcards stored?</h3>
+                        <ul>
+                            <li>When you are not signed in: all data for the site is stored in <a
+                                    href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage">localStorage</a>.
+                                It
+                                does not leave your browser, and clearing your browser data will clear it.</li>
+                            <li>When you are signed in: the data is stored on our backend, and should be present and
+                                up-to-date
+                                on
+                                any device. If you add flashcards while signed out, then sign in or register later, the
+                                two
+                                lists
+                                will be merged, so you shouldn&#39;t lose anything.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section id="faq-single-char-warning" style="display:none">
+                <ul>
+                    <li>
+                        <h3>Why are the examples for certain characters a little strange?</h3>
+                        <ul>
+                            <li>Some characters are not commonly used alone. The examples use a process called <a
+                                    href="https://nlp.stanford.edu/IR-book/html/htmledition/tokenization-1.html">tokenization</a>
+                                to
+                                split the sentences into individual words. For example, 他是非常好 might be split into words
+                                like: 他,
+                                是,
+                                非常, 好, so searching for 非 by itself would not match. Future updates might show any
+                                sentences that contain the character, even if
+                                it&#39;s used
+                                as
+                                part of another word.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+        </main>
+    </div>
+    <script type="module" src="./js/modules/study-mode.js"></script>
+    <script type="module" src="./js/modules/base.js"></script>
+    <script type="module" src="./js/modules/main.js"></script>
 </body>
 
 </html>

@@ -244,8 +244,13 @@ let setupExamples = function (words) {
             //I know I shouldn't do this, but I'll refactor any day now
             exampleWarning.textContent = 'This character does not appear alone in the HSK word list. It appears only as part of other words. Examples seen by clicking the connecting lines may be of higher quality. ';
             let warningFaqLink = document.createElement('a');
-            warningFaqLink.href = './faq.html';
-            warningFaqLink.textContent = "See the FAQ.";
+            warningFaqLink.textContent = "Learn more.";
+            warningFaqLink.className = 'faq-link';
+            warningFaqLink.addEventListener('click', function () {
+                document.getElementById('container').style.display = 'none';
+                document.getElementById('faq-container').removeAttribute('style');
+                document.getElementById('faq-single-char-warning').removeAttribute('style');
+            });
             exampleWarning.appendChild(warningFaqLink);
             item.appendChild(exampleWarning);
         }
@@ -321,6 +326,7 @@ let setupCytoscape = function (root, elements) {
         setupExamples([id]);
         persistState();
         document.getElementById('show-explore').click();
+        document.getElementById('main-header').scrollIntoView();
         markVisited([id]);
     });
     cy.on('tap', 'edge', function (evt) {
@@ -330,6 +336,7 @@ let setupCytoscape = function (root, elements) {
         persistState();
         //TODO toggle functions
         document.getElementById('show-explore').click();
+        document.getElementById('main-header').scrollIntoView();
         markVisited([evt.target.source().id(), evt.target.target().id()]);
     });
 };
@@ -523,9 +530,20 @@ document.getElementById('stats-show').addEventListener('click', function () {
         createVisitedGraphs(visited);
     }
 });
+document.getElementById('show-study-faq').addEventListener('click', function () {
+    document.getElementById('container').style.display = 'none';
+    document.getElementById('faq-container').removeAttribute('style');
+    document.getElementById('faq-study-mode').removeAttribute('style');
+});
 document.getElementById('exit-button').addEventListener('click', function () {
     document.getElementById('stats-container').style.display = 'none';
     document.getElementById('container').removeAttribute('style');
+});
+document.getElementById('faq-exit-button').addEventListener('click', function () {
+    document.getElementById('faq-container').style.display = 'none';
+    document.getElementById('container').removeAttribute('style');
+    document.getElementById('faq-single-char-warning').style.display = 'none';
+    document.getElementById('faq-study-mode').style.display = 'none';
 });
 
 export { initialize, makeSentenceNavigable, addTextToSpeech };
