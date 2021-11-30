@@ -1,4 +1,10 @@
-import { interpolatePiYG, map, range, utcSunday, utcMonday, quantile, scaleSequential, utcFormat, groups, create, utcYear, utcMonths, utcMonth, InternSet, scaleBand, axisBottom, axisLeft, scaleLinear, max } from "https://cdn.skypack.dev/d3@7";
+import { interpolatePiYG } from 'https://cdn.skypack.dev/pin/d3-scale-chromatic@v3.0.0-wlyjJbUexgtDqhQ6ksVy/mode=imports,min/optimized/d3-scale-chromatic.js';
+import { utcYear, utcSunday, utcMonths, utcMonth, utcMonday } from "https://cdn.skypack.dev/pin/d3-time@v3.0.0-Ww07wkuPsE2c8Ac33BKQ/mode=imports,min/optimized/d3-time.js";
+import { utcFormat } from 'https://cdn.skypack.dev/pin/d3-time-format@v4.0.0-A7vYeSqgWxeXXSpz1rEp/mode=imports,min/optimized/d3-time-format.js';
+import { axisBottom, axisLeft } from 'https://cdn.skypack.dev/pin/d3-axis@v3.0.0-Tp73hnXudkL5zk3Jd1gx/mode=imports,min/optimized/d3-axis.js';
+import { scaleSequential, scaleBand, scaleLinear } from "https://cdn.skypack.dev/pin/d3-scale@v4.0.2-qUv67mnQQKwRMEsPRKcO/mode=imports,min/optimized/d3-scale.js";
+import { quantile, groups, map, range, max, InternSet } from 'https://cdn.skypack.dev/pin/d3-array@v3.1.1-Ibshj34oOmCw8da1RLSW/mode=imports,min/optimized/d3-array.js';
+import { create } from "https://cdn.skypack.dev/pin/d3-selection@v3.0.0-sAmQ3giCT8irML5wz1T1/mode=imports,min/optimized/d3-selection.js";
 // Copyright 2021 Observable, Inc.
 // Released under the ISC license.
 // https://observablehq.com/@d3/calendar-view

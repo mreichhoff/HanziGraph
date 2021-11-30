@@ -33,11 +33,25 @@ let recordEvent = function (date, result) {
         studyResults.hourly[hour][studyResult.CORRECT] = 0;
         studyResults.hourly[hour][studyResult.INCORRECT] = 0;
     }
+    //fix up potential response from backend that doesn't include one of correct or incorrect
+    //i.e., check above sets it, then we get a response when reading from backend that has the given hour but
+    //no correct or incorrect property, which can happen if you get X wrong/right in a row to start an hour
+    //we can be confident we'll still have hourly and daily as those are written in the same operation
+    //TODO check firebase docs
+    if (!studyResults.hourly[hour][result]) {
+        studyResults.hourly[hour][result] = 0;
+    }
     studyResults.hourly[hour][result]++;
     if (!studyResults.daily[day]) {
         studyResults.daily[day] = {};
         studyResults.daily[day][studyResult.CORRECT] = 0;
         studyResults.daily[day][studyResult.INCORRECT] = 0;
+    }
+    //fix up potential response from backend that doesn't include one of correct or incorrect
+    //i.e., check above sets it, then we get a response when reading from backend that has the given day but
+    //no correct or incorrect property, which can happen if you get X wrong/right in a row to start a day
+    if (!studyResults.daily[day][result]) {
+        studyResults.daily[day][result] = 0;
     }
     studyResults.daily[day][result]++;
     if (window.user) {
