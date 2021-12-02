@@ -1,6 +1,7 @@
 import { addCards, setupStudyMode, inStudyList } from "./study-mode.js";
 import { createVisitedGraphs } from "./stats.js";
 import { getDatabase, update, ref, increment, get, child } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -116,6 +117,10 @@ let markVisited = function (nodes) {
     } else {
         localStorage.setItem('visited', JSON.stringify(visited));
     }
+    recommendationsWorker.postMessage({
+        type: 'visited',
+        payload: visited
+    });
 };
 let addTextToSpeech = function (holder, text, aList) {
     let textToSpeechButton = document.createElement('span');
@@ -454,7 +459,7 @@ document.getElementById('hanzi-choose').addEventListener('submit', function (eve
     event.preventDefault();
     let value = document.getElementById('hanzi-box').value;
     let maxLevel = document.getElementById('level-selector').value;
-    if (value) {
+    if (value && hanzi[value]) {
         updateUndoChain();
         updateGraph(value, maxLevel);
         setupExamples([document.getElementById('hanzi-box').value]);
@@ -512,17 +517,123 @@ document.getElementById('show-study').addEventListener('click', function () {
     persistState();
 });
 
+
+//eww, even worse than normal from here down
 let visitedLastUpdated = null;
+let canUpdateVisited = function (user, lastUpdate) {
+    return (user && (!lastUpdate || (Date.now() - lastUpdate) >= (60 * 60 * 1000)));
+}
+let recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
+recommendationsWorker.postMessage({
+    type: 'graph',
+    payload: hanzi
+});
+recommendationsWorker.postMessage({
+    type: 'visited',
+    payload: visited
+});
+document.getElementById('recommendations-difficulty').addEventListener('change', function () {
+    let val = document.getElementById('recommendations-difficulty').value;
+    let minLevel = 1;
+    let maxLevel = 6;
+    if (val === 'easy') {
+        maxLevel = 3;
+    } else if (val === 'hard') {
+        minLevel = 4;
+    }
+    recommendationsWorker.postMessage({
+        type: 'levelPreferences',
+        payload: {
+            minLevel: minLevel,
+            maxLevel: maxLevel
+        }
+    })
+});
+recommendationsWorker.onmessage = function (e) {
+    let recommendationsContainer = document.getElementById('recommendations-container');
+    if (e.data.recommendations && e.data.recommendations.length) {
+        recommendationsContainer.innerHTML = '';
+        let recommendationMessage = document.createElement('span');
+        recommendationMessage.style.display = 'none';
+        recommendationMessage.innerText = "Recommended:";
+        recommendationMessage.className = "recommendation-message";
+        recommendationsContainer.appendChild(recommendationMessage);
+        recommendationsContainer.removeAttribute('style');
+        let usedRecommendation = false;
+        for (let i = 0; i < e.data.recommendations.length; i++) {
+            //don't bother recommending items already being shown in the graph
+            if (cy && cy.getElementById(e.data.recommendations[i]).length) {
+                continue;
+            }
+            recommendationMessage.removeAttribute('style');
+            let curr = document.createElement('a');
+            curr.innerText = e.data.recommendations[i];
+            curr.className = 'recommendation';
+            curr.addEventListener('click', function (event) {
+                //can I do this?
+                document.getElementById('hanzi-box').value = event.target.innerText;
+                document.querySelector('#hanzi-choose input[type=submit]').click();
+                event.target.style.display = 'none';
+                let otherRecs = document.querySelectorAll('.recommendation');
+                let stillShown = false;
+                for (let i = 0; i < otherRecs.length; i++) {
+                    if (!otherRecs[i].style.display || otherRecs[i].style.display !== 'none') {
+                        stillShown = true;
+                        break;
+                    }
+                }
+                if (!stillShown) {
+                    recommendationsContainer.style.display = 'none';
+                }
+            });
+            recommendationsContainer.appendChild(curr);
+            usedRecommendation = true;
+        }
+        let recommendationsFaqLink = document.createElement('a');
+        recommendationsFaqLink.className = 'faq-link';
+        recommendationsFaqLink.innerText = "Why?"
+        recommendationsFaqLink.addEventListener('click', function () {
+            document.getElementById('container').style.display = 'none';
+            document.getElementById('faq-container').removeAttribute('style');
+            document.getElementById('faq-recommendations').removeAttribute('style');
+        });
+        if (usedRecommendation) {
+            recommendationsContainer.appendChild(recommendationsFaqLink);
+        }
+    } else {
+        document.getElementById('recommendations-container').style.display = 'none';
+    }
+}
+const auth = getAuth();
+onAuthStateChanged(auth, (user) => {
+    if (canUpdateVisited(user, visitedLastUpdated)) {
+        visitedLastUpdated = Date.now();
+        const dbRef = ref(getDatabase());
+        get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
+            visited = snapshot.val();
+            recommendationsWorker.postMessage({
+                type: 'visited',
+                payload: visited
+            });
+        }).catch((error) => {
+            console.error(error);
+        });
+    }
+});
 document.getElementById('stats-show').addEventListener('click', function () {
     document.getElementById('container').style.display = 'none';
     document.getElementById('stats-container').removeAttribute('style');
-    if (window.user && (!visitedLastUpdated || (Date.now() - visitedLastUpdated) >= (60 * 60 * 1000))) {
+    if (canUpdateVisited(user, visitedLastUpdated)) {
         //potentially could still get in here twice, but not super concerned about an extra read or two in rare cases
         visitedLastUpdated = Date.now();
         const dbRef = ref(getDatabase());
         get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
             visited = snapshot.val();
             createVisitedGraphs(visited);
+            recommendationsWorker.postMessage({
+                type: 'visited',
+                payload: visited
+            });
         }).catch((error) => {
             console.error(error);
         });
@@ -530,6 +641,7 @@ document.getElementById('stats-show').addEventListener('click', function () {
         createVisitedGraphs(visited);
     }
 });
+
 document.getElementById('show-study-faq').addEventListener('click', function () {
     document.getElementById('container').style.display = 'none';
     document.getElementById('faq-container').removeAttribute('style');
@@ -544,6 +656,7 @@ document.getElementById('faq-exit-button').addEventListener('click', function ()
     document.getElementById('container').removeAttribute('style');
     document.getElementById('faq-single-char-warning').style.display = 'none';
     document.getElementById('faq-study-mode').style.display = 'none';
+    document.getElementById('faq-recommendations').style.display = 'none';
 });
 
 let menuItems = document.querySelectorAll('.menu-item');

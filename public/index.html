@@ -56,6 +56,17 @@
                         Turn on pinyin in examples
                     </label>
                 </div>
+                <div class="menu-item">
+                    <span class="menu-item-text">Recommendations:</span>
+                    <label for="recommendations-difficulty" class="menu-item-subtext">
+                        show me
+                        <select id="recommendations-difficulty">
+                            <option selected>any</option>
+                            <option>easy</option>
+                            <option>hard</option>
+                        </select>
+                        hanzi</label>
+                </div>
             </div>
             <div class="tabs">
                 <div id="show-explore" class="tab active">Explore</div>
@@ -73,6 +84,7 @@
                         <span class="text-button" id="previousHanziButton">Previous Hanzi</span>
                     </div>
                 </div>
+                <div id="recommendations-container" class="recommendations" style="display:none"></div>
                 <input id="show-pinyin" type="checkbox" style="display:none" />
                 <ul id="examples">
                     <li class="walkthrough">
@@ -285,6 +297,30 @@
                                 it&#39;s used
                                 as
                                 part of another word.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section id="faq-recommendations" style="display:none">
+                <ul>
+                    <li>
+                        <h3>How do recommendations work?</h3>
+                        <ul>
+                            <li>Recommendations are based on what hanzi you&#39;ve already viewed examples for.
+                                For instance, if you&#39;ve viewed examples for 下午 and 上午,
+                                but you haven&#39;t yet visited 中, we might
+                                recommend you visit 中, since 中午 is common, and you&#39;ve seen 午 in several contexts,
+                                which might make it easier to remember 中.
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>How can I stop seeing so many HSK1 recommendations?</h3>
+                        <ul>
+                            <li>You can choose via the menu in the upper left. The choice of &#39;easy&#39; means
+                                you&#39;ll not be shown anything harder than HSK3. The choice of &#39;hard&#39; means
+                                you&#39;ll only be shown HSK4-HSK6 hanzi.
+                            </li>
                         </ul>
                     </li>
                 </ul>
