@@ -258,8 +258,10 @@ p.zh-example {
     margin-left: 12px;
 }
 #study-container {
+    /*TODO make #example-container similar*/
     flex-grow: 1;
-    margin-left: 12px;
+    margin-left: 8px;
+    margin-right: 8px;
 }
 .walkthrough p {
     margin-top: 20px;
@@ -316,7 +318,6 @@ h2 .text-button {
 }
 
 .study-call-to-action {
-    width: 95%;
     text-align: center;
     background-color: white;
     color: black;
