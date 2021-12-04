@@ -76,17 +76,17 @@ let runTextToSpeech = function (text, anchors) {
         let utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = "zh-CN";
         utterance.voice = zhTts;
+        let last = 0;
         utterance.addEventListener('boundary', function (event) {
-            if (event.charIndex == null || event.charLength == null) {
+            //TODO use event.charLength if safari supports it eventually
+            if (event.charIndex == null) {
                 return false;
             }
-            anchors.forEach((character, index) => {
-                if (index >= event.charIndex && index < (event.charIndex + (event.charLength || 1))) {
-                    character.style.fontWeight = 'bold';
-                } else {
-                    character.style.fontWeight = 'normal';
-                }
-            });
+            //err...why does +1 here look better? I don't know
+            for (let i = last; i <= event.charIndex + 1 && i < anchors.length; i++) {
+                anchors[i].style.fontWeight = 'bold';
+            }
+            last = event.charIndex;
         });
         utterance.addEventListener('end', function () {
             anchors.forEach(character => {
