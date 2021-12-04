@@ -540,3 +540,63 @@ main.stats section p {
 #hourly-graph {
     padding-bottom: 40px;
 }
+
+@media (prefers-color-scheme: light) {
+    .text-button {
+        background-color: #eee;
+        border: 1px solid black;
+    }
+    .tab.active {
+        border-bottom: 1px solid #121212;
+        background-color: #3333;
+    }
+    .study-call-to-action {
+        background-color: #eee;
+    }
+    body {
+        color: black;
+        background: white;
+    }
+    a {
+        color: black;
+    }
+    #graph {
+        background: #f9f9f9;
+    }
+    .menu-item {
+        background-color: #eee;
+    }
+    .circle {
+        border: 1px solid black;
+    }
+    #wrong-button {
+        background-color: orangered;
+        border: 1px solid black;
+    }
+    #right-button {
+        background-color: lightgreen;
+        border:1px solid black;
+    }
+    .exit-arrow::before {
+        background: black;
+    }
+}
+@media (prefers-color-scheme: light) and (hover: hover){
+    .text-button:hover {
+        color: black;
+        cursor: pointer;
+        background-color: cornflowerblue;
+    }
+    .tab:hover {
+        background-color: #eee;
+    }
+    .tab.active:hover {
+        background-color: #3333;
+    }
+    #result-buttons li:hover {
+        color: black;
+    }
+    #show-answer-button:hover {
+        background-color: cornflowerblue;
+    }
+}

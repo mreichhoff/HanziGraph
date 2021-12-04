@@ -151,6 +151,7 @@ let createCardGraphs = function (studyList) {
     }
 
     fillGapDays(dailyAdds, addedByDay, { chars: new Set(), total: 0 });
+    let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
     document.getElementById('added-calendar').innerHTML = '';
     document.getElementById('added-calendar').appendChild(
         Calendar(dailyAdds, {
@@ -158,6 +159,7 @@ let createCardGraphs = function (studyList) {
             y: d => d.total,
             title: d => `${getUTCISODate(d.date)}: ${d.total} added`,
             weekday: 'sunday',
+            fill: prefersLight ? 'black' : 'white',
             clickHandler: function (_, i) {
                 let detail = document.getElementById('added-calendar-detail');
                 detail.innerHTML = '';
@@ -276,11 +278,13 @@ let createStudyResultGraphs = function (results) {
         incorrect: 0
     });
     dailyData.sort((x, y) => x.date - y.date);
+    let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
     document.getElementById('study-calendar').innerHTML = '';
     document.getElementById('study-calendar').appendChild(
         Calendar(dailyData, {
             x: d => d.date,
             y: d => d.total,
+            fill: prefersLight ? 'black' : 'white',
             title: d => `${getUTCISODate(d.date)}: ${d.correct} correct and ${d.incorrect} incorrect`,
             weekday: 'sunday',
             clickHandler: function (_, i) {
@@ -308,7 +312,7 @@ let createStudyResultGraphs = function (results) {
                     return 'green';
                 }
                 if (percentage < 75 && percentage >= 50) {
-                    return 'yellow';
+                    return 'gold';
                 }
                 if (percentage < 50 && percentage >= 25) {
                     return 'orange';

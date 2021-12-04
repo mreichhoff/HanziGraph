@@ -46,7 +46,7 @@ let levelColor = function (element) {
         case 4:
             return 'green';
         case 3:
-            return 'yellow';
+            return 'gold';
         case 2:
             return 'orange';
         case 1:
@@ -285,6 +285,7 @@ let getCardFromDefinitions = function (text, definitionList) {
     return result;
 };
 let setupCytoscape = function (root, elements) {
+    let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
     cy = cytoscape({
         container: document.getElementById('graph'),
         elements: elements,
@@ -308,9 +309,9 @@ let setupCytoscape = function (root, elements) {
                     'target-arrow-shape': 'none',
                     'curve-style': 'straight',
                     'label': 'data(words)',
-                    'color': '#eee',
+                    'color': (_ => prefersLight ? 'black' : '#eee'),
                     'font-size': '10px',
-                    'text-background-color': '#333333',
+                    'text-background-color': (_ => prefersLight ? '#f9f9f9' : '#333333'),
                     'text-background-opacity': '1',
                     'text-background-shape': 'round-rectangle'
                 }
