@@ -40,17 +40,17 @@ let levelColor = function (element) {
     let level = element.data('level');
     switch (level) {
         case 6:
-            return 'blue';
+            return '#68aaee';
         case 5:
-            return 'purple';
+            return '#de68ee';
         case 4:
-            return 'green';
+            return '#6de200';
         case 3:
-            return 'gold';
+            return '#fff249';
         case 2:
-            return 'orange';
+            return '#ff9b35';
         case 1:
-            return 'red';
+            return '#ff635f';
     }
 };
 
@@ -296,7 +296,7 @@ let setupCytoscape = function (root, elements) {
                 style: {
                     'background-color': levelColor,
                     'label': 'data(id)',
-                    'color': (element => element.data('level') > 3 ? '#eee' : '#333333'),
+                    'color': 'black',
                     'font-size': '16px',
                     'text-valign': 'center',
                     'text-halign': 'center'

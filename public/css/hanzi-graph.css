@@ -567,9 +567,6 @@ main.stats section p {
     .menu-item {
         background-color: #eee;
     }
-    .circle {
-        border: 1px solid black;
-    }
     #wrong-button {
         background-color: orangered;
         border: 1px solid black;
