@@ -58,6 +58,7 @@ a {
     flex: 1;
     text-align: left;
     margin-left: 8px;
+    margin-top: 2px;
 }
 .stats-button {
     position: relative;
@@ -209,9 +210,10 @@ h2 span {
     color: black;
 }
 #legend {
-    margin-left: 10px;
     font-size: 14px;
     text-align: center;
+    margin-left: 8px;
+    margin-right: 8px;
 }
 #level-container {
     display: flex;
@@ -232,6 +234,7 @@ p.example-line {
 }
 p.zh-example {
     font-size: 28px;
+    display: flex;
     cursor: pointer;
 }
 .pinyin-example {
@@ -255,13 +258,16 @@ p.zh-example {
 }
 #example-container {
     flex-grow: 1;
-    margin-left: 12px;
+    margin-left: 8px;
+    margin-right: 8px;
 }
 #study-container {
-    /*TODO make #example-container similar*/
     flex-grow: 1;
     margin-left: 8px;
     margin-right: 8px;
+}
+.sentence-container {
+    max-width: 80%;
 }
 .walkthrough p {
     margin-top: 20px;
@@ -278,12 +284,8 @@ p.zh-example {
     user-select: none;
     -webkit-user-select: none;
 }
-.sentence-container {
-    display: inline-block;
-    max-width: 80%;
-}
 p .text-button.listen {
-    display: inline-block;
+    align-self: flex-start;
     vertical-align: top;
 }
 h2 .text-button {
@@ -350,6 +352,9 @@ h2 .text-button {
     background-color: green;
     user-select: none;
     -webkit-user-select: none;
+}
+#card-question-container {
+    display: flex;
 }
 #card-question-container a {
     font-size: 28px;
@@ -481,7 +486,7 @@ select {
         font-size: 26px;
     }
     .tab {
-        font-size: 14px;
+        font-size: 16px;
     }
     .study-call-to-action {
         font-size: 18px;
@@ -568,11 +573,11 @@ main.stats section p {
         background-color: #eee;
     }
     #wrong-button {
-        background-color: orangered;
+        background-color: #ff635f;
         border: 1px solid black;
     }
     #right-button {
-        background-color: lightgreen;
+        background-color: #6de200;
         border:1px solid black;
     }
     .exit-arrow::before {
@@ -583,7 +588,7 @@ main.stats section p {
     .text-button:hover {
         color: black;
         cursor: pointer;
-        background-color: cornflowerblue;
+        background-color: #68aaee;
     }
     .tab:hover {
         background-color: #eee;
@@ -595,6 +600,6 @@ main.stats section p {
         color: black;
     }
     #show-answer-button:hover {
-        background-color: cornflowerblue;
+        background-color: #68aaee;
     }
 }

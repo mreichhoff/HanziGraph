@@ -113,6 +113,7 @@ let setupStudyMode = function () {
     currentKey = null;
     let currentCard = null;
     document.getElementById('card-answer-container').style.display = 'none';
+    document.getElementById('show-answer-button').innerText = "Show Answer";
     let counter = 0;
     for (const [key, value] of Object.entries(studyList)) {
         if (value.due <= Date.now()) {
@@ -142,8 +143,9 @@ let setupStudyMode = function () {
     document.getElementById('card-answer').textContent = currentCard.en;
 };
 document.getElementById('show-answer-button').addEventListener('click', function () {
+    document.getElementById('show-answer-button').innerText = "Answer:";
     document.getElementById('card-answer-container').style.display = 'block';
-    document.getElementById('card-answer-container').scrollIntoView();
+    document.getElementById('show-answer-button').scrollIntoView();
 });
 document.getElementById('wrong-button').addEventListener('click', function () {
     let now = new Date();

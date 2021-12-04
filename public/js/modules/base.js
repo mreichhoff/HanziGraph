@@ -130,7 +130,7 @@ let addTextToSpeech = function (holder, text, aList) {
     holder.appendChild(textToSpeechButton);
 };
 let addSaveToListButton = function (holder, text) {
-    let buttonTexts = ['In your study list!', 'Add to my study list!'];
+    let buttonTexts = ['In your study list!', 'Add to study list'];
     let saveToListButton = document.createElement('span');
     saveToListButton.className = 'text-button';
     saveToListButton.textContent = inStudyList(text) ? buttonTexts[0] : buttonTexts[1];
