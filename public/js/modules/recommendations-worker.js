@@ -26,7 +26,9 @@ let getRecommendations = function () {
         }
         let total = 0;
         for (let j = 0; j < edgeKeys.length; j++) {
-            total += visited[edgeKeys[j]] || 0;
+            let curr = visited[edgeKeys[j]] || 0;
+            curr /= (Object.keys(hanzi[edgeKeys[j]].edges).length || 1);
+            total += curr;
             //TODO lots of room for improvement
             //edgeLevelTotal += hanzi[edgeKeys[j]].node.level;
         }
