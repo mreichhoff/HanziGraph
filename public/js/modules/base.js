@@ -648,6 +648,11 @@ document.getElementById('show-study-faq').addEventListener('click', function () 
     document.getElementById('faq-container').removeAttribute('style');
     document.getElementById('faq-study-mode').removeAttribute('style');
 });
+document.getElementById('show-general-faq').addEventListener('click', function () {
+    document.getElementById('container').style.display = 'none';
+    document.getElementById('faq-container').removeAttribute('style');
+    document.getElementById('faq-general').removeAttribute('style');
+});
 document.getElementById('exit-button').addEventListener('click', function () {
     document.getElementById('stats-container').style.display = 'none';
     document.getElementById('container').removeAttribute('style');
@@ -658,6 +663,7 @@ document.getElementById('faq-exit-button').addEventListener('click', function ()
     document.getElementById('faq-single-char-warning').style.display = 'none';
     document.getElementById('faq-study-mode').style.display = 'none';
     document.getElementById('faq-recommendations').style.display = 'none';
+    document.getElementById('faq-general').style.display = 'none';
 });
 
 let menuItems = document.querySelectorAll('.menu-item');

@@ -115,7 +115,7 @@
                             Note that you can also zoom, drag, and re-arrange the diagram however you please.
                         </p>
                         <p>
-                            <a href="faq.html">See the FAQ for more information.</a>
+                            <a class="faq-link" id="show-general-faq">See the FAQ for more information.</a>
                         </p>
                     </li>
                 </ul>
@@ -214,6 +214,63 @@
             <div class="stats-container"></div>
         </header>
         <main class="faq">
+            <section id="faq-general" style="display:none">
+                <p>This site is a prototype, but it&#39;s decently usable in its current state. Feel free to see the
+                    (currently
+                    at a
+                    hackathon level of quality) <a href="https://github.com/mreichhoff/HanziGraph">code</a> or contact
+                    <a href="https://github.com/mreichhoff">the author on github</a>.
+                </p>
+                <p>The idea is to emphasize the word-forming connections among hanzi to help learners remember them.
+                    I&#39;ve
+                    found
+                    this more fun and effective than other methods, like studying stroke order, learning radicals or
+                    components,
+                    writing each character out 100 times, or doing spaced repetition on cards mapping hanzi to pinyin
+                    and
+                    English.
+                </p>
+                <ul>
+                    <li>
+                        <h3>Is there an app?</h3>
+                        <ul>
+                            <li>The site is a progressive web app. This means it uses modern browser APIs to make an
+                                installable
+                                app. Follow <a
+                                    href="https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Installing">the
+                                    directions for your platform</a> to install it. A truly native app downloadable from
+                                the app
+                                stores may be a future work item.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>Where did the examples come from?</h3>
+                        <ul>
+                            <li>The examples came from <a href="https://tatoeba.org">Tatoeba</a>, which releases data
+                                under <a href="https://creativecommons.org/licenses/by/2.0/fr">CC-BY 2.0 FR</a>, and
+                                from <a href="http://www.opensubtitles.org/">OpenSubtitles</a>, pulled from <a
+                                    href="https://opus.nlpl.eu/OpenSubtitles2018.php">opus.nlpl.eu</a>. </li>
+                            <li>Definitions and pinyin transcriptions of individual words were pulled from <a
+                                    href="https://cc-cedict.org/editor/editor.php">CEDICT</a>, which releases data under
+                                <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Accordingly,
+                                some
+                                of
+                                the files in <code>data</code> should be considered released under that same license.
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>Which characters are present in the graph?</h3>
+                        <ul>
+                            <li>All of the HSK 1-6 characters should be present, and most have examples. <a
+                                    href="https://github.com/mreichhoff/HanziGraph/issues/new/choose">Ping on github</a>
+                                with
+                                any
+                                issues. Future updates may add the newer HSK characters.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
             <section id="faq-study-mode" style="display:none">
                 <ul>
                     <li>
