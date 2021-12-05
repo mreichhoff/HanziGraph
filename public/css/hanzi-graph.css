@@ -552,9 +552,12 @@ main.stats section p {
         background-color: #eee;
         border: 1px solid black;
     }
+    .tab {
+        background-color: #3333;
+    }
     .tab.active {
         border-bottom: 1px solid #121212;
-        background-color: #3333;
+        background-color: white;
     }
     .study-call-to-action {
         background-color: #eee;
@@ -594,7 +597,7 @@ main.stats section p {
         background-color: #eee;
     }
     .tab.active:hover {
-        background-color: #3333;
+        background-color: white;
     }
     #result-buttons li:hover {
         color: black;
