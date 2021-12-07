@@ -17,21 +17,22 @@ let getRecommendations = function () {
         if (visited[keys[i]] || hanzi[keys[i]].node.level < minLevel || hanzi[keys[i]].node.level > maxLevel) {
             continue;
         }
-        let curr = hanzi[keys[i]];
+        let currentHanzi = hanzi[keys[i]];
         //let numerator = 0;
         //let edgeLevelTotal = 1;
-        let edgeKeys = Object.keys(curr.edges);
+        let edgeKeys = Object.keys(currentHanzi.edges);
         if (edgeKeys.length > maxEdgesForRecommendation) {
             continue;
         }
         let total = 0;
         for (let j = 0; j < edgeKeys.length; j++) {
-            let curr = visited[edgeKeys[j]] || 0;
+            let curr = (visited[edgeKeys[j]] || 0) / hanzi[edgeKeys[j]].node.level;
             curr /= (Object.keys(hanzi[edgeKeys[j]].edges).length || 1);
             total += curr;
             //TODO lots of room for improvement
             //edgeLevelTotal += hanzi[edgeKeys[j]].node.level;
         }
+        total /= currentHanzi.node.level;
         //let total = numerator / (edgeLevelTotal / (edgeKeys.length || 1));
         if (total > best || !result.length) {
             best = total;
