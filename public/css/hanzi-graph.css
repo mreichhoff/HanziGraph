@@ -326,6 +326,7 @@ h2 .text-button {
     padding: 8px;
     cursor: pointer;
     font-size: 20px;
+    border-radius: 6px;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -344,12 +345,16 @@ h2 .text-button {
     font-size: 20px;
 }
 #wrong-button {
-    background-color: red;
+    background-color: #ff635f;
+    color: black;
+    border: 1px solid black;
     user-select: none;
     -webkit-user-select: none;
 }
 #right-button {
-    background-color: green;
+    background-color: #6de200;
+    border:1px solid black;
+    color: black;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -452,7 +457,6 @@ select {
         background-color: #333;
     }
     #result-buttons li:hover {
-        color: white;
         font-weight: bold;
     }
     #show-answer-button:hover {
@@ -561,6 +565,7 @@ main.stats section p {
     }
     .study-call-to-action {
         background-color: #eee;
+        border: 1px solid black;
     }
     body {
         color: black;
@@ -574,14 +579,6 @@ main.stats section p {
     }
     .menu-item {
         background-color: #eee;
-    }
-    #wrong-button {
-        background-color: #ff635f;
-        border: 1px solid black;
-    }
-    #right-button {
-        background-color: #6de200;
-        border:1px solid black;
     }
     .exit-arrow::before {
         background: black;
@@ -598,9 +595,6 @@ main.stats section p {
     }
     .tab.active:hover {
         background-color: white;
-    }
-    #result-buttons li:hover {
-        color: black;
     }
     #show-answer-button:hover {
         background-color: #68aaee;
