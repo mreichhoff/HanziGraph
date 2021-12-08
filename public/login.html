@@ -15,6 +15,7 @@
         <div class="stats-container"></div>
     </header>
     <main class="auth-form">
+        <p id="error-message" style="visibility: hidden;">An error occurred. Please try again.</p>
         <form id="signin">
             <ul>
                 <li>
@@ -24,24 +25,48 @@
                     </label>
                 </li>
                 <li>
-                    <label for="email">
+                    <label for="password">
                         Enter your password:
-                        <input id="password" minlength="12" type="password" />
+                        <input id="password" autocomplete="current-password" minlength="12" type="password" />
                     </label>
                 </li>
                 <li>
                     <input type="submit" value="Sign in!" />
-                    <input id="register" type="button" value="Register" />
+                </li>
+                <li>
+                    <a id="register-link" class="secondary-signin-link">No account? Sign up!</a>
                 </li>
             </ul>
             <p id="forgot-password">Forgot your password?</p>
-            <p id="alternate-signins">
-                Other ways to sign in:
-            </p>
-            <p>
-                <img id="signin-with-google" src="./images/btn_google_signin_dark_normal_web.png" />
-            </p>
         </form>
+        <form id="register" style="display: none;">
+            <ul>
+                <li>
+                    <label for="register-email">
+                        Enter your email address:
+                        <input id="register-email" type="email" />
+                    </label>
+                </li>
+                <li>
+                    <label for="register-password">
+                        Enter a new password:
+                        <input id="register-password" autocomplete="new-password" minlength="12" type="password" />
+                    </label>
+                </li>
+                <li>
+                    <input type="submit" value="Register!" />
+                </li>
+                <li>
+                    <a id="signin-link" class="secondary-signin-link">Already have an account?</a>
+                </li>
+            </ul>
+        </form>
+        <p id="alternate-signins">
+            Other ways to sign in:
+        </p>
+        <p>
+            <img id="signin-with-google" src="./images/btn_google_signin_dark_normal_web.png" />
+        </p>
     </main>
     <script type="module" src="./js/modules/auth.js"></script>
 </body>

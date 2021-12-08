@@ -407,14 +407,9 @@ main.auth-form {
     width:270px;
 }
 .auth-form input[type=submit] {
-    width: 130px;
+    width: 100%;
     height: 28px;
-    cursor: pointer;
-}
-.auth-form input[type=button] {
-    width: 130px;
-    height: 28px;
-    margin-left: 8px;
+    font-size: 18px;
     cursor: pointer;
 }
 .auth-form label {
@@ -434,6 +429,13 @@ main.auth-form {
 }
 .auth-form #alternate-signins {
     font-size: 18px;
+}
+.auth-form .secondary-signin-link {
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 28px;
+    max-width: 130px;
 }
 .welcome-message {
     font-size: 12px;

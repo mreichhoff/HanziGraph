@@ -20,34 +20,37 @@ document.getElementById('signin').addEventListener('submit', function (event) {
 
     const auth = getAuth();
     signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+        .then((_) => {
             document.location.href = "/";
         })
-        .catch((error) => {
-            const errorMessage = error.message;
-            alert(errorMessage);
+        .catch((_) => {
+            document.getElementById('error-message').style.visibility = 'visible';
         });
 });
-
-document.getElementById('register').addEventListener('click', function () {
+document.getElementById('register').addEventListener('submit', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
     const auth = getAuth();
-    const email = document.getElementById('email').value;
-    const passwordElement = document.getElementById('password');
-    const password = passwordElement.value;
-    if (password.length < passwordElement.minLength) {
-        alert('Please enter a password of at least 12 characters.');
-        return false;
-    }
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
     createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
+        .then((_) => {
             document.location.href = "/";
         })
-        .catch((error) => {
-            const errorMessage = error.message;
-            alert(errorMessage);
+        .catch((_) => {
+            document.getElementById('error-message').style.visibility = 'visible';
         });
 });
-
+document.getElementById('register-link').addEventListener('click', function () {
+    document.getElementById('signin').style.display = 'none';
+    document.getElementById('register').removeAttribute('style');
+    document.getElementById('error-message').style.visibility = 'hidden';
+});
+document.getElementById('signin-link').addEventListener('click', function () {
+    document.getElementById('register').style.display = 'none';
+    document.getElementById('signin').removeAttribute('style');
+    document.getElementById('error-message').style.visibility = 'hidden';
+});
 document.getElementById('forgot-password').addEventListener('click', function () {
     const auth = getAuth();
     const email = document.getElementById('email').value;

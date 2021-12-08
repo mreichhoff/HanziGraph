@@ -611,7 +611,7 @@ onAuthStateChanged(auth, (user) => {
         visitedLastUpdated = Date.now();
         const dbRef = ref(getDatabase());
         get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
-            visited = snapshot.val();
+            visited = snapshot.val() || {};
             recommendationsWorker.postMessage({
                 type: 'visited',
                 payload: visited
@@ -629,7 +629,7 @@ document.getElementById('stats-show').addEventListener('click', function () {
         visitedLastUpdated = Date.now();
         const dbRef = ref(getDatabase());
         get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
-            visited = snapshot.val();
+            visited = snapshot.val() || {};
             createVisitedGraphs(visited);
             recommendationsWorker.postMessage({
                 type: 'visited',
