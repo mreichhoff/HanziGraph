@@ -5,6 +5,7 @@ body {
     padding: 0;
     color: #eee;
     background: #121212;
+    font-family: Times, serif;
 }
 a {
     color: #eee;
@@ -167,6 +168,7 @@ a {
     margin-right: 10px;
     cursor: pointer;
     font-size:22px;
+    font-family: sans-serif;
 }
 .recommendation-message {
     font-size: 16px;
@@ -195,6 +197,7 @@ h1 {
 h2 {
     margin-bottom: 0;
     font-size: 28px;
+    font-family: sans-serif;
 }
 h2 span {
     font-weight: normal;
@@ -236,6 +239,7 @@ p.zh-example {
     font-size: 28px;
     display: flex;
     cursor: pointer;
+    font-family: sans-serif;
 }
 .pinyin-example {
     display: none;
@@ -281,6 +285,7 @@ p.zh-example {
     padding: 6px;
     color: black;
     border-radius: 6px;
+    font-family: Times, serif;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -365,6 +370,7 @@ h2 .text-button {
     font-size: 28px;
     vertical-align: text-top;
     cursor: pointer;
+    font-family: sans-serif;
 }
 #card-answer {
     font-size: 24px;
@@ -443,6 +449,9 @@ main.auth-form {
 select {
     font-size: 16px;
     border: 0;
+}
+.stats-detail {
+    font-family: sans-serif;
 }
 @media (hover: hover) {
     .text-button:hover {
@@ -543,6 +552,7 @@ main.stats {
 }
 main.stats section h2 {
     font-size: 20px;
+    font-family: Times, serif;
 }
 main.stats section p {
     font-size: 18px;
