@@ -562,14 +562,17 @@ main.stats section p {
 #hourly-graph {
     padding-bottom: 40px;
 }
+.month-indicator {
+    width: 16px;
+}
 .calendar-day {
     border: 1px solid black;
     color: black;
     background-color: #333;
-    width: 30px;
-    height: 30px;
-    margin-left: 2px;
-    margin-bottom: 2px;
+    width: 16px;
+    height: 16px;
+    margin-left: 6px;
+    margin-bottom: 6px;
     border-radius: 4px;
 }
 .calendar-day.s {
@@ -598,7 +601,7 @@ main.stats section p {
 }
 .calendar {
     display: grid;
-    max-width: 85%;
+    max-width: 95%;
     overflow: scroll;
     margin: 0 auto;
 }
