@@ -151,15 +151,28 @@ let createCardGraphs = function (studyList) {
     }
 
     fillGapDays(dailyAdds, addedByDay, { chars: new Set(), total: 0 });
-    let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+    dailyAdds.sort((x, y) => x.date - y.date);
     document.getElementById('added-calendar').innerHTML = '';
     document.getElementById('added-calendar').appendChild(
         Calendar(dailyAdds, {
-            x: d => d.date,
-            y: d => d.total,
-            title: d => `${getUTCISODate(d.date)}: ${d.total} added`,
-            weekday: 'sunday',
-            fill: prefersLight ? 'black' : 'white',
+            id: 'added-calendar',
+            getIntensity: function (total) {
+                if (total == 0) {
+                    return 'empty';
+                } else if (total < 6) {
+                    return 's';
+                } else if (total < 12) {
+                    return 'm';
+                } else if (total < 18) {
+                    return 'l';
+                } else if (total < 24) {
+                    return 'xl';
+                } else if (total < 30) {
+                    return 'xxl';
+                } else {
+                    return 'epic';
+                }
+            },
             clickHandler: function (_, i) {
                 let detail = document.getElementById('added-calendar-detail');
                 detail.innerHTML = '';
@@ -177,11 +190,15 @@ let createCardGraphs = function (studyList) {
             }
         })
     );
+    document.getElementById('added-calendar-calendar').scrollTo({
+        top: 0,
+        left: document.getElementById('added-calendar-today').offsetLeft
+    });
     //(more than) slightly WTF
     let today = new Date(getLocalISODate(new Date())).valueOf()
     let last10Days = dailyAdds.filter(x =>
         x.date.valueOf() <= today &&
-        x.date.valueOf() >= (today - 10 * 24 * 60 * 60 * 1000)).sort((x, y) => y.date.valueOf() - x.date.valueOf());
+        x.date.valueOf() >= (today - 9 * 24 * 60 * 60 * 1000)).sort((x, y) => y.date.valueOf() - x.date.valueOf());
 
     document.getElementById('added-graph').innerHTML = '';
     document.getElementById('added-graph').appendChild(
@@ -278,15 +295,27 @@ let createStudyResultGraphs = function (results) {
         incorrect: 0
     });
     dailyData.sort((x, y) => x.date - y.date);
-    let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
     document.getElementById('study-calendar').innerHTML = '';
     document.getElementById('study-calendar').appendChild(
         Calendar(dailyData, {
-            x: d => d.date,
-            y: d => d.total,
-            fill: prefersLight ? 'black' : 'white',
-            title: d => `${getUTCISODate(d.date)}: ${d.correct} correct and ${d.incorrect} incorrect`,
-            weekday: 'sunday',
+            id: 'study-calendar',
+            getIntensity: function (total) {
+                if (total == 0) {
+                    return 'empty';
+                } else if (total < 10) {
+                    return 's';
+                } else if (total < 25) {
+                    return 'm';
+                } else if (total < 50) {
+                    return 'l';
+                } else if (total < 100) {
+                    return 'xl';
+                } else if (total < 150) {
+                    return 'xxl';
+                } else {
+                    return 'epic';
+                }
+            },
             clickHandler: function (_, i) {
                 let detail = document.getElementById('study-calendar-detail');
                 detail.innerHTML = '';
@@ -297,6 +326,10 @@ let createStudyResultGraphs = function (results) {
         })
     );
     document.getElementById('study-calendar-container').removeAttribute('style');
+    document.getElementById('study-calendar-calendar').scrollTo({
+        top: 0,
+        left: document.getElementById('study-calendar-today').offsetLeft
+    });
     //why, you ask? I don't know
     let getHour = function (hour) { return hour == 0 ? '12am' : (hour < 12 ? `${hour}am` : hour == 12 ? '12pm' : `${hour % 12}pm`) };
     document.getElementById('hourly-graph').innerHTML = '';

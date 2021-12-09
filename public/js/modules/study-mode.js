@@ -238,7 +238,7 @@ document.getElementById('stats-show').addEventListener('click', function () {
         studyResultsLastUpdated = Date.now();
         const dbRef = ref(getDatabase());
         get(child(dbRef, `users/${user.uid}/results/zh-CN`)).then((snapshot) => {
-            studyResults = snapshot.val();
+            studyResults = snapshot.val() || studyResults;
             createStudyResultGraphs(studyResults);
         }).catch((error) => {
             console.error(error);
@@ -277,7 +277,7 @@ onAuthStateChanged(auth, (user) => {
         });
         const deletedFlashcardRef = ref(db, 'users/' + user.uid + '/deleted/zh-CN');
         onValue(deletedFlashcardRef, (snapshot) => {
-            const data = snapshot.val();
+            const data = snapshot.val() || {};
             for (const key in data) {
                 if (window.studyList[key]) {
                     delete window.studyList[key];

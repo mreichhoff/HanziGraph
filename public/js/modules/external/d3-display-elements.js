@@ -1,139 +1,60 @@
-import { interpolatePiYG } from 'https://cdn.skypack.dev/pin/d3-scale-chromatic@v3.0.0-wlyjJbUexgtDqhQ6ksVy/mode=imports,min/optimized/d3-scale-chromatic.js';
-import { utcYear, utcSunday, utcMonths, utcMonth, utcMonday } from "https://cdn.skypack.dev/pin/d3-time@v3.0.0-Ww07wkuPsE2c8Ac33BKQ/mode=imports,min/optimized/d3-time.js";
-import { utcFormat } from 'https://cdn.skypack.dev/pin/d3-time-format@v4.0.0-A7vYeSqgWxeXXSpz1rEp/mode=imports,min/optimized/d3-time-format.js';
 import { axisBottom, axisLeft } from 'https://cdn.skypack.dev/pin/d3-axis@v3.0.0-Tp73hnXudkL5zk3Jd1gx/mode=imports,min/optimized/d3-axis.js';
-import { scaleSequential, scaleBand, scaleLinear } from "https://cdn.skypack.dev/pin/d3-scale@v4.0.2-qUv67mnQQKwRMEsPRKcO/mode=imports,min/optimized/d3-scale.js";
-import { quantile, groups, map, range, max, InternSet } from 'https://cdn.skypack.dev/pin/d3-array@v3.1.1-Ibshj34oOmCw8da1RLSW/mode=imports,min/optimized/d3-array.js';
+import { scaleBand, scaleLinear } from "https://cdn.skypack.dev/pin/d3-scale@v4.0.2-qUv67mnQQKwRMEsPRKcO/mode=imports,min/optimized/d3-scale.js";
+import { map, range, max, InternSet } from 'https://cdn.skypack.dev/pin/d3-array@v3.1.1-Ibshj34oOmCw8da1RLSW/mode=imports,min/optimized/d3-array.js';
 import { create } from "https://cdn.skypack.dev/pin/d3-selection@v3.0.0-sAmQ3giCT8irML5wz1T1/mode=imports,min/optimized/d3-selection.js";
-// Copyright 2021 Observable, Inc.
-// Released under the ISC license.
-// https://observablehq.com/@d3/calendar-view
+
+function sameDay(d1, d2) {
+    return d1.getFullYear() == d2.getFullYear() &&
+        d1.getMonth() == d2.getMonth() &&
+        d1.getDate() == d2.getDate();
+}
 function Calendar(data, {
-    x = ([x]) => x, // given d in data, returns the (temporal) x-value
-    y = ([, y]) => y, // given d in data, returns the (quantitative) y-value
-    title, // given d in data, returns the title text
-    width = 1000, // width of the chart, in pixels
-    cellSize = 17, // width and height of an individual day, in pixels
-    weekday = "monday", // either: weekday, sunday, or monday
-    formatDay = i => "SMTWTFS"[i], // given a day number in [0, 6], the day-of-week label
-    formatMonth = "%b", // format specifier string for months (above the chart)
-    yFormat, // format specifier string for values (in the title)
-    colors = interpolatePiYG,
+    id,
     clickHandler = () => { },
-    fill = 'white',
-    includeMonthBoundaries = false
+    getIntensity = () => { return '' }
 } = {}) {
-    // Compute values.
-    const X = map(data, x);
-    const Y = map(data, y);
-    const I = range(X.length);
-
-    const countDay = weekday === "sunday" ? i => i : i => (i + 6) % 7;
-    const timeWeek = weekday === "sunday" ? utcSunday : utcMonday;
-    const weekDays = weekday === "weekday" ? 5 : 7;
-    const height = cellSize * (weekDays + 2);
-
-    // Compute a color scale. This assumes a diverging color scheme where the pivot
-    // is zero, and we want symmetric difference around zero.
-    const max = quantile(Y, 0.9975, Math.abs);
-    const color = scaleSequential([-max, +max], colors).unknown("none");
-
-    // Construct formats.
-    formatMonth = utcFormat(formatMonth);
-
-    // Compute titles.
-    if (title === undefined) {
-        const formatDate = utcFormat("%B %-d, %Y");
-        const formatValue = color.tickFormat(100, yFormat);
-        title = i => `${formatDate(X[i])}\n${formatValue(Y[i])}`;
-    } else if (title !== null) {
-        const T = map(data, title);
-        title = i => T[i];
+    let now = new Date();
+    let root = document.createElement('div');
+    root.id = `${id}-calendar`;
+    root.className = 'calendar';
+    for (let i = 0; i < data[0].date.getUTCDay(); i++) {
+        if (i === 0) {
+            let monthIndicator = document.createElement('div');
+            monthIndicator.style.gridRow = '1';
+            monthIndicator.className = 'month-indicator';
+            root.appendChild(monthIndicator);
+        }
+        let currentDay = document.createElement('div');
+        currentDay.className = 'calendar-day-dummy';
+        currentDay.style.gridRow = `${i + 2}`;
+        root.appendChild(currentDay);
     }
 
-    // Group the index by year, in reverse input order. (Assuming that the input is
-    // chronological, this will show years in reverse chronological order.)
-    const years = groups(I, i => X[i].getUTCFullYear()).reverse();
-
-    function pathMonth(t) {
-        const d = Math.max(0, Math.min(weekDays, countDay(t.getUTCDay())));
-        const w = timeWeek.count(utcYear(t), t);
-        return `${d === 0 ? `M${w * cellSize},0`
-            : d === weekDays ? `M${(w + 1) * cellSize},0`
-                : `M${(w + 1) * cellSize},0V${d * cellSize}H${w * cellSize}`}V${weekDays * cellSize}`;
+    for (let i = 0; i < data.length; i++) {
+        if (data[i].date.getUTCDay() === 0) {
+            let monthIndicator = document.createElement('div');
+            monthIndicator.style.gridRow = '1';
+            monthIndicator.className = 'month-indicator';
+            if (data[i].date.getUTCDate() < 8) {
+                monthIndicator.innerText = data[i].date.toLocaleString('default', { month: 'short', timeZone: 'UTC' });
+            }
+            root.appendChild(monthIndicator);
+        }
+        let currentDay = document.createElement('div');
+        if (sameDay(now, data[i].date)) {
+            currentDay.id = `${id}-today`;
+            currentDay.classList.add('today');
+        } else if (now.valueOf() < data[i].date.valueOf()) {
+            currentDay.classList.add('future');
+        }
+        currentDay.style.gridRow = `${data[i].date.getUTCDay() + 2}`;
+        //currentDay.style.gridColumn = `${12 - i}`;
+        currentDay.classList.add('calendar-day');
+        currentDay.classList.add(getIntensity(data[i].total));
+        currentDay.addEventListener('click', clickHandler.bind(this, 0, i));
+        root.appendChild(currentDay);
     }
-
-    const svg = create("svg")
-        .attr("width", width)
-        .attr("height", height * years.length)
-        .attr("viewBox", [0, 0, width, height * years.length])
-        .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
-        .attr("font-family", "sans-serif")
-        .attr("font-size", 14)
-        .attr('fill', fill);
-
-    const year = svg.selectAll("g")
-        .data(years)
-        .join("g")
-        .attr("transform", (d, i) => `translate(40.5,${height * i + cellSize * 1.5})`);
-
-    year.append("text")
-        .attr("x", -5)
-        .attr("y", -5)
-        .attr("font-weight", "bold")
-        .attr("text-anchor", "end")
-        .text(([key]) => key);
-
-    year.append("g")
-        .attr("text-anchor", "end")
-        .selectAll("text")
-        .data(weekday === "weekday" ? range(1, 6) : range(7))
-        .join("text")
-        .attr("x", -5)
-        .attr("y", i => (countDay(i) + 0.5) * cellSize)
-        .attr("dy", "0.31em")
-        .text(formatDay);
-
-    const cell = year.append("g")
-        .selectAll("rect")
-        .data(weekday === "weekday"
-            ? ([, I]) => I.filter(i => ![0, 6].includes(X[i].getUTCDay()))
-            : ([, I]) => I)
-        .join("rect")
-        .attr("width", cellSize - 1)
-        .attr("height", cellSize - 1)
-        .attr("x", i => timeWeek.count(utcYear(X[i]), X[i]) * cellSize + 0.5)
-        .attr("y", i => countDay(X[i].getUTCDay()) * cellSize + 0.5)
-        .attr("fill", i => color(Y[i]))
-        .on('click', clickHandler);
-
-    if (title) cell.append("title")
-        .text(title);
-
-    const month = year.append("g")
-        .selectAll("g")
-        .data(([, I]) => utcMonths(utcMonth(X[I[0]]), X[I[I.length - 1]]))
-        .join("g");
-
-    if (includeMonthBoundaries) {
-        month.filter((d, i) => i).append("path")
-            .attr("fill", "none")
-            .attr("stroke", "#fff")
-            .attr("stroke-width", 3)
-            .attr("d", pathMonth);
-    } else {
-        month.filter((d, i) => i).append("path")
-            .attr("fill", "none")
-            .attr("stroke", "#fff")
-            .attr("stroke-width", 3);
-    }
-
-    month.append("text")
-        .attr("x", d => timeWeek.count(utcYear(d), timeWeek.ceil(d)) * cellSize + 2)
-        .attr("y", -5)
-        .text(formatMonth);
-
-    return Object.assign(svg.node(), { scales: { color } });
+    return root;
 }
 // Copyright 2021 Observable, Inc.
 // Released under the ISC license.

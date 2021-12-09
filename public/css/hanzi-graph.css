@@ -562,7 +562,49 @@ main.stats section p {
 #hourly-graph {
     padding-bottom: 40px;
 }
-
+.calendar-day {
+    border: 1px solid black;
+    color: black;
+    background-color: #333;
+    width: 30px;
+    height: 30px;
+    margin-left: 2px;
+    margin-bottom: 2px;
+    border-radius: 4px;
+}
+.calendar-day.s {
+    background-color: #4000bf;
+}
+.calendar-day.m {
+    background-color: #6a0095;
+}
+.calendar-day.l {
+    background-color: #95006a;
+}
+.calendar-day.xl {
+    background-color: #bf0040;
+}
+.calendar-day.xxl {
+    background-color: #ff0000;
+}
+.calendar-day.epic {
+    background-color: #ff00ff;
+}
+.calendar-day.future {
+    opacity: 0.1;
+}
+.calendar-day-dummy {
+    opacity: 0;
+}
+.calendar {
+    display: grid;
+    max-width: 85%;
+    overflow: scroll;
+    margin: 0 auto;
+}
+.calendar .today {
+    margin-right: 12px;
+}
 @media (prefers-color-scheme: light) {
     .text-button {
         background-color: #eee;
@@ -594,6 +636,9 @@ main.stats section p {
     }
     .exit-arrow::before {
         background: black;
+    }
+    .calendar-day {
+        background-color: #eee;
     }
 }
 @media (prefers-color-scheme: light) and (hover: hover){
