@@ -455,6 +455,14 @@ select {
 .stats-detail {
     font-family: sans-serif;
 }
+.result-indicator-wrong {
+    background-color: #ff635f;
+    color: black;
+}
+.result-indicator-right {
+    background-color: #6de200;
+    color: black;
+}
 @media (hover: hover) {
     .text-button:hover {
         color: black;
@@ -468,7 +476,8 @@ select {
         background-color: #333;
     }
     #result-buttons li:hover {
-        font-weight: bold;
+        border: 1px solid white;
+        transition: border 500ms;
     }
     #show-answer-button:hover {
         background-color: lightgray;
@@ -658,5 +667,8 @@ main.stats section p {
     }
     #show-answer-button:hover {
         background-color: #68aaee;
+    }
+    #result-buttons li:hover {
+        transition: border 500ms;
     }
 }

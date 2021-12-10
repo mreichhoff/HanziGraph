@@ -155,6 +155,10 @@ document.getElementById('wrong-button').addEventListener('click', function () {
     saveStudyList([currentKey]);
     setupStudyMode();
     document.getElementById('study-call-to-action').scrollIntoView();
+    document.getElementById('cards-due').classList.add('result-indicator-wrong');
+    setTimeout(function () {
+        document.getElementById('cards-due').classList.remove('result-indicator-wrong');
+    }, 750);
     recordEvent(now, studyResult.INCORRECT);
 });
 document.getElementById('right-button').addEventListener('click', function () {
@@ -166,6 +170,10 @@ document.getElementById('right-button').addEventListener('click', function () {
     saveStudyList([currentKey]);
     setupStudyMode();
     document.getElementById('study-call-to-action').scrollIntoView();
+    document.getElementById('cards-due').classList.add('result-indicator-right');
+    setTimeout(function () {
+        document.getElementById('cards-due').classList.remove('result-indicator-right');
+    }, 750);
     recordEvent(now, studyResult.CORRECT);
 });
 document.getElementById('delete-card-button').addEventListener('click', function () {
