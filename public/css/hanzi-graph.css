@@ -467,7 +467,8 @@ select {
     .text-button:hover {
         color: black;
         cursor: pointer;
-        background-color: lightgray;
+        background-color: #68aaee;
+        transition: background-color 300ms;
     }
     .tab:hover {
         background-color: #3333;
@@ -480,8 +481,30 @@ select {
         transition: border 500ms;
     }
     #show-answer-button:hover {
-        background-color: lightgray;
+        background-color: #68aaee;
+        transition: background-color 300ms;
     }
+}
+.bar-chart {
+    display: grid;
+    width: 600px;
+    height: 400px;
+    margin: 0 auto;
+    grid-template-rows: repeat(100, 1fr) 1px 16px;
+    column-gap: 6px;
+}
+.bar-chart-separator {
+    background: white;
+}
+.bar-chart-bar {
+    background-color: blue;
+}
+.bar-chart-x-label {
+    margin-top: 2px;
+}
+.bar-chart-y-label {
+    grid-column: 1;
+    text-align: right;
 }
 @media (max-width:1024px)  {
     #control-pane {
@@ -528,6 +551,10 @@ select {
     p.zh-example {
         font-size: 30px;
     }
+    .bar-chart {
+        width: 98%;
+        height: 300px;
+    }
 }
 @media (max-width:360px)  {
     .text-button {
@@ -568,7 +595,7 @@ main.stats section h2 {
 main.stats section p {
     font-size: 18px;
 }
-#hourly-graph {
+#added-calendar-detail {
     padding-bottom: 40px;
 }
 .month-indicator {
@@ -652,21 +679,16 @@ main.stats section p {
     .calendar-day {
         background-color: #eee;
     }
+    .bar-chart-separator {
+        background: black;
+    }
 }
 @media (prefers-color-scheme: light) and (hover: hover){
-    .text-button:hover {
-        color: black;
-        cursor: pointer;
-        background-color: #68aaee;
-    }
     .tab:hover {
         background-color: #eee;
     }
     .tab.active:hover {
         background-color: white;
-    }
-    #show-answer-button:hover {
-        background-color: #68aaee;
     }
     #result-buttons li:hover {
         transition: border 500ms;

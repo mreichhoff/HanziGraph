@@ -6,9 +6,7 @@
     <meta name="description"
         content="Learn Chinese by exploring the relationships between characters alongside examples that illustrate their use.">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.1/cytoscape.min.js"
-        integrity="sha512-REr7ZKldLo2Lx6UiQ6autPWZR+j4u1/7ElYsrcwFe3ZmT/TKXCF/vXqNP/d2BQ78k0tapdZFccpFkku9bwrS3w=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="./js/external/cytoscape.min.js"></script>
     <script type="module" src="./js/modules/init.js"></script>
     <!--TODO safari appeared not to support await-->
     <script src="./data/hanzi.js"></script>
@@ -189,9 +187,6 @@
                         studying.
                     </p>
                 </div>
-                <p>Characters added, last 10 days:</p>
-                <p id='added-graph-detail' class="stats-detail">Click a bar in the chart for details.</p>
-                <div id="added-graph"></div>
                 <p>Cards added by day:</p>
                 <div id="added-calendar"></div>
                 <p id='added-calendar-detail' class="stats-detail">Click a box in the calendar for details. Brighter

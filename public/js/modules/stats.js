@@ -92,12 +92,9 @@ let createCardGraphs = function (studyList) {
     document.getElementById('studied-graph').innerHTML = '';
     document.getElementById('studied-graph').appendChild(
         BarChart(levelData, {
-            x: (_, i) => 'HSK' + (i + 1),
-            y: d => (d.count / d.total),
-            yFormat: "%",
-            yLabel: "↑ Percentage Marked For Study",
-            color: "blue",
-            clickHandler: function (_, i) {
+            labelText: (i) => `HSK${i + 1}`,
+            color: () => "blue",
+            clickHandler: function (i) {
                 hskBarChartClickHandler(
                     'studied-graph-detail',
                     hskTotalsByLevel,
@@ -194,34 +191,6 @@ let createCardGraphs = function (studyList) {
         top: 0,
         left: document.getElementById('added-calendar-today').offsetLeft
     });
-    //(more than) slightly WTF
-    let today = new Date(getLocalISODate(new Date())).valueOf()
-    let last10Days = dailyAdds.filter(x =>
-        x.date.valueOf() <= today &&
-        x.date.valueOf() >= (today - 9 * 24 * 60 * 60 * 1000)).sort((x, y) => y.date.valueOf() - x.date.valueOf());
-
-    document.getElementById('added-graph').innerHTML = '';
-    document.getElementById('added-graph').appendChild(
-        BarChart(last10Days, {
-            x: (d, _) => getUTCISODate(d.date).substring(5, 10).replace('-', '/'),
-            y: d => d.chars.size,
-            yLabel: "↑ Characters Added",
-            color: "blue",
-            clickHandler: function (_, i) {
-                let detail = document.getElementById('added-graph-detail');
-                let data = last10Days[i];
-                let characters = '';
-                data.chars.forEach(x => characters += x);
-                if (data.total && data.chars.size) {
-                    detail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with these new characters: ${characters}`;
-                } else if (data.total) {
-                    detail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with no new characters.`;
-                } else {
-                    detail.innerText = `On ${getUTCISODate(data.date)}, you added no new cards.`;
-                }
-            }
-        })
-    );
 }
 let createVisitedGraphs = function (visitedCharacters) {
     if (!visitedCharacters) {
@@ -244,12 +213,9 @@ let createVisitedGraphs = function (visitedCharacters) {
     document.getElementById('visited-graph').innerHTML = '';
     document.getElementById('visited-graph').appendChild(
         BarChart(levelData, {
-            x: (_, i) => 'HSK' + (i + 1),
-            y: d => (d.count / d.total),
-            yFormat: "%",
-            yLabel: "↑ Percentage Visited",
-            color: "blue",
-            clickHandler: function (_, i) {
+            labelText: (i) => `HSK${i + 1}`,
+            color: () => "blue",
+            clickHandler: function (i) {
                 hskBarChartClickHandler(
                     'visited-graph-detail',
                     hskTotalsByLevel,
@@ -272,6 +238,10 @@ let createStudyResultGraphs = function (results) {
             correct: (i.toString() in results.hourly) ? (results.hourly[i.toString()].correct || 0) : 0,
             incorrect: (i.toString() in results.hourly) ? (results.hourly[i.toString()].incorrect || 0) : 0
         });
+    }
+    for (let i = 0; i < 24; i++) {
+        hourlyData[i]['count'] = hourlyData[i].correct + hourlyData[i].incorrect;
+        hourlyData[i]['total'] = hourlyData[i].correct + hourlyData[i].incorrect;
     }
     let daysStudied = Object.keys(results.daily);
     //ISO 8601 lexicographically sortable
@@ -330,37 +300,37 @@ let createStudyResultGraphs = function (results) {
         top: 0,
         left: document.getElementById('study-calendar-today').offsetLeft
     });
+    //TODO reinstate if desired
     //why, you ask? I don't know
-    let getHour = function (hour) { return hour == 0 ? '12am' : (hour < 12 ? `${hour}am` : hour == 12 ? '12pm' : `${hour % 12}pm`) };
-    document.getElementById('hourly-graph').innerHTML = '';
-    document.getElementById('hourly-graph').appendChild(
-        BarChart(hourlyData, {
-            x: d => getHour(d.hour),
-            y: d => d.correct + d.incorrect,
-            width: 1000,
-            yLabel: "↑ Count",
-            color: i => {
-                let percentage = (hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100;
-                if (percentage <= 100 && percentage >= 75) {
-                    return 'green';
-                }
-                if (percentage < 75 && percentage >= 50) {
-                    return 'gold';
-                }
-                if (percentage < 50 && percentage >= 25) {
-                    return 'orange';
-                }
-                if (percentage < 25) {
-                    return 'red';
-                }
-            },
-            clickHandler: function (_, i) {
-                let detail = document.getElementById('hourly-graph-detail');
-                detail.innerText = `In the ${getHour(hourlyData[i].hour)} hour, you've gotten ${hourlyData[i].correct} correct and ${hourlyData[i].incorrect} incorrect, or ${Math.round((hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100)}% correct.`;
-            }
-        })
-    );
-    document.getElementById('hourly-container').removeAttribute('style');
+    // let getHour = function (hour) { return hour == 0 ? '12am' : (hour < 12 ? `${hour}am` : hour == 12 ? '12pm' : `${hour % 12}pm`) };
+    // document.getElementById('hourly-graph').innerHTML = '';
+    // document.getElementById('hourly-graph').appendChild(
+    //     BarChart(hourlyData, {
+    //         x: d => getHour(d.hour),
+    //         y: d => d.correct + d.incorrect,
+    //         yLabel: "↑ Count",
+    //         color: i => {
+    //             let percentage = (hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100;
+    //             if (percentage <= 100 && percentage >= 75) {
+    //                 return 'green';
+    //             }
+    //             if (percentage < 75 && percentage >= 50) {
+    //                 return 'gold';
+    //             }
+    //             if (percentage < 50 && percentage >= 25) {
+    //                 return 'orange';
+    //             }
+    //             if (percentage < 25) {
+    //                 return 'red';
+    //             }
+    //         },
+    //         clickHandler: function (i) {
+    //             let detail = document.getElementById('hourly-graph-detail');
+    //             detail.innerText = `In the ${getHour(hourlyData[i].hour)} hour, you've gotten ${hourlyData[i].correct} correct and ${hourlyData[i].incorrect} incorrect, or ${Math.round((hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100)}% correct.`;
+    //         }
+    //     })
+    // );
+    // document.getElementById('hourly-container').removeAttribute('style');
 };
 
 export { createCardGraphs, createVisitedGraphs, createStudyResultGraphs };

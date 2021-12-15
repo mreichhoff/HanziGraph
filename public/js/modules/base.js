@@ -656,6 +656,12 @@ document.getElementById('show-general-faq').addEventListener('click', function (
 document.getElementById('exit-button').addEventListener('click', function () {
     document.getElementById('stats-container').style.display = 'none';
     document.getElementById('container').removeAttribute('style');
+    //TODO this is silly
+    document.getElementById('studied-graph-detail').innerText = '';
+    document.getElementById('added-calendar-detail').innerText = '';
+    document.getElementById('visited-graph-detail').innerText = '';
+    document.getElementById('study-calendar-detail').innerText = '';
+    document.getElementById('hourly-graph-detail').innerText = '';
 });
 document.getElementById('faq-exit-button').addEventListener('click', function () {
     document.getElementById('faq-container').style.display = 'none';
