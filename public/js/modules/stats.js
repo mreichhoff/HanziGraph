@@ -93,7 +93,7 @@ let createCardGraphs = function (studyList) {
     document.getElementById('studied-graph').appendChild(
         BarChart(levelData, {
             labelText: (i) => `HSK${i + 1}`,
-            color: () => "blue",
+            color: () => "#68aaee",
             clickHandler: function (i) {
                 hskBarChartClickHandler(
                     'studied-graph-detail',
@@ -214,7 +214,7 @@ let createVisitedGraphs = function (visitedCharacters) {
     document.getElementById('visited-graph').appendChild(
         BarChart(levelData, {
             labelText: (i) => `HSK${i + 1}`,
-            color: () => "blue",
+            color: () => "#68aaee",
             clickHandler: function (i) {
                 hskBarChartClickHandler(
                     'visited-graph-detail',
@@ -239,9 +239,13 @@ let createStudyResultGraphs = function (results) {
             incorrect: (i.toString() in results.hourly) ? (results.hourly[i.toString()].incorrect || 0) : 0
         });
     }
+    let total = 0;
+    for (let i = 0; i < hourlyData.length; i++) {
+        total += hourlyData[i].correct + hourlyData[i].incorrect;
+    }
     for (let i = 0; i < 24; i++) {
         hourlyData[i]['count'] = hourlyData[i].correct + hourlyData[i].incorrect;
-        hourlyData[i]['total'] = hourlyData[i].correct + hourlyData[i].incorrect;
+        hourlyData[i]['total'] = total;
     }
     let daysStudied = Object.keys(results.daily);
     //ISO 8601 lexicographically sortable
@@ -300,37 +304,43 @@ let createStudyResultGraphs = function (results) {
         top: 0,
         left: document.getElementById('study-calendar-today').offsetLeft
     });
-    //TODO reinstate if desired
     //why, you ask? I don't know
-    // let getHour = function (hour) { return hour == 0 ? '12am' : (hour < 12 ? `${hour}am` : hour == 12 ? '12pm' : `${hour % 12}pm`) };
-    // document.getElementById('hourly-graph').innerHTML = '';
-    // document.getElementById('hourly-graph').appendChild(
-    //     BarChart(hourlyData, {
-    //         x: d => getHour(d.hour),
-    //         y: d => d.correct + d.incorrect,
-    //         yLabel: "↑ Count",
-    //         color: i => {
-    //             let percentage = (hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100;
-    //             if (percentage <= 100 && percentage >= 75) {
-    //                 return 'green';
-    //             }
-    //             if (percentage < 75 && percentage >= 50) {
-    //                 return 'gold';
-    //             }
-    //             if (percentage < 50 && percentage >= 25) {
-    //                 return 'orange';
-    //             }
-    //             if (percentage < 25) {
-    //                 return 'red';
-    //             }
-    //         },
-    //         clickHandler: function (i) {
-    //             let detail = document.getElementById('hourly-graph-detail');
-    //             detail.innerText = `In the ${getHour(hourlyData[i].hour)} hour, you've gotten ${hourlyData[i].correct} correct and ${hourlyData[i].incorrect} incorrect, or ${Math.round((hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100)}% correct.`;
-    //         }
-    //     })
-    // );
-    // document.getElementById('hourly-container').removeAttribute('style');
+    let getHour = function (hour) { return hour == 0 ? '12am' : (hour < 12 ? `${hour}am` : hour == 12 ? '12pm' : `${hour % 12}pm`) };
+    document.getElementById('hourly-graph').innerHTML = '';
+    let hourlyClickHandler = function (i) {
+        let detail = document.getElementById('hourly-graph-detail');
+        if ((hourlyData[i].correct + hourlyData[i].incorrect) !== 0) {
+            detail.innerText = `In the ${getHour(hourlyData[i].hour)} hour, you've gotten ${hourlyData[i].correct} correct and ${hourlyData[i].incorrect} incorrect, or ${Math.round((hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100)}% correct.`;
+        } else {
+            detail.innerText = `In the ${getHour(hourlyData[i].hour)} hour, you've not studied.`;
+        }
+    };
+    let hourlyColor = i => {
+        let percentage = (hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100;
+        if (percentage <= 100 && percentage >= 75) {
+            return '#6de200';
+        }
+        if (percentage < 75 && percentage >= 50) {
+            return '#68aaee';
+        }
+        if (percentage < 50 && percentage >= 25) {
+            return '#ff9b35';
+        }
+        if (percentage < 25) {
+            return '#ff635f';
+        }
+    };
+    document.getElementById('hourly-graph').appendChild(
+        BarChart(hourlyData, {
+            labelText: (i) => getHour(i),
+            color: hourlyColor,
+            clickHandler: hourlyClickHandler,
+            includeYLabel: false,
+            customClass: 'hours',
+            scale: 1.5
+        })
+    );
+    document.getElementById('hourly-container').removeAttribute('style');
 };
 
 export { createCardGraphs, createVisitedGraphs, createStudyResultGraphs };

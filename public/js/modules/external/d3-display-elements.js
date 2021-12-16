@@ -54,35 +54,46 @@ function Calendar(data, {
 function BarChart(data, {
     labelText = () => { return '' },
     color = () => { return '' },
-    clickHandler = () => { }
+    clickHandler = () => { },
+    includeYLabel = true,
+    customClass
 } = {}) {
     let root = document.createElement('div');
     root.classList.add('bar-chart');
-    root.style.gridTemplateColumns = `50px repeat(${data.length}, 1fr)`
-    for (let i = 10; i >= 1; i--) {
-        let yLabel = document.createElement('div');
-        yLabel.style.gridRow = `${100 - (10 * i)}`;
-        yLabel.innerText = `${10 * i}% -`;
-        yLabel.className = 'bar-chart-y-label';
-        root.appendChild(yLabel);
+    if (customClass) {
+        root.classList.add(customClass);
+    }
+    if (includeYLabel) {
+        root.style.gridTemplateColumns = `50px repeat(${data.length}, 1fr)`;
+        for (let i = 10; i >= 1; i--) {
+            let yLabel = document.createElement('div');
+            yLabel.style.gridRow = `${100 - (10 * i)}`;
+            yLabel.innerText = `${10 * i}% -`;
+            yLabel.className = 'bar-chart-y-label';
+            root.appendChild(yLabel);
+        }
+    } else {
+        root.style.gridTemplateColumns = `repeat(${data.length}, 1fr)`;
     }
     for (let i = 0; i < data.length; i++) {
         let bar = document.createElement('div');
         bar.className = 'bar-chart-bar';
-        bar.style.gridColumn = `${i + 2}`;
+        bar.style.gridColumn = `${i + (includeYLabel ? 2 : 1)}`;
+        bar.style.backgroundColor = color(i);
         bar.style.gridRow = `${(100 - (Math.ceil(100 * data[i].count / data[i].total) || 1)) || 1} / 101`;
         bar.addEventListener('click', clickHandler.bind(this, i));
         root.appendChild(bar);
     }
     let hr = document.createElement('div');
     hr.style.gridRow = '101';
-    hr.style.gridColumn = `2/max`;
+    //don't try this at home
+    hr.style.gridColumn = `${includeYLabel ? 2 : 1}/max`;
     hr.className = 'bar-chart-separator';
     root.appendChild(hr);
     for (let i = 0; i < data.length; i++) {
         let xLabel = document.createElement('div');
         xLabel.className = 'bar-chart-x-label';
-        xLabel.style.gridColumn = `${i + 2}`;
+        xLabel.style.gridColumn = `${i + (includeYLabel ? 2 : 1)}`;
         xLabel.style.gridRow = '102';
         xLabel.innerText = labelText(i);
         root.appendChild(xLabel);

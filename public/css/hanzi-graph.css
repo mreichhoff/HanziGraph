@@ -495,11 +495,13 @@ select {
     font-family: sans-serif;
     font-size: 14px;
 }
+.hours.bar-chart {
+    height: 300px;
+    width: 85%;
+    overflow: scroll;
+}
 .bar-chart-separator {
     background: white;
-}
-.bar-chart-bar {
-    background-color: blue;
 }
 .bar-chart-x-label {
     margin-top: 2px;
@@ -517,6 +519,10 @@ select {
     }
     .tab {
         font-size: 16px;
+    }
+    .hours.bar-chart {
+        height: 250px;
+        width: 100%;
     }
 }
 @media (max-width:664px)  {
@@ -598,7 +604,7 @@ main.stats section h2 {
 main.stats section p {
     font-size: 18px;
 }
-#added-calendar-detail {
+#hourly-graph {
     padding-bottom: 40px;
 }
 .month-indicator {
