@@ -337,7 +337,7 @@ let createStudyResultGraphs = function (results) {
             clickHandler: hourlyClickHandler,
             includeYLabel: false,
             customClass: 'hours',
-            scale: 1.5
+            scaleToFit: true
         })
     );
     document.getElementById('hourly-container').removeAttribute('style');

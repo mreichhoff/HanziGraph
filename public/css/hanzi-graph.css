@@ -498,7 +498,8 @@ select {
 .hours.bar-chart {
     height: 300px;
     width: 85%;
-    overflow: scroll;
+    overflow-x: scroll;
+    overflow-y: hidden;
 }
 .bar-chart-separator {
     background: white;

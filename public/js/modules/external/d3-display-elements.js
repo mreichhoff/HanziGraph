@@ -56,7 +56,8 @@ function BarChart(data, {
     color = () => { return '' },
     clickHandler = () => { },
     includeYLabel = true,
-    customClass
+    customClass,
+    scaleToFit
 } = {}) {
     let root = document.createElement('div');
     root.classList.add('bar-chart');
@@ -75,12 +76,24 @@ function BarChart(data, {
     } else {
         root.style.gridTemplateColumns = `repeat(${data.length}, 1fr)`;
     }
+    let scaleMultiplier = 1;
+    if (scaleToFit) {
+        scaleMultiplier = 100;
+        //TODO if you ever get really serious, you could determine the number of rows
+        //in the grid for scaling purposes instead of scaling across 100 total
+        for (let i = 0; i < data.length; i++) {
+            let curr = Math.floor(1 / ((data[i].count || 1) / (data[i].total || 100)));
+            scaleMultiplier = Math.min(curr || 1, scaleMultiplier);
+        }
+    }
     for (let i = 0; i < data.length; i++) {
         let bar = document.createElement('div');
         bar.className = 'bar-chart-bar';
         bar.style.gridColumn = `${i + (includeYLabel ? 2 : 1)}`;
         bar.style.backgroundColor = color(i);
-        bar.style.gridRow = `${(100 - (Math.ceil(100 * data[i].count / data[i].total) || 1)) || 1} / 101`;
+        //how many `|| 1` is too many?
+        //you know what, don't answer
+        bar.style.gridRow = `${(100 - (Math.ceil(100 * (data[i].count * scaleMultiplier) / (data[i].total || 1)) || 1)) || 1} / 101`;
         bar.addEventListener('click', clickHandler.bind(this, i));
         root.appendChild(bar);
     }
