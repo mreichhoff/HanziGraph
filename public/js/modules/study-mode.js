@@ -105,7 +105,7 @@ let addCards = function (currentExamples, text) {
     }
     //update it whenever it changes
     saveStudyList(newKeys);
-    document.getElementById('exportStudyListButton').style.display = 'inline';
+    document.getElementById('exportStudyListButton').removeAttribute('style');
 };
 
 let currentKey = null;
@@ -183,7 +183,9 @@ document.getElementById('delete-card-button').addEventListener('click', function
     setupStudyMode();
 });
 
-document.getElementById('exportStudyListButton').style.display = (Object.keys(studyList).length > 0) ? 'inline' : 'none';
+if (Object.keys(studyList).length > 0) {
+    document.getElementById('exportStudyListButton').removeAttribute('style');
+}
 document.getElementById('exportStudyListButton').addEventListener('click', function () {
     let content = "data:text/plain;charset=utf-8,";
     for (const [key, value] of Object.entries(studyList)) {
@@ -235,7 +237,9 @@ let mergeStudyLists = function (baseStudyList, targetStudyList) {
         }
     }
     window.studyList = baseStudyList;
-    document.getElementById('exportStudyListButton').style.display = (Object.keys(studyList).length > 0) ? 'inline' : 'none';
+    if (Object.keys(studyList).length > 0) {
+        document.getElementById('exportStudyListButton').removeAttribute('style');
+    }
 };
 
 let studyResultsLastUpdated = null;

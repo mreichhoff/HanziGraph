@@ -3,28 +3,22 @@ import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/fi
 const auth = getAuth();
 const signinButton = document.getElementById('signin-button');
 const signoutButton = document.getElementById('signout-button');
-const signinMenuItem = document.getElementById('signin');
+const welcomeMessageContainer = document.getElementById('welcome-message-container');
+const welcomeMessage = document.getElementById('welcome-message');
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
         window.user = user;
         signinButton.style.display = 'none';
         signoutButton.style.display = 'inline-block';
-        let message = document.querySelector('.welcome-message');
-        if (!message) {
-            let welcomeMessage = document.createElement('span');
-            welcomeMessage.className = 'welcome-message';
-            welcomeMessage.textContent = "你好" + user.email;
-            signinMenuItem.appendChild(welcomeMessage);
-        }
+        welcomeMessageContainer.removeAttribute('style');
+        welcomeMessage.textContent = "你好" + user.email;
     } else {
         window.user = null;
+        welcomeMessageContainer.style.display = 'none';
         signoutButton.style.display = 'none';
         signinButton.style.display = 'inline-block';
-        let staleMessage = document.querySelector('.welcome-message');
-        if (staleMessage) {
-            staleMessage.remove();
-        }
+        welcomeMessage.textContent = '';
     }
 });
 

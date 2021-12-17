@@ -621,6 +621,14 @@ onAuthStateChanged(auth, (user) => {
         });
     }
 });
+document.getElementById('menu-button').addEventListener('click', function () {
+    document.getElementById('container').style.display = 'none';
+    document.getElementById('menu-container').removeAttribute('style');
+});
+document.getElementById('menu-exit-button').addEventListener('click', function () {
+    document.getElementById('menu-container').style.display = 'none';
+    document.getElementById('container').removeAttribute('style');
+});
 document.getElementById('stats-show').addEventListener('click', function () {
     document.getElementById('container').style.display = 'none';
     document.getElementById('stats-container').removeAttribute('style');
@@ -670,29 +678,6 @@ document.getElementById('faq-exit-button').addEventListener('click', function ()
     document.getElementById('faq-study-mode').style.display = 'none';
     document.getElementById('faq-recommendations').style.display = 'none';
     document.getElementById('faq-general').style.display = 'none';
-});
-
-let menuItems = document.querySelectorAll('.menu-item');
-document.getElementById('menu-toggle').addEventListener('change', function () {
-    let closeMenuIfNeeded = function (event) {
-        //if a click event occurs anywhere on the page that isn't associated with the menu, close the menu
-        if (document.getElementById('menu-button').contains(event.target) ||
-            document.getElementById('menu-toggle').contains(event.target) ||
-            document.getElementById('show-pinyin').contains(event.target)) {
-            document.body.addEventListener('click', closeMenuIfNeeded, { once: true });
-            return;
-        }
-        for (let i = 0; i < menuItems.length; i++) {
-            if (menuItems[i].contains(event.target)) {
-                document.body.addEventListener('click', closeMenuIfNeeded, { once: true });
-                return;
-            }
-        }
-        document.getElementById('menu-toggle').checked = false;
-    };
-    if (document.getElementById('menu-toggle').checked) {
-        document.body.addEventListener('click', closeMenuIfNeeded, { once: true });
-    }
 });
 
 export { initialize, makeSentenceNavigable, addTextToSpeech };
