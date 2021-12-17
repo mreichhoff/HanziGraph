@@ -261,6 +261,9 @@ p.zh-example {
     margin-left: 8px;
     margin-right: 8px;
 }
+#cards-due {
+    max-width: fit-content;
+}
 .sentence-container {
     max-width: 80%;
 }
