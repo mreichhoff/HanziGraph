@@ -311,7 +311,7 @@ let setupCytoscape = function (root, elements) {
                     'label': 'data(words)',
                     'color': (_ => prefersLight ? 'black' : '#eee'),
                     'font-size': '10px',
-                    'text-background-color': (_ => prefersLight ? '#f9f9f9' : '#333333'),
+                    'text-background-color': (_ => prefersLight ? '#f9f9f9' : '#3333'),
                     'text-background-opacity': '1',
                     'text-background-shape': 'round-rectangle',
                     'text-events': 'yes'
