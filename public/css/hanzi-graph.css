@@ -21,6 +21,7 @@ a {
     display: flex;
     flex-direction: column;
     overflow: auto;
+    border-right: 1px solid #3333;
 }
 #graph {
     width: 65%;
@@ -521,6 +522,8 @@ select {
     #control-pane {
         width: 100%;
         height: 50%;
+        border-right: 0;
+        border-bottom: 1px solid #3333;
     }
     #graph {
         width: 100%;
@@ -653,18 +656,18 @@ main.stats section p {
 @media (prefers-color-scheme: light) {
     .text-button {
         background-color: #eee;
-        border: 1px solid black;
+        border: 1px solid #3333;
     }
     .tab {
-        background-color: #3333;
+        background-color: #eee;
     }
     .tab.active {
-        border-bottom: 1px solid #121212;
+        border-bottom: 1px solid #3333;
         background-color: white;
     }
     .study-call-to-action {
         background-color: #eee;
-        border: 1px solid black;
+        border: 1px solid #3333;
     }
     body {
         color: black;
@@ -688,7 +691,7 @@ main.stats section p {
 }
 @media (prefers-color-scheme: light) and (hover: hover){
     .tab:hover {
-        background-color: #eee;
+        background-color: #f5f5f5;
     }
     .tab.active:hover {
         background-color: white;

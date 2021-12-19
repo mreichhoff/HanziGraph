@@ -617,6 +617,7 @@ onAuthStateChanged(auth, (user) => {
                 payload: visited
             });
         }).catch((error) => {
+            visitedLastUpdated = null;
             console.error(error);
         });
     }
@@ -644,6 +645,7 @@ document.getElementById('stats-show').addEventListener('click', function () {
                 payload: visited
             });
         }).catch((error) => {
+            visitedLastUpdated = null;
             console.error(error);
         });
     } else {

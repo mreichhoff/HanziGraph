@@ -253,6 +253,7 @@ document.getElementById('stats-show').addEventListener('click', function () {
             studyResults = snapshot.val() || studyResults;
             createStudyResultGraphs(studyResults);
         }).catch((error) => {
+            studyResultsLastUpdated = null;
             console.error(error);
         });
     } else {
