@@ -313,7 +313,8 @@ let setupCytoscape = function (root, elements) {
                     'font-size': '10px',
                     'text-background-color': (_ => prefersLight ? '#f9f9f9' : '#333333'),
                     'text-background-opacity': '1',
-                    'text-background-shape': 'round-rectangle'
+                    'text-background-shape': 'round-rectangle',
+                    'text-events': 'yes'
                 }
             }
         ],
