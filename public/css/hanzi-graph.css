@@ -215,6 +215,13 @@ h2 span {
     justify-content: center;
     align-items: center;
 }
+/*TODO: use classes to make this sane again*/
+#examples {
+    margin-top: 0;
+}
+#examples h2 {
+    margin-top: 16px;
+}
 #examples ul li {
     font-size: 16px;
     margin-bottom: 12px;
@@ -347,13 +354,13 @@ h2 .text-button {
 #wrong-button {
     background-color: #ff635f;
     color: black;
-    border: 1px solid black;
+    border: 1px solid #3333;
     user-select: none;
     -webkit-user-select: none;
 }
 #right-button {
     background-color: #6de200;
-    border:1px solid black;
+    border:1px solid #3333;
     color: black;
     user-select: none;
     -webkit-user-select: none;
@@ -370,6 +377,15 @@ h2 .text-button {
 #card-answer {
     font-size: 24px;
     width: 95%;
+}
+.card-detail {
+    font-size: 16px;
+    margin: 0 auto;
+    text-align: center;
+    width: 80%;
+}
+.card-detail p {
+    margin: 0 2px;
 }
 #delete-card-button {
     margin-right: auto;

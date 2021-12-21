@@ -141,6 +141,16 @@ let setupStudyMode = function () {
     let aList = makeSentenceNavigable(question, document.getElementById('card-question-container'));
     addTextToSpeech(document.getElementById('card-question-container'), question, aList);
     document.getElementById('card-answer').textContent = currentCard.en;
+    if (currentCard.wrongCount + currentCard.rightCount != 0) {
+        document.getElementById('card-old-message').removeAttribute('style');
+        document.getElementById('card-new-message').style.display = 'none';
+        document.getElementById('card-percentage').textContent = Math.round(100 * currentCard.rightCount / (currentCard.rightCount + currentCard.wrongCount));
+        document.getElementById('card-right-count').textContent = `${currentCard.rightCount} time${currentCard.rightCount != 1 ? 's' : ''}`;
+        document.getElementById('card-wrong-count').textContent = `${currentCard.wrongCount} time${currentCard.wrongCount != 1 ? 's' : ''}`;
+    } else {
+        document.getElementById('card-new-message').removeAttribute('style');
+        document.getElementById('card-old-message').style.display = 'none';
+    }
 };
 document.getElementById('show-answer-button').addEventListener('click', function () {
     document.getElementById('show-answer-button').innerText = "Answer:";
@@ -154,7 +164,7 @@ document.getElementById('wrong-button').addEventListener('click', function () {
     studyList[currentKey].due = now.valueOf();
     saveStudyList([currentKey]);
     setupStudyMode();
-    document.getElementById('study-call-to-action').scrollIntoView();
+    document.getElementById('cards-due').scrollIntoView();
     document.getElementById('cards-due').classList.add('result-indicator-wrong');
     setTimeout(function () {
         document.getElementById('cards-due').classList.remove('result-indicator-wrong');
@@ -169,7 +179,7 @@ document.getElementById('right-button').addEventListener('click', function () {
     studyList[currentKey].due = now.valueOf() + (nextJump * 24 * 60 * 60 * 1000);
     saveStudyList([currentKey]);
     setupStudyMode();
-    document.getElementById('study-call-to-action').scrollIntoView();
+    document.getElementById('cards-due').scrollIntoView();
     document.getElementById('cards-due').classList.add('result-indicator-right');
     setTimeout(function () {
         document.getElementById('cards-due').classList.remove('result-indicator-right');
