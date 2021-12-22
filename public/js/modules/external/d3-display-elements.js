@@ -93,7 +93,7 @@ function BarChart(data, {
         bar.style.backgroundColor = color(i);
         //how many `|| 1` is too many?
         //you know what, don't answer
-        bar.style.gridRow = `${(100 - (Math.ceil(100 * (data[i].count * scaleMultiplier) / (data[i].total || 1)) || 1)) || 1} / 101`;
+        bar.style.gridRow = `${(100 - (Math.floor(100 * (data[i].count * scaleMultiplier) / (data[i].total || 1)) || 1)) || 1} / 101`;
         bar.addEventListener('click', clickHandler.bind(this, i));
         root.appendChild(bar);
     }
