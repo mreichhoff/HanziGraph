@@ -107,7 +107,35 @@ let addCards = function (currentExamples, text) {
     saveStudyList(newKeys);
     document.getElementById('exportStudyListButton').removeAttribute('style');
 };
-
+let displayRelatedCards = function (anchor) {
+    let MAX_RELATED_CARDS = 3;
+    let related = findOtherCards(anchor.textContent);
+    let relatedCardsContainer = document.getElementById('related-cards-container');
+    let relatedCardsElement = document.getElementById('related-cards');
+    let relatedCardQueryElement = document.getElementById('related-card-query');
+    relatedCardQueryElement.innerText = anchor.textContent;
+    if (!related || !related.length) {
+        relatedCardsContainer.style.display = 'none';
+        return;
+    }
+    relatedCardsElement.innerHTML = '';
+    for (let i = 0; i < Math.min(MAX_RELATED_CARDS, related.length); i++) {
+        let item = document.createElement('p');
+        item.className = 'related-card';
+        item.innerText = related[i];
+        let relatedPerf = document.createElement('p');
+        relatedPerf.className = 'related-card-performance';
+        relatedPerf.innerText = `(right ${studyList[related[i]].rightCount}, wrong ${studyList[related[i]].wrongCount})`;
+        item.appendChild(relatedPerf);
+        relatedCardsElement.appendChild(item);
+    }
+    relatedCardsContainer.removeAttribute('style');
+}
+let findOtherCards = function (seeking) {
+    let cards = Object.keys(studyList);
+    let candidates = cards.filter(x => x !== currentKey && x.includes(seeking)).sort((a, b) => studyList[b].rightCount - studyList[a].rightCount);
+    return candidates;
+}
 let currentKey = null;
 let setupStudyMode = function () {
     currentKey = null;
@@ -139,6 +167,9 @@ let setupStudyMode = function () {
     }
     let question = currentCard.zh.join('');
     let aList = makeSentenceNavigable(question, document.getElementById('card-question-container'));
+    for (let i = 0; i < aList.length; i++) {
+        aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
+    }
     addTextToSpeech(document.getElementById('card-question-container'), question, aList);
     document.getElementById('card-answer').textContent = currentCard.en;
     if (currentCard.wrongCount + currentCard.rightCount != 0) {
@@ -151,6 +182,7 @@ let setupStudyMode = function () {
         document.getElementById('card-new-message').removeAttribute('style');
         document.getElementById('card-old-message').style.display = 'none';
     }
+    document.getElementById('related-cards-container').style.display = 'none';
 };
 document.getElementById('show-answer-button').addEventListener('click', function () {
     document.getElementById('show-answer-button').innerText = "Answer:";
@@ -306,6 +338,7 @@ onAuthStateChanged(auth, (user) => {
                     delete window.studyList[key];
                 }
             }
+            setupStudyMode();
         });
     }
 });

@@ -380,12 +380,23 @@ h2 .text-button {
 }
 .card-detail {
     font-size: 16px;
-    margin: 0 auto;
+    margin: 10px auto;
     text-align: center;
     width: 80%;
 }
 .card-detail p {
     margin: 0 2px;
+}
+.related-cards {
+    font-size: 20px;
+    font-family: sans-serif;
+}
+p.related-card {
+    margin: 6px auto;
+}
+.related-card-performance {
+    font-size: 16px;
+    font-family: Times, serif;
 }
 #delete-card-button {
     margin-right: auto;

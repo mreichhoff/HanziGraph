@@ -440,7 +440,7 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
                         updateGraph(character, document.getElementById('level-selector').value);
                     }
                     //enable seamless switching, but don't update if we're already showing examples for character
-                    if (!noExampleChange && (currentWord.length !== 1 || currentWord[0] !== character)) {
+                    if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
                         if (!updated) {
                             updateUndoChain();
                         }
