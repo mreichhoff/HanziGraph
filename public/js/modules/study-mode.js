@@ -305,6 +305,7 @@ document.getElementById('stats-show').addEventListener('click', function () {
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
+        //TODO get study results here, too
         const db = getDatabase();
         const flashcardRef = ref(db, 'users/' + user.uid + '/decks/zh-CN');
         onValue(flashcardRef, (snapshot) => {
