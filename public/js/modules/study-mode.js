@@ -219,10 +219,13 @@ document.getElementById('right-button').addEventListener('click', function () {
     recordEvent(now, studyResult.CORRECT);
 });
 document.getElementById('delete-card-button').addEventListener('click', function () {
-    delete studyList[currentKey];
-    addDeletedKey(currentKey);
-    saveStudyList([currentKey]);
+    let deletedKey = currentKey;
+    delete studyList[deletedKey];
+    //use deletedKey rather than currentKey since saveStudyList can end up modifying what we have
+    //same with addDeletedKey
+    saveStudyList([deletedKey]);
     setupStudyMode();
+    addDeletedKey(deletedKey);
 });
 
 if (Object.keys(studyList).length > 0) {
