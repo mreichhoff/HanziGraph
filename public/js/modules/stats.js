@@ -34,6 +34,10 @@ let getLocalISODate = function (date) {
 let fillGapDays = function (daysWithData, originalData, defaultEntry) {
     let firstDayStudied = daysWithData.length ? daysWithData[0].date : new Date();
     let lastDayStudied = daysWithData.length ? daysWithData[daysWithData.length - 1].date : new Date();
+    if (lastDayStudied.valueOf() < Date.now()) {
+        //weird edge case on them studying and then having clock skew, I think?
+        lastDayStudied = new Date();
+    }
     let firstYearStudied = firstDayStudied.getUTCFullYear();
     let lastYearStudied = lastDayStudied.getUTCFullYear();
     let start = new Date(`${firstYearStudied}-01-01`);
@@ -60,14 +64,18 @@ let hskBarChartClickHandler = function (id, hskTotalsByLevel, prop, index, messa
 };
 //could be an array, but we're possibly going to add out of order, and also trying to avoid hardcoding max level
 let hskTotalsByLevel = {};
-Object.keys(hanzi).forEach(x => {
-    let level = hanzi[x].node.level;
-    if (!(level in hskTotalsByLevel)) {
-        hskTotalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), characters: new Set() };
-    }
-    hskTotalsByLevel[level].total++;
-    hskTotalsByLevel[level].characters.add(x);
-});
+let updateHskTotalsByLevel = function () {
+    hskTotalsByLevel = {};
+    Object.keys(hanzi).forEach(x => {
+        let level = hanzi[x].node.level;
+        if (!(level in hskTotalsByLevel)) {
+            hskTotalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), characters: new Set() };
+        }
+        hskTotalsByLevel[level].total++;
+        hskTotalsByLevel[level].characters.add(x);
+    });
+}
+updateHskTotalsByLevel();
 let createCardGraphs = function (studyList) {
     let studyListCharacters = new Set();
     Object.keys(studyList).forEach(x => {
@@ -343,4 +351,4 @@ let createStudyResultGraphs = function (results) {
     document.getElementById('hourly-container').removeAttribute('style');
 };
 
-export { createCardGraphs, createVisitedGraphs, createStudyResultGraphs };
+export { createCardGraphs, createVisitedGraphs, createStudyResultGraphs, updateHskTotalsByLevel };

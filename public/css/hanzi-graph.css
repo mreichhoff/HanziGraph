@@ -293,6 +293,7 @@ p.zh-example {
     border-radius: 6px;
     font-family: Times, serif;
     user-select: none;
+    white-space: nowrap;
     -webkit-user-select: none;
 }
 p .text-button.listen {
@@ -646,8 +647,7 @@ main.stats section p {
     background-color: #333;
     width: 16px;
     height: 16px;
-    margin-left: 6px;
-    margin-bottom: 6px;
+    margin: 3px;
     border-radius: 4px;
 }
 .calendar-day.s {
@@ -679,9 +679,6 @@ main.stats section p {
     max-width: 95%;
     overflow: scroll;
     margin: 0 auto;
-}
-.calendar .today {
-    margin-right: 12px;
 }
 @media (prefers-color-scheme: light) {
     #control-pane {

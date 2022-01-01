@@ -1,5 +1,5 @@
 import { addCards, setupStudyMode, inStudyList } from "./study-mode.js";
-import { createVisitedGraphs } from "./stats.js";
+import { createVisitedGraphs, updateHskTotalsByLevel } from "./stats.js";
 import { getDatabase, update, ref, increment, get, child } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 
@@ -23,6 +23,17 @@ fetch('./data/single-char-words.json')
     });
 let activeTab = tabs.explore;
 let visited = JSON.parse(localStorage.getItem('visited') || '{}');
+
+let graphOptions = {
+    newHsk: {
+        display: 'New HSK', prefix: 'new-hsk-'
+    },
+    oldHsk: {
+        display: 'Old HSK', prefix: ''
+    }
+};
+let activeGraph = graphOptions.oldHsk;
+const graphSelector = document.getElementById('graph-selector');
 
 let getZhTts = function () {
     //use the first-encountered zh-CN voice for now
@@ -148,7 +159,8 @@ let persistState = function () {
         word: currentWord,
         level: document.getElementById('level-selector').value,
         undoChain: localUndoChain,
-        activeTab: activeTab
+        activeTab: activeTab,
+        currentGraph: activeGraph.display
     }));
 };
 let setupDefinitions = function (definitionList, definitionHolder) {
@@ -682,5 +694,37 @@ document.getElementById('faq-exit-button').addEventListener('click', function ()
     document.getElementById('faq-recommendations').style.display = 'none';
     document.getElementById('faq-general').style.display = 'none';
 });
+
+let switchGraph = function () {
+    let value = graphSelector.value;
+    if (value !== activeGraph.display) {
+        let key = Object.keys(graphOptions).find(x => graphOptions[x].display === value);
+        activeGraph = graphOptions[key];
+        let prefix = activeGraph.prefix;
+        //fetch regardless...allow service worker and/or browser cache to optimize
+        fetch(`./data/${prefix}graph.json`)
+            .then(response => response.json())
+            .then(function (data) {
+                window.hanzi = data;
+                recommendationsWorker.postMessage({
+                    type: 'graph',
+                    payload: window.hanzi
+                });
+                updateHskTotalsByLevel();
+            });
+        fetch(`./data/${prefix}sentences.json`)
+            .then(response => response.json())
+            .then(function (data) {
+                window.sentences = data;
+            });
+        fetch(`./data/${prefix}single-char-words.json`)
+            .then(response => response.json())
+            .then(function (data) {
+                singleCharacterWords = new Set(data);
+            });
+    }
+}
+
+graphSelector.addEventListener('change', switchGraph);
 
 export { initialize, makeSentenceNavigable, addTextToSpeech };

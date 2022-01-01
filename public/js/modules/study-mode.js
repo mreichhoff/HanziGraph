@@ -105,6 +105,7 @@ let addCards = function (currentExamples, text) {
     }
     //update it whenever it changes
     saveStudyList(newKeys);
+    //TODO: remove these keys from /deleted/ to allow re-add
     document.getElementById('exportStudyListButton').removeAttribute('style');
 };
 let displayRelatedCards = function (anchor) {
