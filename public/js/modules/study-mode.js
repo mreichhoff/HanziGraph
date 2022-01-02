@@ -1,6 +1,6 @@
 import { getDatabase, update, ref, onValue, increment, get, child } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
-import { makeSentenceNavigable, addTextToSpeech } from "./base.js";
+import { makeSentenceNavigable, addTextToSpeech, getActiveGraph } from "./base.js";
 import { createStudyResultGraphs, createCardGraphs } from "./stats.js";
 
 window.studyList = window.studyList || JSON.parse(localStorage.getItem('studyList') || '{}');
@@ -290,7 +290,7 @@ let mergeStudyLists = function (baseStudyList, targetStudyList) {
 
 let studyResultsLastUpdated = null;
 document.getElementById('stats-show').addEventListener('click', function () {
-    createCardGraphs(studyList);
+    createCardGraphs(studyList, getActiveGraph().legend);
     if (window.user && (!studyResultsLastUpdated || (Date.now() - studyResultsLastUpdated) >= (60 * 60 * 1000))) {
         //potentially could still get in here twice, but not super concerned about an extra read or two in rare cases
         studyResultsLastUpdated = Date.now();
@@ -303,7 +303,7 @@ document.getElementById('stats-show').addEventListener('click', function () {
             console.error(error);
         });
     } else {
-        createStudyResultGraphs(studyResults);
+        createStudyResultGraphs(studyResults, getActiveGraph().legend);
     }
 });
 

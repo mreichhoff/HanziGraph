@@ -76,7 +76,7 @@ let updateHskTotalsByLevel = function () {
     });
 }
 updateHskTotalsByLevel();
-let createCardGraphs = function (studyList) {
+let createCardGraphs = function (studyList, legend) {
     let studyListCharacters = new Set();
     Object.keys(studyList).forEach(x => {
         for (let i = 0; i < x.length; i++) {
@@ -100,7 +100,7 @@ let createCardGraphs = function (studyList) {
     document.getElementById('studied-graph').innerHTML = '';
     document.getElementById('studied-graph').appendChild(
         BarChart(levelData, {
-            labelText: (i) => `HSK${i + 1}`,
+            labelText: (i) => legend[i],
             color: () => "#68aaee",
             clickHandler: function (i) {
                 hskBarChartClickHandler(
@@ -108,7 +108,7 @@ let createCardGraphs = function (studyList) {
                     hskTotalsByLevel,
                     'seen',
                     i,
-                    `In HSK${i + 1}, your study list doesn't yet contain:<br>`
+                    `In ${legend[i]}, your study list doesn't yet contain:<br>`
                 );
             }
         })
@@ -200,7 +200,7 @@ let createCardGraphs = function (studyList) {
         left: document.getElementById('added-calendar-today').offsetLeft
     });
 }
-let createVisitedGraphs = function (visitedCharacters) {
+let createVisitedGraphs = function (visitedCharacters, legend) {
     if (!visitedCharacters) {
         return;
     }
@@ -221,7 +221,7 @@ let createVisitedGraphs = function (visitedCharacters) {
     document.getElementById('visited-graph').innerHTML = '';
     document.getElementById('visited-graph').appendChild(
         BarChart(levelData, {
-            labelText: (i) => `HSK${i + 1}`,
+            labelText: (i) => legend[i],
             color: () => "#68aaee",
             clickHandler: function (i) {
                 hskBarChartClickHandler(
@@ -229,7 +229,7 @@ let createVisitedGraphs = function (visitedCharacters) {
                     hskTotalsByLevel,
                     'visited',
                     i,
-                    `In HSK${i + 1}, you haven't yet visited:<br>`
+                    `In ${legend[i]}, you haven't yet visited:<br>`
                 );
             }
         })

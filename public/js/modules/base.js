@@ -24,15 +24,24 @@ fetch('./data/single-char-words.json')
 let activeTab = tabs.explore;
 let visited = JSON.parse(localStorage.getItem('visited') || '{}');
 
+let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
+let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
+let legendElements = document.querySelectorAll('div.circle');
 let graphOptions = {
     newHsk: {
-        display: 'New HSK', prefix: 'new-hsk-'
+        display: 'New HSK', prefix: 'new-hsk-', legend: hskLegend
     },
     oldHsk: {
-        display: 'Old HSK', prefix: ''
+        display: 'Old HSK', prefix: '', legend: hskLegend
+    },
+    top10k: {
+        display: 'Top 10k words', prefix: 'top-10k-', legend: freqLegend
     }
 };
 let activeGraph = graphOptions.oldHsk;
+let getActiveGraph = function () {
+    return activeGraph;
+}
 const graphSelector = document.getElementById('graph-selector');
 
 let getZhTts = function () {
@@ -652,7 +661,7 @@ document.getElementById('stats-show').addEventListener('click', function () {
         const dbRef = ref(getDatabase());
         get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
             visited = snapshot.val() || {};
-            createVisitedGraphs(visited);
+            createVisitedGraphs(visited, activeGraph.legend);
             recommendationsWorker.postMessage({
                 type: 'visited',
                 payload: visited
@@ -662,7 +671,7 @@ document.getElementById('stats-show').addEventListener('click', function () {
             console.error(error);
         });
     } else {
-        createVisitedGraphs(visited);
+        createVisitedGraphs(visited, activeGraph.legend);
     }
 });
 
@@ -710,6 +719,9 @@ let switchGraph = function () {
                     type: 'graph',
                     payload: window.hanzi
                 });
+                legendElements.forEach((x, index) => {
+                    x.innerText = activeGraph.legend[index];
+                });
                 updateHskTotalsByLevel();
             });
         fetch(`./data/${prefix}sentences.json`)
@@ -727,4 +739,4 @@ let switchGraph = function () {
 
 graphSelector.addEventListener('change', switchGraph);
 
-export { initialize, makeSentenceNavigable, addTextToSpeech };
+export { initialize, makeSentenceNavigable, addTextToSpeech, getActiveGraph };
