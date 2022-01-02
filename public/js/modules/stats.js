@@ -33,15 +33,17 @@ let getLocalISODate = function (date) {
 };
 let fillGapDays = function (daysWithData, originalData, defaultEntry) {
     let firstDayStudied = daysWithData.length ? daysWithData[0].date : new Date();
-    let lastDayStudied = daysWithData.length ? daysWithData[daysWithData.length - 1].date : new Date();
-    if (lastDayStudied.valueOf() < Date.now()) {
-        //weird edge case on them studying and then having clock skew, I think?
-        lastDayStudied = new Date();
+    //TODO add trollface ascii art to this insanity
+    let today = new Date(getLocalISODate(new Date()));
+
+    //always show at least the last 365 days
+    let floorDate = new Date(today.valueOf() - 365 * 24 * 60 * 60 * 1000);
+    if (firstDayStudied.valueOf() < floorDate.valueOf()) {
+        floorDate = firstDayStudied;
     }
-    let firstYearStudied = firstDayStudied.getUTCFullYear();
-    let lastYearStudied = lastDayStudied.getUTCFullYear();
-    let start = new Date(`${firstYearStudied}-01-01`);
-    let end = new Date(`${lastYearStudied}-12-31`);
+
+    let start = new Date(getLocalISODate(floorDate));
+    let end = today;
     let curr = start.valueOf();
     while (curr <= end.valueOf()) {
         let next = new Date(curr);
