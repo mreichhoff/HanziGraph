@@ -68,19 +68,18 @@ let levelColor = function (element) {
     }
 };
 
-let layout = function (root) {
+let layout = function (root, numNodes) {
+    //very scientifically chosen 95 (不 was slow to load)
+    //the grid layout appears to be far faster than cose
+    if (numNodes > 95) {
+        return {
+            name: 'grid'
+        };
+    }
     return {
         name: 'cose',
         animate: false
     };
-    // TODO determine the right way to render...going with cose for now
-    //     return {
-    //         name: 'breadthfirst',
-    //         roots: [root],
-    //         padding: 6,
-    //         spacingFactor: 0.85
-    //     };
-    // }
 };
 
 let runTextToSpeech = function (text, anchors) {
@@ -305,7 +304,7 @@ let setupCytoscape = function (root, elements) {
     cy = cytoscape({
         container: document.getElementById('graph'),
         elements: elements,
-        layout: layout(root),
+        layout: layout(root, elements.nodes.length),
         style: [
             {
                 selector: 'node',
@@ -368,8 +367,13 @@ let addToExistingGraph = function (character, maxLevel) {
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
     dfs(character, result, maxDepth, {}, maxLevel);
+    let preNodeCount = cy.nodes().length;
+    let preEdgeCount = cy.edges().length;
     cy.add(result);
-    cy.layout(layout(character)).run();
+    if (cy.nodes().length !== preNodeCount || cy.edges().length !== preEdgeCount) {
+        //if we've actually added to the graph, re-render it; else just let it be
+        cy.layout(layout(character, cy.nodes().length)).run();
+    }
     //currentHanzi must be set up before this call
     currentHanzi.push(character);
 };
