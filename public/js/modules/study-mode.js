@@ -25,6 +25,19 @@ let getISODate = function (date) {
         '-' +
         pad(date.getDate()));
 };
+
+let getCardCount = function (character) {
+    let count = 0;
+    //TODO: if performance becomes an issue, we can pre-compute this
+    //as-is, it performs fine even with larger flashcard decks
+    Object.keys(studyList || {}).forEach(x => {
+        if (x.indexOf(character) >= 0) {
+            count++;
+        }
+    });
+    return count;
+};
+
 let recordEvent = function (date, result) {
     let hour = date.getHours();
     let day = getISODate(date);
@@ -348,4 +361,4 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-export { setupStudyMode, saveStudyList, addCards, inStudyList };
+export { setupStudyMode, saveStudyList, addCards, inStudyList, getCardCount };

@@ -244,6 +244,12 @@ p.zh-example {
     cursor: pointer;
     font-family: sans-serif;
 }
+.context {
+    margin: 0;
+    margin-bottom: 12px;
+    font-family: sans-serif;
+    font-size: 14px;
+}
 .pinyin-example {
     display: none;
 }

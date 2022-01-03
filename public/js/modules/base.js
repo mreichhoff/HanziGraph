@@ -1,4 +1,4 @@
-import { addCards, setupStudyMode, inStudyList } from "./study-mode.js";
+import { addCards, setupStudyMode, inStudyList, getCardCount } from "./study-mode.js";
 import { createVisitedGraphs, updateHskTotalsByLevel } from "./stats.js";
 import { getDatabase, update, ref, increment, get, child } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
@@ -253,6 +253,25 @@ let setupExamples = function (words) {
         let definitionList = definitions[words[i]] || [];
         setupDefinitions(definitionList, definitionHolder);
         item.appendChild(definitionHolder);
+
+        let contextHolder = document.createElement('p');
+        //TODO not so thrilled with 'context' as the name here
+        contextHolder.className = 'context';
+        contextHolder.innerText += "Previously: ";
+        [...words[i]].forEach(x => {
+            contextHolder.innerText += `${x} seen ${visited[x] || 0} times; in ${getCardCount(x)} flash cards. `;
+        });
+        let contextFaqLink = document.createElement('a');
+        contextFaqLink.className = 'faq-link';
+        contextFaqLink.textContent = "Learn more.";
+        contextFaqLink.addEventListener('click', function () {
+            document.getElementById('container').style.display = 'none';
+            document.getElementById('faq-container').removeAttribute('style');
+            document.getElementById('faq-context').removeAttribute('style');
+        });
+        contextHolder.appendChild(contextFaqLink);
+        item.appendChild(contextHolder);
+
         //TODO: definition list doesn't have the same interface (missing zh field)
         currentExamples[words[i]].push(getCardFromDefinitions(words[i], definitionList));
         //setup current examples for potential future export
@@ -710,6 +729,7 @@ document.getElementById('faq-exit-button').addEventListener('click', function ()
     document.getElementById('faq-study-mode').style.display = 'none';
     document.getElementById('faq-recommendations').style.display = 'none';
     document.getElementById('faq-general').style.display = 'none';
+    document.getElementById('faq-context').style.display = 'none';
 });
 
 let switchGraph = function () {
