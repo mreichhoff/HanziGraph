@@ -7,11 +7,9 @@
     <meta name="description"
         content="Learn Chinese by exploring the relationships between characters alongside examples that illustrate their use.">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./js/data-load.js"></script>
     <script src="./js/external/cytoscape.min.js"></script>
     <script type="module" src="./js/modules/init.js"></script>
-    <!--TODO safari appeared not to support await-->
-    <script src="./data/hanzi.js"></script>
-    <script src="./data/sentences.js"></script>
     <script src="./data/definitions.js"></script>
     <link rel="stylesheet" type="text/css" href="css/hanzi-graph.css">
     <link rel="manifest" href="./manifest.json">
@@ -120,8 +118,7 @@
             </div>
             <div id="legend">
                 <p>
-                    The color of a given hanzi or connection indicates the level at which it first appears in the HSK
-                    exam.
+                    The color of a given hanzi or connection indicates its difficulty level.
                 </p>
                 <div id="level-container">
                     <div class="circle" style="background:#ff635f">HSK1</div>
@@ -229,20 +226,21 @@
                             <li>Definitions and pinyin transcriptions of individual words were pulled from <a
                                     href="https://cc-cedict.org/editor/editor.php">CEDICT</a>, which releases data under
                                 <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Accordingly,
-                                some
-                                of
-                                the files in <code>data</code> should be considered released under that same license.
+                                some of the files in <code>data</code> should be considered released under that same
+                                license.
                             </li>
                         </ul>
                     </li>
                     <li>
                         <h3>Which characters are present in the graph?</h3>
                         <ul>
-                            <li>All of the HSK 1-6 characters should be present, and most have examples. <a
-                                    href="https://github.com/mreichhoff/HanziGraph/issues/new/choose">Ping on github</a>
-                                with
-                                any
-                                issues. Future updates may add the newer HSK characters.</li>
+                            <li>That depends on which graph you choose. For either the old or new HSK exam, all of the
+                                HSK 1-6 characters should be present,
+                                and most have examples. When viewing the top 10k words, all hanzi used in those words
+                                should be present.
+                                <a href="https://github.com/mreichhoff/HanziGraph/issues/new/choose">Ping on github</a>
+                                with any issues. More examples and definitions will be added in the future.
+                            </li>
                         </ul>
                     </li>
                 </ul>
@@ -333,8 +331,10 @@
                         <h3>How can I stop seeing so many HSK1 recommendations?</h3>
                         <ul>
                             <li>You can choose via the menu in the upper left. The choice of &#39;easy&#39; means
-                                you&#39;ll not be shown anything harder than HSK3. The choice of &#39;hard&#39; means
-                                you&#39;ll only be shown HSK4-HSK6 hanzi.
+                                you&#39;ll not be shown anything harder than level 3 of your chosen wordlist. The choice
+                                of &#39;hard&#39; means
+                                you&#39;ll only be shown level4-level6 hanzi. Levels are determined by word frequency
+                                (when viewing the top 10k words) or the HSK exam.
                             </li>
                         </ul>
                     </li>
@@ -357,7 +357,7 @@
                 <a id="signout-button" class="authn-button" style="display:none">Sign out</a>
             </div>
             <div class="menu-item">
-                <label class="menu-item-text" for="level-selector">Choose max HSK level in the graph:</label>
+                <label class="menu-item-text" for="level-selector">Choose max level in the graph:</label>
                 <select id="level-selector">
                     <option>1</option>
                     <option>2</option>

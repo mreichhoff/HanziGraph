@@ -15,12 +15,6 @@ let tabs = {
     explore: 'explore',
     study: 'study'
 };
-let singleCharacterWords = new Set();
-fetch('./data/single-char-words.json')
-    .then(response => response.json())
-    .then(function (data) {
-        singleCharacterWords = new Set(data);
-    });
 let activeTab = tabs.explore;
 let visited = JSON.parse(localStorage.getItem('visited') || '{}');
 
@@ -169,7 +163,8 @@ let persistState = function () {
         level: document.getElementById('level-selector').value,
         undoChain: localUndoChain,
         activeTab: activeTab,
-        currentGraph: activeGraph.display
+        currentGraph: activeGraph.display,
+        graphPrefix: activeGraph.prefix
     }));
 };
 let setupDefinitions = function (definitionList, definitionHolder) {
@@ -268,7 +263,7 @@ let setupExamples = function (words) {
             let exampleWarning = document.createElement('p');
             exampleWarning.className = 'example-warning';
             //I know I shouldn't do this, but I'll refactor any day now
-            exampleWarning.textContent = 'This character does not appear alone in the HSK word list. It appears only as part of other words. Examples seen by clicking the connecting lines may be of higher quality. ';
+            exampleWarning.textContent = `This character does not appear alone in the ${activeGraph.display}. It appears only as part of other words. Examples seen by clicking the connecting lines may be of higher quality. `;
             let warningFaqLink = document.createElement('a');
             warningFaqLink.textContent = "Learn more.";
             warningFaqLink.className = 'faq-link';
@@ -416,14 +411,23 @@ let updateGraph = function (value, maxLevel) {
         persistState();
     }
 };
-
+let recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
 let initialize = function () {
     let oldState = JSON.parse(localStorage.getItem('state'));
     if (!oldState) {
+        //graph chosen is default, no need to modify legend or dropdown
         //add a default graph on page load to illustrate the concept
         let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
         updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], document.getElementById('level-selector').value);
     } else {
+        if (state.currentGraph) {
+            let activeGraphKey = Object.keys(graphOptions).find(x => graphOptions[x].display === state.currentGraph);
+            activeGraph = graphOptions[activeGraphKey];
+            legendElements.forEach((x, index) => {
+                x.innerText = activeGraph.legend[index];
+            });
+            graphSelector.value = state.currentGraph;
+        }
         document.getElementById('level-selector').value = oldState.level;
         //oldState.hanzi should always have length >= 1
         updateGraph(oldState.hanzi[0], oldState.level);
@@ -441,6 +445,15 @@ let initialize = function () {
         }
         persistState();
     }
+    updateHskTotalsByLevel();
+    recommendationsWorker.postMessage({
+        type: 'graph',
+        payload: hanzi
+    });
+    recommendationsWorker.postMessage({
+        type: 'visited',
+        payload: visited
+    });
 };
 
 let makeSentenceNavigable = function (text, container, noExampleChange) {
@@ -546,15 +559,6 @@ let visitedLastUpdated = null;
 let canUpdateVisited = function (user, lastUpdate) {
     return (user && (!lastUpdate || (Date.now() - lastUpdate) >= (60 * 60 * 1000)));
 }
-let recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
-recommendationsWorker.postMessage({
-    type: 'graph',
-    payload: hanzi
-});
-recommendationsWorker.postMessage({
-    type: 'visited',
-    payload: visited
-});
 document.getElementById('recommendations-difficulty').addEventListener('change', function () {
     let val = document.getElementById('recommendations-difficulty').value;
     let minLevel = 1;
@@ -734,6 +738,7 @@ let switchGraph = function () {
             .then(function (data) {
                 singleCharacterWords = new Set(data);
             });
+        persistState();
     }
 }
 

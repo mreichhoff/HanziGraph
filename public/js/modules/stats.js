@@ -43,7 +43,7 @@ let fillGapDays = function (daysWithData, originalData, defaultEntry) {
     }
 
     let start = new Date(getLocalISODate(floorDate));
-    let end = today;
+    let end = new Date(today.valueOf() + (7 * 24 * 60 * 60 * 1000));
     let curr = start.valueOf();
     while (curr <= end.valueOf()) {
         let next = new Date(curr);
@@ -77,7 +77,6 @@ let updateHskTotalsByLevel = function () {
         hskTotalsByLevel[level].characters.add(x);
     });
 }
-updateHskTotalsByLevel();
 let createCardGraphs = function (studyList, legend) {
     let studyListCharacters = new Set();
     Object.keys(studyList).forEach(x => {

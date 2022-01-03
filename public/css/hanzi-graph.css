@@ -669,7 +669,7 @@ main.stats section p {
     background-color: #ff00ff;
 }
 .calendar-day.future {
-    opacity: 0.1;
+    opacity: 0.4;
 }
 .calendar-day-dummy {
     opacity: 0;
