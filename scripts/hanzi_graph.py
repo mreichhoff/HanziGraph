@@ -12,26 +12,14 @@ class SetEncoder(json.JSONEncoder):
 def parse_line(line):
     # example: 上网（三级
     # TODO make more generic
-    return line.split("（")
-
-
-def get_level(level_string):
-    # level_string assumed to be of format: 二级）
-    return {
-        "一": 1,
-        "二": 2,
-        "三": 3,
-        "四": 4,
-        "五": 5,
-        "六": 6
-    }[level_string[0]]
+    return line.strip().split('\t')
 
 
 def get_words_with_level(lines):
     result = {}
     for line in lines:
         parsed_line = parse_line(line)
-        result[parsed_line[0]] = get_level(parsed_line[1])
+        result[parsed_line[0]] = int(parsed_line[1])
     return result
 
 

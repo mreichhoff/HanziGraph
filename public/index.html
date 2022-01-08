@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HanziGraph</title>
+    <meta charset="utf-8">
+    <meta name="description"
+        content="Learn Chinese by exploring the relationships between characters alongside examples that illustrate their use.">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./js/data-load.js"></script>
+    <script src="./js/external/cytoscape.min.js"></script>
+    <script type="module" src="./js/modules/init.js"></script>
+    <script src="./data/definitions.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/hanzi-graph.css">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="images/favicon-32x32.png" type="image/x-icon">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+</head>
+
+<body>
+    <div id="container">
+        <!-- lol, like control plane -->
+        <div id="control-pane">
+            <header class="header">
+                <div class="menu-container">
+                    <label id="menu-button">
+                        <i class="menu-expand"></i>
+                    </label>
+                </div>
+                <!--TODO get rid of this ID-->
+                <h1 id="main-header" class="main-header">HanziGraph</h1>
+                <div class="stats-container"><a id="stats-show"><i class="stats-button"></i></a></div>
+            </header>
+            <div class="tabs">
+                <div id="show-explore" class="tab active">Explore</div>
+                <div id="show-study" class="tab">Study</div>
+            </div>
+            <div id="example-container">
+                <div id="controls">
+                    <form id="hanzi-choose" class="control">
+                        <!-- i18n? what's that? -->
+                        <label for="hanzi-box">Choose a hanzi:</label>
+                        <input id="hanzi-box" type="text" maxlength="1" />
+                        <input type="submit" value="Go!" />
+                    </form>
+                    <div class="control center">
+                        <span class="text-button" id="previousHanziButton">Previous</span>
+                    </div>
+                </div>
+                <div id="recommendations-container" class="recommendations" style="display:none"></div>
+                <input id="show-pinyin" type="checkbox" style="display:none" />
+                <ul id="examples">
+                    <li class="walkthrough">
+                        <!-- i18n :-( -->
+                        <p>
+                            To begin, enter a hanzi above, or explore the example.
+                            You can click on hanzi or the lines that connect them.
+                            Example sentences will appear here!
+                        </p>
+                        <p>
+                            Examples can be exported into your flashcard app of choice (e.g., Anki).
+                            Simply click the "Add to study list" button on whichever words you'd like,
+                            and then the "Export" button once you're done, for
+                            an import-ready download.
+                        </p>
+                        <p>
+                            Circles (nodes) correspond to individual hanzi characters.
+                        </p>
+                        <p>
+                            Connecting lines (edges) represent a relationship among hanzi.
+                            Namely, by connecting the two linked hanzi, a word can be formed
+                            (or partially formed in the case of 3+ character words).
+                        </p>
+                        <p style="font-weight:bold">
+                            Both lines and circles can be clicked!
+                        </p>
+                        <p>
+                            Note that you can also zoom, drag, and re-arrange the diagram however you please.
+                        </p>
+                        <p>
+                            <a class="faq-link" id="show-general-faq">See the FAQ for more information.</a>
+                        </p>
+                    </li>
+                </ul>
+            </div>
+            <div id="study-container" style="display:none">
+                <p id="explain-text">Not sure how this works? <a class="faq-link" id="show-study-faq">Learn
+                        more.</a></p>
+                <p id="cards-due">
+                    Cards due: <span id="card-due-count"></span>
+                </p>
+                <p id="study-call-to-action" class="study-call-to-action">
+                    <span id="task-description">What does the text below mean?</span>
+                    <span id="task-complete">Studying complete. Check back later for more reviews. <br />You can also
+                        add more cards by exploring the graph!</span>
+                </p>
+                <p id="card-question-container"></p>
+                <span id="show-answer-button" class="study-call-to-action">Show Answer</span>
+                <div id="card-answer-container" style="display:none">
+                    <p id="card-answer"></p>
+                    <ul id="result-buttons">
+                        <li id="wrong-button">I didn't know that</li>
+                        <li id="right-button">I knew that!</li>
+                    </ul>
+                    <p id="delete-card-button" class="text-button">Delete this card</p>
+                    <div id="past-performance-container" class="card-detail">
+                        <p id="card-new-message" style="display:none">This is a new card!</p>
+                        <div id="card-old-message" style="display: none;">
+                            <p>Previous attempts: <span id="card-percentage"></span>% correct.</p>
+                            <p>Right <span id="card-right-count"></span>; Wrong <span id="card-wrong-count"></span>.</p>
+                        </div>
+                    </div>
+                    <div id="related-cards-container" class="card-detail" style="display:none">
+                        Other cards with <span id="related-card-query"></span>:
+                        <div id="related-cards" class="related-cards"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="legend">
+                <p>
+                    The color of a hanzi or connection indicates its difficulty level.
+                </p>
+                <div id="level-container">
+                    <div class="circle" style="background:#ff635f">HSK1</div>
+                    <div class="circle" style="background:#ff9b35">HSK2</div>
+                    <div class="circle" style="background:#fff249">HSK3</div>
+                    <div class="circle" style="background:#6de200">HSK4</div>
+                    <div class="circle" style="background:#de68ee">HSK5</div>
+                    <div class="circle" style="background:#68aaee">HSK6</div>
+                </div>
+            </div>
+        </div>
+        <div id="graph"></div>
+    </div>
+    <div id="stats-container" style="display:none">
+        <header class="header">
+            <div class="exit-container"><i id="exit-button" class="exit-arrow"></i></div>
+            <h1 class="main-header">HanziGraph</h1>
+            <div class="stats-container"></div>
+        </header>
+        <main class="stats">
+            <section>
+                <div id="visited-container" style="display:none">
+                    <h2>Hanzi Seen</h2>
+                    <h3>You've viewed examples for:</h3>
+                    <div id="visited-graph"></div>
+                    <p id="visited-graph-detail" class="stats-detail">Percentages are hanzi seen, not words. Click a bar
+                        in the chart for details.</p>
+                </div>
+                <h3>You've studied examples for:</h3>
+                <div id="studied-graph"></div>
+                <p id="studied-graph-detail" class="stats-detail">Percentages are hanzi seen, not words. Click a bar in
+                    the chart for details.</p>
+            </section>
+            <section>
+                <h2>Study Stats</h2>
+                <div id="study-calendar-container" style="display: none;">
+                    <h3>Study stats by day:</h3>
+                    <div id="study-calendar"></div>
+                    <p id='study-calendar-detail' class="stats-detail">Click a box in the calendar for details. Brighter
+                        colors mean more
+                        studying.
+                    </p>
+                </div>
+                <h3>Cards added by day:</h3>
+                <div id="added-calendar"></div>
+                <p id='added-calendar-detail' class="stats-detail">Click a box in the calendar for details. Brighter
+                    colors mean more cards
+                    added.
+                </p>
+                <div id="hourly-container" style="display: none;">
+                    <h3>Study stats by hour:</h3>
+                    <p id='hourly-graph-detail' class="stats-detail">Click a bar in the chart for details. <br />Green:
+                        75% correct or
+                        better.
+                        Blue:
+                        between 50% and 75%. Orange: between 25% and 50%. Red: less than 25% correct.</p>
+                    <div id="hourly-graph"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <div id="faq-container" style="display:none">
+        <header class="header">
+            <div class="exit-container"><i id="faq-exit-button" class="exit-arrow"></i></div>
+            <h1 class="main-header">HanziGraph</h1>
+            <div class="stats-container"></div>
+        </header>
+        <main class="faq">
+            <section id="faq-general" style="display:none">
+                <p>This site is a prototype, but it&#39;s decently usable in its current state. Feel free to see the
+                    (currently
+                    at a
+                    hackathon level of quality) <a href="https://github.com/mreichhoff/HanziGraph">code</a> or contact
+                    <a href="https://github.com/mreichhoff">the author on github</a>.
+                </p>
+                <p>The idea is to emphasize the word-forming connections among hanzi to help learners remember them.
+                    I&#39;ve
+                    found
+                    this more fun and effective than other methods, like studying stroke order, learning radicals or
+                    components,
+                    writing each character out 100 times, or doing spaced repetition on cards mapping hanzi to pinyin
+                    and
+                    English.
+                </p>
+                <ul>
+                    <li>
+                        <h3>Is there an app?</h3>
+                        <ul>
+                            <li>The site is a progressive web app. This means it uses modern browser APIs to make an
+                                installable
+                                app. Follow <a
+                                    href="https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Installing">the
+                                    directions for your platform</a> to install it. A truly native app downloadable from
+                                the app
+                                stores may be a future work item.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>Where did the examples come from?</h3>
+                        <ul>
+                            <li>The examples came from <a href="https://tatoeba.org">Tatoeba</a>, which releases data
+                                under <a href="https://creativecommons.org/licenses/by/2.0/fr">CC-BY 2.0 FR</a>, and
+                                from <a href="http://www.opensubtitles.org/">OpenSubtitles</a>, pulled from <a
+                                    href="https://opus.nlpl.eu/OpenSubtitles2018.php">opus.nlpl.eu</a>. </li>
+                            <li>Definitions and pinyin transcriptions of individual words were pulled from <a
+                                    href="https://cc-cedict.org/editor/editor.php">CEDICT</a>, which releases data under
+                                <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Accordingly,
+                                some of the files in <code>data</code> should be considered released under that same
+                                license.
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>Which characters are present in the graph?</h3>
+                        <ul>
+                            <li>That depends on which graph you choose. For either the old or new HSK exam, all of the
+                                HSK 1-6 characters should be present,
+                                and most have examples. When viewing the top 10k words, all hanzi used in those words
+                                should be present.
+                                <a href="https://github.com/mreichhoff/HanziGraph/issues/new/choose">Ping on github</a>
+                                with any issues. More examples and definitions will be added in the future.
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section id="faq-study-mode" style="display:none">
+                <ul>
+                    <li>
+                        <h3>How does study mode work?</h3>
+                        <ul>
+                            <li>When you add words to your study list, they will be presented to you as flashcards.
+                                You&#39;ll
+                                be
+                                shown the sentence and asked what it means; click &quot;Show Answer&quot; to see how
+                                tatoeba
+                                translated it. When you click &quot;I didn&#39;t know that&quot;, the card will be added
+                                back to
+                                the
+                                end of your to-study list. When you click &quot;I knew that!&quot;, it will be shown one
+                                day
+                                later,
+                                then two days if you get it right again, then four, and so on. It is meant to be a very,
+                                very
+                                basic
+                                <a href="https://en.wikipedia.org/wiki/Spaced_repetition">spaced repetition system</a>.
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>What does the export button do?</h3>
+                        <ul>
+                            <li>The export button downloads a file that can be imported into a different (better) spaced
+                                repetition
+                                system, like Anki.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>Where are the flashcards stored?</h3>
+                        <ul>
+                            <li>When you are not signed in: all data for the site is stored in <a
+                                    href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage">localStorage</a>.
+                                It
+                                does not leave your browser, and clearing your browser data will clear it.</li>
+                            <li>When you are signed in: the data is stored on our backend, and should be present and
+                                up-to-date
+                                on
+                                any device. If you add flashcards while signed out, then sign in or register later, the
+                                two
+                                lists
+                                will be merged, so you shouldn&#39;t lose anything.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section id="faq-single-char-warning" style="display:none">
+                <ul>
+                    <li>
+                        <h3>Why are the examples for certain characters a little strange?</h3>
+                        <ul>
+                            <li>Some characters are not commonly used alone. The examples use a process called <a
+                                    href="https://nlp.stanford.edu/IR-book/html/htmledition/tokenization-1.html">tokenization</a>
+                                to
+                                split the sentences into individual words. For example, 他是非常好 might be split into words
+                                like: 他,
+                                是,
+                                非常, 好, so searching for 非 by itself would not match. Future updates might show any
+                                sentences that contain the character, even if
+                                it&#39;s used
+                                as
+                                part of another word.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section id="faq-context" style="display:none">
+                <ul>
+                    <li>
+                        <h3>What does this "Previously" thing mean?</h3>
+                        <ul>
+                            <li>As you search, click, or tap hanzi or connections in the diagram, you are shown example
+                                sentences. Then, when you add words to your study list, the examples are converted to
+                                flashcards.
+                                The 'previous' section indicates how many times you've
+                                viewed examples for each of the characters in a given word, and how many cards contain
+                                those characters. The numbers are based on how things were when you viewed the examples,
+                                so if it's your first time seeing examples for a character, it'll say seen 0 times.
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section id="faq-recommendations" style="display:none">
+                <ul>
+                    <li>
+                        <h3>How do recommendations work?</h3>
+                        <ul>
+                            <li>Recommendations are based on what hanzi you&#39;ve already viewed examples for.
+                                For instance, if you&#39;ve viewed examples for 下午 and 上午,
+                                but you haven&#39;t yet visited 中, we might
+                                recommend you visit 中, since 中午 is common, and you&#39;ve seen 午 in several contexts,
+                                which might make it easier to remember 中.
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>How can I stop seeing so many HSK1 recommendations?</h3>
+                        <ul>
+                            <li>You can choose via the menu in the upper left. The choice of &#39;easy&#39; means
+                                you&#39;ll not be shown anything harder than level 3 of your chosen wordlist. The choice
+                                of &#39;hard&#39; means
+                                you&#39;ll only be shown level4-level6 hanzi. Levels are determined by word frequency
+                                (when viewing the top 10k words) or the HSK exam.
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+        </main>
+    </div>
+    <div id="menu-container" style="display:none">
+        <header class="header">
+            <div class="exit-container"><i id="menu-exit-button" class="exit-arrow"></i></div>
+            <h1 class="main-header">HanziGraph</h1>
+            <div class="stats-container"></div>
+        </header>
+        <main class="menu">
+            <div class="menu-item" id="welcome-message-container" style="display:none">
+                <span id="welcome-message" class="welcome-message"></span>
+            </div>
+            <div id="signin" class="menu-item">
+                <a id="signin-button" class="authn-button" href="login.html">Sign in</a>
+                <a id="signout-button" class="authn-button" style="display:none">Sign out</a>
+            </div>
+            <div class="menu-item">
+                <label class="menu-item-text" for="level-selector">Choose max level in the graph:</label>
+                <select id="level-selector">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option selected>6</option>
+                </select>
+            </div>
+            <div class="menu-item">
+                <label id="toggle-pinyin-label" class="menu-item-text menu-item-clickable" for="show-pinyin">
+                    Turn on pinyin in examples
+                </label>
+            </div>
+            <div class="menu-item">
+                <span class="menu-item-text">Recommendations:</span>
+                <label for="recommendations-difficulty">
+                    show me
+                    <select id="recommendations-difficulty">
+                        <option selected>any</option>
+                        <option>easy</option>
+                        <option>hard</option>
+                    </select>
+                    hanzi</label>
+            </div>
+            <div class="menu-item">
+                <label class="menu-item-text" for="graph-selector">Character set:</label>
+                <select id="graph-selector">
+                    <option selected>Old HSK</option>
+                    <option>New HSK</option>
+                    <option>Top 10k words</option>
+                </select>
+            </div>
+            <div class="menu-item menu-item-clickable" id="exportStudyListButton" style="display:none">Export study
+                list</span>
+        </main>
+    </div>
+    <script type="module" src="./js/modules/auth-state.js"></script>
+    <script type="module" src="./js/modules/study-mode.js"></script>
+    <script type="module" src="./js/modules/base.js"></script>
+    <script type="module" src="./js/modules/main.js"></script>
+</body>
+
+</html>

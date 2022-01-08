@@ -16,7 +16,7 @@ def get_hsk_words(hsk_filename):
     hsk_words = set()
     with open(hsk_filename) as f:
         for line in f:
-            word, _ = line.split('（')
+            word, _ = line.split('\t')
             hsk_words.add(word)
             # we want each word and each individual character
             for i in range(0, len(word)):
@@ -42,7 +42,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Get definitions for HSK words. Outputs JSON.')
     parser.add_argument(
-        '--hsk-filename', help='the filename of an HSK list of format {word（level）}')
+        '--hsk-filename', help='the filename of an HSK list of format {word\tlevel}')
     parser.add_argument(
         '--dict-filename', help='the dictionary filename, currently compatible with cedict')
 
