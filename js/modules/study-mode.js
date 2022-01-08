@@ -259,6 +259,9 @@ let mergeStudyLists = function (baseStudyList, targetStudyList) {
 };
 
 document.getElementById('stats-show').addEventListener('click', function () {
+    //TODO this is dumb...don't actually want two event handlers
+    document.getElementById('container').style.display = 'none';
+    document.getElementById('stats-container').removeAttribute('style');
     createCardGraphs(studyList, getActiveGraph().legend);
     createStudyResultGraphs(studyResults, getActiveGraph().legend);
 });
