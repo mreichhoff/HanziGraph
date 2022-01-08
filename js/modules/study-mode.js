@@ -1,5 +1,3 @@
-import { getDatabase, update, ref, onValue, increment, get, child } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 import { makeSentenceNavigable, addTextToSpeech, getActiveGraph } from "./base.js";
 import { createStudyResultGraphs, createCardGraphs } from "./stats.js";
 
@@ -67,32 +65,7 @@ let recordEvent = function (date, result) {
         studyResults.daily[day][result] = 0;
     }
     studyResults.daily[day][result]++;
-    if (window.user) {
-        const db = getDatabase();
-        const resultRef = ref(db, 'users/' + user.uid + '/results/zh-CN/');
-        let updates = {};
-        //using client side date since offline mode is possible (which means a batch could come in well after it happened),
-        //plus I prefer the user's perception of the time to win out, and their machine being incorrect should be rare
-        updates['hourly/' + (hour + '/' + result)] = increment(1);
-        updates['daily/' + (day + '/' + result)] = increment(1);
-
-        update(resultRef, updates);
-    } else {
-        localStorage.setItem('studyResults', JSON.stringify(studyResults));
-    }
-};
-
-let addDeletedKey = function (key) {
-    //if there's no user, the key will have been pulled out of localStorage; no further action
-    //if there is a user, write this key to the set of deleted keys, and let the corresponding
-    //update handler clear the key on any other devices
-    if (window.user) {
-        const db = getDatabase();
-        const flashcardRef = ref(db, 'users/' + user.uid + '/deleted/zh-CN');
-        let updates = {};
-        updates[sanitizeKey(key)] = true;
-        update(flashcardRef, updates);
-    }
+    localStorage.setItem('studyResults', JSON.stringify(studyResults));
 };
 
 let inStudyList = function (text) {
@@ -262,29 +235,13 @@ document.getElementById('exportStudyListButton').addEventListener('click', funct
     document.body.removeChild(link);
 });
 
-let auth = getAuth();
-
 let sanitizeKey = function (key) {
     return key.replaceAll('.', '。').replaceAll('#', '').replaceAll('$', 'USD').replaceAll('/', '').replaceAll('[', '').replaceAll(']', '');
 };
 
+//keeping keys/localStudyList for parity with current hacked together firebase version
 let saveStudyList = function (keys, localStudyList) {
-    if (window.user) {
-        localStudyList = localStudyList || studyList;
-        const db = getDatabase();
-        const flashcardRef = ref(db, 'users/' + user.uid + '/decks/zh-CN');
-        let updates = {};
-        for (let i = 0; i < keys.length; i++) {
-            //setting to null will delete if not present
-            updates[sanitizeKey(keys[i])] = localStudyList[keys[i]] || null;
-        }
-        update(flashcardRef, updates).then(() => {
-            //regardless of how we ended up here, the localStorage part has been incorporated, so clear it out
-            localStorage.removeItem('studyList');
-        });
-    } else {
-        localStorage.setItem('studyList', JSON.stringify(window.studyList));
-    }
+    localStorage.setItem('studyList', JSON.stringify(window.studyList));
 };
 let mergeStudyLists = function (baseStudyList, targetStudyList) {
     baseStudyList = baseStudyList || {};
@@ -301,64 +258,9 @@ let mergeStudyLists = function (baseStudyList, targetStudyList) {
     }
 };
 
-let studyResultsLastUpdated = null;
 document.getElementById('stats-show').addEventListener('click', function () {
     createCardGraphs(studyList, getActiveGraph().legend);
-    if (window.user && (!studyResultsLastUpdated || (Date.now() - studyResultsLastUpdated) >= (60 * 60 * 1000))) {
-        //potentially could still get in here twice, but not super concerned about an extra read or two in rare cases
-        studyResultsLastUpdated = Date.now();
-        const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${user.uid}/results/zh-CN`)).then((snapshot) => {
-            studyResults = snapshot.val() || studyResults;
-            createStudyResultGraphs(studyResults);
-        }).catch((error) => {
-            studyResultsLastUpdated = null;
-            console.error(error);
-        });
-    } else {
-        createStudyResultGraphs(studyResults, getActiveGraph().legend);
-    }
-});
-
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        //TODO get study results here, too
-        const db = getDatabase();
-        const flashcardRef = ref(db, 'users/' + user.uid + '/decks/zh-CN');
-        onValue(flashcardRef, (snapshot) => {
-            const data = snapshot.val();
-            let localStudyList = JSON.parse(localStorage.getItem('studyList')) || {};
-            if (Object.keys(localStudyList).length > 0) {
-                let updates = [];
-                for (const key in localStudyList) {
-                    if (!data || !data[key] ||
-                        (data[key].rightCount + data[key].wrongCount) <
-                        (localStudyList[key].rightCount + localStudyList[key].wrongCount)) {
-                        updates.push(key);
-                    }
-                }
-                if (updates.length > 0) {
-                    saveStudyList(updates, localStudyList);
-                    //break out and let the save re-trigger this
-                    return;
-                }
-            }
-            if (data) {
-                mergeStudyLists(window.studyList, data);
-                setupStudyMode();
-            }
-        });
-        const deletedFlashcardRef = ref(db, 'users/' + user.uid + '/deleted/zh-CN');
-        onValue(deletedFlashcardRef, (snapshot) => {
-            const data = snapshot.val() || {};
-            for (const key in data) {
-                if (window.studyList[key]) {
-                    delete window.studyList[key];
-                }
-            }
-            setupStudyMode();
-        });
-    }
+    createStudyResultGraphs(studyResults, getActiveGraph().legend);
 });
 
 export { setupStudyMode, saveStudyList, addCards, inStudyList, getCardCount };

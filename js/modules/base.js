@@ -1,7 +1,5 @@
 import { addCards, setupStudyMode, inStudyList, getCardCount } from "./study-mode.js";
 import { createVisitedGraphs, updateHskTotalsByLevel } from "./stats.js";
-import { getDatabase, update, ref, increment, get, child } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -119,17 +117,7 @@ let markVisited = function (nodes) {
         }
         visited[nodes[i]]++;
     }
-    if (window.user) {
-        const db = getDatabase();
-        const nodeRef = ref(db, 'users/' + user.uid + '/visited/zh-CN/');
-        let updates = {};
-        for (let i = 0; i < nodes.length; i++) {
-            updates[nodes[i]] = increment(1);
-        }
-        update(nodeRef, updates);
-    } else {
-        localStorage.setItem('visited', JSON.stringify(visited));
-    }
+    localStorage.setItem('visited', JSON.stringify(visited));
     recommendationsWorker.postMessage({
         type: 'visited',
         payload: visited
@@ -654,23 +642,6 @@ recommendationsWorker.onmessage = function (e) {
         document.getElementById('recommendations-container').style.display = 'none';
     }
 }
-const auth = getAuth();
-onAuthStateChanged(auth, (user) => {
-    if (canUpdateVisited(user, visitedLastUpdated)) {
-        visitedLastUpdated = Date.now();
-        const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
-            visited = snapshot.val() || {};
-            recommendationsWorker.postMessage({
-                type: 'visited',
-                payload: visited
-            });
-        }).catch((error) => {
-            visitedLastUpdated = null;
-            console.error(error);
-        });
-    }
-});
 document.getElementById('menu-button').addEventListener('click', function () {
     document.getElementById('container').style.display = 'none';
     document.getElementById('menu-container').removeAttribute('style');
@@ -682,24 +653,7 @@ document.getElementById('menu-exit-button').addEventListener('click', function (
 document.getElementById('stats-show').addEventListener('click', function () {
     document.getElementById('container').style.display = 'none';
     document.getElementById('stats-container').removeAttribute('style');
-    if (canUpdateVisited(user, visitedLastUpdated)) {
-        //potentially could still get in here twice, but not super concerned about an extra read or two in rare cases
-        visitedLastUpdated = Date.now();
-        const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
-            visited = snapshot.val() || {};
-            createVisitedGraphs(visited, activeGraph.legend);
-            recommendationsWorker.postMessage({
-                type: 'visited',
-                payload: visited
-            });
-        }).catch((error) => {
-            visitedLastUpdated = null;
-            console.error(error);
-        });
-    } else {
-        createVisitedGraphs(visited, activeGraph.legend);
-    }
+    createVisitedGraphs(visited, activeGraph.legend);
 });
 
 document.getElementById('show-study-faq').addEventListener('click', function () {
