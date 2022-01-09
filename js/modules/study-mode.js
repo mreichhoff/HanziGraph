@@ -1,6 +1,28 @@
 import { makeSentenceNavigable, addTextToSpeech, getActiveGraph } from "./base.js";
 import { createStudyResultGraphs, createCardGraphs } from "./stats.js";
 
+const exportStudyListButton = document.getElementById('exportStudyListButton');
+const cardQuestionContainer = document.getElementById('card-question-container');
+const cardAnswerContainer = document.getElementById('card-answer-container');
+const showAnswerButton = document.getElementById('show-answer-button');
+const taskCompleteElement = document.getElementById('task-complete');
+const cardsDueElement = document.getElementById('cards-due');
+const cardsDueCounter = document.getElementById('card-due-count');
+const taskDescriptionElement = document.getElementById('task-description');
+const cardAnswerElement = document.getElementById('card-answer');
+const wrongButton = document.getElementById('wrong-button');
+const rightButton = document.getElementById('right-button');
+const deleteCardButton = document.getElementById('delete-card-button');
+
+const relatedCardsContainer = document.getElementById('related-cards-container');
+const relatedCardsElement = document.getElementById('related-cards');
+const relatedCardQueryElement = document.getElementById('related-card-query');
+const cardOldMessageElement = document.getElementById('card-old-message');
+const cardNewMessageElement = document.getElementById('card-new-message');
+const cardRightCountElement = document.getElementById('card-right-count');
+const cardWrongCountElement = document.getElementById('card-wrong-count');
+const cardPercentageElement = document.getElementById('card-percentage');
+
 window.studyList = window.studyList || JSON.parse(localStorage.getItem('studyList') || '{}');
 let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
 
@@ -92,14 +114,11 @@ let addCards = function (currentExamples, text) {
     //update it whenever it changes
     saveStudyList(newKeys);
     //TODO: remove these keys from /deleted/ to allow re-add
-    document.getElementById('exportStudyListButton').removeAttribute('style');
+    exportStudyListButton.removeAttribute('style');
 };
 let displayRelatedCards = function (anchor) {
     let MAX_RELATED_CARDS = 3;
     let related = findOtherCards(anchor.textContent);
-    let relatedCardsContainer = document.getElementById('related-cards-container');
-    let relatedCardsElement = document.getElementById('related-cards');
-    let relatedCardQueryElement = document.getElementById('related-card-query');
     relatedCardQueryElement.innerText = anchor.textContent;
     if (!related || !related.length) {
         relatedCardsContainer.style.display = 'none';
@@ -127,8 +146,8 @@ let currentKey = null;
 let setupStudyMode = function () {
     currentKey = null;
     let currentCard = null;
-    document.getElementById('card-answer-container').style.display = 'none';
-    document.getElementById('show-answer-button').innerText = "Show Answer";
+    cardAnswerContainer.style.display = 'none';
+    showAnswerButton.innerText = "Show Answer";
     let counter = 0;
     for (const [key, value] of Object.entries(studyList)) {
         if (value.due <= Date.now()) {
@@ -140,57 +159,57 @@ let setupStudyMode = function () {
             counter++;
         }
     }
-    document.getElementById('card-due-count').textContent = counter;
-    document.getElementById('card-question-container').innerHTML = '';
+    cardsDueCounter.textContent = counter;
+    cardQuestionContainer.innerHTML = '';
     if (counter === 0) {
-        document.getElementById('task-complete').style.display = 'inline';
-        document.getElementById('task-description').style.display = 'none';
-        document.getElementById('show-answer-button').style.display = 'none';
+        taskCompleteElement.style.display = 'inline';
+        taskDescriptionElement.style.display = 'none';
+        showAnswerButton.style.display = 'none';
         return;
     } else {
-        document.getElementById('task-complete').style.display = 'none';
-        document.getElementById('task-description').style.display = 'inline';
-        document.getElementById('show-answer-button').style.display = 'block';
+        taskCompleteElement.style.display = 'none';
+        taskDescriptionElement.style.display = 'inline';
+        showAnswerButton.style.display = 'block';
     }
     let question = currentCard.zh.join('');
-    let aList = makeSentenceNavigable(question, document.getElementById('card-question-container'));
+    let aList = makeSentenceNavigable(question, cardQuestionContainer);
     for (let i = 0; i < aList.length; i++) {
         aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
     }
-    addTextToSpeech(document.getElementById('card-question-container'), question, aList);
-    document.getElementById('card-answer').textContent = currentCard.en;
+    addTextToSpeech(cardQuestionContainer, question, aList);
+    cardAnswerElement.textContent = currentCard.en;
     if (currentCard.wrongCount + currentCard.rightCount != 0) {
-        document.getElementById('card-old-message').removeAttribute('style');
-        document.getElementById('card-new-message').style.display = 'none';
-        document.getElementById('card-percentage').textContent = Math.round(100 * currentCard.rightCount / (currentCard.rightCount + currentCard.wrongCount));
-        document.getElementById('card-right-count').textContent = `${currentCard.rightCount} time${currentCard.rightCount != 1 ? 's' : ''}`;
-        document.getElementById('card-wrong-count').textContent = `${currentCard.wrongCount} time${currentCard.wrongCount != 1 ? 's' : ''}`;
+        cardOldMessageElement.removeAttribute('style');
+        cardNewMessageElement.style.display = 'none';
+        cardPercentageElement.textContent = Math.round(100 * currentCard.rightCount / (currentCard.rightCount + currentCard.wrongCount));
+        cardRightCountElement.textContent = `${currentCard.rightCount} time${currentCard.rightCount != 1 ? 's' : ''}`;
+        cardWrongCountElement.textContent = `${currentCard.wrongCount} time${currentCard.wrongCount != 1 ? 's' : ''}`;
     } else {
-        document.getElementById('card-new-message').removeAttribute('style');
-        document.getElementById('card-old-message').style.display = 'none';
+        cardNewMessageElement.removeAttribute('style');
+        cardOldMessageElement.style.display = 'none';
     }
-    document.getElementById('related-cards-container').style.display = 'none';
+    relatedCardsContainer.style.display = 'none';
 };
-document.getElementById('show-answer-button').addEventListener('click', function () {
-    document.getElementById('show-answer-button').innerText = "Answer:";
-    document.getElementById('card-answer-container').style.display = 'block';
-    document.getElementById('show-answer-button').scrollIntoView();
+showAnswerButton.addEventListener('click', function () {
+    showAnswerButton.innerText = "Answer:";
+    cardAnswerContainer.style.display = 'block';
+    showAnswerButton.scrollIntoView();
 });
-document.getElementById('wrong-button').addEventListener('click', function () {
+wrongButton.addEventListener('click', function () {
     let now = new Date();
     studyList[currentKey].nextJump = 0.5;
     studyList[currentKey].wrongCount++;
     studyList[currentKey].due = now.valueOf();
     saveStudyList([currentKey]);
     setupStudyMode();
-    document.getElementById('cards-due').scrollIntoView();
-    document.getElementById('cards-due').classList.add('result-indicator-wrong');
+    cardsDueElement.scrollIntoView();
+    cardsDueElement.classList.add('result-indicator-wrong');
     setTimeout(function () {
-        document.getElementById('cards-due').classList.remove('result-indicator-wrong');
+        cardsDueElement.classList.remove('result-indicator-wrong');
     }, 750);
     recordEvent(now, studyResult.INCORRECT);
 });
-document.getElementById('right-button').addEventListener('click', function () {
+rightButton.addEventListener('click', function () {
     let now = new Date();
     let nextJump = studyList[currentKey].nextJump || 0.5;
     studyList[currentKey].nextJump = nextJump * 2;
@@ -198,14 +217,14 @@ document.getElementById('right-button').addEventListener('click', function () {
     studyList[currentKey].due = now.valueOf() + (nextJump * 24 * 60 * 60 * 1000);
     saveStudyList([currentKey]);
     setupStudyMode();
-    document.getElementById('cards-due').scrollIntoView();
-    document.getElementById('cards-due').classList.add('result-indicator-right');
+    cardsDueElement.scrollIntoView();
+    cardsDueElement.classList.add('result-indicator-right');
     setTimeout(function () {
-        document.getElementById('cards-due').classList.remove('result-indicator-right');
+        cardsDueElement.classList.remove('result-indicator-right');
     }, 750);
     recordEvent(now, studyResult.CORRECT);
 });
-document.getElementById('delete-card-button').addEventListener('click', function () {
+deleteCardButton.addEventListener('click', function () {
     let deletedKey = currentKey;
     delete studyList[deletedKey];
     //use deletedKey rather than currentKey since saveStudyList can end up modifying what we have
@@ -216,9 +235,9 @@ document.getElementById('delete-card-button').addEventListener('click', function
 });
 
 if (Object.keys(studyList).length > 0) {
-    document.getElementById('exportStudyListButton').removeAttribute('style');
+    exportStudyListButton.removeAttribute('style');
 }
-document.getElementById('exportStudyListButton').addEventListener('click', function () {
+exportStudyListButton.addEventListener('click', function () {
     let content = "data:text/plain;charset=utf-8,";
     for (const [key, value] of Object.entries(studyList)) {
         //replace is a hack for flashcard field separator...TODO could escape
@@ -254,14 +273,18 @@ let mergeStudyLists = function (baseStudyList, targetStudyList) {
     }
     window.studyList = baseStudyList;
     if (Object.keys(studyList).length > 0) {
-        document.getElementById('exportStudyListButton').removeAttribute('style');
+        exportStudyListButton.removeAttribute('style');
     }
 };
 
-document.getElementById('stats-show').addEventListener('click', function () {
+//TODO this doesn't belong here
+const statsShowButton = document.getElementById('stats-show');
+const mainContainer = document.getElementById('container');
+const statsContainer = document.getElementById('stats-container');
+statsShowButton.addEventListener('click', function () {
     //TODO this is dumb...don't actually want two event handlers
-    document.getElementById('container').style.display = 'none';
-    document.getElementById('stats-container').removeAttribute('style');
+    mainContainer.style.display = 'none';
+    statsContainer.removeAttribute('style');
     createCardGraphs(studyList, getActiveGraph().legend);
     createStudyResultGraphs(studyResults, getActiveGraph().legend);
 });
