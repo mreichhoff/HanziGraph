@@ -1,6 +1,7 @@
 import { addCards, setupStudyMode, inStudyList, getCardCount } from "./study-mode.js";
 import { createVisitedGraphs, updateTotalsByLevel } from "./stats.js";
 import { faqTypes, showFaq } from "./faq.js";
+import { dataTypes, registerCallback, updateVisited, getVisited } from "./data-layer.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -15,7 +16,6 @@ let tabs = {
     study: 'study'
 };
 let activeTab = tabs.explore;
-let visited = JSON.parse(localStorage.getItem('visited') || '{}');
 
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
 let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
@@ -149,22 +149,7 @@ let runTextToSpeech = function (text, anchors) {
         speechSynthesis.speak(utterance);
     }
 };
-//nodes will be marked visited when the user searches for or taps a node in the graph
-//for now, avoiding marking nodes visited via clicking a hanzi in an example or card
-//because in those cases no examples are shown
-let markVisited = function (nodes) {
-    for (let i = 0; i < nodes.length; i++) {
-        if (!visited[nodes[i]]) {
-            visited[nodes[i]] = 0;
-        }
-        visited[nodes[i]]++;
-    }
-    localStorage.setItem('visited', JSON.stringify(visited));
-    recommendationsWorker.postMessage({
-        type: 'visited',
-        payload: visited
-    });
-};
+
 let addTextToSpeech = function (holder, text, aList) {
     let textToSpeechButton = document.createElement('span');
     textToSpeechButton.className = 'text-button listen';
@@ -288,7 +273,7 @@ let setupExamples = function (words) {
         contextHolder.className = 'context';
         contextHolder.innerText += "Previously: ";
         [...words[i]].forEach(x => {
-            contextHolder.innerText += `${x} seen ${visited[x] || 0} times; in ${getCardCount(x)} flash cards. `;
+            contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${getCardCount(x)} flash cards. `;
         });
         let contextFaqLink = document.createElement('a');
         contextFaqLink.className = 'faq-link';
@@ -393,7 +378,7 @@ let setupCytoscape = function (root, elements, graphContainer) {
         persistState();
         exploreTab.click();
         mainHeader.scrollIntoView();
-        markVisited([id]);
+        updateVisited([id]);
     });
     cy.on('tap', 'edge', function (evt) {
         let words = evt.target.data('words');
@@ -403,7 +388,7 @@ let setupCytoscape = function (root, elements, graphContainer) {
         //TODO toggle functions
         exploreTab.click();
         mainHeader.scrollIntoView();
-        markVisited([evt.target.source().id(), evt.target.target().id()]);
+        updateVisited([evt.target.source().id(), evt.target.target().id()]);
     });
 };
 
@@ -462,6 +447,12 @@ let updateGraph = function (value, maxLevel) {
 };
 let recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
 let initialize = function () {
+    registerCallback(dataTypes.visited, function (visited) {
+        recommendationsWorker.postMessage({
+            type: 'visited',
+            payload: visited
+        });
+    });
     let oldState = JSON.parse(localStorage.getItem('state'));
     if (!oldState) {
         //graph chosen is default, no need to modify legend or dropdown
@@ -501,7 +492,7 @@ let initialize = function () {
     });
     recommendationsWorker.postMessage({
         type: 'visited',
-        payload: visited
+        payload: getVisited()
     });
 };
 
@@ -549,7 +540,7 @@ hanziSearchForm.addEventListener('submit', function (event) {
         updateGraph(value, maxLevel);
         setupExamples([hanziBox.value]);
         persistState();
-        markVisited([value]);
+        updateVisited([value]);
     }
 });
 
@@ -690,7 +681,7 @@ menuExitButton.addEventListener('click', function () {
 statsShow.addEventListener('click', function () {
     mainContainer.style.display = 'none';
     statsContainer.removeAttribute('style');
-    createVisitedGraphs(visited, activeGraph.legend);
+    createVisitedGraphs(getVisited(), activeGraph.legend);
 });
 
 statsExitButton.addEventListener('click', function () {
