@@ -1,4 +1,5 @@
-import { initialize } from "./base.js";
+import { initialize as baseInit } from "./base.js";
+import { initialize as faqInit } from "./faq.js"
 
 Promise.all(
     [
@@ -12,5 +13,8 @@ Promise.all(
             .then(response => response.json())
             .then(data => window.singleCharacterWords = new Set(data))
     ]
-).then(_ => initialize());
+).then(_ => {
+    baseInit();
+    faqInit();
+});
 //ideally we'll continue adding to this

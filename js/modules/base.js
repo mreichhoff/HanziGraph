@@ -1,5 +1,6 @@
 import { addCards, setupStudyMode, inStudyList, getCardCount } from "./study-mode.js";
 import { createVisitedGraphs, updateTotalsByLevel } from "./stats.js";
+import { faqTypes, showFaq } from "./faq.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -38,17 +39,6 @@ let getActiveGraph = function () {
 //top-level section containers
 const mainContainer = document.getElementById('container');
 const statsContainer = document.getElementById('stats-container');
-
-//faq items
-const faqContainer = document.getElementById('faq-container');
-const faqSingleCharWarning = document.getElementById('faq-single-char-warning');
-const faqStudyMode = document.getElementById('faq-study-mode');
-const faqRecommendations = document.getElementById('faq-recommendations');
-const faqContext = document.getElementById('faq-context');
-const faqGeneral = document.getElementById('faq-general');
-const faqExitButton = document.getElementById('faq-exit-button');
-const showStudyFaq = document.getElementById('show-study-faq');
-const showGeneralFaq = document.getElementById('show-general-faq');
 
 const exploreTab = document.getElementById('show-explore');
 const studyTab = document.getElementById('show-study');
@@ -304,9 +294,7 @@ let setupExamples = function (words) {
         contextFaqLink.className = 'faq-link';
         contextFaqLink.textContent = "Learn more.";
         contextFaqLink.addEventListener('click', function () {
-            mainContainer.style.display = 'none';
-            faqContainer.removeAttribute('style');
-            faqContext.removeAttribute('style');
+            showFaq(faqTypes.context);
         });
         contextHolder.appendChild(contextFaqLink);
         item.appendChild(contextHolder);
@@ -325,9 +313,7 @@ let setupExamples = function (words) {
             warningFaqLink.textContent = "Learn more.";
             warningFaqLink.className = 'faq-link';
             warningFaqLink.addEventListener('click', function () {
-                mainContainer.style.display = 'none';
-                faqContainer.removeAttribute('style');
-                faqSingleCharWarning.removeAttribute('style');
+                showFaq(faqTypes.singleCharWarning);
             });
             exampleWarning.appendChild(warningFaqLink);
             item.appendChild(exampleWarning);
@@ -682,9 +668,7 @@ recommendationsWorker.onmessage = function (e) {
         recommendationsFaqLink.className = 'faq-link';
         recommendationsFaqLink.innerText = "Why?"
         recommendationsFaqLink.addEventListener('click', function () {
-            mainContainer.style.display = 'none';
-            faqContainer.removeAttribute('style');
-            faqRecommendations.removeAttribute('style');
+            showFaq[faqTypes.recommendations];
         });
         if (usedRecommendation) {
             recommendationsContainer.appendChild(recommendationsFaqLink);
@@ -709,16 +693,6 @@ statsShow.addEventListener('click', function () {
     createVisitedGraphs(visited, activeGraph.legend);
 });
 
-showStudyFaq.addEventListener('click', function () {
-    mainContainer.style.display = 'none';
-    faqContainer.removeAttribute('style');
-    faqStudyMode.removeAttribute('style');
-});
-showGeneralFaq.addEventListener('click', function () {
-    mainContainer.style.display = 'none';
-    faqContainer.removeAttribute('style');
-    faqGeneral.removeAttribute('style');
-});
 statsExitButton.addEventListener('click', function () {
     statsContainer.style.display = 'none';
     mainContainer.removeAttribute('style');
@@ -728,15 +702,6 @@ statsExitButton.addEventListener('click', function () {
     visitedGraphDetail.innerText = '';
     studyCalendarDetail.innerText = '';
     hourlyGraphDetail.innerText = '';
-});
-faqExitButton.addEventListener('click', function () {
-    faqContainer.style.display = 'none';
-    mainContainer.removeAttribute('style');
-    faqSingleCharWarning.style.display = 'none';
-    faqStudyMode.style.display = 'none';
-    faqRecommendations.style.display = 'none';
-    faqGeneral.style.display = 'none';
-    faqContext.style.display = 'none';
 });
 
 let switchGraph = function () {
