@@ -1,5 +1,6 @@
 import { initialize as baseInit } from "./base.js";
-import { initialize as faqInit } from "./faq.js"
+import { initialize as faqInit } from "./faq.js";
+import { initialize as studyModeInit } from "./study-mode.js";
 
 Promise.all(
     [
@@ -14,6 +15,7 @@ Promise.all(
             .then(data => window.singleCharacterWords = new Set(data))
     ]
 ).then(_ => {
+    studyModeInit();
     baseInit();
     faqInit();
 });

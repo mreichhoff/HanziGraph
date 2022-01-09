@@ -1,7 +1,6 @@
-import { addCards, setupStudyMode, inStudyList, getCardCount } from "./study-mode.js";
 import { createVisitedGraphs, updateTotalsByLevel } from "./stats.js";
 import { faqTypes, showFaq } from "./faq.js";
-import { dataTypes, registerCallback, updateVisited, getVisited } from "./data-layer.js";
+import { dataTypes, registerCallback, updateVisited, getVisited, addCards, getCardCount, inStudyList } from "./data-layer.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -588,17 +587,10 @@ studyTab.addEventListener('click', function () {
     studyContainer.removeAttribute('style');
     studyTab.classList.add('active');
     exploreTab.classList.remove('active');
-    setupStudyMode();
     activeTab = tabs.study;
     persistState();
 });
 
-
-//eww, even worse than normal from here down
-let visitedLastUpdated = null;
-let canUpdateVisited = function (user, lastUpdate) {
-    return (user && (!lastUpdate || (Date.now() - lastUpdate) >= (60 * 60 * 1000)));
-}
 recommendationsDifficultySelector.addEventListener('change', function () {
     let val = recommendationsDifficultySelector.value;
     let minLevel = 1;
