@@ -638,7 +638,7 @@ recommendationsWorker.onmessage = function (e) {
         recommendationsFaqLink.className = 'faq-link';
         recommendationsFaqLink.innerText = "Why?"
         recommendationsFaqLink.addEventListener('click', function () {
-            showFaq[faqTypes.recommendations];
+            showFaq(faqTypes.recommendations);
         });
         if (usedRecommendation) {
             recommendationsContainer.appendChild(recommendationsFaqLink);
