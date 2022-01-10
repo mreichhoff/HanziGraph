@@ -1,6 +1,5 @@
-import { makeSentenceNavigable, addTextToSpeech, getActiveGraph } from "./base.js";
-import { dataTypes, registerCallback, saveStudyList, getStudyList, findOtherCards, removeFromStudyList, recordEvent, getStudyResults, studyResult, updateCard } from "./data-layer.js";
-import { createStudyResultGraphs, createCardGraphs } from "./stats.js";
+import { makeSentenceNavigable, addTextToSpeech } from "./base.js";
+import { dataTypes, registerCallback, saveStudyList, getStudyList, findOtherCards, removeFromStudyList, recordEvent, studyResult, updateCard } from "./data-layer.js";
 
 //TODO probably doesn't belong here and should instead be indirected (could also just export from base)
 const studyTab = document.getElementById('show-study');
@@ -167,17 +166,5 @@ let initialize = function () {
         setupStudyMode();
     });
 };
-
-//TODO this doesn't belong here
-const statsShowButton = document.getElementById('stats-show');
-const mainContainer = document.getElementById('container');
-const statsContainer = document.getElementById('stats-container');
-statsShowButton.addEventListener('click', function () {
-    //TODO this is dumb...don't actually want two event handlers
-    mainContainer.style.display = 'none';
-    statsContainer.removeAttribute('style');
-    createCardGraphs(getStudyList(), getActiveGraph().legend);
-    createStudyResultGraphs(getStudyResults(), getActiveGraph().legend);
-});
 
 export { initialize }

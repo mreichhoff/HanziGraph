@@ -1,8 +1,20 @@
+import { getVisited, getStudyResults, getStudyList } from "./data-layer.js";
+import { getActiveGraph } from "./base.js";
+
+//TODO move these to a central spot
+const mainContainer = document.getElementById('container');
+const statsContainer = document.getElementById('stats-container');
+
+const statsShow = document.getElementById('stats-show');
+const statsExitButton = document.getElementById('exit-button');
+
 const hourlyGraphDetail = document.getElementById('hourly-graph-detail');
 const addedCalendarDetail = document.getElementById('added-calendar-detail');
 const studyCalendarDetail = document.getElementById('study-calendar-detail');
 const studyGraphDetail = document.getElementById('studied-graph-detail');
 const visitedGraphDetail = document.getElementById('visited-graph-detail');
+
+let lastLevelUpdatePrefix = '';
 
 function sameDay(d1, d2) {
     return d1.getUTCFullYear() == d2.getUTCFullYear() &&
@@ -120,7 +132,7 @@ function BarChart(data, {
     return root;
 }
 
-//TODO: combine with the one in study-mode.js
+//TODO: combine with the one in data-layer.js
 let getUTCISODate = function (date) {
     function pad(number) {
         if (number < 10) {
@@ -474,4 +486,32 @@ let createStudyResultGraphs = function (results) {
     document.getElementById('hourly-container').removeAttribute('style');
 };
 
-export { createCardGraphs, createVisitedGraphs, createStudyResultGraphs, updateTotalsByLevel };
+let initialize = function () {
+    lastLevelUpdatePrefix = getActiveGraph().prefix;
+    updateTotalsByLevel();
+    statsShow.addEventListener('click', function () {
+        let activeGraph = getActiveGraph();
+        if (activeGraph.prefix !== lastLevelUpdatePrefix) {
+            lastLevelUpdatePrefix = activeGraph.prefix;
+            updateTotalsByLevel();
+        }
+        mainContainer.style.display = 'none';
+        statsContainer.removeAttribute('style');
+        createVisitedGraphs(getVisited(), activeGraph.legend);
+        createCardGraphs(getStudyList(), activeGraph.legend);
+        createStudyResultGraphs(getStudyResults(), activeGraph.legend);
+    });
+
+    statsExitButton.addEventListener('click', function () {
+        statsContainer.style.display = 'none';
+        mainContainer.removeAttribute('style');
+        //TODO this is silly
+        studyGraphDetail.innerText = '';
+        addedCalendarDetail.innerText = '';
+        visitedGraphDetail.innerText = '';
+        studyCalendarDetail.innerText = '';
+        hourlyGraphDetail.innerText = '';
+    });
+};
+
+export { createCardGraphs, createVisitedGraphs, createStudyResultGraphs, updateTotalsByLevel, initialize };

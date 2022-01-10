@@ -1,6 +1,7 @@
 import { initialize as baseInit } from "./base.js";
 import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
+import { initialize as statsInit } from "./stats.js";
 
 Promise.all(
     [
@@ -17,6 +18,7 @@ Promise.all(
 ).then(_ => {
     studyModeInit();
     baseInit();
+    statsInit();
     faqInit();
 });
 //ideally we'll continue adding to this

@@ -1,4 +1,3 @@
-import { createVisitedGraphs, updateTotalsByLevel } from "./stats.js";
 import { faqTypes, showFaq } from "./faq.js";
 import { dataTypes, registerCallback, updateVisited, getVisited, addCards, getCardCount, inStudyList } from "./data-layer.js";
 
@@ -35,9 +34,8 @@ let getActiveGraph = function () {
     return activeGraph;
 }
 
-//top-level section containers
+//top-level section container
 const mainContainer = document.getElementById('container');
-const statsContainer = document.getElementById('stats-container');
 
 const exploreTab = document.getElementById('show-explore');
 const studyTab = document.getElementById('show-study');
@@ -66,16 +64,6 @@ const menuContainer = document.getElementById('menu-container');
 const menuExitButton = document.getElementById('menu-exit-button');
 const showPinyinCheckbox = document.getElementById('show-pinyin');
 const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
-
-//stats items
-const statsShow = document.getElementById('stats-show');
-const statsExitButton = document.getElementById('exit-button');
-//stats detail items: these don't belong here
-const studiedGraphDetail = document.getElementById('studied-graph-detail');
-const addedCalendarDetail = document.getElementById('added-calendar-detail');
-const visitedGraphDetail = document.getElementById('visited-graph-detail');
-const studyCalendarDetail = document.getElementById('study-calendar-detail');
-const hourlyGraphDetail = document.getElementById('hourly-graph-detail');
 
 let getZhTts = function () {
     //use the first-encountered zh-CN voice for now
@@ -484,7 +472,6 @@ let initialize = function () {
         }
         persistState();
     }
-    updateTotalsByLevel();
     recommendationsWorker.postMessage({
         type: 'graph',
         payload: hanzi
@@ -670,23 +657,6 @@ menuExitButton.addEventListener('click', function () {
     mainContainer.removeAttribute('style');
 });
 
-statsShow.addEventListener('click', function () {
-    mainContainer.style.display = 'none';
-    statsContainer.removeAttribute('style');
-    createVisitedGraphs(getVisited(), activeGraph.legend);
-});
-
-statsExitButton.addEventListener('click', function () {
-    statsContainer.style.display = 'none';
-    mainContainer.removeAttribute('style');
-    //TODO this is silly
-    studiedGraphDetail.innerText = '';
-    addedCalendarDetail.innerText = '';
-    visitedGraphDetail.innerText = '';
-    studyCalendarDetail.innerText = '';
-    hourlyGraphDetail.innerText = '';
-});
-
 let switchGraph = function () {
     let value = graphSelector.value;
     if (value !== activeGraph.display) {
@@ -705,7 +675,6 @@ let switchGraph = function () {
                 legendElements.forEach((x, index) => {
                     x.innerText = activeGraph.legend[index];
                 });
-                updateTotalsByLevel();
             });
         fetch(`./data/${prefix}sentences.json`)
             .then(response => response.json())
