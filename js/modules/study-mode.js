@@ -44,7 +44,7 @@ let displayRelatedCards = function (anchor) {
         item.innerText = related[i];
         let relatedPerf = document.createElement('p');
         relatedPerf.className = 'related-card-performance';
-        relatedPerf.innerText = `(right ${studyList[related[i]].rightCount}, wrong ${studyList[related[i]].wrongCount})`;
+        relatedPerf.innerText = `(right ${studyList[related[i]].rightCount || 0}, wrong ${studyList[related[i]].wrongCount || 0})`;
         item.appendChild(relatedPerf);
         relatedCardsElement.appendChild(item);
     }
@@ -90,9 +90,9 @@ let setupStudyMode = function () {
     if (currentCard.wrongCount + currentCard.rightCount != 0) {
         cardOldMessageElement.removeAttribute('style');
         cardNewMessageElement.style.display = 'none';
-        cardPercentageElement.textContent = Math.round(100 * currentCard.rightCount / (currentCard.rightCount + currentCard.wrongCount));
-        cardRightCountElement.textContent = `${currentCard.rightCount} time${currentCard.rightCount != 1 ? 's' : ''}`;
-        cardWrongCountElement.textContent = `${currentCard.wrongCount} time${currentCard.wrongCount != 1 ? 's' : ''}`;
+        cardPercentageElement.textContent = Math.round(100 * currentCard.rightCount / ((currentCard.rightCount + currentCard.wrongCount) || 1));
+        cardRightCountElement.textContent = `${currentCard.rightCount || 0} time${currentCard.rightCount != 1 ? 's' : ''}`;
+        cardWrongCountElement.textContent = `${currentCard.wrongCount || 0} time${currentCard.wrongCount != 1 ? 's' : ''}`;
     } else {
         cardNewMessageElement.removeAttribute('style');
         cardOldMessageElement.style.display = 'none';
