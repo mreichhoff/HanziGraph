@@ -1,6 +1,6 @@
 import { faqTypes, showFaq } from "./faq.js";
 import { updateVisited, getVisited, addCards, getCardCount, inStudyList } from "./data-layer.js";
-import { addToGraph, initializeGraph } from "./graph.js";
+import { addToGraph, initializeGraph, updateColorScheme } from "./graph.js";
 import { graphChanged, preferencesChanged } from "./recommendations.js";
 
 //TODO break this down further
@@ -361,6 +361,7 @@ let initialize = function () {
         }
         persistState();
     }
+    matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
 };
 
 let makeSentenceNavigable = function (text, container, noExampleChange) {

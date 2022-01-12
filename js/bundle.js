@@ -271,41 +271,44 @@
             animate: false
         };
     };
-    let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
+    let getStylesheet = function () {
         //TODO make this injectable
         let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+        return [
+            {
+                selector: 'node',
+                style: {
+                    'background-color': levelColor,
+                    'label': 'data(id)',
+                    'color': 'black',
+                    'font-size': '16px',
+                    'text-valign': 'center',
+                    'text-halign': 'center'
+                }
+            },
+            {
+                selector: 'edge',
+                style: {
+                    'line-color': levelColor,
+                    'target-arrow-shape': 'none',
+                    'curve-style': 'straight',
+                    'label': 'data(words)',
+                    'color': (_ => prefersLight ? 'black' : '#eee'),
+                    'font-size': '10px',
+                    'text-background-color': (_ => prefersLight ? '#f9f9f9' : '#121212'),
+                    'text-background-opacity': '1',
+                    'text-background-shape': 'round-rectangle',
+                    'text-events': 'yes'
+                }
+            }
+        ];
+    };
+    let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
         cy = cytoscape({
             container: graphContainer,
             elements: elements,
             layout: layout(root, elements.nodes.length),
-            style: [
-                {
-                    selector: 'node',
-                    style: {
-                        'background-color': levelColor,
-                        'label': 'data(id)',
-                        'color': 'black',
-                        'font-size': '16px',
-                        'text-valign': 'center',
-                        'text-halign': 'center'
-                    }
-                },
-                {
-                    selector: 'edge',
-                    style: {
-                        'line-color': levelColor,
-                        'target-arrow-shape': 'none',
-                        'curve-style': 'straight',
-                        'label': 'data(words)',
-                        'color': (_ => prefersLight ? 'black' : '#eee'),
-                        'font-size': '10px',
-                        'text-background-color': (_ => prefersLight ? '#f9f9f9' : '#121212'),
-                        'text-background-opacity': '1',
-                        'text-background-shape': 'round-rectangle',
-                        'text-events': 'yes'
-                    }
-                }
-            ],
+            style: getStylesheet(),
             maxZoom: 10,
             minZoom: 0.5
         });
@@ -332,6 +335,12 @@
     };
     let isInGraph = function (node) {
         return cy && cy.getElementById(node).length;
+    };
+    let updateColorScheme = function () {
+        if (!cy) {
+            return;
+        }
+        cy.style(getStylesheet());
     };
 
     //TODO: like in other files, remove these dups
@@ -790,6 +799,7 @@
             }
             persistState();
         }
+        matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
     };
 
     let makeSentenceNavigable = function (text, container, noExampleChange) {
