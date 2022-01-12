@@ -22,7 +22,7 @@
         general: faqGeneral,
         recommendations: faqRecommendations
     };
-    const faqTypes$1 = {
+    const faqTypes = {
         singleCharWarning: 'singleCharWarning',
         studyMode: 'studyMode',
         context: 'context',
@@ -30,7 +30,7 @@
         recommendations: 'recommendations'
     };
 
-    let showFaq$1 = function (faqType) {
+    let showFaq = function (faqType) {
         mainContainer$2.style.display = 'none';
         faqContainer.removeAttribute('style');
         faqTypesToElement[faqType].removeAttribute('style');
@@ -45,10 +45,10 @@
             });
         });
         showStudyFaq.addEventListener('click', function () {
-            showFaq$1(faqTypes$1.studyMode);
+            showFaq(faqTypes.studyMode);
         });
         showGeneralFaq.addEventListener('click', function () {
-            showFaq$1(faqTypes$1.general);
+            showFaq(faqTypes.general);
         });
     };
 
@@ -334,7 +334,9 @@
         return cy && cy.getElementById(node).length;
     };
 
+    //TODO: like in other files, remove these dups
     const recommendationsContainer = document.getElementById('recommendations-container');
+    const hanziBox$1 = document.getElementById('hanzi-box');
     let recommendationsWorker = null;
 
     let initialize$3 = function () {
@@ -375,7 +377,7 @@
                     curr.className = 'recommendation';
                     curr.addEventListener('click', function (event) {
                         //can I do this?
-                        hanziBox.value = event.target.innerText;
+                        hanziBox$1.value = event.target.innerText;
                         document.querySelector('#hanzi-choose input[type=submit]').click();
                         event.target.style.display = 'none';
                         let otherRecs = document.querySelectorAll('.recommendation');
@@ -477,7 +479,7 @@
     const examplesList = document.getElementById('examples');
     const exampleContainer = document.getElementById('example-container');
     //explore tab navigation controls
-    const hanziBox$1 = document.getElementById('hanzi-box');
+    const hanziBox = document.getElementById('hanzi-box');
     const hanziSearchForm = document.getElementById('hanzi-choose');
     const previousHanziButton = document.getElementById('previousHanziButton');
     //recommendations
@@ -661,7 +663,7 @@
             contextFaqLink.className = 'faq-link';
             contextFaqLink.textContent = "Learn more.";
             contextFaqLink.addEventListener('click', function () {
-                showFaq$1(faqTypes$1.context);
+                showFaq(faqTypes.context);
             });
             contextHolder.appendChild(contextFaqLink);
             item.appendChild(contextHolder);
@@ -680,7 +682,7 @@
                 warningFaqLink.textContent = "Learn more.";
                 warningFaqLink.className = 'faq-link';
                 warningFaqLink.addEventListener('click', function () {
-                    showFaq$1(faqTypes$1.singleCharWarning);
+                    showFaq(faqTypes.singleCharWarning);
                 });
                 exampleWarning.appendChild(warningFaqLink);
                 item.appendChild(exampleWarning);
@@ -827,7 +829,7 @@
 
     hanziSearchForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        let value = hanziBox$1.value;
+        let value = hanziBox.value;
         let maxLevel = levelSelector.value;
         if (value && hanzi[value]) {
             updateUndoChain();

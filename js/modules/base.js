@@ -1,6 +1,7 @@
 import { faqTypes, showFaq } from "./faq.js";
-import { dataTypes, registerCallback, updateVisited, getVisited, addCards, getCardCount, inStudyList } from "./data-layer.js";
-import { addToGraph, initializeGraph, isInGraph } from "./graph.js";
+import { updateVisited, getVisited, addCards, getCardCount, inStudyList } from "./data-layer.js";
+import { addToGraph, initializeGraph } from "./graph.js";
+import { graphChanged, preferencesChanged } from "./recommendations.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -53,7 +54,6 @@ const hanziBox = document.getElementById('hanzi-box');
 const hanziSearchForm = document.getElementById('hanzi-choose');
 const previousHanziButton = document.getElementById('previousHanziButton');
 //recommendations
-const recommendationsContainer = document.getElementById('recommendations-container');
 const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
 //menu items
@@ -327,14 +327,8 @@ let updateGraph = function (value, maxLevel) {
         persistState();
     }
 };
-let recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
+
 let initialize = function () {
-    registerCallback(dataTypes.visited, function (visited) {
-        recommendationsWorker.postMessage({
-            type: 'visited',
-            payload: visited
-        });
-    });
     let oldState = JSON.parse(localStorage.getItem('state'));
     if (!oldState) {
         //graph chosen is default, no need to modify legend or dropdown
@@ -367,14 +361,6 @@ let initialize = function () {
         }
         persistState();
     }
-    recommendationsWorker.postMessage({
-        type: 'graph',
-        payload: hanzi
-    });
-    recommendationsWorker.postMessage({
-        type: 'visited',
-        payload: getVisited()
-    });
 };
 
 let makeSentenceNavigable = function (text, container, noExampleChange) {
@@ -419,7 +405,7 @@ hanziSearchForm.addEventListener('submit', function (event) {
     if (value && hanzi[value]) {
         updateUndoChain();
         updateGraph(value, maxLevel);
-        setupExamples([hanziBox.value]);
+        setupExamples([value]);
         persistState();
         updateVisited([value]);
     }
@@ -475,73 +461,8 @@ studyTab.addEventListener('click', function () {
 
 recommendationsDifficultySelector.addEventListener('change', function () {
     let val = recommendationsDifficultySelector.value;
-    let minLevel = 1;
-    let maxLevel = 6;
-    if (val === 'easy') {
-        maxLevel = 3;
-    } else if (val === 'hard') {
-        minLevel = 4;
-    }
-    recommendationsWorker.postMessage({
-        type: 'levelPreferences',
-        payload: {
-            minLevel: minLevel,
-            maxLevel: maxLevel
-        }
-    })
+    preferencesChanged(val);
 });
-recommendationsWorker.onmessage = function (e) {
-    if (e.data.recommendations && e.data.recommendations.length) {
-        recommendationsContainer.innerHTML = '';
-        let recommendationMessage = document.createElement('span');
-        recommendationMessage.style.display = 'none';
-        recommendationMessage.innerText = "Recommended:";
-        recommendationMessage.className = "recommendation-message";
-        recommendationsContainer.appendChild(recommendationMessage);
-        recommendationsContainer.removeAttribute('style');
-        let usedRecommendation = false;
-        for (let i = 0; i < e.data.recommendations.length; i++) {
-            //don't bother recommending items already being shown in the graph
-            if (isInGraph(e.data.recommendations[i])) {
-                continue;
-            }
-            recommendationMessage.removeAttribute('style');
-            let curr = document.createElement('a');
-            curr.innerText = e.data.recommendations[i];
-            curr.className = 'recommendation';
-            curr.addEventListener('click', function (event) {
-                //can I do this?
-                hanziBox.value = event.target.innerText;
-                document.querySelector('#hanzi-choose input[type=submit]').click();
-                event.target.style.display = 'none';
-                let otherRecs = document.querySelectorAll('.recommendation');
-                let stillShown = false;
-                for (let i = 0; i < otherRecs.length; i++) {
-                    if (!otherRecs[i].style.display || otherRecs[i].style.display !== 'none') {
-                        stillShown = true;
-                        break;
-                    }
-                }
-                if (!stillShown) {
-                    recommendationsContainer.style.display = 'none';
-                }
-            });
-            recommendationsContainer.appendChild(curr);
-            usedRecommendation = true;
-        }
-        let recommendationsFaqLink = document.createElement('a');
-        recommendationsFaqLink.className = 'faq-link';
-        recommendationsFaqLink.innerText = "Why?"
-        recommendationsFaqLink.addEventListener('click', function () {
-            showFaq(faqTypes.recommendations);
-        });
-        if (usedRecommendation) {
-            recommendationsContainer.appendChild(recommendationsFaqLink);
-        }
-    } else {
-        recommendationsContainer.style.display = 'none';
-    }
-}
 
 menuButton.addEventListener('click', function () {
     mainContainer.style.display = 'none';
@@ -563,10 +484,7 @@ let switchGraph = function () {
             .then(response => response.json())
             .then(function (data) {
                 window.hanzi = data;
-                recommendationsWorker.postMessage({
-                    type: 'graph',
-                    payload: window.hanzi
-                });
+                graphChanged();
                 legendElements.forEach((x, index) => {
                     x.innerText = activeGraph.legend[index];
                 });
