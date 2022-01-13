@@ -1,7 +1,7 @@
-import { addCards, setupStudyMode, inStudyList, getCardCount } from "./study-mode.js";
-import { createVisitedGraphs, updateHskTotalsByLevel } from "./stats.js";
-import { getDatabase, update, ref, increment, get, child } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-database.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
+import { faqTypes, showFaq } from "./faq.js";
+import { updateVisited, getVisited, addCards, getCardCount, inStudyList } from "./data-layer.js";
+import { addToGraph, initializeGraph, updateColorScheme } from "./graph.js";
+import { graphChanged, preferencesChanged } from "./recommendations.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -10,13 +10,11 @@ let currentExamples = {};
 let currentHanzi = null;
 let currentWord = null;
 let undoChain = [];
-let cy = null;
 let tabs = {
     explore: 'explore',
     study: 'study'
 };
 let activeTab = tabs.explore;
-let visited = JSON.parse(localStorage.getItem('visited') || '{}');
 
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
 let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
@@ -36,7 +34,36 @@ let activeGraph = graphOptions.oldHsk;
 let getActiveGraph = function () {
     return activeGraph;
 }
+
+//top-level section container
+const mainContainer = document.getElementById('container');
+
+const exploreTab = document.getElementById('show-explore');
+const studyTab = document.getElementById('show-study');
+
+const mainHeader = document.getElementById('main-header');
+
+//study items...these may not belong in this file
+const studyContainer = document.getElementById('study-container');
+
+//explore tab items
+const examplesList = document.getElementById('examples');
+const exampleContainer = document.getElementById('example-container');
+//explore tab navigation controls
+const hanziBox = document.getElementById('hanzi-box');
+const hanziSearchForm = document.getElementById('hanzi-choose');
+const previousHanziButton = document.getElementById('previousHanziButton');
+//recommendations
+const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
+
+//menu items
 const graphSelector = document.getElementById('graph-selector');
+const levelSelector = document.getElementById('level-selector');
+const menuButton = document.getElementById('menu-button');
+const menuContainer = document.getElementById('menu-container');
+const menuExitButton = document.getElementById('menu-exit-button');
+const showPinyinCheckbox = document.getElementById('show-pinyin');
+const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 
 let getZhTts = function () {
     //use the first-encountered zh-CN voice for now
@@ -48,38 +75,6 @@ speechSynthesis.onvoiceschanged = function () {
     if (!zhTts) {
         zhTts = getZhTts();
     }
-};
-
-let levelColor = function (element) {
-    let level = element.data('level');
-    switch (level) {
-        case 6:
-            return '#68aaee';
-        case 5:
-            return '#de68ee';
-        case 4:
-            return '#6de200';
-        case 3:
-            return '#fff249';
-        case 2:
-            return '#ff9b35';
-        case 1:
-            return '#ff635f';
-    }
-};
-
-let layout = function (root, numNodes) {
-    //very scientifically chosen 95 (不 was slow to load)
-    //the grid layout appears to be far faster than cose
-    if (numNodes > 95) {
-        return {
-            name: 'grid'
-        };
-    }
-    return {
-        name: 'cose',
-        animate: false
-    };
 };
 
 let runTextToSpeech = function (text, anchors) {
@@ -109,32 +104,7 @@ let runTextToSpeech = function (text, anchors) {
         speechSynthesis.speak(utterance);
     }
 };
-//nodes will be marked visited when the user searches for or taps a node in the graph
-//for now, avoiding marking nodes visited via clicking a hanzi in an example or card
-//because in those cases no examples are shown
-let markVisited = function (nodes) {
-    for (let i = 0; i < nodes.length; i++) {
-        if (!visited[nodes[i]]) {
-            visited[nodes[i]] = 0;
-        }
-        visited[nodes[i]]++;
-    }
-    if (window.user) {
-        const db = getDatabase();
-        const nodeRef = ref(db, 'users/' + user.uid + '/visited/zh-CN/');
-        let updates = {};
-        for (let i = 0; i < nodes.length; i++) {
-            updates[nodes[i]] = increment(1);
-        }
-        update(nodeRef, updates);
-    } else {
-        localStorage.setItem('visited', JSON.stringify(visited));
-    }
-    recommendationsWorker.postMessage({
-        type: 'visited',
-        payload: visited
-    });
-};
+
 let addTextToSpeech = function (holder, text, aList) {
     let textToSpeechButton = document.createElement('span');
     textToSpeechButton.className = 'text-button listen';
@@ -159,7 +129,7 @@ let persistState = function () {
     localStorage.setItem('state', JSON.stringify({
         hanzi: currentHanzi,
         word: currentWord,
-        level: document.getElementById('level-selector').value,
+        level: levelSelector.value,
         undoChain: localUndoChain,
         activeTab: activeTab,
         currentGraph: activeGraph.display,
@@ -233,7 +203,6 @@ let setupExamples = function (words) {
     currentExamples = {};
     //TODO this mixes markup modification and example finding
     //refactor needed
-    let examplesList = document.getElementById('examples');
     while (examplesList.firstChild) {
         examplesList.firstChild.remove();
     }
@@ -259,15 +228,13 @@ let setupExamples = function (words) {
         contextHolder.className = 'context';
         contextHolder.innerText += "Previously: ";
         [...words[i]].forEach(x => {
-            contextHolder.innerText += `${x} seen ${visited[x] || 0} times; in ${getCardCount(x)} flash cards. `;
+            contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${getCardCount(x)} flash cards. `;
         });
         let contextFaqLink = document.createElement('a');
         contextFaqLink.className = 'faq-link';
         contextFaqLink.textContent = "Learn more.";
         contextFaqLink.addEventListener('click', function () {
-            document.getElementById('container').style.display = 'none';
-            document.getElementById('faq-container').removeAttribute('style');
-            document.getElementById('faq-context').removeAttribute('style');
+            showFaq(faqTypes.context);
         });
         contextHolder.appendChild(contextFaqLink);
         item.appendChild(contextHolder);
@@ -286,9 +253,7 @@ let setupExamples = function (words) {
             warningFaqLink.textContent = "Learn more.";
             warningFaqLink.className = 'faq-link';
             warningFaqLink.addEventListener('click', function () {
-                document.getElementById('container').style.display = 'none';
-                document.getElementById('faq-container').removeAttribute('style');
-                document.getElementById('faq-single-char-warning').removeAttribute('style');
+                showFaq(faqTypes.singleCharWarning);
             });
             exampleWarning.appendChild(warningFaqLink);
             item.appendChild(exampleWarning);
@@ -318,130 +283,58 @@ let getCardFromDefinitions = function (text, definitionList) {
     result['en'] = answer;
     return result;
 };
-let setupCytoscape = function (root, elements) {
-    let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-    cy = cytoscape({
-        container: document.getElementById('graph'),
-        elements: elements,
-        layout: layout(root, elements.nodes.length),
-        style: [
-            {
-                selector: 'node',
-                style: {
-                    'background-color': levelColor,
-                    'label': 'data(id)',
-                    'color': 'black',
-                    'font-size': '16px',
-                    'text-valign': 'center',
-                    'text-halign': 'center'
-                }
-            },
-            {
-                selector: 'edge',
-                style: {
-                    'line-color': levelColor,
-                    'target-arrow-shape': 'none',
-                    'curve-style': 'straight',
-                    'label': 'data(words)',
-                    'color': (_ => prefersLight ? 'black' : '#eee'),
-                    'font-size': '10px',
-                    'text-background-color': (_ => prefersLight ? '#f9f9f9' : '#121212'),
-                    'text-background-opacity': '1',
-                    'text-background-shape': 'round-rectangle',
-                    'text-events': 'yes'
-                }
-            }
-        ],
-        maxZoom: 10,
-        minZoom: 0.5
-    });
-    cy.on('tap', 'node', function (evt) {
-        let id = evt.target.id();
-        let maxLevel = document.getElementById('level-selector').value;
-        updateUndoChain();
-        //not needed if currentHanzi contains id, which would mean the nodes have already been added
-        //includes O(N) but currentHanzi almost always < 10 elements
-        if (currentHanzi && !currentHanzi.includes(id)) {
-            addToExistingGraph(id, maxLevel);
-        }
-        setupExamples([id]);
-        persistState();
-        document.getElementById('show-explore').click();
-        document.getElementById('main-header').scrollIntoView();
-        markVisited([id]);
-    });
-    cy.on('tap', 'edge', function (evt) {
-        let words = evt.target.data('words');
-        updateUndoChain();
-        setupExamples(words);
-        persistState();
-        //TODO toggle functions
-        document.getElementById('show-explore').click();
-        document.getElementById('main-header').scrollIntoView();
-        markVisited([evt.target.source().id(), evt.target.target().id()]);
-    });
-};
 
-let addToExistingGraph = function (character, maxLevel) {
-    let result = { 'nodes': [], 'edges': [] };
-    let maxDepth = 1;
-    dfs(character, result, maxDepth, {}, maxLevel);
-    let preNodeCount = cy.nodes().length;
-    let preEdgeCount = cy.edges().length;
-    cy.add(result);
-    if (cy.nodes().length !== preNodeCount || cy.edges().length !== preEdgeCount) {
-        //if we've actually added to the graph, re-render it; else just let it be
-        cy.layout(layout(character, cy.nodes().length)).run();
+let nodeTapHandler = function (evt) {
+    let id = evt.target.id();
+    let maxLevel = levelSelector.value;
+    updateUndoChain();
+    //not needed if currentHanzi contains id, which would mean the nodes have already been added
+    //includes O(N) but currentHanzi almost always < 10 elements
+    if (currentHanzi && !currentHanzi.includes(id)) {
+        addToExistingGraph(id, maxLevel);
     }
+    setupExamples([id]);
+    persistState();
+    exploreTab.click();
+    mainHeader.scrollIntoView();
+    updateVisited([id]);
+};
+let edgeTapHandler = function (evt) {
+    let words = evt.target.data('words');
+    updateUndoChain();
+    setupExamples(words);
+    persistState();
+    //TODO toggle functions
+    exploreTab.click();
+    mainHeader.scrollIntoView();
+    updateVisited([evt.target.source().id(), evt.target.target().id()]);
+};
+let addToExistingGraph = function (character, maxLevel) {
+    addToGraph(character, maxLevel);
     //currentHanzi must be set up before this call
     currentHanzi.push(character);
-};
-
-let dfs = function (start, elements, maxDepth, visited, maxLevel) {
-    if (maxDepth < 0) {
-        return;
-    }
-    let curr = hanzi[start];
-    //todo does javascript have a set?
-    visited[start] = true;
-    for (const [key, value] of Object.entries(curr.edges)) {
-        //don't add outgoing edges when we won't process the next layer
-        if (maxDepth > 0 && value.level <= maxLevel) {
-            if (!visited[key]) {
-                elements.edges.push({ data: { id: Array.from(start + key).sort().toString(), source: start, target: key, level: value.level, words: value.words } });
-            }
-        }
-    }
-    elements.nodes.push({ data: { id: start, level: curr.node.level } });
-    for (const [key, value] of Object.entries(curr.edges)) {
-        if (!visited[key] && value.level <= maxLevel) {
-            dfs(key, elements, maxDepth - 1, visited, maxLevel);
-        }
-    }
 };
 let updateGraph = function (value, maxLevel) {
     document.getElementById('graph').remove();
     let nextGraph = document.createElement("div");
     nextGraph.id = 'graph';
-    document.getElementById('container').append(nextGraph);
+    //TODO: makes assumption about markup order
+    mainContainer.append(nextGraph);
 
     if (value && hanzi[value]) {
-        let result = { 'nodes': [], 'edges': [] };
-        let maxDepth = 1;
-        dfs(value, result, maxDepth, {}, maxLevel);
-        setupCytoscape(value, result);
+        initializeGraph(value, maxLevel, nextGraph, nodeTapHandler, edgeTapHandler);
         currentHanzi = [value];
         persistState();
     }
 };
-let recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
+
 let initialize = function () {
     let oldState = JSON.parse(localStorage.getItem('state'));
     if (!oldState) {
         //graph chosen is default, no need to modify legend or dropdown
         //add a default graph on page load to illustrate the concept
         let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
-        updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], document.getElementById('level-selector').value);
+        updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], levelSelector.value);
     } else {
         if (state.currentGraph) {
             let activeGraphKey = Object.keys(graphOptions).find(x => graphOptions[x].display === state.currentGraph);
@@ -451,7 +344,7 @@ let initialize = function () {
             });
             graphSelector.value = state.currentGraph;
         }
-        document.getElementById('level-selector').value = oldState.level;
+        levelSelector.value = oldState.level;
         //oldState.hanzi should always have length >= 1
         updateGraph(oldState.hanzi[0], oldState.level);
         for (let i = 1; i < oldState.hanzi.length; i++) {
@@ -464,19 +357,11 @@ let initialize = function () {
         if (oldState.activeTab === tabs.study) {
             //reallllllly need a toggle method
             //this does set up the current card, etc.
-            document.getElementById('show-study').click();
+            studyTab.click();
         }
         persistState();
     }
-    updateHskTotalsByLevel();
-    recommendationsWorker.postMessage({
-        type: 'graph',
-        payload: hanzi
-    });
-    recommendationsWorker.postMessage({
-        type: 'visited',
-        payload: visited
-    });
+    matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
 };
 
 let makeSentenceNavigable = function (text, container, noExampleChange) {
@@ -494,7 +379,7 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
                     if (currentHanzi && !currentHanzi.includes(character)) {
                         updateUndoChain();
                         updated = true;
-                        updateGraph(character, document.getElementById('level-selector').value);
+                        updateGraph(character, levelSelector.value);
                     }
                     //enable seamless switching, but don't update if we're already showing examples for character
                     if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
@@ -514,31 +399,31 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
     return anchorList;
 };
 
-document.getElementById('hanzi-choose').addEventListener('submit', function (event) {
+hanziSearchForm.addEventListener('submit', function (event) {
     event.preventDefault();
-    let value = document.getElementById('hanzi-box').value;
-    let maxLevel = document.getElementById('level-selector').value;
+    let value = hanziBox.value;
+    let maxLevel = levelSelector.value;
     if (value && hanzi[value]) {
         updateUndoChain();
         updateGraph(value, maxLevel);
-        setupExamples([document.getElementById('hanzi-box').value]);
+        setupExamples([value]);
         persistState();
-        markVisited([value]);
+        updateVisited([value]);
     }
 });
 
-document.getElementById('level-selector').addEventListener('change', function () {
+levelSelector.addEventListener('change', function () {
     //TODO hide edges in existing graph rather than rebuilding
     //TODO refresh after level change can be weird
-    updateGraph(currentHanzi[currentHanzi.length - 1], document.getElementById('level-selector').value);
+    updateGraph(currentHanzi[currentHanzi.length - 1], levelSelector.value);
 });
 
-document.getElementById('previousHanziButton').addEventListener('click', function () {
+previousHanziButton.addEventListener('click', function () {
     if (!undoChain.length) {
         return;
     }
     let next = undoChain.pop();
-    let maxLevel = document.getElementById('level-selector').value;
+    let maxLevel = levelSelector.value;
     updateGraph(next.hanzi[0], maxLevel);
     for (let i = 1; i < next.hanzi.length; i++) {
         addToExistingGraph(next.hanzi[i], maxLevel);
@@ -548,188 +433,45 @@ document.getElementById('previousHanziButton').addEventListener('click', functio
     }
     persistState();
 });
-document.getElementById('show-pinyin').addEventListener('change', function () {
-    let toggleLabel = document.getElementById('toggle-pinyin-label');
-    if (document.getElementById('show-pinyin').checked) {
+showPinyinCheckbox.addEventListener('change', function () {
+    let toggleLabel = togglePinyinLabel;
+    if (showPinyinCheckbox.checked) {
         toggleLabel.innerText = 'Turn off pinyin in examples';
     } else {
         toggleLabel.innerText = 'Turn on pinyin in examples';
     }
 });
-document.getElementById('show-explore').addEventListener('click', function () {
-    document.getElementById('example-container').removeAttribute('style');
-    document.getElementById('study-container').style.display = 'none';
+exploreTab.addEventListener('click', function () {
+    exampleContainer.removeAttribute('style');
+    studyContainer.style.display = 'none';
     //TODO could likely do all of this with CSS
-    document.getElementById('show-explore').classList.add('active');
-    document.getElementById('show-study').classList.remove('active');
+    exploreTab.classList.add('active');
+    studyTab.classList.remove('active');
     activeTab = tabs.explore;
     persistState();
 });
 
-document.getElementById('show-study').addEventListener('click', function () {
-    document.getElementById('example-container').style.display = 'none';
-    document.getElementById('study-container').removeAttribute('style');
-    document.getElementById('show-study').classList.add('active');
-    document.getElementById('show-explore').classList.remove('active');
-    setupStudyMode();
+studyTab.addEventListener('click', function () {
+    exampleContainer.style.display = 'none';
+    studyContainer.removeAttribute('style');
+    studyTab.classList.add('active');
+    exploreTab.classList.remove('active');
     activeTab = tabs.study;
     persistState();
 });
 
-
-//eww, even worse than normal from here down
-let visitedLastUpdated = null;
-let canUpdateVisited = function (user, lastUpdate) {
-    return (user && (!lastUpdate || (Date.now() - lastUpdate) >= (60 * 60 * 1000)));
-}
-document.getElementById('recommendations-difficulty').addEventListener('change', function () {
-    let val = document.getElementById('recommendations-difficulty').value;
-    let minLevel = 1;
-    let maxLevel = 6;
-    if (val === 'easy') {
-        maxLevel = 3;
-    } else if (val === 'hard') {
-        minLevel = 4;
-    }
-    recommendationsWorker.postMessage({
-        type: 'levelPreferences',
-        payload: {
-            minLevel: minLevel,
-            maxLevel: maxLevel
-        }
-    })
-});
-recommendationsWorker.onmessage = function (e) {
-    let recommendationsContainer = document.getElementById('recommendations-container');
-    if (e.data.recommendations && e.data.recommendations.length) {
-        recommendationsContainer.innerHTML = '';
-        let recommendationMessage = document.createElement('span');
-        recommendationMessage.style.display = 'none';
-        recommendationMessage.innerText = "Recommended:";
-        recommendationMessage.className = "recommendation-message";
-        recommendationsContainer.appendChild(recommendationMessage);
-        recommendationsContainer.removeAttribute('style');
-        let usedRecommendation = false;
-        for (let i = 0; i < e.data.recommendations.length; i++) {
-            //don't bother recommending items already being shown in the graph
-            if (cy && cy.getElementById(e.data.recommendations[i]).length) {
-                continue;
-            }
-            recommendationMessage.removeAttribute('style');
-            let curr = document.createElement('a');
-            curr.innerText = e.data.recommendations[i];
-            curr.className = 'recommendation';
-            curr.addEventListener('click', function (event) {
-                //can I do this?
-                document.getElementById('hanzi-box').value = event.target.innerText;
-                document.querySelector('#hanzi-choose input[type=submit]').click();
-                event.target.style.display = 'none';
-                let otherRecs = document.querySelectorAll('.recommendation');
-                let stillShown = false;
-                for (let i = 0; i < otherRecs.length; i++) {
-                    if (!otherRecs[i].style.display || otherRecs[i].style.display !== 'none') {
-                        stillShown = true;
-                        break;
-                    }
-                }
-                if (!stillShown) {
-                    recommendationsContainer.style.display = 'none';
-                }
-            });
-            recommendationsContainer.appendChild(curr);
-            usedRecommendation = true;
-        }
-        let recommendationsFaqLink = document.createElement('a');
-        recommendationsFaqLink.className = 'faq-link';
-        recommendationsFaqLink.innerText = "Why?"
-        recommendationsFaqLink.addEventListener('click', function () {
-            document.getElementById('container').style.display = 'none';
-            document.getElementById('faq-container').removeAttribute('style');
-            document.getElementById('faq-recommendations').removeAttribute('style');
-        });
-        if (usedRecommendation) {
-            recommendationsContainer.appendChild(recommendationsFaqLink);
-        }
-    } else {
-        document.getElementById('recommendations-container').style.display = 'none';
-    }
-}
-const auth = getAuth();
-onAuthStateChanged(auth, (user) => {
-    if (canUpdateVisited(user, visitedLastUpdated)) {
-        visitedLastUpdated = Date.now();
-        const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
-            visited = snapshot.val() || {};
-            recommendationsWorker.postMessage({
-                type: 'visited',
-                payload: visited
-            });
-        }).catch((error) => {
-            visitedLastUpdated = null;
-            console.error(error);
-        });
-    }
-});
-document.getElementById('menu-button').addEventListener('click', function () {
-    document.getElementById('container').style.display = 'none';
-    document.getElementById('menu-container').removeAttribute('style');
-});
-document.getElementById('menu-exit-button').addEventListener('click', function () {
-    document.getElementById('menu-container').style.display = 'none';
-    document.getElementById('container').removeAttribute('style');
-});
-document.getElementById('stats-show').addEventListener('click', function () {
-    document.getElementById('container').style.display = 'none';
-    document.getElementById('stats-container').removeAttribute('style');
-    if (canUpdateVisited(user, visitedLastUpdated)) {
-        //potentially could still get in here twice, but not super concerned about an extra read or two in rare cases
-        visitedLastUpdated = Date.now();
-        const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${user.uid}/visited/zh-CN`)).then((snapshot) => {
-            visited = snapshot.val() || {};
-            createVisitedGraphs(visited, activeGraph.legend);
-            recommendationsWorker.postMessage({
-                type: 'visited',
-                payload: visited
-            });
-        }).catch((error) => {
-            visitedLastUpdated = null;
-            console.error(error);
-        });
-    } else {
-        createVisitedGraphs(visited, activeGraph.legend);
-    }
+recommendationsDifficultySelector.addEventListener('change', function () {
+    let val = recommendationsDifficultySelector.value;
+    preferencesChanged(val);
 });
 
-document.getElementById('show-study-faq').addEventListener('click', function () {
-    document.getElementById('container').style.display = 'none';
-    document.getElementById('faq-container').removeAttribute('style');
-    document.getElementById('faq-study-mode').removeAttribute('style');
+menuButton.addEventListener('click', function () {
+    mainContainer.style.display = 'none';
+    menuContainer.removeAttribute('style');
 });
-document.getElementById('show-general-faq').addEventListener('click', function () {
-    document.getElementById('container').style.display = 'none';
-    document.getElementById('faq-container').removeAttribute('style');
-    document.getElementById('faq-general').removeAttribute('style');
-});
-document.getElementById('exit-button').addEventListener('click', function () {
-    document.getElementById('stats-container').style.display = 'none';
-    document.getElementById('container').removeAttribute('style');
-    //TODO this is silly
-    document.getElementById('studied-graph-detail').innerText = '';
-    document.getElementById('added-calendar-detail').innerText = '';
-    document.getElementById('visited-graph-detail').innerText = '';
-    document.getElementById('study-calendar-detail').innerText = '';
-    document.getElementById('hourly-graph-detail').innerText = '';
-});
-document.getElementById('faq-exit-button').addEventListener('click', function () {
-    document.getElementById('faq-container').style.display = 'none';
-    document.getElementById('container').removeAttribute('style');
-    document.getElementById('faq-single-char-warning').style.display = 'none';
-    document.getElementById('faq-study-mode').style.display = 'none';
-    document.getElementById('faq-recommendations').style.display = 'none';
-    document.getElementById('faq-general').style.display = 'none';
-    document.getElementById('faq-context').style.display = 'none';
+menuExitButton.addEventListener('click', function () {
+    menuContainer.style.display = 'none';
+    mainContainer.removeAttribute('style');
 });
 
 let switchGraph = function () {
@@ -743,14 +485,10 @@ let switchGraph = function () {
             .then(response => response.json())
             .then(function (data) {
                 window.hanzi = data;
-                recommendationsWorker.postMessage({
-                    type: 'graph',
-                    payload: window.hanzi
-                });
+                graphChanged();
                 legendElements.forEach((x, index) => {
                     x.innerText = activeGraph.legend[index];
                 });
-                updateHskTotalsByLevel();
             });
         fetch(`./data/${prefix}sentences.json`)
             .then(response => response.json())

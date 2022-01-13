@@ -9,7 +9,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="./js/data-load.js"></script>
     <script src="./js/external/cytoscape.min.js"></script>
-    <script type="module" src="./js/modules/init.js"></script>
+    <script type="module">
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./asset-service-worker.js');
+        };
+    </script>
     <script src="./data/definitions.js"></script>
     <link rel="stylesheet" type="text/css" href="css/hanzi-graph.css">
     <link rel="manifest" href="./manifest.json">
@@ -412,10 +416,7 @@
                 list</span>
         </main>
     </div>
-    <script type="module" src="./js/modules/auth-state.js"></script>
-    <script type="module" src="./js/modules/study-mode.js"></script>
-    <script type="module" src="./js/modules/base.js"></script>
-    <script type="module" src="./js/modules/main.js"></script>
+    <script type="module" src="./js/bundle.js"></script>
 </body>
 
 </html>

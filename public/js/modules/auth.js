@@ -1,5 +1,7 @@
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signInWithRedirect, GoogleAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js";
+import { initialize } from "./firebase-init.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signInWithRedirect, GoogleAuthProvider, sendPasswordResetEmail } from "firebase/auth";
 
+initialize();
 let auth = getAuth();
 const googleProvider = new GoogleAuthProvider();
 onAuthStateChanged(auth, (user) => {
