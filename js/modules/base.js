@@ -28,6 +28,9 @@ let graphOptions = {
     },
     top10k: {
         display: 'Top 10k words', prefix: 'top-10k-', legend: freqLegend
+    },
+    traditional: {
+        display: 'Top 10k traditional', prefix: 'trad-', legend: freqLegend
     }
 };
 let activeGraph = graphOptions.oldHsk;
