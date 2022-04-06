@@ -25,7 +25,6 @@ a {
     flex-direction: column;
     overflow: auto;
     border-right: 1px solid #333;
-    border-bottom: 1px solid #333;
 }
 #graph {
     width: 65%;
@@ -561,6 +560,7 @@ select {
         width: 100%;
         height: 50%;
         border-right: 0;
+        border-bottom: 1px solid #333;
     }
     #graph {
         width: 100%;
@@ -689,7 +689,6 @@ main.stats section p {
 @media (prefers-color-scheme: light) {
     #control-pane {
         border-right: 1px solid #3333;
-        border-bottom: 1px solid #3333;
     }
     .text-button {
         background-color: #eee;
@@ -735,5 +734,11 @@ main.stats section p {
     }
     #result-buttons li:hover {
         transition: border 500ms;
+    }
+}
+@media (prefers-color-scheme: light) and (max-width:664px) {
+    #control-pane {
+        border-bottom: 1px solid #3333;
+        border-right: 0;
     }
 }

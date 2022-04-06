@@ -55,6 +55,7 @@ let updateVisited = function (nodes) {
         }
         update(nodeRef, updates).then(() => {
             fetchVisited();
+            fetchStudyResults();
         }).catch((error) => {
             console.log(error);
         });
@@ -68,17 +69,21 @@ let registerCallback = function (dataType, callback) {
 };
 
 //keeping keys/localStudyList for parity with current hacked together firebase version
-let saveStudyList = function (keys, localStudyList) {
+let saveStudyList = function (keys, localStudyList, isAddition) {
     if (authenticatedUser) {
         localStudyList = localStudyList || studyList;
         const db = getDatabase();
-        const flashcardRef = ref(db, 'users/' + authenticatedUser.uid + '/decks/zh-CN');
+        const nodeRef = ref(db, `users/${authenticatedUser.uid}`);
         let updates = {};
         for (let i = 0; i < keys.length; i++) {
             //setting to null will delete if not present
-            updates[sanitizeKey(keys[i])] = localStudyList[keys[i]] || null;
+            updates[`decks/zh-CN/${sanitizeKey(keys[i])}`] = localStudyList[keys[i]] || null;
+            if (isAddition) {
+                //the user could've previously deleted the card...this addition should win out
+                updates[`deleted/zh-CN/${sanitizeKey(keys[i])}`] = null;
+            }
         }
-        update(flashcardRef, updates).then(() => {
+        update(nodeRef, updates).then(() => {
             //regardless of how we ended up here, the localStorage part has been incorporated, so clear it out
             localStorage.setItem('studyListDirty', false);
         }).catch(() => {
@@ -122,7 +127,7 @@ let addCards = function (currentExamples, text) {
     }
     //TODO: remove these keys from /deleted/ to allow re-add
     //update it whenever it changes
-    saveStudyList(newKeys);
+    saveStudyList(newKeys, null, true);
     callbacks[dataTypes.studyList].forEach(x => x(studyList));
 };
 
@@ -215,6 +220,7 @@ let recordEvent = function (result) {
 
         update(resultRef, updates).then(() => {
             fetchStudyResults();
+            fetchVisited();
         }).catch((error) => {
             console.log(error);
         });
@@ -293,6 +299,7 @@ let fetchVisited = function () {
 
 let initialize = function () {
     let auth = getAuth();
+    // TODO cancel callback?
     onAuthStateChanged(auth, (user) => {
         if (user) {
             authenticatedUser = user;
@@ -303,7 +310,11 @@ let initialize = function () {
                 const data = snapshot.val();
                 let studyListDirty = JSON.parse(localStorage.getItem('studyListDirty') || "false");
                 if (studyListDirty) {
+                    //TODO: it gets reset to true if the write fails, but is this actually the right spot?
                     localStorage.setItem('studyListDirty', false);
+                    //TODO: should we use the in-memory studyList variable?
+                    //this is an artifact of a prior implementation where it wasn't necessarily loaded
+                    //immediately...
                     let localStudyList = JSON.parse(localStorage.getItem('studyList') || '{}');
                     let updates = [];
                     for (const key in localStudyList) {
