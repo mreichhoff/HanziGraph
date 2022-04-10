@@ -6,12 +6,12 @@ body {
     height: 100%;
     margin: 0;
     padding: 0;
-    color: #eee;
+    color: white;
     background: #121212;
     font-family: Times, serif;
 }
 a {
-    color: #eee;
+    color: white;
 }
 #container {
     display: flex;
@@ -29,7 +29,7 @@ a {
 #graph {
     width: 65%;
     height: 100%;
-    background: #3336;
+    background: black;
 }
 
 .header {
@@ -236,21 +236,28 @@ h2 span {
 p.example-line {
     margin-top: 4px;
     margin-bottom: 4px;
+    opacity: 0.9;
 }
 p.zh-example {
     font-size: 28px;
     display: flex;
-    cursor: pointer;
     font-family: sans-serif;
+    opacity: 1;
+}
+a.navigable {
+    cursor: pointer;
 }
 .context {
     margin: 0;
     margin-bottom: 12px;
     font-family: sans-serif;
     font-size: 14px;
+    opacity: 0.8;
 }
-.pinyin-example {
+/*TODO: too much specificity...*/
+.pinyin-example.example-line {
     display: none;
+    opacity: 0.8;
 }
 #show-pinyin:checked ~ * .pinyin-example {
     display: block;
@@ -291,7 +298,7 @@ p.zh-example {
 
 .text-button {
     font-size: 16px;
-    background-color: #eeee;
+    background-color: white;
     margin-left: 4px;
     padding: 6px;
     color: black;
@@ -377,16 +384,26 @@ h2 .text-button {
 }
 #card-question-container {
     display: flex;
+    font-size: 28px;
 }
-#card-question-container a {
+.cloze-container {
+    margin: 2px;
+}
+.cloze-placeholder {
+    color: #ff635f;
+    font-weight: bold;
+    letter-spacing: 10px;
+    margin-left: 10px;
+}
+.sentence-container a {
     font-size: 28px;
     vertical-align: text-top;
-    cursor: pointer;
     font-family: sans-serif;
 }
 #card-answer {
     font-size: 24px;
     width: 95%;
+    display: flex;
 }
 .card-detail {
     font-size: 16px;

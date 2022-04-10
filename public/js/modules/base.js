@@ -1,5 +1,5 @@
 import { faqTypes, showFaq } from "./faq.js";
-import { updateVisited, getVisited, addCards, getCardCount, inStudyList } from "./data-layer.js";
+import { updateVisited, getVisited, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
 import { addToGraph, initializeGraph, updateColorScheme } from "./graph.js";
 import { graphChanged, preferencesChanged } from "./recommendations.js";
 
@@ -101,7 +101,7 @@ let runTextToSpeech = function (text, anchors) {
         });
         utterance.addEventListener('end', function () {
             anchors.forEach(character => {
-                character.style.fontWeight = 'normal';
+                character.removeAttribute('style');
             });
         });
         speechSynthesis.speak(utterance);
@@ -231,7 +231,8 @@ let setupExamples = function (words) {
         contextHolder.className = 'context';
         contextHolder.innerText += "Previously: ";
         [...words[i]].forEach(x => {
-            contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${getCardCount(x)} flash cards. `;
+            let cardData = getCardPerformance(x);
+            contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${cardData.count} flash cards (${cardData.performance}% correct). `;
         });
         let contextFaqLink = document.createElement('a');
         contextFaqLink.className = 'faq-link';
@@ -376,6 +377,9 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
         (function (character) {
             let a = document.createElement('a');
             a.textContent = character;
+            if (hanzi[character]) {
+                a.className = 'navigable';
+            }
             a.addEventListener('click', function () {
                 if (hanzi[character]) {
                     let updated = false;

@@ -20360,6 +20360,13 @@
         CORRECT: 'correct',
         INCORRECT: 'incorrect'
     };
+    const cardTypes = {
+        RECOGNITION: 'recognition',
+        RECALL: 'recall',
+        CLOZE: 'cloze'
+    };
+    const MAX_RECALL = 2;
+    const MAX_CLOZE = 2;
 
     let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
     let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
@@ -20453,23 +20460,75 @@
         }
         saveStudyList([key]);
     };
+    let addRecallCards = function (newCards, text, newKeys) {
+        let total = Math.min(MAX_RECALL, newCards.length);
+        for (let i = 0; i < total; i++) {
+            let key = newCards[i].zh.join('') + cardTypes.RECALL;
+            if (!studyList[key] && newCards[i].en) {
+                newKeys.push(key);
+                studyList[key] = {
+                    en: newCards[i].en,
+                    due: Date.now() + newCards.length + i,
+                    zh: newCards[i].zh,
+                    wrongCount: 0,
+                    rightCount: 0,
+                    type: cardTypes.RECALL,
+                    vocabOrigin: text,
+                    added: Date.now()
+                };
+            }
+        }
+    };
+    // TODO: may be better combined with addRecallCards...
+    let addClozeCards = function (newCards, text, newKeys) {
+        let added = 0;
+        for (let i = 0; i < newCards.length; i++) {
+            if (added == MAX_CLOZE) {
+                return;
+            }
+            // don't make cloze cards with the exact text
+            if (newCards[i].zh.join('').length <= text.length) {
+                continue;
+            }
+            let key = newCards[i].zh.join('') + cardTypes.CLOZE;
+            if (!studyList[key] && newCards[i].en) {
+                added++;
+                newKeys.push(key);
+                studyList[key] = {
+                    en: newCards[i].en,
+                    // due after the recognition cards, for some reason
+                    due: Date.now() + newCards.length + i,
+                    zh: newCards[i].zh,
+                    wrongCount: 0,
+                    rightCount: 0,
+                    type: cardTypes.CLOZE,
+                    vocabOrigin: text,
+                    added: Date.now()
+                };
+            }
+        }
+    };
     let addCards = function (currentExamples, text) {
         let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
         let newKeys = [];
         for (let i = 0; i < newCards.length; i++) {
             let zhJoined = newCards[i].zh.join('');
-            newKeys.push(zhJoined);
             if (!studyList[zhJoined] && newCards[i].en) {
+                newKeys.push(zhJoined);
                 studyList[zhJoined] = {
                     en: newCards[i].en,
                     due: newCards[i].due,
                     zh: newCards[i].zh,
                     wrongCount: 0,
                     rightCount: 0,
+                    type: cardTypes.RECOGNITION,
+                    vocabOrigin: text,
                     added: Date.now()
                 };
             }
         }
+        addRecallCards(newCards, text, newKeys);
+        addClozeCards(newCards, text, newKeys);
         //TODO: remove these keys from /deleted/ to allow re-add
         //update it whenever it changes
         saveStudyList(newKeys, null, true);
@@ -20480,16 +20539,20 @@
         return studyList[text];
     };
 
-    let getCardCount = function (character) {
+    let getCardPerformance = function (character) {
         let count = 0;
+        let correct = 0;
+        let incorrect = 0;
         //TODO: if performance becomes an issue, we can pre-compute this
         //as-is, it performs fine even with larger flashcard decks
         Object.keys(studyList || {}).forEach(x => {
             if (x.indexOf(character) >= 0) {
                 count++;
+                correct += studyList[x].rightCount;
+                incorrect += studyList[x].wrongCount;
             }
         });
-        return count;
+        return { count: count, performance: Math.round(100 * correct / ((correct + incorrect) || 1)) };
     };
 
     let getStudyList = function () {
@@ -20497,7 +20560,7 @@
     };
     let findOtherCards = function (seeking, currentKey) {
         let cards = Object.keys(studyList);
-        let candidates = cards.filter(x => x !== currentKey && x.includes(seeking)).sort((a, b) => studyList[b].rightCount - studyList[a].rightCount);
+        let candidates = cards.filter(x => x !== currentKey && (!studyList[x].type || studyList[x].type === cardTypes.RECOGNITION) && x.includes(seeking)).sort((a, b) => studyList[b].rightCount - studyList[a].rightCount);
         return candidates;
     };
 
@@ -20782,7 +20845,7 @@
                     'label': 'data(words)',
                     'color': (_ => prefersLight ? 'black' : '#eee'),
                     'font-size': '10px',
-                    'text-background-color': (_ => prefersLight ? '#f9f9f9' : '#121212'),
+                    'text-background-color': (_ => prefersLight ? '#f9f9f9' : 'black'),
                     'text-background-opacity': '1',
                     'text-background-shape': 'round-rectangle',
                     'text-events': 'yes'
@@ -21026,7 +21089,7 @@
             });
             utterance.addEventListener('end', function () {
                 anchors.forEach(character => {
-                    character.style.fontWeight = 'normal';
+                    character.removeAttribute('style');
                 });
             });
             speechSynthesis.speak(utterance);
@@ -21156,7 +21219,8 @@
             contextHolder.className = 'context';
             contextHolder.innerText += "Previously: ";
             [...words[i]].forEach(x => {
-                contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${getCardCount(x)} flash cards. `;
+                let cardData = getCardPerformance(x);
+                contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${cardData.count} flash cards (${cardData.performance}% correct). `;
             });
             let contextFaqLink = document.createElement('a');
             contextFaqLink.className = 'faq-link';
@@ -21301,6 +21365,9 @@
             (function (character) {
                 let a = document.createElement('a');
                 a.textContent = character;
+                if (hanzi[character]) {
+                    a.className = 'navigable';
+                }
                 a.addEventListener('click', function () {
                     if (hanzi[character]) {
                         let updated = false;
@@ -21458,8 +21525,72 @@
     const cardRightCountElement = document.getElementById('card-right-count');
     const cardWrongCountElement = document.getElementById('card-wrong-count');
     const cardPercentageElement = document.getElementById('card-percentage');
+    const clozePlaceholderCharacter = "*";
+    const clozePlaceholder = clozePlaceholderCharacter + clozePlaceholderCharacter + clozePlaceholderCharacter;
 
     let currentKey = null;
+
+    // TODO: must match cardTypes, which sucks
+    // why can't you do: {cardTypes.RECOGNITION: function(){...}}?
+    const cardRenderers = {
+        'recognition': function (currentCard) {
+            taskDescriptionElement.innerText = 'What does the text below mean?';
+            let question = currentCard.zh.join('');
+            let aList = makeSentenceNavigable(question, cardQuestionContainer);
+            for (let i = 0; i < aList.length; i++) {
+                aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
+            }
+            cardQuestionContainer.style.flexDirection = 'row';
+            addTextToSpeech(cardQuestionContainer, question, aList);
+            cardAnswerElement.textContent = currentCard.en;
+
+        },
+        'recall': function (currentCard) {
+            let question = currentCard.en;
+            let answer = currentCard.zh.join('');
+            // so clean, so clean
+            if (answer === currentCard.vocabOrigin) {
+                taskDescriptionElement.innerText = `Can you match the definitions below to a Chinese word?`;
+            } else {
+                taskDescriptionElement.innerText = `Can you translate the text below to Chinese?`;
+            }
+            cardAnswerElement.innerHTML = '';
+            let aList = makeSentenceNavigable(answer, cardAnswerElement);
+            for (let i = 0; i < aList.length; i++) {
+                aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
+            }
+            addTextToSpeech(cardAnswerElement, answer, aList);
+            cardQuestionContainer.innerText = question;
+        },
+        'cloze': function (currentCard) {
+            taskDescriptionElement.innerText = `Can you replace ${clozePlaceholder} to match the translation?`;
+            let clozedSentence = currentCard.zh.map(x => x === currentCard.vocabOrigin ? clozePlaceholder : x).join('');
+            let clozeContainer = document.createElement('p');
+            clozeContainer.className = 'cloze-container';
+            let aList = makeSentenceNavigable(clozedSentence, clozeContainer);
+            for (let i = 0; i < aList.length; i++) {
+                // TODO yuck
+                if (i >= 2 && aList[i].innerText === clozePlaceholderCharacter && aList[i - 1].innerText === clozePlaceholderCharacter && aList[i - 2].innerText === clozePlaceholderCharacter) {
+                    aList[i].classList.add('cloze-placeholder');
+                    aList[i - 1].classList.add('cloze-placeholder');
+                    aList[i - 2].classList.add('cloze-placeholder');
+                }
+                aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
+            }
+            cardQuestionContainer.style.flexDirection = 'column';
+            cardQuestionContainer.appendChild(clozeContainer);
+            let clozeAnswerContainer = document.createElement('p');
+            clozeAnswerContainer.className = 'cloze-container';
+            clozeAnswerContainer.innerText = currentCard.en;
+            cardQuestionContainer.appendChild(clozeAnswerContainer);
+            cardAnswerElement.innerHTML = '';
+            let answerAList = makeSentenceNavigable(currentCard.vocabOrigin, cardAnswerElement);
+            for (let i = 0; i < answerAList.length; i++) {
+                answerAList[i].addEventListener('click', displayRelatedCards.bind(this, answerAList[i]));
+            }
+            addTextToSpeech(cardAnswerElement, currentCard.vocabOrigin, answerAList);
+        }
+    };
 
     let displayRelatedCards = function (anchor) {
         let MAX_RELATED_CARDS = 3;
@@ -21508,18 +21639,14 @@
             taskDescriptionElement.style.display = 'none';
             showAnswerButton.style.display = 'none';
             return;
-        } else {
-            taskCompleteElement.style.display = 'none';
-            taskDescriptionElement.style.display = 'inline';
-            showAnswerButton.style.display = 'block';
         }
-        let question = currentCard.zh.join('');
-        let aList = makeSentenceNavigable(question, cardQuestionContainer);
-        for (let i = 0; i < aList.length; i++) {
-            aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
-        }
-        addTextToSpeech(cardQuestionContainer, question, aList);
-        cardAnswerElement.textContent = currentCard.en;
+
+        taskCompleteElement.style.display = 'none';
+        showAnswerButton.style.display = 'block';
+        // Old cards have no type property, but all are recognition
+        cardRenderers[currentCard.type || cardTypes.RECOGNITION](currentCard);
+        taskDescriptionElement.style.display = 'inline';
+
         if (currentCard.wrongCount + currentCard.rightCount != 0) {
             cardOldMessageElement.removeAttribute('style');
             cardNewMessageElement.style.display = 'none';
@@ -21571,9 +21698,12 @@
             let studyList = getStudyList();
             let content = "data:text/plain;charset=utf-8,";
             for (const [key, value] of Object.entries(studyList)) {
-                //replace is a hack for flashcard field separator...TODO could escape
-                content += [key.replace(';', ''), value.en.replace(';', '')].join(';');
-                content += '\n';
+                // TODO: figure out cloze/recall exports
+                if (!value.type || value.type === cardTypes.RECOGNITION) {
+                    //replace is a hack for flashcard field separator...TODO could escape
+                    content += [key.replace(';', ''), value.en.replace(';', '')].join(';');
+                    content += '\n';
+                }
             }
             //wow, surely it can't be this absurd
             let encodedUri = encodeURI(content);
