@@ -169,8 +169,11 @@ a {
     font-size: 16px;
     margin-right: 4px;
 }
-#control-pane input[type=text]{
-    width: 50px;
+#hanzi-choose {
+    width: 100%;
+}
+.search-box {
+    width: 150px;
 }
 .faq-link {
     text-decoration: underline;
@@ -634,9 +637,6 @@ select {
     }
     #controls input[type=submit] {
         font-size: 12px;
-    }
-    #control-pane input[type=text] {
-        width: 30px;
     }
 }
 header.stats-header {

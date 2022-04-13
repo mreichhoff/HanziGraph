@@ -14,6 +14,7 @@ let tabs = {
     explore: 'explore',
     study: 'study'
 };
+let wordSet = new Set();
 let activeTab = tabs.explore;
 
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
@@ -56,6 +57,7 @@ const exampleContainer = document.getElementById('example-container');
 const hanziBox = document.getElementById('hanzi-box');
 const hanziSearchForm = document.getElementById('hanzi-choose');
 const previousHanziButton = document.getElementById('previousHanziButton');
+const notFoundElement = document.getElementById('not-found-message');
 //recommendations
 const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
@@ -331,8 +333,21 @@ let updateGraph = function (value, maxLevel) {
         persistState();
     }
 };
-
+let getWordSet = function (graph) {
+    //yeah, probably a better way...
+    let wordSet = new Set();
+    Object.keys(graph).forEach(x => {
+        wordSet.add(x);
+        Object.keys(graph[x].edges || {}).forEach(edge => {
+            graph[x].edges[edge].words.forEach(word => {
+                wordSet.add(word);
+            });
+        });
+    });
+    return wordSet;
+};
 let initialize = function () {
+    wordSet = getWordSet(hanzi);
     let oldState = JSON.parse(localStorage.getItem('state'));
     if (!oldState) {
         //graph chosen is default, no need to modify legend or dropdown
@@ -410,12 +425,18 @@ hanziSearchForm.addEventListener('submit', function (event) {
     event.preventDefault();
     let value = hanziBox.value;
     let maxLevel = levelSelector.value;
-    if (value && hanzi[value]) {
+    if (value && wordSet.has(value)) {
+        notFoundElement.style.display = 'none';
         updateUndoChain();
-        updateGraph(value, maxLevel);
+        updateGraph(value[0], maxLevel);
+        for (let i = 1; i < value.length; i++) {
+            addToExistingGraph(value[i], maxLevel);
+        }
         setupExamples([value]);
         persistState();
         updateVisited([value]);
+    } else {
+        notFoundElement.removeAttribute('style');
     }
 });
 
@@ -496,6 +517,7 @@ let switchGraph = function () {
                 legendElements.forEach((x, index) => {
                     x.innerText = activeGraph.legend[index];
                 });
+                wordSet = getWordSet(hanzi);
             });
         fetch(`./data/${prefix}sentences.json`)
             .then(response => response.json())

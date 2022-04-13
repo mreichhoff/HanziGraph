@@ -43,14 +43,16 @@
                 <div id="controls">
                     <form id="hanzi-choose" class="control">
                         <!-- i18n? what's that? -->
-                        <label for="hanzi-box">Choose a hanzi:</label>
-                        <input id="hanzi-box" type="text" maxlength="1" />
+                        <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word"
+                            type="text" maxlength="6" class="search-box" />
                         <input type="submit" value="Go!" />
                     </form>
                     <div class="control center">
                         <span class="text-button" id="previousHanziButton">Previous</span>
                     </div>
                 </div>
+                <div style="display:none" id="not-found-message">😞 That word was not found. Please try another, or
+                    change the character set in the menu.</div>
                 <div id="recommendations-container" class="recommendations" style="display:none"></div>
                 <input id="show-pinyin" type="checkbox" style="display:none" />
                 <ul id="examples">
