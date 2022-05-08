@@ -19,6 +19,7 @@ let activeTab = tabs.explore;
 
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
 let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
+let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
 let legendElements = document.querySelectorAll('div.circle');
 let graphOptions = {
     newHsk: {
@@ -32,6 +33,9 @@ let graphOptions = {
     },
     traditional: {
         display: 'Top 10k traditional', prefix: 'trad-', legend: freqLegend
+    },
+    top50k: {
+        display: 'Top 50k words', prefix: '50k-', legend: bigFreqLegend
     }
 };
 let activeGraph = graphOptions.oldHsk;
@@ -304,6 +308,7 @@ let nodeTapHandler = function (evt) {
     exploreTab.click();
     mainHeader.scrollIntoView();
     updateVisited([id]);
+    notFoundElement.style.display = 'none';
 };
 let edgeTapHandler = function (evt) {
     let words = evt.target.data('words');
@@ -314,6 +319,7 @@ let edgeTapHandler = function (evt) {
     exploreTab.click();
     mainHeader.scrollIntoView();
     updateVisited([evt.target.source().id(), evt.target.target().id()]);
+    notFoundElement.style.display = 'none';
 };
 let addToExistingGraph = function (character, maxLevel) {
     addToGraph(character, maxLevel);
@@ -365,10 +371,7 @@ let initialize = function () {
         }
         levelSelector.value = oldState.level;
         //oldState.hanzi should always have length >= 1
-        updateGraph(oldState.hanzi[0], oldState.level);
-        for (let i = 1; i < oldState.hanzi.length; i++) {
-            addToExistingGraph(oldState.hanzi[i], oldState.level);
-        }
+        buildGraph(oldState.hanzi, oldState.level);
         if (oldState.word) {
             setupExamples(oldState.word);
         }
@@ -421,17 +424,61 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
     return anchorList;
 };
 
+let addEdges = function (word) {
+    for (let i = 0; i < word.length; i++) {
+        let curr = word[i];
+        if (!hanzi[curr]) { continue; }
+        for (let j = 0; j < word.length; j++) {
+            if (i === j || !hanzi[word[j]]) { continue; }
+            if (!hanzi[curr].edges[word[j]]) {
+                hanzi[curr].edges[word[j]] = {
+                    // TODO: stop it
+                    level: 6,
+                    words: []
+                };
+            }
+            // not that efficient, but we almost never see more than 5 items in words, so NBD
+            if (hanzi[curr].edges[word[j]].words.indexOf(word) < 0) {
+                hanzi[curr].edges[word[j]].words.push(word);
+            }
+        }
+    }
+};
+// build a graph based on a word rather than just a character like updateGraph
+let buildGraph = function (value, maxLevel) {
+    let ranUpdate = false;
+    // we don't necessarily populate all via the script
+    addEdges(value);
+    for (let i = 0; i < value.length; i++) {
+        if (hanzi[value[i]]) {
+            if (!ranUpdate) {
+                //TODO do we need this?
+                ranUpdate = true;
+                updateGraph(value[i], maxLevel);
+            } else {
+                addToExistingGraph(value[i], maxLevel);
+            }
+        }
+    }
+};
+
+let allInGraph = function (word) {
+    for (let i = 0; i < word.length; i++) {
+        if (!hanzi[word[i]]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 hanziSearchForm.addEventListener('submit', function (event) {
     event.preventDefault();
     let value = hanziBox.value;
     let maxLevel = levelSelector.value;
-    if (value && wordSet.has(value)) {
+    if (value && allInGraph(value) && (definitions[value] || wordSet.has(value))) {
         notFoundElement.style.display = 'none';
         updateUndoChain();
-        updateGraph(value[0], maxLevel);
-        for (let i = 1; i < value.length; i++) {
-            addToExistingGraph(value[i], maxLevel);
-        }
+        buildGraph(value, maxLevel);
         setupExamples([value]);
         persistState();
         updateVisited([value]);
@@ -452,10 +499,7 @@ previousHanziButton.addEventListener('click', function () {
     }
     let next = undoChain.pop();
     let maxLevel = levelSelector.value;
-    updateGraph(next.hanzi[0], maxLevel);
-    for (let i = 1; i < next.hanzi.length; i++) {
-        addToExistingGraph(next.hanzi[i], maxLevel);
-    }
+    buildGraph(next.hanzi, maxLevel);
     if (next.word) {
         setupExamples(next.word);
     }
@@ -528,6 +572,11 @@ let switchGraph = function () {
             .then(response => response.json())
             .then(function (data) {
                 singleCharacterWords = new Set(data);
+            });
+        fetch(`./data/${prefix}definitions.json`)
+            .then(response => response.json())
+            .then(function (data) {
+                definitions = data;
             });
         persistState();
     }

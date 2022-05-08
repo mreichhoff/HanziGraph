@@ -7,14 +7,13 @@
     <meta name="description"
         content="Learn Chinese by exploring the relationships between characters alongside examples that illustrate their use.">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="./js/data-load.js"></script>
-    <script src="./js/external/cytoscape.min.js"></script>
     <script type="module">
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./asset-service-worker.js');
         };
     </script>
-    <script src="./data/definitions.js"></script>
+    <script src="./js/data-load.js"></script>
+    <script src="./js/external/cytoscape.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/hanzi-graph.css">
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" href="images/favicon-32x32.png" type="image/x-icon">
@@ -59,26 +58,23 @@
                     <li class="walkthrough">
                         <!-- i18n :-( -->
                         <p>
-                            To begin, enter a hanzi above, or explore the example.
-                            You can click on hanzi or the lines that connect them.
-                            Example sentences will appear here!
+                            Learn Chinese by exploring the relationships between characters alongside examples that
+                            illustrate their use.
                         </p>
                         <p>
-                            Examples can be exported into your flashcard app of choice (e.g., Anki).
-                            Simply click the "Add to study list" button on whichever words you'd like,
-                            and then the "Export" button once you're done, for
-                            an import-ready download.
+                            To begin, enter a hanzi above, or explore the diagram. You can quickly build mental
+                            connections
+                            among characters based on the words they form and their use in example sentences.
                         </p>
                         <p>
-                            Circles (nodes) correspond to individual hanzi characters.
+                            Anywhere you see a hanzi, assume clicking or tapping it will make something happen.
                         </p>
                         <p>
-                            Connecting lines (edges) represent a relationship among hanzi.
-                            Namely, by connecting the two linked hanzi, a word can be formed
-                            (or partially formed in the case of 3+ character words).
-                        </p>
-                        <p style="font-weight:bold">
-                            Both lines and circles can be clicked!
+                            When you choose "add to study list", flash cards will be created from the examples.
+                            You can study the cards on the study tab; spaced repetition is used to help you learn
+                            efficiently.
+                            Flash cards are synced across devices in real-time when you're signed in, and can be
+                            exported to anki.
                         </p>
                         <p>
                             Note that you can also zoom, drag, and re-arrange the diagram however you please.
@@ -413,6 +409,7 @@
                     <option>New HSK</option>
                     <option>Top 10k words</option>
                     <option>Top 10k traditional</option>
+                    <option>Top 50k words</option>
                 </select>
             </div>
             <div class="menu-item">

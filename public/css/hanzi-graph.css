@@ -209,6 +209,7 @@ h2 span {
     text-align: center;
     line-height: 44px;
     color: black;
+    margin: 0 0.5px;
 }
 #legend {
     font-size: 14px;
@@ -295,6 +296,7 @@ a.navigable {
     max-width: 80%;
 }
 .walkthrough p {
+    font-size: 18px;
     margin-top: 20px;
     margin-bottom: 20px;
 }
