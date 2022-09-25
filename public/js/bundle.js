@@ -20995,9 +20995,8 @@
     //refactor badly needed...hacks on top of hacks at this point
     let maxExamples = 5;
     let currentExamples = {};
-    let currentHanzi = null;
-    let currentWord = null;
-    let undoChain = [];
+    let currentHanzi = [];
+    let currentWord = '';
     let tabs = {
         explore: 'explore',
         study: 'study'
@@ -21054,6 +21053,8 @@
     const notFoundElement = document.getElementById('not-found-message');
     //recommendations
     const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
+
+    const walkThrough = document.getElementById('walkthrough');
 
     //menu items
     const graphSelector = document.getElementById('graph-selector');
@@ -21123,17 +21124,50 @@
     };
 
     let persistState = function () {
-        let localUndoChain = undoChain.length > 5 ? undoChain.slice(0, 5) : undoChain;
-        localStorage.setItem('state', JSON.stringify({
-            hanzi: currentHanzi,
+        const newUrl = `/${currentWord}`;
+        history.pushState({
             word: currentWord,
-            level: levelSelector.value,
-            undoChain: localUndoChain,
+        }, '', newUrl);
+    };
+
+    let persistUIState = function () {
+        localStorage.setItem('state', JSON.stringify({
             activeTab: activeTab,
             currentGraph: activeGraph.display,
             graphPrefix: activeGraph.prefix
         }));
     };
+
+    function parseUrl(path) {
+        if (path[0] === '/') {
+            path = path.substring(1);
+        }
+        const segments = path.split('/');
+        if (segments.length !== 1) {
+            return null;
+        }
+        const term = segments[0];
+        return {
+            word: term
+        };
+    }
+    function loadState(state) {
+        const term = decodeURIComponent(state.word);
+        hanziBox.value = term;
+        search(term, levelSelector.value, true);
+    }
+
+    window.onpopstate = (event) => {
+        const state = event.state;
+        if (!state || !state.word) {
+            walkThrough.removeAttribute('style');
+            examplesList.innerHTML = '';
+            hanziBox.value = '';
+            return;
+        }
+        loadState(state);
+    };
+
     let setupDefinitions = function (definitionList, definitionHolder) {
         for (let i = 0; i < definitionList.length; i++) {
             let definitionItem = document.createElement('li');
@@ -21199,6 +21233,8 @@
     };
     let setupExamples = function (words) {
         currentExamples = {};
+        // if we're showing examples, never show the walkthrough.
+        walkThrough.style.display = 'none';
         //TODO this mixes markup modification and example finding
         //refactor needed
         while (examplesList.firstChild) {
@@ -21263,11 +21299,7 @@
 
             examplesList.append(item);
         }
-        currentWord = words;
-    };
-    let updateUndoChain = function () {
-        //push clones onto the stack
-        undoChain.push({ hanzi: [...currentHanzi], word: (currentWord ? [...currentWord] : currentWord) });
+        currentWord = words[0];
     };
 
     //TODO can this be combined with the definition rendering part?
@@ -21286,12 +21318,12 @@
     let nodeTapHandler = function (evt) {
         let id = evt.target.id();
         let maxLevel = levelSelector.value;
-        updateUndoChain();
         //not needed if currentHanzi contains id, which would mean the nodes have already been added
         //includes O(N) but currentHanzi almost always < 10 elements
         if (currentHanzi && !currentHanzi.includes(id)) {
             addToExistingGraph(id, maxLevel);
         }
+        hanziBox.value = id;
         setupExamples([id]);
         persistState();
         exploreTab.click();
@@ -21301,7 +21333,7 @@
     };
     let edgeTapHandler = function (evt) {
         let words = evt.target.data('words');
-        updateUndoChain();
+        hanziBox.value = words[0];
         setupExamples(words);
         persistState();
         //TODO toggle functions
@@ -21315,7 +21347,7 @@
         //currentHanzi must be set up before this call
         currentHanzi.push(character);
     };
-    let updateGraph = function (value, maxLevel) {
+    let updateGraph = function (value, maxLevel, skipState) {
         document.getElementById('graph').remove();
         let nextGraph = document.createElement("div");
         nextGraph.id = 'graph';
@@ -21324,8 +21356,6 @@
 
         if (value && hanzi[value]) {
             initializeGraph(value, maxLevel, nextGraph, nodeTapHandler, edgeTapHandler);
-            currentHanzi = [value];
-            persistState();
         }
     };
     let getWordSet = function (graph) {
@@ -21343,34 +21373,36 @@
     };
     let initialize$2 = function () {
         wordSet = getWordSet(hanzi);
-        let oldState = JSON.parse(localStorage.getItem('state'));
-        if (!oldState) {
+        if (history.state) {
+            loadState(history.state);
+        } else if (document.location.pathname !== '/') {
+            const state = parseUrl(document.location.pathname);
+            if (state) {
+                loadState(state);
+                history.pushState(state, '', document.location);
+            }
+        } else {
             //graph chosen is default, no need to modify legend or dropdown
             //add a default graph on page load to illustrate the concept
             let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
+            walkThrough.removeAttribute('style');
             updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], levelSelector.value);
-        } else {
-            if (state.currentGraph) {
-                let activeGraphKey = Object.keys(graphOptions).find(x => graphOptions[x].display === state.currentGraph);
+        }
+        let oldState = JSON.parse(localStorage.getItem('state'));
+        if (oldState) {
+            if (oldState.currentGraph) {
+                let activeGraphKey = Object.keys(graphOptions).find(x => graphOptions[x].display === oldState.currentGraph);
                 activeGraph = graphOptions[activeGraphKey];
                 legendElements.forEach((x, index) => {
                     x.innerText = activeGraph.legend[index];
                 });
                 graphSelector.value = state.currentGraph;
             }
-            levelSelector.value = oldState.level;
-            //oldState.hanzi should always have length >= 1
-            buildGraph(oldState.hanzi, oldState.level);
-            if (oldState.word) {
-                setupExamples(oldState.word);
-            }
-            undoChain = oldState.undoChain;
             if (oldState.activeTab === tabs.study) {
                 //reallllllly need a toggle method
                 //this does set up the current card, etc.
                 studyTab$1.click();
             }
-            persistState();
         }
         matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
     };
@@ -21389,20 +21421,15 @@
                 }
                 a.addEventListener('click', function () {
                     if (hanzi[character]) {
-                        let updated = false;
                         if (currentHanzi && !currentHanzi.includes(character)) {
-                            updateUndoChain();
-                            updated = true;
                             updateGraph(character, levelSelector.value);
                         }
                         //enable seamless switching, but don't update if we're already showing examples for character
                         if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
-                            if (!updated) {
-                                updateUndoChain();
-                            }
                             setupExamples([character]);
+                            persistState();
+                            persistUIState();
                         }
-                        persistState();
                     }
                 });
                 anchorList.push(a);
@@ -21459,21 +21486,22 @@
         }
         return true;
     };
-
-    hanziSearchForm.addEventListener('submit', function (event) {
-        event.preventDefault();
-        let value = hanziBox.value;
-        let maxLevel = levelSelector.value;
+    let search = function (value, maxLevel, skipState) {
         if (value && allInGraph(value) && (definitions[value] || wordSet.has(value))) {
             notFoundElement.style.display = 'none';
-            updateUndoChain();
             buildGraph(value, maxLevel);
             setupExamples([value]);
-            persistState();
+            if (!skipState) {
+                persistState();
+            }
             updateVisited([value]);
         } else {
             notFoundElement.removeAttribute('style');
         }
+    };
+    hanziSearchForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        search(hanziBox.value, levelSelector.value);
     });
 
     levelSelector.addEventListener('change', function () {
@@ -21496,7 +21524,8 @@
         exploreTab.classList.add('active');
         studyTab$1.classList.remove('active');
         activeTab = tabs.explore;
-        persistState();
+        // the user's choice of word hasn't changed, but they've switched modes
+        persistUIState();
     });
 
     studyTab$1.addEventListener('click', function () {
@@ -21505,7 +21534,7 @@
         studyTab$1.classList.add('active');
         exploreTab.classList.remove('active');
         activeTab = tabs.study;
-        persistState();
+        persistUIState();
     });
 
     recommendationsDifficultySelector.addEventListener('change', function () {
@@ -21554,7 +21583,7 @@
                 .then(function (data) {
                     definitions = data;
                 });
-            persistState();
+            persistUIState();
         }
     };
 
