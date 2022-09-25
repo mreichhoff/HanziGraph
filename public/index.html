@@ -36,7 +36,7 @@
             <!-- lol, like control plane -->
             <div id="control-pane">
                 <div class="tabs">
-                    <div id="show-explore" class="tab active">Explore</div>
+                    <div id="show-explore" class="tab left active">Explore</div>
                     <div id="show-study" class="tab">Study</div>
                 </div>
                 <div id="example-container">
@@ -44,8 +44,8 @@
                         <form id="hanzi-choose" class="control">
                             <!-- i18n? what's that? -->
                             <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word"
-                                type="text" maxlength="6" class="search-box" />
-                            <input type="submit" value="Go!" />
+                                type="search" enterkeyhint="search" maxlength="6" class="search-box" />
+                            <input id="submit-button" type="submit" value="Go!" />
                         </form>
                     </div>
                     <div style="display:none" id="not-found-message">😞 That word was not found. Please try another, or
@@ -79,9 +79,8 @@
                     </p>
                     <p id="study-call-to-action" class="study-call-to-action">
                         <span id="task-description">What does the text below mean?</span>
-                        <span id="task-complete">Studying complete. Check back later for more reviews. <br />You can
-                            also
-                            add more cards by exploring the graph!</span>
+                        <span id="task-complete">Studying complete. Check later for more reviews, or add more
+                            cards.</span>
                     </p>
                     <p id="card-question-container"></p>
                     <span id="show-answer-button" class="study-call-to-action">Show Answer</span>
@@ -111,7 +110,7 @@
                 <div id="graph"></div>
                 <div id="legend">
                     <p>
-                        The color of a hanzi or connection indicates its difficulty level.
+                        Colors indicate frequency or HSK level.
                     </p>
                     <div id="level-container">
                         <div class="circle" style="background:#ff635f">HSK1</div>

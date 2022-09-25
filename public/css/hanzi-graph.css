@@ -171,7 +171,7 @@ a {
 }
 
 .menu-item {
-    font-size: 22px;
+    font-size: 18px;
     height: 60px;
     cursor: pointer;
 }
@@ -216,10 +216,17 @@ a {
 }
 
 .search-box {
+    font-size: 20px;
+    font-weight: 300;
     width: calc(100% - 70px);
     background-color: rgba(74, 74, 74, 0.9);
     border: 1px solid #3333;
     color: rgba(255, 255, 255, 0.87);
+}
+
+#submit-button {
+    width: 65px;
+    font-size: 16px;
 }
 
 .faq-link {
@@ -381,11 +388,12 @@ a.navigable {
 }
 
 .sentence-container {
-    max-width: 80%;
+    max-width: 85%;
+    min-width: 85%;
 }
 
 .walkthrough p {
-    font-size: 18px;
+    font-size: 16px;
     margin-top: 20px;
     margin-bottom: 20px;
 }
@@ -420,11 +428,15 @@ h2 .text-button {
 }
 
 .tab {
-    font-size: 20px;
+    font-size: 18px;
     text-align: center;
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
+}
+
+.tab.left {
+    border-right: 1px solid #333;
 }
 
 .tab.active {
@@ -539,6 +551,11 @@ p.related-card {
 }
 
 #explain-text {
+    margin: 0;
+    font-size: 14px;
+}
+
+#cards-due {
     margin-top: 20px;
 }
 
@@ -609,11 +626,6 @@ main.auth-form {
     max-width: 95%;
 }
 
-#controls input {
-    font-size: 20px;
-    font-weight: 300;
-}
-
 select {
     font-size: 16px;
 }
@@ -672,6 +684,34 @@ select {
     text-align: right;
 }
 
+.volume {
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+    transform: scale(0.9);
+    width: 22px;
+    height: 22px;
+    border: 2px solid;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 8px;
+    margin-left: 20px;
+}
+
+.volume::before {
+    content: "";
+    display: inline-block;
+    box-sizing: border-box;
+    position: absolute;
+    width: 0;
+    height: 10px;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 6px solid;
+    top: 4px;
+    left: 7px
+}
+
 @media (max-width:1024px) {
 
     #graph-container,
@@ -696,7 +736,7 @@ select {
 
     #control-pane {
         width: 100%;
-        height: 50%;
+        height: calc(50% - 2px);
         border-right: 0;
         border-bottom: 1px solid #333;
     }
@@ -741,14 +781,18 @@ select {
         font-size: 12px;
     }
 
-    .menu-item {
-        font-size: 20px;
-    }
-
     .menu {
         width: 98%;
         margin-left: auto;
         margin-right: auto;
+    }
+
+    .volume {
+        margin-left: 16px;
+    }
+
+    #result-buttons li {
+        width: 80%;
     }
 }
 
@@ -763,10 +807,6 @@ select {
 
     h2 {
         font-size: 24px;
-    }
-
-    .menu-item {
-        font-size: 18px;
     }
 
     #controls input[type=submit] {
@@ -892,6 +932,10 @@ main.stats section p {
         background-color: #f9f9f9;
     }
 
+    .tab.left {
+        border-right: 1px solid #3333;
+    }
+
     .tab.active {
         background-color: white;
     }
@@ -934,34 +978,6 @@ main.stats section p {
         border-bottom: 1px solid #3333;
         border-right: 0;
     }
-}
-
-.volume {
-    box-sizing: border-box;
-    position: relative;
-    display: inline-block;
-    transform: scale(0.9);
-    width: 22px;
-    height: 22px;
-    border: 2px solid;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 8px;
-    margin-left: 40px;
-}
-
-.volume::before {
-    content: "";
-    display: inline-block;
-    box-sizing: border-box;
-    position: absolute;
-    width: 0;
-    height: 10px;
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    border-left: 6px solid;
-    top: 4px;
-    left: 7px
 }
 
 .add-button {
