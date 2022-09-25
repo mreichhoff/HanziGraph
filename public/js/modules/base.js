@@ -20,6 +20,8 @@ let activeTab = tabs.explore;
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
 let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
 let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
+const legendContainer = document.getElementById('legend');
+
 let legendElements = document.querySelectorAll('div.circle');
 let graphOptions = {
     newHsk: {
@@ -44,7 +46,8 @@ let getActiveGraph = function () {
 }
 
 //top-level section container
-const mainContainer = document.getElementById('container');
+const mainContainer = document.getElementById('main-container');
+const graphContainer = document.getElementById('graph-container');
 
 const exploreTab = document.getElementById('show-explore');
 const studyTab = document.getElementById('show-study');
@@ -60,7 +63,6 @@ const exampleContainer = document.getElementById('example-container');
 //explore tab navigation controls
 const hanziBox = document.getElementById('hanzi-box');
 const hanziSearchForm = document.getElementById('hanzi-choose');
-const previousHanziButton = document.getElementById('previousHanziButton');
 const notFoundElement = document.getElementById('not-found-message');
 //recommendations
 const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
@@ -76,7 +78,7 @@ const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 
 let getZhTts = function () {
     //use the first-encountered zh-CN voice for now
-    return speechSynthesis.getVoices().find(voice => voice.lang === "zh-CN");
+    return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
 };
 let zhTts = getZhTts();
 //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
@@ -91,7 +93,7 @@ let runTextToSpeech = function (text, anchors) {
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
     if (zhTts) {
         let utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "zh-CN";
+        utterance.lang = zhTts.lang;
         utterance.voice = zhTts;
         utterance.addEventListener('boundary', function (event) {
             if (event.charIndex == null || event.charLength == null) {
@@ -116,15 +118,14 @@ let runTextToSpeech = function (text, anchors) {
 
 let addTextToSpeech = function (holder, text, aList) {
     let textToSpeechButton = document.createElement('span');
-    textToSpeechButton.className = 'text-button listen';
-    textToSpeechButton.textContent = 'Listen';
+    textToSpeechButton.className = 'volume';
     textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
     holder.appendChild(textToSpeechButton);
 };
 let addSaveToListButton = function (holder, text) {
-    let buttonTexts = ['In your study list!', 'Add to study list'];
+    let buttonTexts = ['✔️', '+'];
     let saveToListButton = document.createElement('span');
-    saveToListButton.className = 'text-button';
+    saveToListButton.className = 'add-button';
     saveToListButton.textContent = inStudyList(text) ? buttonTexts[0] : buttonTexts[1];
     saveToListButton.addEventListener('click', function () {
         addCards(currentExamples, text);
@@ -331,7 +332,7 @@ let updateGraph = function (value, maxLevel) {
     let nextGraph = document.createElement("div");
     nextGraph.id = 'graph';
     //TODO: makes assumption about markup order
-    mainContainer.append(nextGraph);
+    graphContainer.insertBefore(nextGraph, legendContainer);
 
     if (value && hanzi[value]) {
         initializeGraph(value, maxLevel, nextGraph, nodeTapHandler, edgeTapHandler);
@@ -491,19 +492,6 @@ levelSelector.addEventListener('change', function () {
     //TODO hide edges in existing graph rather than rebuilding
     //TODO refresh after level change can be weird
     updateGraph(currentHanzi[currentHanzi.length - 1], levelSelector.value);
-});
-
-previousHanziButton.addEventListener('click', function () {
-    if (!undoChain.length) {
-        return;
-    }
-    let next = undoChain.pop();
-    let maxLevel = levelSelector.value;
-    buildGraph(next.hanzi, maxLevel);
-    if (next.word) {
-        setupExamples(next.word);
-    }
-    persistState();
 });
 showPinyinCheckbox.addEventListener('change', function () {
     let toggleLabel = togglePinyinLabel;

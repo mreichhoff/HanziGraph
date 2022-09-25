@@ -25,7 +25,7 @@ const cardNewMessageElement = document.getElementById('card-new-message');
 const cardRightCountElement = document.getElementById('card-right-count');
 const cardWrongCountElement = document.getElementById('card-wrong-count');
 const cardPercentageElement = document.getElementById('card-percentage');
-const clozePlaceholderCharacter = "*";
+const clozePlaceholderCharacter = "_";
 const clozePlaceholder = clozePlaceholderCharacter + clozePlaceholderCharacter + clozePlaceholderCharacter;
 
 let currentKey = null;

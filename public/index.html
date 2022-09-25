@@ -21,118 +21,121 @@
 </head>
 
 <body>
-    <div id="container">
-        <!-- lol, like control plane -->
-        <div id="control-pane">
-            <header class="header">
-                <div class="menu-container">
-                    <label id="menu-button">
-                        <i class="menu-expand"></i>
-                    </label>
-                </div>
-                <!--TODO get rid of this ID-->
-                <h1 id="main-header" class="main-header">HanziGraph</h1>
-                <div class="stats-container"><a id="stats-show"><i class="stats-button"></i></a></div>
-            </header>
-            <div class="tabs">
-                <div id="show-explore" class="tab active">Explore</div>
-                <div id="show-study" class="tab">Study</div>
+    <div id="main-container">
+        <header class="header">
+            <div class="menu-container">
+                <label id="menu-button">
+                    <i class="menu-expand"></i>
+                </label>
             </div>
-            <div id="example-container">
-                <div id="controls">
-                    <form id="hanzi-choose" class="control">
-                        <!-- i18n? what's that? -->
-                        <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word"
-                            type="text" maxlength="6" class="search-box" />
-                        <input type="submit" value="Go!" />
-                    </form>
-                    <div class="control center">
-                        <span class="text-button" id="previousHanziButton">Previous</span>
+            <!--TODO get rid of this ID in CSS-->
+            <h1 id="main-header" class="main-header">HanziGraph</h1>
+            <div class="stats-container"><a id="stats-show"><i class="stats-button"></i></a></div>
+        </header>
+        <div id="container">
+            <!-- lol, like control plane -->
+            <div id="control-pane">
+                <div class="tabs">
+                    <div id="show-explore" class="tab active">Explore</div>
+                    <div id="show-study" class="tab">Study</div>
+                </div>
+                <div id="example-container">
+                    <div id="controls">
+                        <form id="hanzi-choose" class="control">
+                            <!-- i18n? what's that? -->
+                            <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word"
+                                type="text" maxlength="6" class="search-box" />
+                            <input type="submit" value="Go!" />
+                        </form>
                     </div>
-                </div>
-                <div style="display:none" id="not-found-message">😞 That word was not found. Please try another, or
-                    change the character set in the menu.</div>
-                <div id="recommendations-container" class="recommendations" style="display:none"></div>
-                <input id="show-pinyin" type="checkbox" style="display:none" />
-                <ul id="examples">
-                    <li class="walkthrough">
-                        <!-- i18n :-( -->
-                        <p>
-                            Learn Chinese by exploring the relationships between characters alongside examples that
-                            illustrate their use.
-                        </p>
-                        <p>
-                            To begin, enter a hanzi above, or explore the diagram. You can quickly build mental
-                            connections
-                            among characters based on the words they form and their use in example sentences.
-                        </p>
-                        <p>
-                            Anywhere you see a hanzi, assume clicking or tapping it will make something happen.
-                        </p>
-                        <p>
-                            When you choose "add to study list", flash cards will be created from the examples.
-                            You can study the cards on the study tab; spaced repetition is used to help you learn
-                            efficiently.
-                            Flash cards are synced across devices in real-time when you're signed in, and can be
-                            exported to anki.
-                        </p>
-                        <p>
-                            Note that you can also zoom, drag, and re-arrange the diagram however you please.
-                        </p>
-                        <p>
-                            <a class="faq-link" id="show-general-faq">See the FAQ for more information.</a>
-                        </p>
-                    </li>
-                </ul>
-            </div>
-            <div id="study-container" style="display:none">
-                <p id="explain-text">Not sure how this works? <a class="faq-link" id="show-study-faq">Learn
-                        more.</a></p>
-                <p id="cards-due">
-                    Cards due: <span id="card-due-count"></span>
-                </p>
-                <p id="study-call-to-action" class="study-call-to-action">
-                    <span id="task-description">What does the text below mean?</span>
-                    <span id="task-complete">Studying complete. Check back later for more reviews. <br />You can also
-                        add more cards by exploring the graph!</span>
-                </p>
-                <p id="card-question-container"></p>
-                <span id="show-answer-button" class="study-call-to-action">Show Answer</span>
-                <div id="card-answer-container" style="display:none">
-                    <p id="card-answer"></p>
-                    <ul id="result-buttons">
-                        <li id="wrong-button">I didn't know that</li>
-                        <li id="right-button">I knew that!</li>
+                    <div style="display:none" id="not-found-message">😞 That word was not found. Please try another, or
+                        change the character set in the menu.</div>
+                    <div id="recommendations-container" class="recommendations" style="display:none"></div>
+                    <input id="show-pinyin" type="checkbox" style="display:none" />
+                    <ul id="examples">
+                        <li class="walkthrough">
+                            <!-- i18n :-( -->
+                            <p>
+                                Learn Chinese by exploring the relationships between characters alongside examples that
+                                illustrate their use.
+                            </p>
+                            <p>
+                                To begin, enter a hanzi above, or explore the diagram. You can quickly build mental
+                                connections
+                                among characters based on the words they form and their use in example sentences.
+                            </p>
+                            <p>
+                                Anywhere you see a hanzi, assume clicking or tapping it will make something happen.
+                            </p>
+                            <p>
+                                When you choose "add to study list", flash cards will be created from the examples.
+                                You can study the cards on the study tab; spaced repetition is used to help you learn
+                                efficiently.
+                                Flash cards are synced across devices in real-time when you're signed in, and can be
+                                exported to anki.
+                            </p>
+                            <p>
+                                Note that you can also zoom, drag, and re-arrange the diagram however you please.
+                            </p>
+                            <p>
+                                <a class="faq-link" id="show-general-faq">See the FAQ for more information.</a>
+                            </p>
+                        </li>
                     </ul>
-                    <p id="delete-card-button" class="text-button">Delete this card</p>
-                    <div id="past-performance-container" class="card-detail">
-                        <p id="card-new-message" style="display:none">This is a new card!</p>
-                        <div id="card-old-message" style="display: none;">
-                            <p>Previous attempts: <span id="card-percentage"></span>% correct.</p>
-                            <p>Right <span id="card-right-count"></span>; Wrong <span id="card-wrong-count"></span>.</p>
+                </div>
+                <div id="study-container" style="display:none">
+                    <p id="explain-text">Not sure how this works? <a class="faq-link" id="show-study-faq">Learn
+                            more.</a></p>
+                    <p id="cards-due">
+                        Cards due: <span id="card-due-count"></span>
+                    </p>
+                    <p id="study-call-to-action" class="study-call-to-action">
+                        <span id="task-description">What does the text below mean?</span>
+                        <span id="task-complete">Studying complete. Check back later for more reviews. <br />You can
+                            also
+                            add more cards by exploring the graph!</span>
+                    </p>
+                    <p id="card-question-container"></p>
+                    <span id="show-answer-button" class="study-call-to-action">Show Answer</span>
+                    <div id="card-answer-container" style="display:none">
+                        <p id="card-answer"></p>
+                        <ul id="result-buttons">
+                            <li id="wrong-button">✕</li>
+                            <li id="right-button">✔</li>
+                        </ul>
+                        <p id="delete-card-button">Delete this card</p>
+                        <div id="past-performance-container" class="card-detail">
+                            <p id="card-new-message" style="display:none">This is a new card!</p>
+                            <div id="card-old-message" style="display: none;">
+                                <p>Previous attempts: <span id="card-percentage"></span>% correct.</p>
+                                <p>Right <span id="card-right-count"></span>; Wrong <span id="card-wrong-count"></span>.
+                                </p>
+                            </div>
+                        </div>
+                        <div id="related-cards-container" class="card-detail" style="display:none">
+                            Other cards with <span id="related-card-query"></span>:
+                            <div id="related-cards" class="related-cards"></div>
                         </div>
                     </div>
-                    <div id="related-cards-container" class="card-detail" style="display:none">
-                        Other cards with <span id="related-card-query"></span>:
-                        <div id="related-cards" class="related-cards"></div>
-                    </div>
                 </div>
             </div>
-            <div id="legend">
-                <p>
-                    The color of a hanzi or connection indicates its difficulty level.
-                </p>
-                <div id="level-container">
-                    <div class="circle" style="background:#ff635f">HSK1</div>
-                    <div class="circle" style="background:#ff9b35">HSK2</div>
-                    <div class="circle" style="background:#fff249">HSK3</div>
-                    <div class="circle" style="background:#6de200">HSK4</div>
-                    <div class="circle" style="background:#de68ee">HSK5</div>
-                    <div class="circle" style="background:#68aaee">HSK6</div>
+            <div id="graph-container">
+                <div id="graph"></div>
+                <div id="legend">
+                    <p>
+                        The color of a hanzi or connection indicates its difficulty level.
+                    </p>
+                    <div id="level-container">
+                        <div class="circle" style="background:#ff635f">HSK1</div>
+                        <div class="circle" style="background:#ff9b35">HSK2</div>
+                        <div class="circle" style="background:#fff249">HSK3</div>
+                        <div class="circle" style="background:#6de200">HSK4</div>
+                        <div class="circle" style="background:#de68ee">HSK5</div>
+                        <div class="circle" style="background:#68aaee">HSK6</div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="graph"></div>
     </div>
     <div id="stats-container" style="display:none">
         <header class="header">

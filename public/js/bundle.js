@@ -8026,7 +8026,7 @@
     };
 
     //TODO may want to stop this and just have it stay shown, with faq over top via absolute position/z-index
-    const mainContainer$2 = document.getElementById('container');
+    const mainContainer$2 = document.getElementById('main-container');
     //faq items
     const faqContainer = document.getElementById('faq-container');
     const faqSingleCharWarning = document.getElementById('faq-single-char-warning');
@@ -21008,6 +21008,8 @@
     let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
     let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
     let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
+    const legendContainer = document.getElementById('legend');
+
     let legendElements = document.querySelectorAll('div.circle');
     let graphOptions = {
         newHsk: {
@@ -21032,7 +21034,8 @@
     };
 
     //top-level section container
-    const mainContainer$1 = document.getElementById('container');
+    const mainContainer$1 = document.getElementById('main-container');
+    const graphContainer = document.getElementById('graph-container');
 
     const exploreTab = document.getElementById('show-explore');
     const studyTab$1 = document.getElementById('show-study');
@@ -21048,7 +21051,6 @@
     //explore tab navigation controls
     const hanziBox = document.getElementById('hanzi-box');
     const hanziSearchForm = document.getElementById('hanzi-choose');
-    const previousHanziButton = document.getElementById('previousHanziButton');
     const notFoundElement = document.getElementById('not-found-message');
     //recommendations
     const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
@@ -21064,7 +21066,7 @@
 
     let getZhTts = function () {
         //use the first-encountered zh-CN voice for now
-        return speechSynthesis.getVoices().find(voice => voice.lang === "zh-CN");
+        return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
     };
     let zhTts = getZhTts();
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
@@ -21079,7 +21081,7 @@
         //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
         if (zhTts) {
             let utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = "zh-CN";
+            utterance.lang = zhTts.lang;
             utterance.voice = zhTts;
             utterance.addEventListener('boundary', function (event) {
                 if (event.charIndex == null || event.charLength == null) {
@@ -21104,15 +21106,14 @@
 
     let addTextToSpeech = function (holder, text, aList) {
         let textToSpeechButton = document.createElement('span');
-        textToSpeechButton.className = 'text-button listen';
-        textToSpeechButton.textContent = 'Listen';
+        textToSpeechButton.className = 'volume';
         textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
         holder.appendChild(textToSpeechButton);
     };
     let addSaveToListButton = function (holder, text) {
-        let buttonTexts = ['In your study list!', 'Add to study list'];
+        let buttonTexts = ['✔️', '+'];
         let saveToListButton = document.createElement('span');
-        saveToListButton.className = 'text-button';
+        saveToListButton.className = 'add-button';
         saveToListButton.textContent = inStudyList(text) ? buttonTexts[0] : buttonTexts[1];
         saveToListButton.addEventListener('click', function () {
             addCards(currentExamples, text);
@@ -21319,7 +21320,7 @@
         let nextGraph = document.createElement("div");
         nextGraph.id = 'graph';
         //TODO: makes assumption about markup order
-        mainContainer$1.append(nextGraph);
+        graphContainer.insertBefore(nextGraph, legendContainer);
 
         if (value && hanzi[value]) {
             initializeGraph(value, maxLevel, nextGraph, nodeTapHandler, edgeTapHandler);
@@ -21480,19 +21481,6 @@
         //TODO refresh after level change can be weird
         updateGraph(currentHanzi[currentHanzi.length - 1], levelSelector.value);
     });
-
-    previousHanziButton.addEventListener('click', function () {
-        if (!undoChain.length) {
-            return;
-        }
-        let next = undoChain.pop();
-        let maxLevel = levelSelector.value;
-        buildGraph(next.hanzi, maxLevel);
-        if (next.word) {
-            setupExamples(next.word);
-        }
-        persistState();
-    });
     showPinyinCheckbox.addEventListener('change', function () {
         let toggleLabel = togglePinyinLabel;
         if (showPinyinCheckbox.checked) {
@@ -21596,7 +21584,7 @@
     const cardRightCountElement = document.getElementById('card-right-count');
     const cardWrongCountElement = document.getElementById('card-wrong-count');
     const cardPercentageElement = document.getElementById('card-percentage');
-    const clozePlaceholderCharacter = "*";
+    const clozePlaceholderCharacter = "_";
     const clozePlaceholder = clozePlaceholderCharacter + clozePlaceholderCharacter + clozePlaceholderCharacter;
 
     let currentKey = null;
@@ -21803,7 +21791,7 @@
     };
 
     //TODO move these to a central spot
-    const mainContainer = document.getElementById('container');
+    const mainContainer = document.getElementById('main-container');
     const statsContainer = document.getElementById('stats-container');
 
     const statsShow = document.getElementById('stats-show');

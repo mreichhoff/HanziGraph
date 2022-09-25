@@ -1,5 +1,5 @@
 //TODO may want to stop this and just have it stay shown, with faq over top via absolute position/z-index
-const mainContainer = document.getElementById('container');
+const mainContainer = document.getElementById('main-container');
 //faq items
 const faqContainer = document.getElementById('faq-container');
 const faqSingleCharWarning = document.getElementById('faq-single-char-warning');

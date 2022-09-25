@@ -2,7 +2,7 @@ import { getVisited, getStudyResults, getStudyList } from "./data-layer.js";
 import { getActiveGraph } from "./base.js";
 
 //TODO move these to a central spot
-const mainContainer = document.getElementById('container');
+const mainContainer = document.getElementById('main-container');
 const statsContainer = document.getElementById('stats-container');
 
 const statsShow = document.getElementById('stats-show');
