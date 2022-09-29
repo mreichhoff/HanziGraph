@@ -378,8 +378,8 @@ let createStudyResultGraphs = function (results) {
     for (let i = 0; i < 24; i++) {
         hourlyData.push({
             hour: i,
-            correct: (i.toString() in results.hourly) ? (results.hourly[i.toString()].correct || 0) : 0,
-            incorrect: (i.toString() in results.hourly) ? (results.hourly[i.toString()].incorrect || 0) : 0
+            correct: (results.hourly[i.toString()]) ? (results.hourly[i.toString()].correct || 0) : 0,
+            incorrect: (results.hourly[i.toString()]) ? (results.hourly[i.toString()].incorrect || 0) : 0
         });
     }
     let total = 0;

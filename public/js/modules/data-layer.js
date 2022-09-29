@@ -1,5 +1,5 @@
-import { getDatabase, update, ref, onValue, increment, get, child } from "firebase/database";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, doc, onSnapshot, collection, writeBatch, increment } from "firebase/firestore";
 
 const dataTypes = {
     visited: 'visited',
@@ -22,20 +22,18 @@ const cardTypes = {
 };
 const MAX_RECALL = 2;
 const MAX_CLOZE = 2;
+const MAX_BATCH_SIZE = 500;
 
 let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
 let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
 let visited = JSON.parse(localStorage.getItem('visited') || '{}');
 
+let firstStudyListLoad = true;
+let firstVisitedLoad = true;
+let firstDailyResultsLoad = true;
+let firstHourlyResultsLoad = true;
+
 let authenticatedUser = null;
-
-let studyResultsLastUpdated = null;
-let visitedLastUpdated = null;
-
-//TODO
-let canUpdateNonCriticalData = function (user, lastUpdate) {
-    return (user && (!lastUpdate || (Date.now() - lastUpdate) >= (60 * 60 * 1000)));
-}
 
 let getStudyResults = function () {
     return studyResults;
@@ -54,18 +52,18 @@ let updateVisited = function (nodes) {
         visited[nodes[i]]++;
     }
     if (authenticatedUser) {
-        const db = getDatabase();
-        const nodeRef = ref(db, 'users/' + authenticatedUser.uid + '/visited/zh-CN/');
-        let updates = {};
+        const db = getFirestore();
+        const batch = writeBatch(db);
         for (let i = 0; i < nodes.length; i++) {
-            updates[nodes[i]] = increment(1);
+            batch.set(doc(db, `users/${authenticatedUser.uid}/visited/${sanitizeKey(nodes[i])}`), { count: increment(1) }, { merge: true });
         }
-        update(nodeRef, updates).then(() => {
-            fetchVisited();
-            fetchStudyResults();
+        batch.commit().then(() => {
+            localStorage.setItem('visitedDirty', false);
         }).catch((error) => {
-            console.log(error);
+            localStorage.setItem('visitedDirty', true);
         });
+    } else {
+        localStorage.setItem('visitedDirty', true);
     }
     localStorage.setItem('visited', JSON.stringify(visited));
     callbacks[dataTypes.visited].forEach(x => x(visited));
@@ -75,27 +73,39 @@ let registerCallback = function (dataType, callback) {
     callbacks[dataType].push(callback);
 };
 
-//keeping keys/localStudyList for parity with current hacked together firebase version
-let saveStudyList = function (keys, localStudyList, isAddition) {
+let saveStudyList = function (keys, localStudyList) {
     if (authenticatedUser) {
         localStudyList = localStudyList || studyList;
-        const db = getDatabase();
-        const nodeRef = ref(db, `users/${authenticatedUser.uid}`);
-        let updates = {};
+        const db = getFirestore();
+        let batch = writeBatch(db);
+        let count = 0;
         for (let i = 0; i < keys.length; i++) {
             //setting to null will delete if not present
-            updates[`decks/zh-CN/${sanitizeKey(keys[i])}`] = localStudyList[keys[i]] || null;
-            if (isAddition) {
-                //the user could've previously deleted the card...this addition should win out
-                updates[`deleted/zh-CN/${sanitizeKey(keys[i])}`] = null;
+            const sanitizedKey = sanitizeKey(keys[i]);
+            count++;
+            if (localStudyList[keys[i]]) {
+                batch.set(doc(db, `users/${authenticatedUser.uid}/studyList/${sanitizedKey}`), localStudyList[keys[i]], { merge: true });
+            } else {
+                batch.delete(doc(db, `users/${authenticatedUser.uid}/studyList/${sanitizedKey}`));
+            }
+            if (count == MAX_BATCH_SIZE) {
+                batch.commit().then(() => {
+                    localStorage.setItem('studyListDirty', false);
+                }).catch(() => {
+                    localStorage.setItem('studyListDirty', true);
+                });
+                batch = writeBatch(db);
+                count = 0;
             }
         }
-        update(nodeRef, updates).then(() => {
-            //regardless of how we ended up here, the localStorage part has been incorporated, so clear it out
-            localStorage.setItem('studyListDirty', false);
-        }).catch(() => {
-            localStorage.setItem('studyListDirty', true);
-        });
+        if (keys && keys.length > 0) {
+            //TODO: do we need to set dirty to true here?
+            batch.commit().then(() => {
+                localStorage.setItem('studyListDirty', false);
+            }).catch(() => {
+                localStorage.setItem('studyListDirty', true);
+            });
+        }
     } else {
         localStorage.setItem('studyListDirty', true);
     }
@@ -222,7 +232,7 @@ let findOtherCards = function (seeking, currentKey) {
 let removeFromStudyList = function (key) {
     delete studyList[key];
     callbacks[dataTypes.studyList].forEach(x => x(studyList));
-    addDeletedKey(key);
+    saveStudyList([key]);
 };
 
 let getISODate = function (date) {
@@ -273,93 +283,85 @@ let recordEvent = function (result) {
     studyResults.daily[day][result]++;
 
     if (authenticatedUser) {
-        const db = getDatabase();
-        const resultRef = ref(db, 'users/' + authenticatedUser.uid + '/results/zh-CN/');
-        let updates = {};
-        //using client side date since offline mode is possible (which means a batch could come in well after it happened),
-        //plus I prefer the user's perception of the time to win out, and their machine being incorrect should be rare
-        updates['hourly/' + (hour + '/' + result)] = increment(1);
-        updates['daily/' + (day + '/' + result)] = increment(1);
-
-        update(resultRef, updates).then(() => {
-            fetchStudyResults();
-            fetchVisited();
+        const db = getFirestore();
+        const batch = writeBatch(db);
+        const objectToMerge = {};
+        objectToMerge[result] = increment(1);
+        batch.set(doc(db, `users/${authenticatedUser.uid}/hourly/${hour}`), objectToMerge, { merge: true });
+        batch.set(doc(db, `users/${authenticatedUser.uid}/daily/${day}`), objectToMerge, { merge: true });
+        batch.commit().then(() => {
+            localStorage.setItem('dailyDirty', false);
+            localStorage.setItem('hourlyDirty', false);
         }).catch((error) => {
-            console.log(error);
+            localStorage.setItem('dailyDirty', true);
+            localStorage.setItem('hourlyDirty', true);
         });
+    } else {
+        localStorage.setItem('dailyDirty', true);
+        localStorage.setItem('hourlyDirty', true);
     }
     localStorage.setItem('studyResults', JSON.stringify(studyResults));
     callbacks[dataTypes.studyResults].forEach(x => x(studyResults));
 };
 
-let addDeletedKey = function (key) {
-    //if there's no user, the key will have been pulled out of localStorage; no further action
-    //if there is a user, write this key to the set of deleted keys, and let the corresponding
-    //update handler clear the key on any other devices
-    if (authenticatedUser) {
-        const db = getDatabase();
-        const flashcardRef = ref(db, 'users/' + authenticatedUser.uid + '/deleted/zh-CN');
-        let updates = {};
-        updates[sanitizeKey(key)] = true;
-        update(flashcardRef, updates);
-    }
-};
-
-let mergeStudyLists = function (baseStudyList, targetStudyList) {
-    let madeChanges = false;
-    baseStudyList = baseStudyList || {};
-    for (const key in targetStudyList) {
-        if (!baseStudyList[key] ||
-            (baseStudyList[key].rightCount + baseStudyList[key].wrongCount) <
-            (targetStudyList[key].rightCount + targetStudyList[key].wrongCount)) {
-            madeChanges = true;
-            baseStudyList[key] = targetStudyList[key];
-        } else if ((baseStudyList[key].rightCount + baseStudyList[key].wrongCount) ===
-            (targetStudyList[key].rightCount + targetStudyList[key].wrongCount)) {
-            if (targetStudyList[key].due !== baseStudyList[key].due) {
-                baseStudyList[key].due = Math.min(baseStudyList[key].due, targetStudyList[key].due);
-                madeChanges = true;
-            }
-        }
-    }
-    studyList = baseStudyList;
-    localStorage.setItem('studyList', JSON.stringify(studyList));
-    return madeChanges;
-};
 let sanitizeKey = function (key) {
     return key.replaceAll('.', '。').replaceAll('#', '').replaceAll('$', 'USD').replaceAll('/', '').replaceAll('[', '').replaceAll(']', '');
 };
-
-let fetchStudyResults = function () {
-    if (canUpdateNonCriticalData(authenticatedUser, studyResultsLastUpdated)) {
-        //potentially could still get in here twice, but not super concerned about an extra read or two in rare cases
-        studyResultsLastUpdated = Date.now();
-        const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${authenticatedUser.uid}/results/zh-CN`)).then((snapshot) => {
-            studyResults = snapshot.val() || studyResults;
-            localStorage.setItem('studyResults', JSON.stringify(studyResults));
-            callbacks[dataTypes.studyResults].forEach(x => x(studyResults));
-        }).catch((error) => {
-            studyResultsLastUpdated = null;
-            console.error(error);
-        });
+// todo combine
+let overwriteVisitedKeys = function (keys) {
+    const db = getFirestore();
+    let batch = writeBatch(db);
+    let count = 0;
+    for (let i = 0; i < keys.length; i++) {
+        count++;
+        batch.set(doc(db, `users/${authenticatedUser.uid}/visited/${sanitizeKey(keys[i])}`), { count: visited[keys[i]] }, { merge: true });
+        if (count == MAX_BATCH_SIZE) {
+            batch.commit().then(() => {
+                localStorage.setItem('visitedDirty', false);
+            }).catch((error) => {
+                localStorage.setItem('visitedDirty', true);
+            });
+            count = 0;
+            batch = writeBatch(db);
+        }
     }
-}
-let fetchVisited = function () {
-    if (canUpdateNonCriticalData(authenticatedUser, visitedLastUpdated)) {
-        visitedLastUpdated = Date.now();
-        const dbRef = ref(getDatabase());
-        get(child(dbRef, `users/${authenticatedUser.uid}/visited/zh-CN`)).then((snapshot) => {
-            visited = snapshot.val() || visited;
-            localStorage.setItem('visited', JSON.stringify(visited));
-            callbacks[dataTypes.visited].forEach(x => x(visited));
-        }).catch((error) => {
-            visitedLastUpdated = null;
-            console.error(error);
-        });
+    batch.commit().then(() => {
+        localStorage.setItem('visitedDirty', false);
+    }).catch((error) => {
+        localStorage.setItem('visitedDirty', true);
+    });
+};
+let overwriteHourlyResultKeys = function (keys) {
+    const db = getFirestore();
+    const batch = writeBatch(db);
+    for (let i = 0; i < keys.length; i++) {
+        batch.set(doc(db, `users/${authenticatedUser.uid}/hourly/${sanitizeKey(keys[i])}`), studyResults.hourly[keys[i]], { merge: true });
     }
-}
+    batch.commit().then(() => {
+        localStorage.setItem('hourlyDirty', false);
+    }).catch((error) => {
+        localStorage.setItem('hourlyDirty', true);
+    });
+    localStorage.setItem('studyResults', JSON.stringify(studyResults));
+};
+let overwriteDailyResultKeys = function (keys) {
+    const db = getFirestore();
+    const batch = writeBatch(db);
+    for (let i = 0; i < keys.length; i++) {
+        batch.set(doc(db, `users/${authenticatedUser.uid}/daily/${sanitizeKey(keys[i])}`), studyResults.daily[keys[i]], { merge: true });
+    }
+    batch.commit().then(() => {
+        localStorage.setItem('dailyDirty', false);
+    }).catch((error) => {
+        localStorage.setItem('dailyDirty', true);
+    });
+    localStorage.setItem('studyResults', JSON.stringify(studyResults));
+};
 
+let getResultCount = function (results) {
+    //defensive check
+    return (results[studyResult.CORRECT] || 0) + (results[studyResult.INCORRECT] || 0);
+}
 let initialize = function () {
     let auth = getAuth();
     // TODO cancel callback?
@@ -367,54 +369,241 @@ let initialize = function () {
         if (user) {
             authenticatedUser = user;
             //TODO get study results here, too
-            const db = getDatabase();
-            const flashcardRef = ref(db, 'users/' + authenticatedUser.uid + '/decks/zh-CN');
-            onValue(flashcardRef, (snapshot) => {
-                const data = snapshot.val();
+            const db = getFirestore();
+
+            //TODO: these are all horribly repetitive and overengineered
+            onSnapshot(collection(db, `users/${authenticatedUser.uid}/studyList`), (doc) => {
                 let studyListDirty = JSON.parse(localStorage.getItem('studyListDirty') || "false");
-                if (studyListDirty) {
-                    //TODO: it gets reset to true if the write fails, but is this actually the right spot?
-                    localStorage.setItem('studyListDirty', false);
-                    //TODO: should we use the in-memory studyList variable?
-                    //this is an artifact of a prior implementation where it wasn't necessarily loaded
-                    //immediately...
-                    let localStudyList = JSON.parse(localStorage.getItem('studyList') || '{}');
-                    let updates = [];
-                    for (const key in localStudyList) {
-                        if (!data || !data[key] ||
-                            (data[key].rightCount + data[key].wrongCount) <
-                            (localStudyList[key].rightCount + localStudyList[key].wrongCount)) {
-                            updates.push(key);
+                // if hasPendingWrites is true, we're getting a notification for our own write; ignore
+                if (!doc.metadata.hasPendingWrites) {
+                    let wasFirstLoad = false;
+                    if (firstStudyListLoad) {
+                        firstStudyListLoad = false;
+                        wasFirstLoad = true;
+                    }
+                    let madeUpdates = false;
+                    let serverStudyList = {};
+                    let deletedKeys = [];
+                    for (const item of doc.docChanges()) {
+                        if (item.type === 'added' || item.type === 'modified') {
+                            serverStudyList[item.doc.id] = item.doc.data();
+                        } else if (item.type === 'removed') {
+                            deletedKeys.push(item.doc.id);
                         }
                     }
-                    if (updates.length > 0) {
-                        saveStudyList(updates, localStudyList);
-                        //break out and let the save re-trigger this
-                        return;
+                    // TODO: ensure sanitizeKey() isn't a server-only concept
+                    //merge local with server:
+                    //  if studylist not dirty, use server copy
+                    //     the entire snapshot is only sent the first time,
+                    //       so only use those keys present in the server copy
+                    //     loop through deleted keys, remove from local copy, madeUpdates=true
+                    //  if studylist dirty, find differing keys:
+                    //     if local key not present on server or in deletedKeys, local stays the same, write local to server
+                    //         the entire snapshot is only sent the first time, so only do this if first load
+                    //     if server key not present in local, keep server, no write
+                    //         what if user goes offline, deletes something, server doesn't see it?
+                    //         must keep dirty deleted keys
+                    //     if both present, keep whichever copy has been studied more
+                    //         if the chosen copy is local, write local to server
+                    //
+                    // note that this would be far simpler with a log of study events that would be used to determine due, etc.
+                    // TODO: do that, maybe?
+                    //
+                    // per https://stackoverflow.com/a/51084236:
+                    // firestore also just overwrites with the latest write in its offline mode, which would break this
+                    // (though the worst case seems to be losing the study count + due date, so not catastrophic,
+                    // and anyway if you were studying a ton while offline, why shouldn't those count?)
+                    // the main case where this algorithm would be used would be when a user is not signed in, studies, then signs in
+                    // or similar.
+                    if (!studyListDirty) {
+                        for (const [key, value] of Object.entries(serverStudyList)) {
+                            if (!studyList[key] || studyList[key].due !== value.due) {
+                                studyList[key] = value;
+                                madeUpdates = true;
+                            }
+                        }
+                        for (const deletedKey of deletedKeys) {
+                            delete studyList[deletedKey];
+                            madeUpdates = true;
+                        }
+                        // no keys to write to server, but we must write to localStorage
+                        // kind of a hack, I guess
+                        saveStudyList([]);
+                    } else {
+                        for (const deletedKey of deletedKeys) {
+                            delete studyList[deletedKey];
+                            madeUpdates = true;
+                        }
+                        let updatedKeys = [];
+                        for (const [key, value] of Object.entries(serverStudyList)) {
+                            const localCard = studyList[key];
+                            if (localCard && ((localCard.rightCount + localCard.wrongCount) > (value.rightCount + value.wrongCount))) {
+                                updatedKeys.push(key);
+                            } else {
+                                studyList[key] = value;
+                                madeUpdates = true;
+                            }
+                        }
+                        if (wasFirstLoad) {
+                            for (const localKey of Object.keys(studyList)) {
+                                if (!serverStudyList[localKey]) {
+                                    updatedKeys.push(localKey);
+                                }
+                            }
+                        }
+                        saveStudyList(updatedKeys);
                     }
-                }
-                if (data) {
-                    if (mergeStudyLists(studyList, data)) {
+
+                    if (madeUpdates) {
                         callbacks[dataTypes.studyList].forEach(x => x(studyList));
                     }
                 }
             });
-            const deletedFlashcardRef = ref(db, 'users/' + authenticatedUser.uid + '/deleted/zh-CN');
-            onValue(deletedFlashcardRef, (snapshot) => {
-                const data = snapshot.val() || {};
-                let madeChanges = false;
-                for (const key in data) {
-                    if (studyList[key]) {
-                        delete studyList[key];
-                        madeChanges = true;
+            onSnapshot(collection(db, `users/${authenticatedUser.uid}/visited`), (doc) => {
+                // if hasPendingWrites is true, we're getting a notification for our own write; ignore
+                let visitedDirty = JSON.parse(localStorage.getItem('visitedDirty') || "false");
+                if (!doc.metadata.hasPendingWrites) {
+                    let wasFirstLoad = false;
+                    if (firstVisitedLoad) {
+                        firstVisitedLoad = false;
+                        wasFirstLoad = true;
                     }
-                }
-                if (madeChanges) {
-                    callbacks[dataTypes.studyList].forEach(x => x(studyList));
+                    let serverVisited = {};
+                    for (const item of doc.docChanges()) {
+                        // no support for deleting visited nodes, currently
+                        if (item.type === 'added' || item.type === 'modified') {
+                            serverVisited[item.doc.id] = item.doc.data().count;
+                        }
+                    }
+                    if (visitedDirty) {
+                        // we made updates that weren't written to the server
+                        // (which can happen due to being signed out, etc.)
+                        // if it's the first load, then we need to figure out which ones the server doesn't have
+                        // if it's not the first load, just take the larger of local and server and save if necessary
+                        let updatedKeys = [];
+                        if (wasFirstLoad) {
+                            // TODO maybe just do this if server doesn't have it
+                            // that simplifies things...server wins, but if it has no record, then write it
+                            for (const [key, value] of Object.entries(visited)) {
+                                if (!serverVisited[key] || serverVisited[key] < value) {
+                                    // we have something the server doesn't know about
+                                    updatedKeys.push(key);
+                                }
+                            }
+                        }
+                        // whether first load or not, take the server's value if we can
+                        // or overwrite if local is larger
+                        for (const [key, value] of Object.entries(serverVisited)) {
+                            if (!visited[key] || visited[key] <= value) {
+                                visited[key] = value;
+                            } else {
+                                //key is in visited, and its value is strictly greater than the server sent
+                                updatedKeys.push(key);
+                            }
+                        }
+                        overwriteVisitedKeys(updatedKeys);
+                    } else {
+                        // we have no updates; server wins
+                        for (const [key, value] of Object.entries(serverVisited)) {
+                            visited[key] = value;
+                        }
+                    }
+                    callbacks[dataTypes.visited].forEach(x => x(visited));
                 }
             });
-            fetchStudyResults();
-            fetchVisited();
+            // TODO: combine hourly and daily
+            onSnapshot(collection(db, `users/${authenticatedUser.uid}/hourly`), (doc) => {
+                if (!doc.metadata.hasPendingWrites) {
+                    let hourlyDirty = JSON.parse(localStorage.getItem('hourlyDirty') || "false");
+                    let wasFirstLoad = false;
+                    if (firstHourlyResultsLoad) {
+                        firstHourlyResultsLoad = false;
+                        wasFirstLoad = true;
+                    }
+                    let serverHourly = {};
+                    for (const item of doc.docChanges()) {
+                        // no support for deleting results, currently
+                        if (item.type === 'added' || item.type === 'modified') {
+                            serverHourly[item.doc.id] = item.doc.data();
+                        }
+                    }
+                    if (hourlyDirty) {
+                        //we wrote something the server didn't see.
+                        let updatedKeys = [];
+                        if (wasFirstLoad) {
+                            for (const [key, value] of Object.entries(studyResults.hourly)) {
+                                if (!serverHourly[key] || getResultCount(serverHourly[key]) < getResultCount(value)) {
+                                    // we have something the server doesn't know about
+                                    if (value) {
+                                        updatedKeys.push(key);
+                                    }
+                                }
+                            }
+                        }
+                        // whether first load or not, take the server's value if we can
+                        // or overwrite if local is larger
+                        for (const [key, value] of Object.entries(serverHourly)) {
+                            if (!studyResults.hourly[key] || getResultCount(studyResults.hourly[key]) <= getResultCount(value)) {
+                                studyResults.hourly[key] = value;
+                            } else {
+                                //key is in results, and its value is strictly greater than the server sent
+                                updatedKeys.push(key);
+                            }
+                        }
+                        overwriteHourlyResultKeys(updatedKeys);
+                    } else {
+                        // we have no updates; server wins
+                        for (const [key, value] of Object.entries(serverHourly)) {
+                            studyResults.hourly[key] = value;
+                        }
+                    }
+                }
+            });
+            onSnapshot(collection(db, `users/${authenticatedUser.uid}/daily`), (doc) => {
+                if (!doc.metadata.hasPendingWrites) {
+                    let dailyDirty = JSON.parse(localStorage.getItem('dailyDirty') || "false");
+                    let wasFirstLoad = false;
+                    if (firstDailyResultsLoad) {
+                        firstDailyResultsLoad = false;
+                        wasFirstLoad = true;
+                    }
+                    let serverDaily = {};
+                    for (const item of doc.docChanges()) {
+                        // no support for deleting results, currently
+                        if (item.type === 'added' || item.type === 'modified') {
+                            serverDaily[item.doc.id] = item.doc.data();
+                        }
+                    }
+                    if (dailyDirty) {
+                        //we wrote something the server didn't see.
+                        let updatedKeys = [];
+                        if (wasFirstLoad) {
+                            for (const [key, value] of Object.entries(studyResults.daily)) {
+                                if (!serverDaily[key] || getResultCount(serverDaily[key]) < getResultCount(value)) {
+                                    // we have something the server doesn't know about
+                                    updatedKeys.push(key);
+                                }
+                            }
+                        }
+                        // whether first load or not, take the server's value if we can
+                        // or overwrite if local is larger
+                        for (const [key, value] of Object.entries(serverDaily)) {
+                            if (!studyResults.daily[key] || getResultCount(studyResults.daily[key]) <= getResultCount(value)) {
+                                studyResults.daily[key] = value;
+                            } else {
+                                //key is in results, and its value is strictly greater than the server sent
+                                updatedKeys.push(key);
+                            }
+                        }
+                        overwriteDailyResultKeys(updatedKeys);
+                    } else {
+                        // we have no updates; server wins
+                        for (const [key, value] of Object.entries(serverDaily)) {
+                            studyResults.daily[key] = value;
+                        }
+                    }
+                }
+            });
         }
     });
 };
