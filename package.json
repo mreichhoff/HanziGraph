@@ -1,0 +1,13 @@
+{
+    "private": true,
+    "dependencies": {
+        "firebase": "^9.6.1"
+    },
+    "jshintConfig": {
+        "esversion": 9
+    },
+    "devDependencies": {
+        "@rollup/plugin-json": "^4.1.0",
+        "@rollup/plugin-node-resolve": "^13.1.3"
+    }
+}

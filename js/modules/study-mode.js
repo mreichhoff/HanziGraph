@@ -1,5 +1,5 @@
 import { makeSentenceNavigable, addTextToSpeech } from "./base.js";
-import { dataTypes, registerCallback, saveStudyList, getStudyList, findOtherCards, removeFromStudyList, recordEvent, studyResult, updateCard } from "./data-layer.js";
+import { dataTypes, registerCallback, saveStudyList, getStudyList, findOtherCards, removeFromStudyList, recordEvent, studyResult, updateCard, cardTypes } from "./data-layer.js";
 
 //TODO probably doesn't belong here and should instead be indirected (could also just export from base)
 const studyTab = document.getElementById('show-study');
@@ -25,8 +25,79 @@ const cardNewMessageElement = document.getElementById('card-new-message');
 const cardRightCountElement = document.getElementById('card-right-count');
 const cardWrongCountElement = document.getElementById('card-wrong-count');
 const cardPercentageElement = document.getElementById('card-percentage');
+const clozePlaceholderCharacter = "_";
+const clozePlaceholder = clozePlaceholderCharacter + clozePlaceholderCharacter + clozePlaceholderCharacter;
 
 let currentKey = null;
+
+// TODO: must match cardTypes, which sucks
+// why can't you do: {cardTypes.RECOGNITION: function(){...}}?
+const cardRenderers = {
+    'recognition': function (currentCard) {
+        taskDescriptionElement.innerText = 'What does the text below mean?';
+        let question = currentCard.zh.join('');
+        let aList = makeSentenceNavigable(question, cardQuestionContainer);
+        for (let i = 0; i < aList.length; i++) {
+            aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
+        }
+        cardQuestionContainer.style.flexDirection = 'row';
+        addTextToSpeech(cardQuestionContainer, question, aList);
+        cardAnswerElement.textContent = currentCard.en;
+
+    },
+    'recall': function (currentCard) {
+        let question = currentCard.en;
+        let answer = currentCard.zh.join('');
+        // so clean, so clean
+        if (answer === currentCard.vocabOrigin) {
+            taskDescriptionElement.innerText = `Can you match the definitions below to a Chinese word?`;
+        } else {
+            taskDescriptionElement.innerText = `Can you translate the text below to Chinese?`;
+        }
+        cardAnswerElement.innerHTML = '';
+        let aList = makeSentenceNavigable(answer, cardAnswerElement);
+        for (let i = 0; i < aList.length; i++) {
+            aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
+        }
+        addTextToSpeech(cardAnswerElement, answer, aList);
+        cardQuestionContainer.innerText = question;
+    },
+    'cloze': function (currentCard) {
+        taskDescriptionElement.innerText = `Can you replace ${clozePlaceholder} to match the translation?`;
+        let clozedSentence;
+        if (currentCard.vocabOrigin.length === 1) {
+            clozedSentence = currentCard.zh.join('');
+            clozedSentence = clozedSentence.replaceAll(currentCard.vocabOrigin, x => clozePlaceholder);
+        }
+        else {
+            clozedSentence = currentCard.zh.map(x => x === currentCard.vocabOrigin ? clozePlaceholder : x).join('');
+        }
+        let clozeContainer = document.createElement('p');
+        clozeContainer.className = 'cloze-container';
+        let aList = makeSentenceNavigable(clozedSentence, clozeContainer);
+        for (let i = 0; i < aList.length; i++) {
+            // TODO yuck
+            if (i >= 2 && aList[i].innerText === clozePlaceholderCharacter && aList[i - 1].innerText === clozePlaceholderCharacter && aList[i - 2].innerText === clozePlaceholderCharacter) {
+                aList[i].classList.add('cloze-placeholder');
+                aList[i - 1].classList.add('cloze-placeholder');
+                aList[i - 2].classList.add('cloze-placeholder');
+            }
+            aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
+        }
+        cardQuestionContainer.style.flexDirection = 'column';
+        cardQuestionContainer.appendChild(clozeContainer);
+        let clozeAnswerContainer = document.createElement('p');
+        clozeAnswerContainer.className = 'cloze-container';
+        clozeAnswerContainer.innerText = currentCard.en;
+        cardQuestionContainer.appendChild(clozeAnswerContainer);
+        cardAnswerElement.innerHTML = '';
+        let answerAList = makeSentenceNavigable(currentCard.vocabOrigin, cardAnswerElement);
+        for (let i = 0; i < answerAList.length; i++) {
+            answerAList[i].addEventListener('click', displayRelatedCards.bind(this, answerAList[i]));
+        }
+        addTextToSpeech(cardAnswerElement, currentCard.vocabOrigin, answerAList);
+    }
+};
 
 let displayRelatedCards = function (anchor) {
     let MAX_RELATED_CARDS = 3;
@@ -75,18 +146,14 @@ let setupStudyMode = function () {
         taskDescriptionElement.style.display = 'none';
         showAnswerButton.style.display = 'none';
         return;
-    } else {
-        taskCompleteElement.style.display = 'none';
-        taskDescriptionElement.style.display = 'inline';
-        showAnswerButton.style.display = 'block';
     }
-    let question = currentCard.zh.join('');
-    let aList = makeSentenceNavigable(question, cardQuestionContainer);
-    for (let i = 0; i < aList.length; i++) {
-        aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
-    }
-    addTextToSpeech(cardQuestionContainer, question, aList);
-    cardAnswerElement.textContent = currentCard.en;
+
+    taskCompleteElement.style.display = 'none';
+    showAnswerButton.style.display = 'block';
+    // Old cards have no type property, but all are recognition
+    cardRenderers[currentCard.type || cardTypes.RECOGNITION](currentCard);
+    taskDescriptionElement.style.display = 'inline';
+
     if (currentCard.wrongCount + currentCard.rightCount != 0) {
         cardOldMessageElement.removeAttribute('style');
         cardNewMessageElement.style.display = 'none';
@@ -138,9 +205,12 @@ let initialize = function () {
         let studyList = getStudyList();
         let content = "data:text/plain;charset=utf-8,";
         for (const [key, value] of Object.entries(studyList)) {
-            //replace is a hack for flashcard field separator...TODO could escape
-            content += [key.replace(';', ''), value.en.replace(';', '')].join(';');
-            content += '\n';
+            // TODO: figure out cloze/recall exports
+            if (!value.type || value.type === cardTypes.RECOGNITION) {
+                //replace is a hack for flashcard field separator...TODO could escape
+                content += [key.replace(';', ''), value.en.replace(';', '')].join(';');
+                content += '\n';
+            }
         }
         //wow, surely it can't be this absurd
         let encodedUri = encodeURI(content);
@@ -161,6 +231,7 @@ let initialize = function () {
         } else {
             exportStudyListButton.style.display = 'none';
         }
+        setupStudyMode();
     });
     studyTab.addEventListener('click', function () {
         setupStudyMode();
