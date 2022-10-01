@@ -195,7 +195,7 @@ let findExamples = function (word) {
     //TODO consider indexing up front
     //can also reuse inner loop...consider inverting
     for (let i = 0; i < sentences.length; i++) {
-        if (sentences[i].zh.includes(word)) {
+        if (sentences[i].zh.includes(word) || (word.length === 1 && sentences[i].zh.join('').includes(word))) {
             if (sentences[i].en && sentences[i].pinyin) {
                 examples.push(sentences[i]);
                 if (examples.length === maxExamples) {
@@ -291,20 +291,6 @@ let setupExamples = function (words) {
         //setup current examples for potential future export
         currentExamples[words[i]].push(...examples);
 
-        if (words[i].length === 1 && !singleCharacterWords.has(words[i])) {
-            let exampleWarning = document.createElement('p');
-            exampleWarning.className = 'example-warning';
-            //I know I shouldn't do this, but I'll refactor any day now
-            exampleWarning.textContent = `This character does not appear alone in the ${activeGraph.display}. It appears only as part of other words. Examples seen by clicking the connecting lines may be of higher quality. `;
-            let warningFaqLink = document.createElement('a');
-            warningFaqLink.textContent = "Learn more.";
-            warningFaqLink.className = 'faq-link';
-            warningFaqLink.addEventListener('click', function () {
-                showFaq(faqTypes.singleCharWarning);
-            });
-            exampleWarning.appendChild(warningFaqLink);
-            item.appendChild(exampleWarning);
-        }
         let exampleList = document.createElement('ul');
         item.appendChild(exampleList);
         setupExampleElements(examples, exampleList);
@@ -584,11 +570,6 @@ let switchGraph = function () {
             .then(response => response.json())
             .then(function (data) {
                 window.sentences = data;
-            });
-        fetch(`./data/${prefix}single-char-words.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                singleCharacterWords = new Set(data);
             });
         fetch(`./data/${prefix}definitions.json`)
             .then(response => response.json())

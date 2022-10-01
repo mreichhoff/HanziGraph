@@ -160,7 +160,7 @@ a {
 
 .tabs div {
     flex: 1;
-    padding: 12px;
+    padding: 10px;
 }
 
 .menu {
@@ -326,7 +326,7 @@ p.example-line {
 }
 
 p.zh-example {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 400;
     display: flex;
     opacity: 1;
@@ -396,28 +396,6 @@ a.navigable {
     font-size: 16px;
     margin-top: 20px;
     margin-bottom: 20px;
-}
-
-.text-button {
-    font-size: 16px;
-    background-color: white;
-    margin-left: 4px;
-    padding: 6px;
-    color: black;
-    border-radius: 6px;
-    font-family: Times, serif;
-    user-select: none;
-    white-space: nowrap;
-    -webkit-user-select: none;
-}
-
-p .text-button.listen {
-    align-self: flex-start;
-    vertical-align: top;
-}
-
-h2 .text-button {
-    vertical-align: middle;
 }
 
 /*TODO refactor this...too much repetition, selectors too specific */
@@ -494,7 +472,7 @@ h2 .text-button {
 
 #card-question-container {
     display: flex;
-    font-size: 28px;
+    font-size: 24px;
     justify-content: center;
     font-weight: 400;
 }
@@ -506,11 +484,6 @@ h2 .text-button {
 .cloze-placeholder {
     color: #ff635f;
     font-weight: bold;
-}
-
-.sentence-container a {
-    font-size: 28px;
-    vertical-align: text-top;
 }
 
 #card-answer {
@@ -641,13 +614,6 @@ select {
 }
 
 @media (hover: hover) {
-    .text-button:hover {
-        color: black;
-        cursor: pointer;
-        background-color: #68aaee;
-        transition: background-color 300ms;
-    }
-
     #result-buttons li:hover {
         border: 1px solid white;
         transition: border 500ms;
@@ -741,6 +707,10 @@ select {
         border-bottom: 1px solid #333;
     }
 
+    #example-container {
+        margin-left: 10px;
+    }
+
     #graph-container {
         width: 100%;
         height: 50%;
@@ -768,11 +738,11 @@ select {
     }
 
     #card-question-container a {
-        font-size: 30px;
+        font-size: 26px;
     }
 
     p.zh-example {
-        font-size: 30px;
+        font-size: 26px;
     }
 
     .bar-chart {
@@ -794,13 +764,27 @@ select {
     #result-buttons li {
         width: 80%;
     }
+
+    #graph {
+        height: calc(100% - 38px);
+    }
+
+    #legend {
+        font-size: 10px;
+        height: 38px;
+    }
+
+    .circle {
+        height: 26px;
+        line-height: 26px;
+        width: 32px;
+        font-size: 10px;
+        margin-bottom: 0;
+        margin-top: 0;
+    }
 }
 
 @media (max-width:360px) {
-    .text-button {
-        font-size: 12px;
-    }
-
     .study-call-to-action {
         font-size: 14px;
     }
@@ -920,11 +904,6 @@ main.stats section p {
 
     #control-pane {
         border-right: 1px solid #3333;
-    }
-
-    .text-button {
-        background-color: #eee;
-        border: 1px solid #3333;
     }
 
     .tabs {

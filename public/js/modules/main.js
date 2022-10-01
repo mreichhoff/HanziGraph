@@ -15,9 +15,6 @@ Promise.all(
         window.sentencesFetch
             .then(response => response.json())
             .then(data => window.sentences = data),
-        window.singleCharacterWordsFetch
-            .then(response => response.json())
-            .then(data => window.singleCharacterWords = new Set(data)),
         window.definitionsFetch
             .then(response => response.json())
             .then(data => window.definitions = data)

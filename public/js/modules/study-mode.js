@@ -64,7 +64,14 @@ const cardRenderers = {
     },
     'cloze': function (currentCard) {
         taskDescriptionElement.innerText = `Can you replace ${clozePlaceholder} to match the translation?`;
-        let clozedSentence = currentCard.zh.map(x => x === currentCard.vocabOrigin ? clozePlaceholder : x).join('');
+        let clozedSentence;
+        if (currentCard.vocabOrigin.length === 1) {
+            clozedSentence = currentCard.zh.join('');
+            clozedSentence = clozedSentence.replaceAll(currentCard.vocabOrigin, x => clozePlaceholder);
+        }
+        else {
+            clozedSentence = currentCard.zh.map(x => x === currentCard.vocabOrigin ? clozePlaceholder : x).join('');
+        }
         let clozeContainer = document.createElement('p');
         clozeContainer.className = 'cloze-container';
         let aList = makeSentenceNavigable(clozedSentence, clozeContainer);
