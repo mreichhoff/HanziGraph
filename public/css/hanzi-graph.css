@@ -40,7 +40,7 @@ a {
 #graph-container {
     width: 60%;
     height: 100%;
-    background: black;
+    background: #020202;
 }
 
 #graph {
@@ -284,7 +284,7 @@ h2 span {
     text-align: center;
     margin: 0;
     height: 60px;
-    background-color: black;
+    background-color: #020202;
 }
 
 #legend p {
@@ -388,8 +388,7 @@ a.navigable {
 }
 
 .sentence-container {
-    max-width: 85%;
-    min-width: 85%;
+    width: calc(100% - 38px);
 }
 
 .walkthrough p {
@@ -661,7 +660,7 @@ select {
     border-radius: 4px;
     cursor: pointer;
     margin-top: 8px;
-    margin-left: 20px;
+    margin-left: 16px;
 }
 
 .volume::before {
@@ -757,10 +756,6 @@ select {
         margin-right: auto;
     }
 
-    .volume {
-        margin-left: 16px;
-    }
-
     #result-buttons li {
         width: 80%;
     }
@@ -839,11 +834,10 @@ main.stats section p {
 }
 
 .calendar-day {
-    border: 1px solid black;
     color: black;
     background-color: #333;
-    width: 16px;
-    height: 16px;
+    width: 17px;
+    height: 17px;
     margin: 3px;
     border-radius: 4px;
 }
