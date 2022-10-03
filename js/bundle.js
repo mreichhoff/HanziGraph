@@ -631,13 +631,6 @@
         holder.appendChild(saveToListButton);
     };
 
-    let persistState = function () {
-        const newUrl = `/${currentWord}`;
-        history.pushState({
-            word: currentWord,
-        }, '', newUrl);
-    };
-
     let persistUIState = function () {
         localStorage.setItem('state', JSON.stringify({
             activeTab: activeTab,
@@ -648,19 +641,19 @@
     function loadState(state) {
         const term = decodeURIComponent(state.word);
         hanziBox.value = term;
-        search(term, levelSelector.value, true);
+        search(term, levelSelector.value);
     }
 
-    window.onpopstate = (event) => {
-        const state = event.state;
-        if (!state || !state.word) {
-            walkThrough.removeAttribute('style');
-            examplesList.innerHTML = '';
-            hanziBox.value = '';
-            return;
-        }
-        loadState(state);
-    };
+    // window.onpopstate = (event) => {
+    //     const state = event.state;
+    //     if (!state || !state.word) {
+    //         walkThrough.removeAttribute('style');
+    //         examplesList.innerHTML = '';
+    //         hanziBox.value = '';
+    //         return;
+    //     }
+    //     loadState(state);
+    // };
 
     let setupDefinitions = function (definitionList, definitionHolder) {
         for (let i = 0; i < definitionList.length; i++) {
@@ -735,7 +728,7 @@
 
     // expects callers to ensure augmentation is available
     let augmentExamples = function (curr, word, container) {
-        fetch(`/${activeGraph.augmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
+        fetch(`./${activeGraph.augmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
             .then(response => response.json())
             .then(function (data) {
                 if (!container) {
@@ -830,7 +823,6 @@
         }
         hanziBox.value = id;
         setupExamples([id]);
-        persistState();
         exploreTab.click();
         mainHeader.scrollIntoView();
         updateVisited([id]);
@@ -840,7 +832,6 @@
         let words = evt.target.data('words');
         hanziBox.value = words[0];
         setupExamples(words);
-        persistState();
         //TODO toggle functions
         exploreTab.click();
         mainHeader.scrollIntoView();
@@ -935,7 +926,6 @@
                         //enable seamless switching, but don't update if we're already showing examples for character
                         if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
                             setupExamples([character]);
-                            persistState();
                             persistUIState();
                         }
                     }
@@ -999,9 +989,6 @@
             notFoundElement.style.display = 'none';
             buildGraph(value, maxLevel);
             setupExamples([value]);
-            if (!skipState) {
-                persistState();
-            }
             updateVisited([value]);
         } else {
             notFoundElement.removeAttribute('style');

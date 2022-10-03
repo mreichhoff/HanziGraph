@@ -139,10 +139,10 @@ let addSaveToListButton = function (holder, text) {
 };
 
 let persistState = function () {
-    const newUrl = `/${currentWord}`;
-    history.pushState({
-        word: currentWord,
-    }, '', newUrl);
+    // const newUrl = `/${currentWord}`;
+    // history.pushState({
+    //     word: currentWord,
+    // }, '', newUrl);
 };
 
 let persistUIState = function () {
@@ -172,16 +172,16 @@ function loadState(state) {
     search(term, levelSelector.value, true);
 }
 
-window.onpopstate = (event) => {
-    const state = event.state;
-    if (!state || !state.word) {
-        walkThrough.removeAttribute('style');
-        examplesList.innerHTML = '';
-        hanziBox.value = '';
-        return;
-    }
-    loadState(state);
-};
+// window.onpopstate = (event) => {
+//     const state = event.state;
+//     if (!state || !state.word) {
+//         walkThrough.removeAttribute('style');
+//         examplesList.innerHTML = '';
+//         hanziBox.value = '';
+//         return;
+//     }
+//     loadState(state);
+// };
 
 let setupDefinitions = function (definitionList, definitionHolder) {
     for (let i = 0; i < definitionList.length; i++) {
@@ -256,7 +256,7 @@ let getPartition = function (word, numPartitions) {
 
 // expects callers to ensure augmentation is available
 let augmentExamples = function (curr, word, container) {
-    fetch(`/${activeGraph.augmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
+    fetch(`./${activeGraph.augmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
         .then(response => response.json())
         .then(function (data) {
             if (!container) {
