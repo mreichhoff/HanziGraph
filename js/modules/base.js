@@ -401,13 +401,16 @@ let initialize = function () {
     wordSet = getWordSet(hanzi);
     if (history.state) {
         loadState(history.state);
-    } else if (document.location.pathname !== '/') {
-        const state = parseUrl(document.location.pathname);
-        if (state) {
-            loadState(state);
-            history.pushState(state, '', document.location);
-        }
-    } else {
+    }
+    // disabling on main due to github pages hosting pattern
+    //  else if (document.location.pathname !== '/') {
+    //     const state = parseUrl(document.location.pathname);
+    //     if (state) {
+    //         loadState(state);
+    //         history.pushState(state, '', document.location);
+    //     }
+    // } 
+    else {
         //graph chosen is default, no need to modify legend or dropdown
         //add a default graph on page load to illustrate the concept
         let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
