@@ -1,5 +1,5 @@
 let state = JSON.parse(localStorage.getItem('state') || '{}');
-let graphPrefix = '';
+let graphPrefix = 'simplified-';
 if (state && state.graphPrefix) {
     graphPrefix = state.graphPrefix;
 }

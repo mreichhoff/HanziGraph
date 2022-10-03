@@ -5,8 +5,6 @@ import argparse
 import jieba
 from functools import reduce
 
-from nltk.collections import Trie
-
 
 def get_word_frequencies(filename):
     with open(filename) as f:
@@ -93,12 +91,13 @@ def main():
                 freq = get_average_frequency(freqs, words)
                 for word in words:
                     if word in word_set:
-                        if len(word_set[word]) < 2:
+                        if len(word_set[word]) < 1:
                             heappush(word_set[word],
                                      (-freq, target_tokens, base))
                         else:
                             heappushpop(
                                 word_set[word], (-freq, target_tokens, base))
+    # print(json.dumps(word_set, ensure_ascii=False))
     sentences = set()
     result = []
     for word in word_set.keys():

@@ -530,9 +530,12 @@
         },
         top50k: {
             display: 'Top 50k words', prefix: '50k-', legend: bigFreqLegend
+        },
+        simplified: {
+            display: 'Simplified', prefix: 'simplified-', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100
         }
     };
-    let activeGraph = graphOptions.oldHsk;
+    let activeGraph = graphOptions.simplified;
     let getActiveGraph = function () {
         return activeGraph;
     };
@@ -681,7 +684,7 @@
             definitionHolder.appendChild(definitionItem);
         }
     };
-    let findExamples = function (word) {
+    let findExamples = function (word, sentences) {
         let examples = [];
         //used for e.g., missing translation
         let lessDesirableExamples = [];
@@ -736,6 +739,27 @@
             exampleList.appendChild(exampleHolder);
         }
     };
+    let getPartition = function (word, numPartitions) {
+        let total = 0;
+        for (let i = 0; i < word.length; i++) {
+            total += word.charCodeAt(i);
+        }
+        return total % numPartitions;
+    };
+
+    // expects callers to ensure augmentation is available
+    let augmentExamples = function (curr, word, container) {
+        fetch(`/${activeGraph.augmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
+            .then(response => response.json())
+            .then(function (data) {
+                if (!container) {
+                    return false;
+                }
+                let examples = findExamples(word, data);
+                setupExampleElements(examples, container);
+                currentExamples[word].push(...examples);
+            });
+    };
     let setupExamples = function (words) {
         currentExamples = {};
         // if we're showing examples, never show the walkthrough.
@@ -746,7 +770,7 @@
             examplesList.firstChild.remove();
         }
         for (let i = 0; i < words.length; i++) {
-            let examples = findExamples(words[i]);
+            let examples = findExamples(words[i], sentences);
             currentExamples[words[i]] = [];
 
             let item = document.createElement('li');
@@ -786,7 +810,11 @@
 
             let exampleList = document.createElement('ul');
             item.appendChild(exampleList);
-            setupExampleElements(examples, exampleList);
+            if (examples.length > 0) {
+                setupExampleElements(examples, exampleList);
+            } else if (activeGraph.augmentPath) {
+                augmentExamples(currentWord, words[i], exampleList);
+            }
 
             examplesList.append(item);
         }

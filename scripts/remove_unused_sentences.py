@@ -10,15 +10,12 @@ class SetEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-character_and_word_set = set()
-
-
-def get_character_and_word_set(graph):
-    for key in graph.keys():
-        character_and_word_set.add(key)
-        for edge in graph[key]['edges'].keys():
-            character_and_word_set.add(edge)
-            character_and_word_set.update(graph[key]['edges'][edge]['words'])
+def get_character_and_word_set(filename):
+    # TODO: read in that top25k levels thing here, use that instead
+    with open(filename) as f:
+        defs = json.load(f)
+        return {word: 0 for word in defs.keys()}
+        # return {line.strip().split('\t')[0] for line in f}
 
 
 def get_word_frequencies(filename):
@@ -58,7 +55,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Use example finding logic to determine which sentences are reachable and prune those that aren\'t')
     parser.add_argument(
-        '--graph-filename', help='the filename of the graph data')
+        '--vocab-filename', help='the filename of the graph data')
     parser.add_argument(
         '--sentences-filename', help='the filename of the unpruned example sentences')
     parser.add_argument(
@@ -66,36 +63,37 @@ def main():
     args = parser.parse_args()
 
     sentences = get_current_sentences(args.sentences_filename)
-    graph = get_graph(args.graph_filename)
     freq_dict = get_word_frequencies(args.frequency_list_filename)
 
-    get_character_and_word_set(graph)
-    max_per = 5
+    character_and_word_set = get_character_and_word_set(args.vocab_filename)
+    max_per = 3
     used_sentences = []
     seen_sentences = set()
 
     # unfortunate this is duplicated from the frontend implementation...
     # also unfortunate it requires freq sorted input and then has to re-sort
-    for item in character_and_word_set:
-        count = 0
-        bad_examples = []
-        for sentence in sentences:
-            # don't want to check seen sentences here because we can reuse them
-            # I'm nothing if not patient
-            if item in sentence['zh'] and 'en' in sentence:
-                count = count + 1
-                if(count > max_per):
-                    break
-                if ''.join(sentence['zh']) not in seen_sentences:
+    for sentence in sentences:
+        used_sentence = False
+        joined = ''.join(sentence['zh'])
+        if joined in seen_sentences or 'en' not in sentence:
+            continue
+        seen_sentences.add(joined)
+        for word in sentence['zh']:
+            if word in character_and_word_set and character_and_word_set[word] < max_per:
+                character_and_word_set[word] += 1
+                if not used_sentence:
                     used_sentences.append(sentence)
-                    seen_sentences.add(''.join(sentence['zh']))
-            elif item in sentence['zh']:
-                bad_examples.append(sentence)
-        if count < 5 and len(bad_examples) > 0:
-            for i in range(0, min(len(bad_examples), (max_per - count))):
-                if ''.join(bad_examples[i]['zh']) not in seen_sentences:
-                    used_sentences.append(bad_examples[i])
-                    seen_sentences.add(''.join(bad_examples[i]['zh']))
+                    used_sentence = True
+        for character in joined:
+            if character in character_and_word_set and character_and_word_set[character] < max_per:
+                character_and_word_set[character] += 1
+                if not used_sentence:
+                    used_sentences.append(sentence)
+                    used_sentence = True
+    # for key, value in character_and_word_set.items():
+    #     if value == 0:
+    #         print(key)
+    # TODO: uh...why is this needed? must be a bug in examples.py
     get_average_frequency(used_sentences, freq_dict)
     used_sentences.sort(key=lambda entry: entry['freq'])
     remove_freq_field(used_sentences)
