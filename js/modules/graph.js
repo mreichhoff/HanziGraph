@@ -11,7 +11,16 @@ let dfs = function (start, elements, maxDepth, visited, maxLevel) {
         //don't add outgoing edges when we won't process the next layer
         if (maxDepth > 0 && value.level <= maxLevel) {
             if (!visited[key]) {
-                elements.edges.push({ data: { id: Array.from(start + key).sort().toString(), source: start, target: key, level: value.level, words: value.words } });
+                elements.edges.push({
+                    data: {
+                        id: Array.from(start + key).sort().toString(),
+                        source: start, target: key,
+                        level: value.level,
+                        words: value.words,
+                        // render examples for all words, but only display one
+                        displayWord: value.words[0]
+                    }
+                });
             }
         }
     }
@@ -76,7 +85,7 @@ let getStylesheet = function () {
                 'line-color': levelColor,
                 'target-arrow-shape': 'none',
                 'curve-style': 'straight',
-                'label': 'data(words)',
+                'label': 'data(displayWord)',
                 'color': (_ => prefersLight ? 'black' : '#eee'),
                 'font-size': '10px',
                 'text-background-color': (_ => prefersLight ? '#f9f9f9' : 'black'),

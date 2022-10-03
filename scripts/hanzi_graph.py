@@ -98,7 +98,7 @@ def main():
         for word in all_words:
             # TODO: duplication
             for character in word:
-                if character in target_characters:
+                if character in target_characters or character not in graph:
                     if character not in graph:
                         graph[character] = {
                             'node': {'level': 6}, 'edges': {}}
