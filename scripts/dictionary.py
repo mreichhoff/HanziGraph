@@ -2,13 +2,13 @@ import json
 import argparse
 
 
-def parse_cedict_line(line):
+def parse_cedict_line(line, character_type):
     line = line.rstrip('/').split('/')
     english = ', '.join(line[1:]).strip().rstrip(',')
     char, pinyin = line[0].split('[')
-    _, simplified = char.split()
+    traditional, simplified = char.split()
 
-    return (simplified, english, pinyin.rstrip().rstrip(']'))
+    return (simplified if character_type == 'simplified' else traditional, english, pinyin.rstrip().rstrip(']'))
 
 
 # TODO should make this more generic...it's basically just a filter
@@ -24,12 +24,12 @@ def get_allowlist(allowlist_filename):
     return allowlist
 
 
-def get_dictionary_entries(dict_filename, filter_set):
+def get_dictionary_entries(dict_filename, character_type, filter_set):
     result = {}
     with open(dict_filename) as f:
         for line in f:
             if not line.startswith('#') and len(line) > 0 and len(line.rstrip('/').split('/')) > 1:
-                entry = parse_cedict_line(line)
+                entry = parse_cedict_line(line, character_type)
                 if (not filter_set) or (entry[0] in filter_set):
                     if entry[0] not in result:
                         result[entry[0]] = []
@@ -45,11 +45,13 @@ def main():
         '--allowlist-filename', help='the filename of an allowlist, one word per line')
     parser.add_argument(
         '--dict-filename', help='the dictionary filename, currently compatible with cedict')
+    parser.add_argument(
+        '--character-type', help='simplified or traditional characters')
 
     args = parser.parse_args()
 
     result = get_dictionary_entries(
-        args.dict_filename, (get_allowlist(args.allowlist_filename) if args.allowlist_filename else None))
+        args.dict_filename, args.character_type, (get_allowlist(args.allowlist_filename) if args.allowlist_filename else None))
     print(json.dumps(result, ensure_ascii=False))
 
 

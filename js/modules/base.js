@@ -23,6 +23,11 @@ const legendContainer = document.getElementById('legend');
 
 let legendElements = document.querySelectorAll('div.circle');
 let graphOptions = {
+    // TODO: remove top10k and trad. Choices should be:
+    // Simplified (default)
+    // Traditional
+    // Cantonese
+    // HSK
     newHsk: {
         display: 'New HSK', prefix: 'new-hsk-', legend: hskLegend
     },
@@ -32,7 +37,7 @@ let graphOptions = {
     top10k: {
         display: 'Top 10k words', prefix: 'top-10k-', legend: freqLegend
     },
-    traditional: {
+    trad: {
         display: 'Top 10k traditional', prefix: 'trad-', legend: freqLegend
     },
     top50k: {
@@ -40,6 +45,9 @@ let graphOptions = {
     },
     simplified: {
         display: 'Simplified', prefix: 'simplified-', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100
+    },
+    traditional: {
+        display: 'Traditional', prefix: 'traditional-', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100
     }
 };
 let activeGraph = graphOptions.simplified;
