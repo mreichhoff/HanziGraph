@@ -550,6 +550,9 @@
         },
         traditional: {
             display: 'Traditional', prefix: 'traditional-', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100
+        },
+        cantonese: {
+            display: 'Cantonese', prefix: 'cantonese-', legend: freqLegend, ttsKey: 'zh-HK'
         }
     };
     let activeGraph = graphOptions.simplified;
@@ -604,6 +607,9 @@
 
     let runTextToSpeech = function (text, anchors) {
         zhTts = zhTts || getZhTts();
+        if (activeGraph.ttsKey) {
+            zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === activeGraph.ttsKey);
+        }
         //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
         if (zhTts) {
             let utterance = new SpeechSynthesisUtterance(text);
