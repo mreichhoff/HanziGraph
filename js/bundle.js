@@ -534,7 +534,7 @@
             display: 'New HSK', prefix: 'new-hsk-', legend: hskLegend
         },
         oldHsk: {
-            display: 'Old HSK', prefix: '', legend: hskLegend
+            display: 'HSK Wordlist', prefix: '', legend: hskLegend
         },
         top10k: {
             display: 'Top 10k words', prefix: 'top-10k-', legend: freqLegend
