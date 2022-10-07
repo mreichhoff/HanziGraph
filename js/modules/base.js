@@ -97,6 +97,8 @@ let getZhTts = function () {
 };
 let zhTts = getZhTts();
 //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
+//generally, this thing is weird, so uh...
+//ideally we'd not do this or have any global variable
 speechSynthesis.onvoiceschanged = function () {
     if (!zhTts) {
         zhTts = getZhTts();
@@ -104,10 +106,7 @@ speechSynthesis.onvoiceschanged = function () {
 };
 
 let runTextToSpeech = function (text, anchors) {
-    zhTts = zhTts || getZhTts();
-    if (activeGraph.ttsKey) {
-        zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === activeGraph.ttsKey);
-    }
+    zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (activeGraph.ttsKey || 'zh-CN'));
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
     if (zhTts) {
         let utterance = new SpeechSynthesisUtterance(text);
