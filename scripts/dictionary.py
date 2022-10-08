@@ -2,35 +2,35 @@ import json
 import argparse
 
 
-def parse_cedict_line(line):
+def parse_cedict_line(line, character_type):
     line = line.rstrip('/').split('/')
     english = ', '.join(line[1:]).strip().rstrip(',')
     char, pinyin = line[0].split('[')
-    _, simplified = char.split()
+    traditional, simplified = char.split()
 
-    return (simplified, english, pinyin.rstrip().rstrip(']'))
+    return (simplified if character_type == 'simplified' else traditional, english, pinyin.rstrip().rstrip(']'))
 
 
 # TODO should make this more generic...it's basically just a filter
-def get_hsk_words(hsk_filename):
-    hsk_words = set()
-    with open(hsk_filename) as f:
+def get_allowlist(allowlist_filename):
+    allowlist = set()
+    with open(allowlist_filename) as f:
         for line in f:
-            word, _ = line.split('\t')
-            hsk_words.add(word)
+            word = line.strip()
+            allowlist.add(word)
             # we want each word and each individual character
             for i in range(0, len(word)):
-                hsk_words.add(word[i])
-    return hsk_words
+                allowlist.add(word[i])
+    return allowlist
 
 
-def get_dictionary_entries(dict_filename, filter_set):
+def get_dictionary_entries(dict_filename, character_type, filter_set):
     result = {}
     with open(dict_filename) as f:
         for line in f:
             if not line.startswith('#') and len(line) > 0 and len(line.rstrip('/').split('/')) > 1:
-                entry = parse_cedict_line(line)
-                if entry[0] in filter_set:
+                entry = parse_cedict_line(line, character_type)
+                if (not filter_set) or (entry[0] in filter_set):
                     if entry[0] not in result:
                         result[entry[0]] = []
                     result[entry[0]].append(
@@ -40,16 +40,18 @@ def get_dictionary_entries(dict_filename, filter_set):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Get definitions for HSK words. Outputs JSON.')
+        description='Get definitions for words. Outputs JSON.')
     parser.add_argument(
-        '--hsk-filename', help='the filename of an HSK list of format {word\tlevel}')
+        '--allowlist-filename', help='the filename of an allowlist, one word per line')
     parser.add_argument(
         '--dict-filename', help='the dictionary filename, currently compatible with cedict')
+    parser.add_argument(
+        '--character-type', help='simplified or traditional characters')
 
     args = parser.parse_args()
 
     result = get_dictionary_entries(
-        args.dict_filename, get_hsk_words(args.hsk_filename))
+        args.dict_filename, args.character_type, (get_allowlist(args.allowlist_filename) if args.allowlist_filename else None))
     print(json.dumps(result, ensure_ascii=False))
 
 

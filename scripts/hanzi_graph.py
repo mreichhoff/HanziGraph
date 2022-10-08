@@ -9,54 +9,73 @@ class SetEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def parse_line(line):
-    # example: 上网（三级
-    # TODO make more generic
-    return line.strip().split('\t')
+def get_level(index):
+    if index < 1000:
+        return 1
+    if index < 2000:
+        return 2
+    if index < 4000:
+        return 3
+    if index < 7000:
+        return 4
+    if index < 10000:
+        return 5
+    return 6
 
 
-def get_words_with_level(lines):
-    result = {}
-    for line in lines:
-        parsed_line = parse_line(line)
-        result[parsed_line[0]] = int(parsed_line[1])
-    return result
-
-
-def get_graph(words_with_level):
+def get_graph(filename, dictionary):
+    MAX_EDGES = 8
+    MAX_WORDS_PER_EDGE = 3
     # generate nodes at the character level with an associated minimum hsk level field
     graph = {}
     # TODO single character word bug
-    for key, value in words_with_level.items():
-        for i in range(0, len(key)):
-            if key[i] not in graph:
-                graph[key[i]] = {'node': {'level': value}, 'edges': {}}
-            for j in range(0, len(key)):
-                if j != i:
-                    if key[j] not in graph[key[i]]['edges']:
-                        graph[key[i]]['edges'][key[j]] = {
-                            'level': 6, 'words': set()}
-                    graph[key[i]]['edges'][key[j]]['level'] = min(
-                        graph[key[i]]['edges'][key[j]]['level'], value)
-                    graph[key[i]]['edges'][key[j]]['words'].add(key)
-            graph[key[i]]['node']['level'] = min(
-                graph[key[i]]['node']['level'], value)
+    with open(filename) as f:
+        index = 0
+        for line in f:
+            key = line.strip()
+            if key not in dictionary:
+                continue
+            for i in range(0, len(key)):
+                if key[i] not in dictionary:
+                    continue
+                if key[i] not in graph:
+                    graph[key[i]] = {
+                        'node': {'level': get_level(index)}, 'edges': {}}
+                if len(graph[key[i]]['edges']) == MAX_EDGES:
+                    continue
+                for j in range(0, len(key)):
+                    if j != i:
+                        if len(graph[key[i]]['edges']) == MAX_EDGES:
+                            continue
+                        if key[j] not in dictionary:
+                            continue
+                        if key[j] not in graph[key[i]]['edges']:
+                            graph[key[i]]['edges'][key[j]] = {
+                                'level': 6, 'words': []}
+                        graph[key[i]]['edges'][key[j]]['level'] = min(
+                            graph[key[i]]['edges'][key[j]]['level'], get_level(index))
+                        if len(graph[key[i]]['edges'][key[j]]['words']) < MAX_WORDS_PER_EDGE:
+                            graph[key[i]]['edges'][key[j]]['words'].append(key)
+                graph[key[i]]['node']['level'] = min(
+                    graph[key[i]]['node']['level'], get_level(index))
+            index = index+1
 
     return graph
 
 
-def convert_to_cytoscape(graph):
-    # TODO not currently used
-    # TODO modify to handle words being part of entries
-    result = {'nodes': [], 'edges': []}
-    for key, value in graph.items():
-        min_level = 6
-        for target, level in value.items():
-            min_level = min(min_level, level)
-            result['edges'].append(
-                {'data': {'id': key+target, 'source': key, 'target': target, 'level': level}})
-        result['nodes'].append({'data': {'id': key, 'level': min_level}})
-    return result
+def parse_allowlist(filename):
+    with open(filename) as f:
+        result = json.load(f)
+        if type(result) is list:
+            result = set(result)
+        if type(result) is dict:
+            result = set(result.keys())
+        return result
+
+
+def parse_dictionary(filename):
+    with open(filename) as f:
+        return set(json.load(f).keys())
 
 
 def main():
@@ -65,13 +84,38 @@ def main():
     # TODO make HSK leveling thing optional
     parser.add_argument(
         '--hanzi-list-filename', help='the filename of a list of hanzi with HSK levels')
+    parser.add_argument(
+        '--allowlist-filename', help='the filename of a list of hanzi allowed')
+    parser.add_argument(
+        '--augment-filename', help='the filename of the output of dictionary.py that can find words with characters in allowlist')
     args = parser.parse_args()
-    words_with_level = {}
-    with open(args.hanzi_list_filename) as f:
-        words_with_level = get_words_with_level(f.readlines())
-        graph = get_graph(words_with_level)
-        # can add cytoscape conversion here, or do it on the frontend
-        print(json.dumps(graph, ensure_ascii=False, cls=SetEncoder))
+
+    allowlist = parse_allowlist(args.allowlist_filename)
+    graph = get_graph(args.hanzi_list_filename, allowlist)
+    if args.augment_filename:
+        all_words = parse_dictionary(args.augment_filename)
+        target_characters = allowlist - set(graph.keys())
+        for word in all_words:
+            # TODO: duplication
+            for character in word:
+                if character in target_characters or character not in graph:
+                    if character not in graph:
+                        graph[character] = {
+                            'node': {'level': 6}, 'edges': {}}
+                    if len(graph[character]['edges']) == 5:
+                        continue
+                    for j in range(0, len(word)):
+                        if word[j] != character:
+                            if len(graph[character]['edges']) == 5:
+                                continue
+                            if word[j] not in graph[character]['edges']:
+                                graph[character]['edges'][word[j]] = {
+                                    'level': 6, 'words': []}
+                            if len(graph[character]['edges'][word[j]]['words']) < 3:
+                                graph[character]['edges'][word[j]
+                                                          ]['words'].append(word)
+
+    print(json.dumps(graph, ensure_ascii=False))
 
 
 if __name__ == '__main__':

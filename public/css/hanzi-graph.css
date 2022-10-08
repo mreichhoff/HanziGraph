@@ -158,9 +158,23 @@ a {
     font-family: Times, serif;
 }
 
-.tabs div {
-    flex: 1;
+.tab {
+    font-size: 18px;
     padding: 10px;
+    width: 50%;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.tab.left {
+    border-right: 1px solid #333;
+}
+
+.tab.active {
+    font-weight: bold;
+    background-color: #3336;
 }
 
 .menu {
@@ -198,6 +212,7 @@ a {
 
 .recommendations {
     margin: 0;
+    font-size: 14px;
 }
 
 .recommendation {
@@ -207,21 +222,20 @@ a {
 }
 
 .recommendation-message {
-    font-size: 16px;
     margin-right: 4px;
-}
-
-#hanzi-choose {
-    width: 100%;
 }
 
 .search-box {
     font-size: 20px;
     font-weight: 300;
-    width: calc(100% - 70px);
+    width: 100%;
+    height: 34px;
+    border-radius: 10px;
     background-color: rgba(74, 74, 74, 0.9);
     border: 1px solid #3333;
     color: rgba(255, 255, 255, 0.87);
+    padding-left: 12px;
+    box-shadow: 0 2px 3px 1px #3333;
 }
 
 #submit-button {
@@ -303,12 +317,12 @@ h2 span {
     margin-top: 0;
 }
 
-#examples h2 {
+.word-header {
     margin-top: 16px;
     border-bottom: 1px solid #333;
 }
 
-#examples ul li {
+.example {
     font-size: 16px;
     margin-bottom: 12px;
 }
@@ -318,18 +332,29 @@ h2 span {
     margin-right: 4px;
 }
 
-p.example-line {
-    margin-top: 4px;
-    margin-bottom: 4px;
-    opacity: 0.9;
-    font-size: 14px;
-}
-
-p.zh-example {
+.target {
     font-size: 24px;
     font-weight: 400;
     display: flex;
     opacity: 1;
+    margin: 4px 0;
+}
+
+.base {
+    margin: 4px 0;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.transcription {
+    display: none;
+    margin: 4px 0;
+    opacity: 0.8;
+    font-size: 14px;
+}
+
+#show-pinyin:checked~* .transcription {
+    display: block;
 }
 
 a.navigable {
@@ -343,16 +368,6 @@ a.navigable {
     opacity: 0.8;
 }
 
-/*TODO: too much specificity...*/
-.pinyin-example.example-line {
-    display: none;
-    opacity: 0.8;
-}
-
-#show-pinyin:checked~* .pinyin-example {
-    display: block;
-}
-
 #controls {
     margin-bottom: 0;
     margin-top: 0;
@@ -362,16 +377,12 @@ a.navigable {
 .control {
     margin: 0;
     line-height: 28px;
+    width: 100%;
 }
 
-.control.center {
-    margin-left: auto;
-    margin-right: auto;
-}
-
-#example-container {
+#explore-container {
     flex-grow: 1;
-    margin-left: 20px;
+    margin-left: 14px;
     margin-right: 8px;
 }
 
@@ -398,27 +409,10 @@ a.navigable {
 }
 
 /*TODO refactor this...too much repetition, selectors too specific */
-#examples ul.definition li {
+.definition {
     margin-top: 4px;
     margin-bottom: 4px;
     font-size: 16px;
-}
-
-.tab {
-    font-size: 18px;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.tab.left {
-    border-right: 1px solid #333;
-}
-
-.tab.active {
-    font-weight: bold;
-    background-color: #333d;
 }
 
 #study-call-to-action {
@@ -706,7 +700,7 @@ select {
         border-bottom: 1px solid #333;
     }
 
-    #example-container {
+    #explore-container {
         margin-left: 10px;
     }
 
@@ -717,10 +711,6 @@ select {
 
     h1 {
         font-size: 26px;
-    }
-
-    .tab {
-        font-size: 16px;
     }
 
     .study-call-to-action {
@@ -740,7 +730,7 @@ select {
         font-size: 26px;
     }
 
-    p.zh-example {
+    .target {
         font-size: 26px;
     }
 
@@ -769,10 +759,12 @@ select {
         height: 38px;
     }
 
+    /* circle becomes a misnomer */
     .circle {
-        height: 26px;
-        line-height: 26px;
-        width: 32px;
+        height: 20px;
+        line-height: 20px;
+        border-radius: 0;
+        border: 0.5px solid #3333;
         font-size: 10px;
         margin-bottom: 0;
         margin-top: 0;
@@ -889,9 +881,10 @@ main.stats section p {
     .search-box {
         background-color: rgba(255, 255, 255, 0.9);
         color: black;
+        box-shadow: 0 2px 3px 1px #eeee;
     }
 
-    #examples h2 {
+    .word-header {
         margin-top: 16px;
         border-bottom: 1px solid #3333;
     }
@@ -902,7 +895,6 @@ main.stats section p {
 
     .tabs {
         border-bottom: 1px solid #3333;
-        background-color: #f9f9f9;
     }
 
     .tab.left {
@@ -915,7 +907,7 @@ main.stats section p {
 
     body {
         color: rgba(0, 0, 0, 0.87);
-        background: white;
+        background: #fcfcfc;
     }
 
     a {
@@ -924,7 +916,7 @@ main.stats section p {
 
     #legend,
     #graph-container {
-        background: #f9f9f9;
+        background: white;
     }
 
     .exit-arrow::before {

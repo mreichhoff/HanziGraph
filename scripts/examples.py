@@ -17,34 +17,34 @@ def get_average_frequency(sentences, word_frequencies):
                                         if word in word_frequencies else len(word_frequencies) for word in words]) / len(words)
 
 
-def get_transcriptions(filename, sentences):
+def get_transcriptions(filename, character_type):
     # transcriptions header: zh_id lang format zh_text
     # we assume (due to pre-processing) the number of fields will be correct
     # TODO could add an option for using empty sentences dict if needed
+    result = {}
+    language_key = 'Hans' if character_type == 'simplified' else 'Hant'
     with open(filename) as f:
         for line in f:
             fields = line.split('\t')
-            if fields[0] not in sentences:
-                sentences[fields[0]] = {}
-            if(fields[2].startswith('Han')):
+            if fields[2].startswith(language_key):
+                if fields[0] not in result:
+                    result[fields[0]] = {}
                 # because zh_text can be duplicated in get_translations, overwrite to ensure the transcription matches the actual text
-                sentences[fields[0]]['zh'] = fields[3].strip()
-            else:
-                sentences[fields[0]]['pinyin'] = fields[3].strip()
-    # return sentences
+                result[fields[0]]['zh'] = fields[3].strip()
+            if fields[2].startswith('Latn') and fields[0] in result:
+                result[fields[0]]['pinyin'] = fields[3].strip()
+    return result
 
 
-def get_translations(filename):
+def get_translations(filename, result):
     # tsv header: zh_id zh_text en_id en_text
     # zh_text can be duplicated; we prefer to get zh_text from transcriptions
     # we assume (due to pre-processing) the number of fields will be correct
-    result = {}
     with open(filename) as f:
         for line in f:
             fields = line.split('\t')
-            result[fields[0]] = {
-                'en': fields[3].strip(), 'zh': fields[1].strip()}
-    return result
+            if fields[0] in result and 'en' not in result[fields[0]]:
+                result[fields[0]]['en'] = fields[3].strip()
 
 
 def tokenize(sentences):
@@ -66,12 +66,15 @@ def main():
     parser.add_argument(
         '--translation-filename', help='the filename of a file of zh-en translations')
     parser.add_argument(
+        '--character-type', help='simplified or traditional characters')
+    parser.add_argument(
         '--frequency-list-filename', help='the filename of a file of Chinese words, ranked by frequency, one per line')
     args = parser.parse_args()
 
     freq_dict = get_word_frequencies(args.frequency_list_filename)
-    sentences = get_translations(args.translation_filename)
-    get_transcriptions(args.transcription_filename, sentences)
+    sentences = get_transcriptions(
+        args.transcription_filename, args.character_type)
+    get_translations(args.translation_filename, sentences)
     tokenize(sentences)
     get_average_frequency(sentences, freq_dict)
     result = list(sentences.values())

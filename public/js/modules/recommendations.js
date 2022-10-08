@@ -8,7 +8,7 @@ const hanziBox = document.getElementById('hanzi-box');
 let recommendationsWorker = null;
 
 let initialize = function () {
-    recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
+    recommendationsWorker = new Worker('/js/modules/recommendations-worker.js');
     recommendationsWorker.postMessage({
         type: 'graph',
         payload: window.hanzi

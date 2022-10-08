@@ -19863,7 +19863,16 @@
             //don't add outgoing edges when we won't process the next layer
             if (maxDepth > 0 && value.level <= maxLevel) {
                 if (!visited[key]) {
-                    elements.edges.push({ data: { id: Array.from(start + key).sort().toString(), source: start, target: key, level: value.level, words: value.words } });
+                    elements.edges.push({
+                        data: {
+                            id: Array.from(start + key).sort().toString(),
+                            source: start, target: key,
+                            level: value.level,
+                            words: value.words,
+                            // render examples for all words, but only display one
+                            displayWord: value.words[0]
+                        }
+                    });
                 }
             }
         }
@@ -19928,10 +19937,10 @@
                     'line-color': levelColor,
                     'target-arrow-shape': 'none',
                     'curve-style': 'straight',
-                    'label': 'data(words)',
+                    'label': 'data(displayWord)',
                     'color': (_ => prefersLight ? 'black' : '#eee'),
                     'font-size': '10px',
-                    'text-background-color': (_ => prefersLight ? '#f9f9f9' : 'black'),
+                    'text-background-color': (_ => prefersLight ? 'white' : 'black'),
                     'text-background-opacity': '1',
                     'text-background-shape': 'round-rectangle',
                     'text-events': 'yes'
@@ -19985,7 +19994,7 @@
     let recommendationsWorker = null;
 
     let initialize$3 = function () {
-        recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
+        recommendationsWorker = new Worker('/js/modules/recommendations-worker.js');
         recommendationsWorker.postMessage({
             type: 'graph',
             payload: window.hanzi
@@ -20097,23 +20106,20 @@
 
     let legendElements = document.querySelectorAll('div.circle');
     let graphOptions = {
-        newHsk: {
-            display: 'New HSK', prefix: 'new-hsk-', legend: hskLegend
+        hsk: {
+            display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend
         },
-        oldHsk: {
-            display: 'Old HSK', prefix: '', legend: hskLegend
-        },
-        top10k: {
-            display: 'Top 10k words', prefix: 'top-10k-', legend: freqLegend
+        simplified: {
+            display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100
         },
         traditional: {
-            display: 'Top 10k traditional', prefix: 'trad-', legend: freqLegend
+            display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100
         },
-        top50k: {
-            display: 'Top 50k words', prefix: '50k-', legend: bigFreqLegend
+        cantonese: {
+            display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK'
         }
     };
-    let activeGraph = graphOptions.oldHsk;
+    let activeGraph = graphOptions.simplified;
     let getActiveGraph = function () {
         return activeGraph;
     };
@@ -20132,7 +20138,7 @@
 
     //explore tab items
     const examplesList = document.getElementById('examples');
-    const exampleContainer = document.getElementById('example-container');
+    const exploreContainer = document.getElementById('explore-container');
     //explore tab navigation controls
     const hanziBox = document.getElementById('hanzi-box');
     const hanziSearchForm = document.getElementById('hanzi-choose');
@@ -20157,6 +20163,8 @@
     };
     let zhTts = getZhTts();
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
+    //generally, this thing is weird, so uh...
+    //ideally we'd not do this or have any global variable
     speechSynthesis.onvoiceschanged = function () {
         if (!zhTts) {
             zhTts = getZhTts();
@@ -20164,7 +20172,7 @@
     };
 
     let runTextToSpeech = function (text, anchors) {
-        zhTts = zhTts || getZhTts();
+        zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (activeGraph.ttsKey || 'zh-CN'));
         //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
         if (zhTts) {
             let utterance = new SpeechSynthesisUtterance(text);
@@ -20191,13 +20199,13 @@
         }
     };
 
-    let addTextToSpeech = function (holder, text, aList) {
+    let addTextToSpeech = function (container, text, aList) {
         let textToSpeechButton = document.createElement('span');
         textToSpeechButton.className = 'volume';
         textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
-        holder.appendChild(textToSpeechButton);
+        container.appendChild(textToSpeechButton);
     };
-    let addSaveToListButton = function (holder, text) {
+    let addSaveToListButton = function (container, text) {
         let buttonTexts = ['✔️', '+'];
         let saveToListButton = document.createElement('span');
         saveToListButton.className = 'add-button';
@@ -20206,21 +20214,24 @@
             addCards(currentExamples, text);
             saveToListButton.textContent = buttonTexts[0];
         });
-        holder.appendChild(saveToListButton);
+        container.appendChild(saveToListButton);
     };
 
-    let persistState = function () {
-        const newUrl = `/${currentWord}`;
+    let persistNavigationState = function () {
+        const newUrl = `/${activeGraph.prefix}/${currentWord}`;
         history.pushState({
             word: currentWord,
         }, '', newUrl);
+        // keep UI state around too, I guess?
+        persistUIState();
     };
 
     let persistUIState = function () {
         localStorage.setItem('state', JSON.stringify({
             activeTab: activeTab,
             currentGraph: activeGraph.display,
-            graphPrefix: activeGraph.prefix
+            graphPrefix: activeGraph.prefix,
+            currentWord: currentWord
         }));
     };
 
@@ -20229,16 +20240,19 @@
             path = path.substring(1);
         }
         const segments = path.split('/');
-        if (segments.length !== 1) {
-            return null;
+        if (segments.length === 1) {
+            if (segments[0] in graphOptions) {
+                return { graph: segments[0] };
+            } else {
+                return { word: segments[0] };
+            }
+        } else if (segments.length === 2) {
+            return { graph: segments[0], word: segments[1] };
         }
-        const term = segments[0];
-        return {
-            word: term
-        };
+        return null;
     }
     function loadState(state) {
-        const term = decodeURIComponent(state.word);
+        const term = decodeURIComponent(state.word || '');
         hanziBox.value = term;
         search(term, levelSelector.value, true);
     }
@@ -20254,15 +20268,16 @@
         loadState(state);
     };
 
-    let setupDefinitions = function (definitionList, definitionHolder) {
+    let setupDefinitions = function (definitionList, container) {
         for (let i = 0; i < definitionList.length; i++) {
             let definitionItem = document.createElement('li');
+            definitionItem.classList.add('definition');
             let definitionContent = definitionList[i].pinyin + ': ' + definitionList[i].en;
             definitionItem.textContent = definitionContent;
-            definitionHolder.appendChild(definitionItem);
+            container.appendChild(definitionItem);
         }
     };
-    let findExamples = function (word) {
+    let findExamples = function (word, sentences) {
         let examples = [];
         //used for e.g., missing translation
         let lessDesirableExamples = [];
@@ -20298,23 +20313,87 @@
     let setupExampleElements = function (examples, exampleList) {
         for (let i = 0; i < examples.length; i++) {
             let exampleHolder = document.createElement('li');
+            exampleHolder.classList.add('example');
             let zhHolder = document.createElement('p');
             let exampleText = examples[i].zh.join('');
             let aList = makeSentenceNavigable(exampleText, zhHolder, true);
-            zhHolder.className = 'zh-example example-line';
+            zhHolder.className = 'target';
             addTextToSpeech(zhHolder, exampleText, aList);
             exampleHolder.appendChild(zhHolder);
             if (examples[i].pinyin) {
                 let pinyinHolder = document.createElement('p');
                 pinyinHolder.textContent = examples[i].pinyin;
-                pinyinHolder.className = 'pinyin-example example-line';
+                pinyinHolder.className = 'transcription';
                 exampleHolder.appendChild(pinyinHolder);
             }
             let enHolder = document.createElement('p');
             enHolder.textContent = examples[i].en;
-            enHolder.className = 'example-line';
+            enHolder.className = 'base';
             exampleHolder.appendChild(enHolder);
             exampleList.appendChild(exampleHolder);
+        }
+    };
+    let getPartition = function (word, numPartitions) {
+        let total = 0;
+        for (let i = 0; i < word.length; i++) {
+            total += word.charCodeAt(i);
+        }
+        return total % numPartitions;
+    };
+
+    // expects callers to ensure augmentation is available
+    let augmentExamples = function (word, container) {
+        fetch(`/${activeGraph.augmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
+            .then(response => response.json())
+            .then(function (data) {
+                if (!container) {
+                    return false;
+                }
+                let examples = findExamples(word, data);
+                setupExampleElements(examples, container);
+                currentExamples[word].push(...examples);
+            });
+    };
+    let renderDefinitions = function (definitionList, container) {
+        let definitionsContainer = document.createElement('ul');
+        definitionsContainer.className = 'definitions';
+        setupDefinitions(definitionList, definitionsContainer);
+        container.appendChild(definitionsContainer);
+    };
+    let renderWordHeader = function (word, container) {
+        let wordHolder = document.createElement('h2');
+        wordHolder.classList.add('word-header');
+        wordHolder.textContent = word;
+        addTextToSpeech(wordHolder, word, []);
+        addSaveToListButton(wordHolder, word);
+        container.appendChild(wordHolder);
+    };
+    let renderContext = function (word, container) {
+        let contextHolder = document.createElement('p');
+        //TODO not so thrilled with 'context' as the name here
+        contextHolder.className = 'context';
+        contextHolder.innerText += "Previously: ";
+        [...word].forEach(x => {
+            let cardData = getCardPerformance(x);
+            contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${cardData.count} flash cards (${cardData.performance}% correct). `;
+        });
+        let contextFaqLink = document.createElement('a');
+        contextFaqLink.className = 'faq-link';
+        contextFaqLink.textContent = "Learn more.";
+        contextFaqLink.addEventListener('click', function () {
+            showFaq(faqTypes.context);
+        });
+        contextHolder.appendChild(contextFaqLink);
+        container.appendChild(contextHolder);
+    };
+    let renderExamples = function (word, examples, container) {
+        let exampleList = document.createElement('ul');
+        exampleList.classList.add('examples');
+        container.appendChild(exampleList);
+        if (examples.length > 0) {
+            setupExampleElements(examples, exampleList);
+        } else if (activeGraph.augmentPath) {
+            augmentExamples(word, exampleList);
         }
     };
     let setupExamples = function (words) {
@@ -20327,47 +20406,21 @@
             examplesList.firstChild.remove();
         }
         for (let i = 0; i < words.length; i++) {
-            let examples = findExamples(words[i]);
-            currentExamples[words[i]] = [];
-
-            let item = document.createElement('li');
-            let wordHolder = document.createElement('h2');
-            wordHolder.textContent = words[i];
-            addTextToSpeech(wordHolder, words[i], []);
-            addSaveToListButton(wordHolder, words[i]);
-            item.appendChild(wordHolder);
-
-            let definitionHolder = document.createElement('ul');
-            definitionHolder.className = 'definition';
+            let examples = findExamples(words[i], sentences);
             let definitionList = definitions[words[i]] || [];
-            setupDefinitions(definitionList, definitionHolder);
-            item.appendChild(definitionHolder);
 
-            let contextHolder = document.createElement('p');
-            //TODO not so thrilled with 'context' as the name here
-            contextHolder.className = 'context';
-            contextHolder.innerText += "Previously: ";
-            [...words[i]].forEach(x => {
-                let cardData = getCardPerformance(x);
-                contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${cardData.count} flash cards (${cardData.performance}% correct). `;
-            });
-            let contextFaqLink = document.createElement('a');
-            contextFaqLink.className = 'faq-link';
-            contextFaqLink.textContent = "Learn more.";
-            contextFaqLink.addEventListener('click', function () {
-                showFaq(faqTypes.context);
-            });
-            contextHolder.appendChild(contextFaqLink);
-            item.appendChild(contextHolder);
-
+            currentExamples[words[i]] = [];
             //TODO: definition list doesn't have the same interface (missing zh field)
             currentExamples[words[i]].push(getCardFromDefinitions(words[i], definitionList));
             //setup current examples for potential future export
             currentExamples[words[i]].push(...examples);
 
-            let exampleList = document.createElement('ul');
-            item.appendChild(exampleList);
-            setupExampleElements(examples, exampleList);
+            let item = document.createElement('li');
+            item.classList.add('word-data');
+            renderWordHeader(words[i], item);
+            renderDefinitions(definitionList, item);
+            renderContext(words[i], item);
+            renderExamples(words[i], examples, item);
 
             examplesList.append(item);
         }
@@ -20397,7 +20450,7 @@
         }
         hanziBox.value = id;
         setupExamples([id]);
-        persistState();
+        persistNavigationState();
         exploreTab.click();
         mainHeader.scrollIntoView();
         updateVisited([id]);
@@ -20407,7 +20460,7 @@
         let words = evt.target.data('words');
         hanziBox.value = words[0];
         setupExamples(words);
-        persistState();
+        persistNavigationState();
         //TODO toggle functions
         exploreTab.click();
         mainHeader.scrollIntoView();
@@ -20428,6 +20481,7 @@
 
         if (value && hanzi[value]) {
             initializeGraph(value, maxLevel, nextGraph, nodeTapHandler, edgeTapHandler);
+            currentHanzi = [value];
         }
     };
     let getWordSet = function (graph) {
@@ -20445,14 +20499,45 @@
     };
     let initialize$2 = function () {
         wordSet = getWordSet(hanzi);
-        if (history.state) {
-            loadState(history.state);
-        } else if (document.location.pathname !== '/') {
-            const state = parseUrl(document.location.pathname);
-            if (state) {
-                loadState(state);
-                history.pushState(state, '', document.location);
+        window.definitions = {};
+        const definitionPromise = window.definitionsFetch
+            .then(response => response.json())
+            .then(data => window.definitions = data);
+        let oldState = JSON.parse(localStorage.getItem('state')) || {};
+        if (oldState.graphPrefix && graphOptions[oldState.graphPrefix]) {
+            activeGraph = graphOptions[oldState.graphPrefix];
+            legendElements.forEach((x, index) => {
+                x.innerText = activeGraph.legend[index];
+            });
+            graphSelector.value = activeGraph.display;
+        }
+        // with each of these, we assume data-load.js made the right choice of which graph to fetch
+        let parsedUrl = null;
+        if (document.location.pathname !== '/') {
+            parsedUrl = parseUrl(document.location.pathname);
+        }
+        let state = history.state || parsedUrl;
+        if (state) {
+            if (state.graph && graphOptions[state.graph]) {
+                activeGraph = graphOptions[state.graph];
+                legendElements.forEach((x, index) => {
+                    x.innerText = activeGraph.legend[index];
+                });
+                graphSelector.value = activeGraph.display;
             }
+            if (state.word) {
+                definitionPromise.then(() => {
+                    loadState(state);
+                    if (!history.state) {
+                        history.pushState(state, '', document.location);
+                    }
+                });
+            }
+        } else if (oldState.currentWord) {
+            definitionPromise.then(() => {
+                hanziBox.value = oldState.currentWord;
+                search(oldState.currentWord, levelSelector.value);
+            });
         } else {
             //graph chosen is default, no need to modify legend or dropdown
             //add a default graph on page load to illustrate the concept
@@ -20460,21 +20545,10 @@
             walkThrough.removeAttribute('style');
             updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], levelSelector.value);
         }
-        let oldState = JSON.parse(localStorage.getItem('state'));
-        if (oldState) {
-            if (oldState.currentGraph) {
-                let activeGraphKey = Object.keys(graphOptions).find(x => graphOptions[x].display === oldState.currentGraph);
-                activeGraph = graphOptions[activeGraphKey];
-                legendElements.forEach((x, index) => {
-                    x.innerText = activeGraph.legend[index];
-                });
-                graphSelector.value = state.currentGraph;
-            }
-            if (oldState.activeTab === tabs.study) {
-                //reallllllly need a toggle method
-                //this does set up the current card, etc.
-                studyTab$1.click();
-            }
+        if (oldState.activeTab === tabs.study) {
+            //reallllllly need a toggle method
+            //this does set up the current card, etc.
+            studyTab$1.click();
         }
         matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
     };
@@ -20499,8 +20573,7 @@
                         //enable seamless switching, but don't update if we're already showing examples for character
                         if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
                             setupExamples([character]);
-                            persistState();
-                            persistUIState();
+                            persistNavigationState();
                         }
                     }
                 });
@@ -20564,7 +20637,7 @@
             buildGraph(value, maxLevel);
             setupExamples([value]);
             if (!skipState) {
-                persistState();
+                persistNavigationState();
             }
             updateVisited([value]);
         } else {
@@ -20590,7 +20663,7 @@
         }
     });
     exploreTab.addEventListener('click', function () {
-        exampleContainer.removeAttribute('style');
+        exploreContainer.removeAttribute('style');
         studyContainer.style.display = 'none';
         //TODO could likely do all of this with CSS
         exploreTab.classList.add('active');
@@ -20601,7 +20674,7 @@
     });
 
     studyTab$1.addEventListener('click', function () {
-        exampleContainer.style.display = 'none';
+        exploreContainer.style.display = 'none';
         studyContainer.removeAttribute('style');
         studyTab$1.classList.add('active');
         exploreTab.classList.remove('active');
@@ -20630,7 +20703,7 @@
             activeGraph = graphOptions[key];
             let prefix = activeGraph.prefix;
             //fetch regardless...allow service worker and/or browser cache to optimize
-            fetch(`./data/${prefix}graph.json`)
+            fetch(`/data/${prefix}/graph.json`)
                 .then(response => response.json())
                 .then(function (data) {
                     window.hanzi = data;
@@ -20640,12 +20713,12 @@
                     });
                     wordSet = getWordSet(hanzi);
                 });
-            fetch(`./data/${prefix}sentences.json`)
+            fetch(`/data/${prefix}/sentences.json`)
                 .then(response => response.json())
                 .then(function (data) {
                     window.sentences = data;
                 });
-            fetch(`./data/${prefix}definitions.json`)
+            fetch(`/data/${prefix}/definitions.json`)
                 .then(response => response.json())
                 .then(function (data) {
                     definitions = data;
@@ -21414,9 +21487,6 @@
             window.sentencesFetch
                 .then(response => response.json())
                 .then(data => window.sentences = data),
-            window.definitionsFetch
-                .then(response => response.json())
-                .then(data => window.definitions = data)
         ]
     ).then(_ => {
         initialize$7();

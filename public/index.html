@@ -9,15 +9,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script type="module">
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./asset-service-worker.js');
+            navigator.serviceWorker.register('/asset-service-worker.js');
         };
     </script>
-    <script src="./js/data-load.js"></script>
-    <script src="./js/external/cytoscape.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="css/hanzi-graph.css">
-    <link rel="manifest" href="./manifest.json">
-    <link rel="icon" href="images/favicon-32x32.png" type="image/x-icon">
-    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+    <script src="/js/data-load.js"></script>
+    <script src="/js/external/cytoscape.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/hanzi-graph.css">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/images/favicon-32x32.png" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
 </head>
 
 <body>
@@ -39,13 +39,14 @@
                     <div id="show-explore" class="tab left active">Explore</div>
                     <div id="show-study" class="tab">Study</div>
                 </div>
-                <div id="example-container">
+                <div id="explore-container" class="section-container">
                     <div id="controls">
                         <form id="hanzi-choose" class="control">
                             <!-- i18n? what's that? -->
                             <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word"
                                 type="search" enterkeyhint="search" maxlength="6" class="search-box" />
-                            <input id="submit-button" type="submit" value="Go!" />
+                            <!-- TODO: remove that recommendations hack... -->
+                            <input id="submit-button" type="submit" value="Go!" style="display:none" />
                         </form>
                     </div>
                     <div style="display:none" id="not-found-message">😞 That word was not found. Please try another, or
@@ -71,7 +72,7 @@
                     <ul id="examples">
                     </ul>
                 </div>
-                <div id="study-container" style="display:none">
+                <div id="study-container" class="section-container" style="display:none">
                     <p id="explain-text">Not sure how this works? <a class="faq-link" id="show-study-faq">Learn
                             more.</a></p>
                     <p id="cards-due">
@@ -113,12 +114,12 @@
                         Colors indicate frequency or HSK level.
                     </p>
                     <div id="level-container">
-                        <div class="circle" style="background:#ff635f">HSK1</div>
-                        <div class="circle" style="background:#ff9b35">HSK2</div>
-                        <div class="circle" style="background:#fff249">HSK3</div>
-                        <div class="circle" style="background:#6de200">HSK4</div>
-                        <div class="circle" style="background:#de68ee">HSK5</div>
-                        <div class="circle" style="background:#68aaee">HSK6</div>
+                        <div class="circle" style="background:#ff635f">Top1k</div>
+                        <div class="circle" style="background:#ff9b35">Top2k</div>
+                        <div class="circle" style="background:#fff249">Top4k</div>
+                        <div class="circle" style="background:#6de200">Top7k</div>
+                        <div class="circle" style="background:#de68ee">Top10k</div>
+                        <div class="circle" style="background:#68aaee">>10k</div>
                     </div>
                 </div>
             </div>
@@ -290,18 +291,10 @@
                     <li>
                         <h3>Where are the flashcards stored?</h3>
                         <ul>
-                            <li>When you are not signed in: all data for the site is stored in <a
+                            <li>All data for the site is stored in <a
                                     href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage">localStorage</a>.
                                 It
                                 does not leave your browser, and clearing your browser data will clear it.</li>
-                            <li>When you are signed in: the data is stored on our backend, and should be present and
-                                up-to-date
-                                on
-                                any device. If you add flashcards while signed out, then sign in or register later,
-                                the
-                                two
-                                lists
-                                will be merged, so you shouldn&#39;t lose anything.</li>
                         </ul>
                     </li>
                 </ul>
@@ -369,7 +362,7 @@
                 <span id="welcome-message" class="welcome-message"></span>
             </div>
             <div id="signin" class="menu-item">
-                <a id="signin-button" class="authn-button" href="login.html">Sign in</a>
+                <a id="signin-button" class="authn-button" href="/login.html">Sign in</a>
                 <a id="signout-button" class="authn-button" style="display:none">Sign out</a>
             </div>
             <div class="menu-item">
@@ -402,11 +395,10 @@
             <div class="menu-item">
                 <label class="menu-item-text" for="graph-selector">Character set:</label>
                 <select id="graph-selector">
-                    <option selected>Old HSK</option>
-                    <option>New HSK</option>
-                    <option>Top 10k words</option>
-                    <option>Top 10k traditional</option>
-                    <option>Top 50k words</option>
+                    <option selected>Simplified</option>
+                    <option>Traditional</option>
+                    <option>Cantonese</option>
+                    <option>HSK Wordlist</option>
                 </select>
             </div>
             <div class="menu-item">
@@ -417,7 +409,7 @@
                 list</div>
         </main>
     </div>
-    <script type="module" src="./js/bundle.js"></script>
+    <script type="module" src="/js/bundle.js"></script>
 </body>
 
 </html>
