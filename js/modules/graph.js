@@ -88,7 +88,7 @@ let getStylesheet = function () {
                 'label': 'data(displayWord)',
                 'color': (_ => prefersLight ? 'black' : '#eee'),
                 'font-size': '10px',
-                'text-background-color': (_ => prefersLight ? '#f9f9f9' : 'black'),
+                'text-background-color': (_ => prefersLight ? 'white' : 'black'),
                 'text-background-opacity': '1',
                 'text-background-shape': 'round-rectangle',
                 'text-events': 'yes'
