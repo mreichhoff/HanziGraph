@@ -55,7 +55,7 @@ const studyContainer = document.getElementById('study-container');
 
 //explore tab items
 const examplesList = document.getElementById('examples');
-const exampleContainer = document.getElementById('example-container');
+const exploreContainer = document.getElementById('explore-container');
 //explore tab navigation controls
 const hanziBox = document.getElementById('hanzi-box');
 const hanziSearchForm = document.getElementById('hanzi-choose');
@@ -116,13 +116,13 @@ let runTextToSpeech = function (text, anchors) {
     }
 };
 
-let addTextToSpeech = function (holder, text, aList) {
+let addTextToSpeech = function (container, text, aList) {
     let textToSpeechButton = document.createElement('span');
     textToSpeechButton.className = 'volume';
     textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
-    holder.appendChild(textToSpeechButton);
+    container.appendChild(textToSpeechButton);
 };
-let addSaveToListButton = function (holder, text) {
+let addSaveToListButton = function (container, text) {
     let buttonTexts = ['✔️', '+'];
     let saveToListButton = document.createElement('span');
     saveToListButton.className = 'add-button';
@@ -131,7 +131,7 @@ let addSaveToListButton = function (holder, text) {
         addCards(currentExamples, text);
         saveToListButton.textContent = buttonTexts[0];
     });
-    holder.appendChild(saveToListButton);
+    container.appendChild(saveToListButton);
 };
 
 let persistState = function () {
@@ -179,12 +179,13 @@ function loadState(state) {
 //     loadState(state);
 // };
 
-let setupDefinitions = function (definitionList, definitionHolder) {
+let setupDefinitions = function (definitionList, container) {
     for (let i = 0; i < definitionList.length; i++) {
         let definitionItem = document.createElement('li');
+        definitionItem.classList.add('definition');
         let definitionContent = definitionList[i].pinyin + ': ' + definitionList[i].en;
         definitionItem.textContent = definitionContent;
-        definitionHolder.appendChild(definitionItem);
+        container.appendChild(definitionItem);
     }
 };
 let findExamples = function (word, sentences) {
@@ -223,21 +224,22 @@ let findExamples = function (word, sentences) {
 let setupExampleElements = function (examples, exampleList) {
     for (let i = 0; i < examples.length; i++) {
         let exampleHolder = document.createElement('li');
+        exampleHolder.classList.add('example');
         let zhHolder = document.createElement('p');
         let exampleText = examples[i].zh.join('');
         let aList = makeSentenceNavigable(exampleText, zhHolder, true);
-        zhHolder.className = 'zh-example example-line';
+        zhHolder.className = 'target';
         addTextToSpeech(zhHolder, exampleText, aList);
         exampleHolder.appendChild(zhHolder);
         if (examples[i].pinyin) {
             let pinyinHolder = document.createElement('p');
             pinyinHolder.textContent = examples[i].pinyin;
-            pinyinHolder.className = 'pinyin-example example-line';
+            pinyinHolder.className = 'transcription';
             exampleHolder.appendChild(pinyinHolder);
         }
         let enHolder = document.createElement('p');
         enHolder.textContent = examples[i].en;
-        enHolder.className = 'example-line';
+        enHolder.className = 'base';
         exampleHolder.appendChild(enHolder);
         exampleList.appendChild(exampleHolder);
     }
@@ -251,7 +253,7 @@ let getPartition = function (word, numPartitions) {
 };
 
 // expects callers to ensure augmentation is available
-let augmentExamples = function (curr, word, container) {
+let augmentExamples = function (word, container) {
     fetch(`./${activeGraph.augmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
         .then(response => response.json())
         .then(function (data) {
@@ -262,7 +264,49 @@ let augmentExamples = function (curr, word, container) {
             setupExampleElements(examples, container);
             currentExamples[word].push(...examples);
         });
+};
+let renderDefinitions = function (definitionList, container) {
+    let definitionsContainer = document.createElement('ul');
+    definitionsContainer.className = 'definitions';
+    setupDefinitions(definitionList, definitionsContainer);
+    container.appendChild(definitionsContainer);
 }
+let renderWordHeader = function (word, container) {
+    let wordHolder = document.createElement('h2');
+    wordHolder.classList.add('word-header')
+    wordHolder.textContent = word;
+    addTextToSpeech(wordHolder, word, []);
+    addSaveToListButton(wordHolder, word);
+    container.appendChild(wordHolder);
+};
+let renderContext = function (word, container) {
+    let contextHolder = document.createElement('p');
+    //TODO not so thrilled with 'context' as the name here
+    contextHolder.className = 'context';
+    contextHolder.innerText += "Previously: ";
+    [...word].forEach(x => {
+        let cardData = getCardPerformance(x);
+        contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${cardData.count} flash cards (${cardData.performance}% correct). `;
+    });
+    let contextFaqLink = document.createElement('a');
+    contextFaqLink.className = 'faq-link';
+    contextFaqLink.textContent = "Learn more.";
+    contextFaqLink.addEventListener('click', function () {
+        showFaq(faqTypes.context);
+    });
+    contextHolder.appendChild(contextFaqLink);
+    container.appendChild(contextHolder);
+};
+let renderExamples = function (word, examples, container) {
+    let exampleList = document.createElement('ul');
+    exampleList.classList.add('examples');
+    container.appendChild(exampleList);
+    if (examples.length > 0) {
+        setupExampleElements(examples, exampleList);
+    } else if (activeGraph.augmentPath) {
+        augmentExamples(word, exampleList);
+    }
+};
 let setupExamples = function (words) {
     currentExamples = {};
     // if we're showing examples, never show the walkthrough.
@@ -274,50 +318,20 @@ let setupExamples = function (words) {
     }
     for (let i = 0; i < words.length; i++) {
         let examples = findExamples(words[i], sentences);
-        currentExamples[words[i]] = [];
-
-        let item = document.createElement('li');
-        let wordHolder = document.createElement('h2');
-        wordHolder.textContent = words[i];
-        addTextToSpeech(wordHolder, words[i], []);
-        addSaveToListButton(wordHolder, words[i]);
-        item.appendChild(wordHolder);
-
-        let definitionHolder = document.createElement('ul');
-        definitionHolder.className = 'definition';
         let definitionList = definitions[words[i]] || [];
-        setupDefinitions(definitionList, definitionHolder);
-        item.appendChild(definitionHolder);
 
-        let contextHolder = document.createElement('p');
-        //TODO not so thrilled with 'context' as the name here
-        contextHolder.className = 'context';
-        contextHolder.innerText += "Previously: ";
-        [...words[i]].forEach(x => {
-            let cardData = getCardPerformance(x);
-            contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${cardData.count} flash cards (${cardData.performance}% correct). `;
-        });
-        let contextFaqLink = document.createElement('a');
-        contextFaqLink.className = 'faq-link';
-        contextFaqLink.textContent = "Learn more.";
-        contextFaqLink.addEventListener('click', function () {
-            showFaq(faqTypes.context);
-        });
-        contextHolder.appendChild(contextFaqLink);
-        item.appendChild(contextHolder);
-
+        currentExamples[words[i]] = [];
         //TODO: definition list doesn't have the same interface (missing zh field)
         currentExamples[words[i]].push(getCardFromDefinitions(words[i], definitionList));
         //setup current examples for potential future export
         currentExamples[words[i]].push(...examples);
 
-        let exampleList = document.createElement('ul');
-        item.appendChild(exampleList);
-        if (examples.length > 0) {
-            setupExampleElements(examples, exampleList);
-        } else if (activeGraph.augmentPath) {
-            augmentExamples(currentWord, words[i], exampleList);
-        }
+        let item = document.createElement('li');
+        item.classList.add('word-data');
+        renderWordHeader(words[i], item);
+        renderDefinitions(definitionList, item);
+        renderContext(words[i], item);
+        renderExamples(words[i], examples, item);
 
         examplesList.append(item);
     }
@@ -546,7 +560,7 @@ showPinyinCheckbox.addEventListener('change', function () {
     }
 });
 exploreTab.addEventListener('click', function () {
-    exampleContainer.removeAttribute('style');
+    exploreContainer.removeAttribute('style');
     studyContainer.style.display = 'none';
     //TODO could likely do all of this with CSS
     exploreTab.classList.add('active');
@@ -557,7 +571,7 @@ exploreTab.addEventListener('click', function () {
 });
 
 studyTab.addEventListener('click', function () {
-    exampleContainer.style.display = 'none';
+    exploreContainer.style.display = 'none';
     studyContainer.removeAttribute('style');
     studyTab.classList.add('active');
     exploreTab.classList.remove('active');

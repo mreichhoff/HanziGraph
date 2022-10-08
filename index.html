@@ -39,13 +39,14 @@
                     <div id="show-explore" class="tab left active">Explore</div>
                     <div id="show-study" class="tab">Study</div>
                 </div>
-                <div id="example-container">
+                <div id="explore-container" class="section-container">
                     <div id="controls">
                         <form id="hanzi-choose" class="control">
                             <!-- i18n? what's that? -->
                             <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word"
                                 type="search" enterkeyhint="search" maxlength="6" class="search-box" />
-                            <input id="submit-button" type="submit" value="Go!" />
+                            <!-- TODO: remove that recommendations hack... -->
+                            <input id="submit-button" type="submit" value="Go!" style="display:none" />
                         </form>
                     </div>
                     <div style="display:none" id="not-found-message">😞 That word was not found. Please try another, or
@@ -71,7 +72,7 @@
                     <ul id="examples">
                     </ul>
                 </div>
-                <div id="study-container" style="display:none">
+                <div id="study-container" class="section-container" style="display:none">
                     <p id="explain-text">Not sure how this works? <a class="faq-link" id="show-study-faq">Learn
                             more.</a></p>
                     <p id="cards-due">
