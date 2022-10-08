@@ -525,34 +525,17 @@
 
     let legendElements = document.querySelectorAll('div.circle');
     let graphOptions = {
-        // TODO: remove top10k and trad. Choices should be:
-        // Simplified (default)
-        // Traditional
-        // Cantonese
-        // HSK
-        newHsk: {
-            display: 'New HSK', prefix: 'new-hsk-', legend: hskLegend
-        },
         oldHsk: {
-            display: 'HSK Wordlist', prefix: '', legend: hskLegend
-        },
-        top10k: {
-            display: 'Top 10k words', prefix: 'top-10k-', legend: freqLegend
-        },
-        trad: {
-            display: 'Top 10k traditional', prefix: 'trad-', legend: freqLegend
-        },
-        top50k: {
-            display: 'Top 50k words', prefix: '50k-', legend: bigFreqLegend
+            display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend
         },
         simplified: {
-            display: 'Simplified', prefix: 'simplified-', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100
+            display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100
         },
         traditional: {
-            display: 'Traditional', prefix: 'traditional-', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100
+            display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100
         },
         cantonese: {
-            display: 'Cantonese', prefix: 'cantonese-', legend: freqLegend, ttsKey: 'zh-HK'
+            display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK'
         }
     };
     let activeGraph = graphOptions.simplified;
@@ -914,11 +897,13 @@
         if (oldState) {
             if (oldState.currentGraph) {
                 let activeGraphKey = Object.keys(graphOptions).find(x => graphOptions[x].display === oldState.currentGraph);
-                activeGraph = graphOptions[activeGraphKey];
-                legendElements.forEach((x, index) => {
-                    x.innerText = activeGraph.legend[index];
-                });
-                graphSelector.value = state.currentGraph;
+                if (activeGraphKey) {
+                    activeGraph = graphOptions[activeGraphKey];
+                    legendElements.forEach((x, index) => {
+                        x.innerText = activeGraph.legend[index];
+                    });
+                    graphSelector.value = state.currentGraph;
+                }
             }
             if (oldState.activeTab === tabs.study) {
                 //reallllllly need a toggle method
@@ -1076,7 +1061,7 @@
             activeGraph = graphOptions[key];
             let prefix = activeGraph.prefix;
             //fetch regardless...allow service worker and/or browser cache to optimize
-            fetch(`./data/${prefix}graph.json`)
+            fetch(`./data/${prefix}/graph.json`)
                 .then(response => response.json())
                 .then(function (data) {
                     window.hanzi = data;
@@ -1086,12 +1071,12 @@
                     });
                     wordSet = getWordSet(hanzi);
                 });
-            fetch(`./data/${prefix}sentences.json`)
+            fetch(`./data/${prefix}/sentences.json`)
                 .then(response => response.json())
                 .then(function (data) {
                     window.sentences = data;
                 });
-            fetch(`./data/${prefix}definitions.json`)
+            fetch(`./data/${prefix}/definitions.json`)
                 .then(response => response.json())
                 .then(function (data) {
                     definitions = data;
