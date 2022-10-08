@@ -395,6 +395,7 @@ let updateGraph = function (value, maxLevel, skipState) {
 
     if (value && hanzi[value]) {
         initializeGraph(value, maxLevel, nextGraph, nodeTapHandler, edgeTapHandler);
+        currentHanzi = [value];
     }
 };
 let getWordSet = function (graph) {
