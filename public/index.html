@@ -66,7 +66,13 @@
                             Note that you can zoom, drag, and re-arrange the diagram however you please.
                         </p>
                         <p>
-                            <a class="faq-link" id="show-general-faq">See the FAQ for more information.</a>
+                            Simplified characters are used by default. Traditional characters and Cantonese can be
+                            chosen from the menu in the upper left, as can
+                            a graph based on the HSK word list.
+                        </p>
+                        <p>
+                            Check out <a href="https://github.com/mreichhoff/HanziGraph">the code on GitHub</a>, or <a
+                                class="faq-link" id="show-general-faq">see the FAQ for more information.</a>
                         </p>
                     </div>
                     <ul id="examples">
@@ -222,31 +228,37 @@
                         <ul>
                             <li>The examples came from <a href="https://tatoeba.org">Tatoeba</a>, which releases
                                 data
-                                under <a href="https://creativecommons.org/licenses/by/2.0/fr">CC-BY 2.0 FR</a>, and
+                                under <a href="https://creativecommons.org/licenses/by/2.0/fr">CC-BY 2.0 FR</a>,
                                 from <a href="http://www.opensubtitles.org/">OpenSubtitles</a>, pulled from <a
-                                    href="https://opus.nlpl.eu/OpenSubtitles2018.php">opus.nlpl.eu</a>. </li>
+                                    href="https://opus.nlpl.eu/OpenSubtitles2018.php">opus.nlpl.eu</a>, and from
+                                CommonCrawl, also accessed via <a
+                                    href="https://opus.nlpl.eu/CCAligned.php">opus.nlpl.eu</a>. </li>
                             <li>Definitions and pinyin transcriptions of individual words were pulled from <a
                                     href="https://cc-cedict.org/editor/editor.php">CEDICT</a>, which releases data
                                 under
-                                <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+                                <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, and from <a
+                                    href="https://cantonese.org/download.html">
+                                    CC-CANTO</a>, which releases data under a <a
+                                    href="https://creativecommons.org/licenses/by-sa/3.0/">Creative Commons
+                                    Attribution-ShareAlike 3.0 license.</a>
                                 Accordingly,
-                                some of the files in <code>data</code> should be considered released under that same
-                                license.
+                                some of the files in <code>data</code> should be considered released under those same
+                                ShareAlike licenses.
                             </li>
                         </ul>
                     </li>
                     <li>
                         <h3>Which characters are present in the graph?</h3>
                         <ul>
-                            <li>That depends on which graph you choose. For either the old or new HSK exam, all of
-                                the
-                                HSK 1-6 characters should be present,
-                                and most have examples. When viewing the top 10k words, all hanzi used in those
-                                words
-                                should be present.
+                            <li>That depends on which graph you choose. When viewing the simplified, traditional, or
+                                Cantonese graphs, all characters in <a
+                                    href="https://cc-cedict.org/editor/editor.php">the CEDICT dictionary are
+                                    present</a> (and for Cantonese, <a href="https://cantonese.org/download.html">the
+                                    CC-CANTO</a> words are included). When viewing the HSK graph, only the HSK 1-6
+                                wordlist is included.
                                 <a href="https://github.com/mreichhoff/HanziGraph/issues/new/choose">Ping on
                                     github</a>
-                                with any issues. More examples and definitions will be added in the future.
+                                with any issues. More examples and definitions may be added in the future.
                             </li>
                         </ul>
                     </li>
@@ -257,23 +269,14 @@
                     <li>
                         <h3>How does study mode work?</h3>
                         <ul>
-                            <li>When you add words to your study list, they will be presented to you as flashcards.
-                                You&#39;ll
-                                be
-                                shown the sentence and asked what it means; click &quot;Show Answer&quot; to see how
-                                tatoeba
-                                translated it. When you click &quot;I didn&#39;t know that&quot;, the card will be
-                                added
-                                back to
-                                the
-                                end of your to-study list. When you click &quot;I knew that!&quot;, it will be shown
-                                one
-                                day
-                                later,
-                                then two days if you get it right again, then four, and so on. It is meant to be a
-                                very,
-                                very
-                                basic
+                            <li>When you add words to your study list via the green plus sign, they will be presented to
+                                you as flashcards.
+                                Cards testing recall (Chinese to English), recognition (English to Chinese), and cloze
+                                are all created. The idea is to see the word in a variety of contexts to ensure it is
+                                remembered. When you click the red X, the card will be
+                                added back to the end of your to-study list. When you click the green check, it
+                                will be shown one day later, then two days if you get it right again, then four, and so
+                                on. It is meant to be a very, very basic
                                 <a href="https://en.wikipedia.org/wiki/Spaced_repetition">spaced repetition
                                     system</a>.
                             </li>
@@ -283,18 +286,17 @@
                         <h3>What does the export button do?</h3>
                         <ul>
                             <li>The export button downloads a file that can be imported into a different (better)
-                                spaced
-                                repetition
-                                system, like Anki.</li>
+                                spaced repetition system, like Anki.</li>
                         </ul>
                     </li>
                     <li>
                         <h3>Where are the flashcards stored?</h3>
                         <ul>
-                            <li>All data for the site is stored in <a
+                            <li>When you are not signed in, all data for the site is stored in <a
                                     href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage">localStorage</a>.
-                                It
-                                does not leave your browser, and clearing your browser data will clear it.</li>
+                                It does not leave your browser, and clearing your browser data will clear it.</li>
+                            <li>When you are signed in, the data will be saved to our servers and will be available on
+                                any device.</li>
                         </ul>
                     </li>
                 </ul>
