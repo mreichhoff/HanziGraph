@@ -24,16 +24,16 @@ const legendContainer = document.getElementById('legend');
 let legendElements = document.querySelectorAll('div.circle');
 let graphOptions = {
     hsk: {
-        display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend
+        display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend, defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"]
     },
     simplified: {
-        display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100
+        display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100, defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"]
     },
     traditional: {
-        display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100
+        display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100, defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"]
     },
     cantonese: {
-        display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK'
+        display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK', defaultHanzi: ["我", "哥", "路", "細"], transcriptionName: 'jyutping'
     }
 };
 let activeGraph = graphOptions.simplified;
@@ -420,6 +420,7 @@ let initialize = function () {
     const definitionPromise = window.definitionsFetch
         .then(response => response.json())
         .then(data => window.definitions = data);
+    // TODO: refactor this. Get the appropriate word and graph based on the various sources that can specify them
     let oldState = JSON.parse(localStorage.getItem('state')) || {};
     if (oldState.graphPrefix && graphOptions[oldState.graphPrefix]) {
         activeGraph = graphOptions[oldState.graphPrefix];
@@ -449,6 +450,9 @@ let initialize = function () {
                     history.pushState(state, '', document.location);
                 }
             });
+        } else {
+            walkThrough.removeAttribute('style');
+            updateGraph(activeGraph.defaultHanzi[Math.floor(Math.random() * activeGraph.defaultHanzi.length)], levelSelector.value);
         }
     } else if (oldState.currentWord) {
         definitionPromise.then(() => {
@@ -458,15 +462,15 @@ let initialize = function () {
     } else {
         //graph chosen is default, no need to modify legend or dropdown
         //add a default graph on page load to illustrate the concept
-        let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
         walkThrough.removeAttribute('style');
-        updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], levelSelector.value);
+        updateGraph(activeGraph.defaultHanzi[Math.floor(Math.random() * activeGraph.defaultHanzi.length)], levelSelector.value);
     }
     if (oldState.activeTab === tabs.study) {
         //reallllllly need a toggle method
         //this does set up the current card, etc.
         studyTab.click();
     }
+    setPinyinLabel();
     matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
 };
 
@@ -571,14 +575,15 @@ levelSelector.addEventListener('change', function () {
     //TODO refresh after level change can be weird
     updateGraph(currentHanzi[currentHanzi.length - 1], levelSelector.value);
 });
-showPinyinCheckbox.addEventListener('change', function () {
+let setPinyinLabel = function () {
     let toggleLabel = togglePinyinLabel;
     if (showPinyinCheckbox.checked) {
-        toggleLabel.innerText = 'Turn off pinyin in examples';
+        toggleLabel.innerText = `Turn off ${activeGraph.transcriptionName || 'pinyin'} in examples`;
     } else {
-        toggleLabel.innerText = 'Turn on pinyin in examples';
+        toggleLabel.innerText = `Turn on ${activeGraph.transcriptionName || 'pinyin'} in examples`;
     }
-});
+};
+showPinyinCheckbox.addEventListener('change', setPinyinLabel);
 exploreTab.addEventListener('click', function () {
     exploreContainer.removeAttribute('style');
     studyContainer.style.display = 'none';
@@ -640,6 +645,7 @@ let switchGraph = function () {
             .then(function (data) {
                 definitions = data;
             });
+        setPinyinLabel();
         persistUIState();
     }
 }
