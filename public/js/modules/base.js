@@ -33,7 +33,7 @@ let graphOptions = {
         display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100, defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"]
     },
     cantonese: {
-        display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK', defaultHanzi: ["我", "哥", "路", "細"], transcriptionName: 'jyutping'
+        display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, languageKey: 'zh-HK', defaultHanzi: ["我", "哥", "路", "細"], transcriptionName: 'jyutping'
     }
 };
 let activeGraph = graphOptions.simplified;
@@ -88,8 +88,9 @@ speechSynthesis.onvoiceschanged = function () {
     }
 };
 
-let runTextToSpeech = function (text, anchors) {
-    zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (activeGraph.ttsKey || 'zh-CN'));
+let runTextToSpeech = function (text, anchors, languageKey) {
+    languageKey = languageKey || activeGraph.languageKey;
+    zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (languageKey || 'zh-CN'));
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
     if (zhTts) {
         let utterance = new SpeechSynthesisUtterance(text);
@@ -116,10 +117,10 @@ let runTextToSpeech = function (text, anchors) {
     }
 };
 
-let addTextToSpeech = function (container, text, aList) {
+let addTextToSpeech = function (container, text, aList, languageKey) {
     let textToSpeechButton = document.createElement('span');
     textToSpeechButton.className = 'volume';
-    textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
+    textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList, languageKey), false);
     container.appendChild(textToSpeechButton);
 };
 let addSaveToListButton = function (container, text) {
@@ -128,7 +129,7 @@ let addSaveToListButton = function (container, text) {
     saveToListButton.className = 'add-button';
     saveToListButton.textContent = inStudyList(text) ? buttonTexts[0] : buttonTexts[1];
     saveToListButton.addEventListener('click', function () {
-        addCards(currentExamples, text);
+        addCards(currentExamples, text, activeGraph.languageKey);
         saveToListButton.textContent = buttonTexts[0];
     });
     container.appendChild(saveToListButton);

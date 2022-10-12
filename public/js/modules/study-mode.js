@@ -41,7 +41,7 @@ const cardRenderers = {
             aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
         }
         cardQuestionContainer.style.flexDirection = 'row';
-        addTextToSpeech(cardQuestionContainer, question, aList);
+        addTextToSpeech(cardQuestionContainer, question, aList, currentCard.language || 'zh-CN');
         cardAnswerElement.textContent = currentCard.en;
 
     },
@@ -59,7 +59,7 @@ const cardRenderers = {
         for (let i = 0; i < aList.length; i++) {
             aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
         }
-        addTextToSpeech(cardAnswerElement, answer, aList);
+        addTextToSpeech(cardAnswerElement, answer, aList, currentCard.language || 'zh-CN');
         cardQuestionContainer.innerText = question;
     },
     'cloze': function (currentCard) {
@@ -95,7 +95,7 @@ const cardRenderers = {
         for (let i = 0; i < answerAList.length; i++) {
             answerAList[i].addEventListener('click', displayRelatedCards.bind(this, answerAList[i]));
         }
-        addTextToSpeech(cardAnswerElement, currentCard.vocabOrigin, answerAList);
+        addTextToSpeech(cardAnswerElement, currentCard.vocabOrigin, answerAList, currentCard.language || 'zh-CN');
     }
 };
 

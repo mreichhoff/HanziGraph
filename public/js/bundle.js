@@ -19367,7 +19367,7 @@
         }
         saveStudyList([key]);
     };
-    let addRecallCards = function (newCards, text, newKeys) {
+    let addRecallCards = function (newCards, text, newKeys, languageKey) {
         let total = Math.min(MAX_RECALL, newCards.length);
         for (let i = 0; i < total; i++) {
             let key = newCards[i].zh.join('') + cardTypes.RECALL;
@@ -19381,13 +19381,14 @@
                     rightCount: 0,
                     type: cardTypes.RECALL,
                     vocabOrigin: text,
+                    language: languageKey || 'zh-CN',
                     added: Date.now()
                 };
             }
         }
     };
     // TODO: may be better combined with addRecallCards...
-    let addClozeCards = function (newCards, text, newKeys) {
+    let addClozeCards = function (newCards, text, newKeys, languageKey) {
         let added = 0;
         for (let i = 0; i < newCards.length; i++) {
             if (added == MAX_CLOZE) {
@@ -19410,12 +19411,13 @@
                     rightCount: 0,
                     type: cardTypes.CLOZE,
                     vocabOrigin: text,
+                    language: languageKey || 'zh-CN',
                     added: Date.now()
                 };
             }
         }
     };
-    let addCards = function (currentExamples, text) {
+    let addCards = function (currentExamples, text, languageKey) {
         let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
         let newKeys = [];
         for (let i = 0; i < newCards.length; i++) {
@@ -19430,12 +19432,13 @@
                     rightCount: 0,
                     type: cardTypes.RECOGNITION,
                     vocabOrigin: text,
+                    language: languageKey || 'zh-CN',
                     added: Date.now()
                 };
             }
         }
-        addRecallCards(newCards, text, newKeys);
-        addClozeCards(newCards, text, newKeys);
+        addRecallCards(newCards, text, newKeys, languageKey);
+        addClozeCards(newCards, text, newKeys, languageKey);
         //TODO: remove these keys from /deleted/ to allow re-add
         //update it whenever it changes
         saveStudyList(newKeys, null);
@@ -20116,7 +20119,7 @@
             display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100, defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"]
         },
         cantonese: {
-            display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK', defaultHanzi: ["我", "哥", "路", "細"], transcriptionName: 'jyutping'
+            display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, languageKey: 'zh-HK', defaultHanzi: ["我", "哥", "路", "細"], transcriptionName: 'jyutping'
         }
     };
     let activeGraph = graphOptions.simplified;
@@ -20171,8 +20174,9 @@
         }
     };
 
-    let runTextToSpeech = function (text, anchors) {
-        zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (activeGraph.ttsKey || 'zh-CN'));
+    let runTextToSpeech = function (text, anchors, languageKey) {
+        languageKey = languageKey || activeGraph.languageKey;
+        zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (languageKey || 'zh-CN'));
         //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
         if (zhTts) {
             let utterance = new SpeechSynthesisUtterance(text);
@@ -20199,10 +20203,10 @@
         }
     };
 
-    let addTextToSpeech = function (container, text, aList) {
+    let addTextToSpeech = function (container, text, aList, languageKey) {
         let textToSpeechButton = document.createElement('span');
         textToSpeechButton.className = 'volume';
-        textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
+        textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList, languageKey), false);
         container.appendChild(textToSpeechButton);
     };
     let addSaveToListButton = function (container, text) {
@@ -20211,7 +20215,7 @@
         saveToListButton.className = 'add-button';
         saveToListButton.textContent = inStudyList(text) ? buttonTexts[0] : buttonTexts[1];
         saveToListButton.addEventListener('click', function () {
-            addCards(currentExamples, text);
+            addCards(currentExamples, text, activeGraph.languageKey);
             saveToListButton.textContent = buttonTexts[0];
         });
         container.appendChild(saveToListButton);
@@ -20775,7 +20779,7 @@
                 aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
             }
             cardQuestionContainer.style.flexDirection = 'row';
-            addTextToSpeech(cardQuestionContainer, question, aList);
+            addTextToSpeech(cardQuestionContainer, question, aList, currentCard.language || 'zh-CN');
             cardAnswerElement.textContent = currentCard.en;
 
         },
@@ -20793,7 +20797,7 @@
             for (let i = 0; i < aList.length; i++) {
                 aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
             }
-            addTextToSpeech(cardAnswerElement, answer, aList);
+            addTextToSpeech(cardAnswerElement, answer, aList, currentCard.language || 'zh-CN');
             cardQuestionContainer.innerText = question;
         },
         'cloze': function (currentCard) {
@@ -20829,7 +20833,7 @@
             for (let i = 0; i < answerAList.length; i++) {
                 answerAList[i].addEventListener('click', displayRelatedCards.bind(this, answerAList[i]));
             }
-            addTextToSpeech(cardAnswerElement, currentCard.vocabOrigin, answerAList);
+            addTextToSpeech(cardAnswerElement, currentCard.vocabOrigin, answerAList, currentCard.language || 'zh-CN');
         }
     };
 

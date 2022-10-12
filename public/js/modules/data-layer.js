@@ -125,7 +125,7 @@ let updateCard = function (result, key) {
     }
     saveStudyList([key]);
 };
-let addRecallCards = function (newCards, text, newKeys) {
+let addRecallCards = function (newCards, text, newKeys, languageKey) {
     let total = Math.min(MAX_RECALL, newCards.length);
     for (let i = 0; i < total; i++) {
         let key = newCards[i].zh.join('') + cardTypes.RECALL;
@@ -139,13 +139,14 @@ let addRecallCards = function (newCards, text, newKeys) {
                 rightCount: 0,
                 type: cardTypes.RECALL,
                 vocabOrigin: text,
+                language: languageKey || 'zh-CN',
                 added: Date.now()
             };
         }
     }
 };
 // TODO: may be better combined with addRecallCards...
-let addClozeCards = function (newCards, text, newKeys) {
+let addClozeCards = function (newCards, text, newKeys, languageKey) {
     let added = 0;
     for (let i = 0; i < newCards.length; i++) {
         if (added == MAX_CLOZE) {
@@ -168,12 +169,13 @@ let addClozeCards = function (newCards, text, newKeys) {
                 rightCount: 0,
                 type: cardTypes.CLOZE,
                 vocabOrigin: text,
+                language: languageKey || 'zh-CN',
                 added: Date.now()
             };
         }
     }
 };
-let addCards = function (currentExamples, text) {
+let addCards = function (currentExamples, text, languageKey) {
     let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
     let newKeys = [];
     for (let i = 0; i < newCards.length; i++) {
@@ -188,12 +190,13 @@ let addCards = function (currentExamples, text) {
                 rightCount: 0,
                 type: cardTypes.RECOGNITION,
                 vocabOrigin: text,
+                language: languageKey || 'zh-CN',
                 added: Date.now()
             };
         }
     }
-    addRecallCards(newCards, text, newKeys);
-    addClozeCards(newCards, text, newKeys);
+    addRecallCards(newCards, text, newKeys, languageKey);
+    addClozeCards(newCards, text, newKeys, languageKey);
     //TODO: remove these keys from /deleted/ to allow re-add
     //update it whenever it changes
     saveStudyList(newKeys, null, true);
