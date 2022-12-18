@@ -752,8 +752,8 @@ select {
 
     /* circle becomes a misnomer */
     .circle {
-        height: 20px;
-        line-height: 20px;
+        height: 16px;
+        line-height: 16px;
         border-radius: 12px;
         font-size: 10px;
         margin-bottom: 0;
