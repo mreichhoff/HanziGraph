@@ -450,14 +450,12 @@ a.navigable {
 #wrong-button {
     background-color: #ff635f;
     color: black;
-    border: 1px solid #3333;
     user-select: none;
     -webkit-user-select: none;
 }
 
 #right-button {
     background-color: #6de200;
-    border: 1px solid #3333;
     color: black;
     user-select: none;
     -webkit-user-select: none;
@@ -604,13 +602,6 @@ select {
 .result-indicator-right {
     background-color: #6de200;
     color: black;
-}
-
-@media (hover: hover) {
-    #result-buttons li:hover {
-        border: 1px solid white;
-        transition: border 500ms;
-    }
 }
 
 .bar-chart {
@@ -928,12 +919,6 @@ main.stats section p {
 
     .bar-chart-separator {
         background: black;
-    }
-}
-
-@media (prefers-color-scheme: light) and (hover: hover) {
-    #result-buttons li:hover {
-        transition: border 500ms;
     }
 }
 

@@ -20165,6 +20165,8 @@
         return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
     };
     let zhTts = getZhTts();
+    // hacking around garbage collection issues...
+    window.activeUtterances = [];
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
     //generally, this thing is weird, so uh...
     //ideally we'd not do this or have any global variable
@@ -20180,6 +20182,7 @@
         //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
         if (zhTts) {
             let utterance = new SpeechSynthesisUtterance(text);
+            activeUtterances.push(utterance);
             utterance.lang = zhTts.lang;
             utterance.voice = zhTts;
             utterance.addEventListener('boundary', function (event) {
@@ -20198,6 +20201,10 @@
                 anchors.forEach(character => {
                     character.removeAttribute('style');
                 });
+                // length check shouldn't be necessary, but just in case, I guess?
+                if (activeUtterances.length !== 0) {
+                    activeUtterances.shift();
+                }
             });
             speechSynthesis.speak(utterance);
         }
