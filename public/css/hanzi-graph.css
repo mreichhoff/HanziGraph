@@ -866,6 +866,7 @@ main.stats section p {
 @media (prefers-color-scheme: light) {
     .header {
         border-bottom: 1px solid #3333;
+        background: #fcfcfc;
     }
 
     .search-box {
@@ -891,13 +892,18 @@ main.stats section p {
         border-right: 1px solid #3333;
     }
 
+    .tab {
+        opacity: 0.85;
+    }
+
     .tab.active {
-        background-color: white;
+        opacity: 1;
+        background-color: #fff;
     }
 
     body {
         color: rgba(0, 0, 0, 0.87);
-        background: #fcfcfc;
+        background: #fff;
     }
 
     a {
