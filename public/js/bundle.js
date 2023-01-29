@@ -20162,7 +20162,10 @@
 
     let getZhTts = function () {
         //use the first-encountered zh-CN voice for now
-        return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
+        if ('speechSynthesis' in window) {
+            return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
+        }
+        return null;
     };
     let zhTts = getZhTts();
     // hacking around garbage collection issues...
@@ -20170,11 +20173,13 @@
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
     //generally, this thing is weird, so uh...
     //ideally we'd not do this or have any global variable
-    speechSynthesis.onvoiceschanged = function () {
-        if (!zhTts) {
-            zhTts = getZhTts();
-        }
-    };
+    if ('speechSynthesis' in window) {
+        speechSynthesis.onvoiceschanged = function () {
+            if (!zhTts) {
+                zhTts = getZhTts();
+            }
+        };
+    }
 
     let runTextToSpeech = function (text, anchors, languageKey) {
         languageKey = languageKey || activeGraph.languageKey;
