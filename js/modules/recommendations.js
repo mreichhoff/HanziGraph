@@ -64,7 +64,7 @@ let initialize = function () {
                 usedRecommendation = true;
             }
             let recommendationsFaqLink = document.createElement('a');
-            recommendationsFaqLink.className = 'faq-link';
+            recommendationsFaqLink.className = 'active-link';
             recommendationsFaqLink.innerText = "Why?"
             recommendationsFaqLink.addEventListener('click', function () {
                 showFaq(faqTypes.recommendations);

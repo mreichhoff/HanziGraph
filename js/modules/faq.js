@@ -1,12 +1,10 @@
-//TODO may want to stop this and just have it stay shown, with faq over top via absolute position/z-index
-const mainContainer = document.getElementById('main-container');
-//faq items
+import { switchToState, stateKeys } from "./menu-orchestrator";
+
 const faqContainer = document.getElementById('faq-container');
 const faqStudyMode = document.getElementById('faq-study-mode');
 const faqRecommendations = document.getElementById('faq-recommendations');
 const faqContext = document.getElementById('faq-context');
 const faqGeneral = document.getElementById('faq-general');
-const faqExitButton = document.getElementById('faq-exit-button');
 const showStudyFaq = document.getElementById('show-study-faq');
 const showGeneralFaq = document.getElementById('show-general-faq');
 
@@ -25,15 +23,12 @@ const faqTypes = {
 };
 
 let showFaq = function (faqType) {
-    mainContainer.style.display = 'none';
-    faqContainer.removeAttribute('style');
+    switchToState(stateKeys.faq);
     faqTypesToElement[faqType].removeAttribute('style');
 };
 
 let initialize = function () {
-    faqExitButton.addEventListener('click', function () {
-        faqContainer.style.display = 'none';
-        mainContainer.removeAttribute('style');
+    faqContainer.addEventListener('hidden', function () {
         Object.values(faqTypesToElement).forEach(x => {
             x.style.display = 'none';
         });

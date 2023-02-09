@@ -2,6 +2,7 @@ import { faqTypes, showFaq } from "./faq.js";
 import { updateVisited, getVisited, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
 import { addToGraph, initializeGraph, updateColorScheme } from "./graph.js";
 import { graphChanged, preferencesChanged } from "./recommendations.js";
+import { switchToState, stateKeys } from "./menu-orchestrator.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -21,7 +22,7 @@ let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
 let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
 const legendContainer = document.getElementById('legend');
 
-let legendElements = document.querySelectorAll('div.circle');
+let legendElements = document.querySelectorAll('.level-label');
 let graphOptions = {
     oldHsk: {
         display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend
@@ -41,21 +42,14 @@ let getActiveGraph = function () {
     return activeGraph;
 }
 
-//top-level section container
-const mainContainer = document.getElementById('main-container');
 const graphContainer = document.getElementById('graph-container');
-
-const exploreTab = document.getElementById('show-explore');
-const studyTab = document.getElementById('show-study');
 
 const mainHeader = document.getElementById('main-header');
 
 //study items...these may not belong in this file
-const studyContainer = document.getElementById('study-container');
 
 //explore tab items
 const examplesList = document.getElementById('examples');
-const exploreContainer = document.getElementById('explore-container');
 //explore tab navigation controls
 const hanziBox = document.getElementById('hanzi-box');
 const hanziSearchForm = document.getElementById('hanzi-choose');
@@ -67,26 +61,27 @@ const walkThrough = document.getElementById('walkthrough');
 
 //menu items
 const graphSelector = document.getElementById('graph-selector');
-const levelSelector = document.getElementById('level-selector');
-const menuButton = document.getElementById('menu-button');
-const menuContainer = document.getElementById('menu-container');
-const menuExitButton = document.getElementById('menu-exit-button');
 const showPinyinCheckbox = document.getElementById('show-pinyin');
 const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 
 let getZhTts = function () {
     //use the first-encountered zh-CN voice for now
+    if (!'speechSynthesis' in window) {
+        return null;
+    }
     return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
 };
 let zhTts = getZhTts();
 //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
 //generally, this thing is weird, so uh...
 //ideally we'd not do this or have any global variable
-speechSynthesis.onvoiceschanged = function () {
-    if (!zhTts) {
-        zhTts = getZhTts();
-    }
-};
+if ('speechSynthesis' in window) {
+    speechSynthesis.onvoiceschanged = function () {
+        if (!zhTts) {
+            zhTts = getZhTts();
+        }
+    };
+}
 
 let runTextToSpeech = function (text, anchors) {
     zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (activeGraph.ttsKey || 'zh-CN'));
@@ -101,9 +96,9 @@ let runTextToSpeech = function (text, anchors) {
             }
             anchors.forEach((character, index) => {
                 if (index >= event.charIndex && index < (event.charIndex + (event.charLength || 1))) {
-                    character.style.fontWeight = 'bold';
+                    character.style.backgroundColor = '#6de200';
                 } else {
-                    character.style.fontWeight = 'normal';
+                    character.removeAttribute('style');
                 }
             });
         });
@@ -118,7 +113,7 @@ let runTextToSpeech = function (text, anchors) {
 
 let addTextToSpeech = function (container, text, aList) {
     let textToSpeechButton = document.createElement('span');
-    textToSpeechButton.className = 'volume';
+    textToSpeechButton.className = 'speak-button';
     textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
     container.appendChild(textToSpeechButton);
 };
@@ -165,7 +160,7 @@ function parseUrl(path) {
 function loadState(state) {
     const term = decodeURIComponent(state.word);
     hanziBox.value = term;
-    search(term, levelSelector.value, true);
+    search(term, 6, true);
 }
 
 // window.onpopstate = (event) => {
@@ -289,7 +284,7 @@ let renderContext = function (word, container) {
         contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${cardData.count} flash cards (${cardData.performance}% correct). `;
     });
     let contextFaqLink = document.createElement('a');
-    contextFaqLink.className = 'faq-link';
+    contextFaqLink.className = 'active-link';
     contextFaqLink.textContent = "Learn more.";
     contextFaqLink.addEventListener('click', function () {
         showFaq(faqTypes.context);
@@ -353,7 +348,7 @@ let getCardFromDefinitions = function (text, definitionList) {
 
 let nodeTapHandler = function (evt) {
     let id = evt.target.id();
-    let maxLevel = levelSelector.value;
+    let maxLevel = 6;
     //not needed if currentHanzi contains id, which would mean the nodes have already been added
     //includes O(N) but currentHanzi almost always < 10 elements
     if (currentHanzi && !currentHanzi.includes(id)) {
@@ -362,7 +357,7 @@ let nodeTapHandler = function (evt) {
     hanziBox.value = id;
     setupExamples([id]);
     persistState();
-    exploreTab.click();
+    switchToState(stateKeys.main);
     mainHeader.scrollIntoView();
     updateVisited([id]);
     notFoundElement.style.display = 'none';
@@ -372,8 +367,7 @@ let edgeTapHandler = function (evt) {
     hanziBox.value = words[0];
     setupExamples(words);
     persistState();
-    //TODO toggle functions
-    exploreTab.click();
+    switchToState(stateKeys.main);
     mainHeader.scrollIntoView();
     updateVisited([evt.target.source().id(), evt.target.target().id()]);
     notFoundElement.style.display = 'none';
@@ -426,7 +420,7 @@ let initialize = function () {
         //add a default graph on page load to illustrate the concept
         let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
         walkThrough.removeAttribute('style');
-        updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], levelSelector.value);
+        updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], 6);
     }
     let oldState = JSON.parse(localStorage.getItem('state'));
     if (oldState) {
@@ -435,15 +429,13 @@ let initialize = function () {
             if (activeGraphKey) {
                 activeGraph = graphOptions[activeGraphKey];
                 legendElements.forEach((x, index) => {
-                    x.innerText = activeGraph.legend[index];
+                    x.textContent = activeGraph.legend[index];
                 });
                 graphSelector.value = state.currentGraph;
             }
         }
         if (oldState.activeTab === tabs.study) {
-            //reallllllly need a toggle method
-            //this does set up the current card, etc.
-            studyTab.click();
+            switchToState(states.study);
         }
     }
     matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
@@ -464,7 +456,7 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
             a.addEventListener('click', function () {
                 if (hanzi[character]) {
                     if (currentHanzi && !currentHanzi.includes(character)) {
-                        updateGraph(character, levelSelector.value);
+                        updateGraph(character, 6);
                     }
                     //enable seamless switching, but don't update if we're already showing examples for character
                     if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
@@ -543,13 +535,8 @@ let search = function (value, maxLevel, skipState) {
 }
 hanziSearchForm.addEventListener('submit', function (event) {
     event.preventDefault();
-    search(hanziBox.value, levelSelector.value);
-});
-
-levelSelector.addEventListener('change', function () {
-    //TODO hide edges in existing graph rather than rebuilding
-    //TODO refresh after level change can be weird
-    updateGraph(currentHanzi[currentHanzi.length - 1], levelSelector.value);
+    search(hanziBox.value, 6);
+    switchToState(stateKeys.main);
 });
 showPinyinCheckbox.addEventListener('change', function () {
     let toggleLabel = togglePinyinLabel;
@@ -559,38 +546,10 @@ showPinyinCheckbox.addEventListener('change', function () {
         toggleLabel.innerText = 'Turn on pinyin in examples';
     }
 });
-exploreTab.addEventListener('click', function () {
-    exploreContainer.removeAttribute('style');
-    studyContainer.style.display = 'none';
-    //TODO could likely do all of this with CSS
-    exploreTab.classList.add('active');
-    studyTab.classList.remove('active');
-    activeTab = tabs.explore;
-    // the user's choice of word hasn't changed, but they've switched modes
-    persistUIState();
-});
-
-studyTab.addEventListener('click', function () {
-    exploreContainer.style.display = 'none';
-    studyContainer.removeAttribute('style');
-    studyTab.classList.add('active');
-    exploreTab.classList.remove('active');
-    activeTab = tabs.study;
-    persistUIState();
-});
 
 recommendationsDifficultySelector.addEventListener('change', function () {
     let val = recommendationsDifficultySelector.value;
     preferencesChanged(val);
-});
-
-menuButton.addEventListener('click', function () {
-    mainContainer.style.display = 'none';
-    menuContainer.removeAttribute('style');
-});
-menuExitButton.addEventListener('click', function () {
-    menuContainer.style.display = 'none';
-    mainContainer.removeAttribute('style');
 });
 
 let switchGraph = function () {

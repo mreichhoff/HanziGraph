@@ -1,15 +1,161 @@
 (function () {
     'use strict';
 
-    //TODO may want to stop this and just have it stay shown, with faq over top via absolute position/z-index
-    const mainContainer$2 = document.getElementById('main-container');
-    //faq items
+    const leftButtonContainer = document.getElementById('left-menu-button-container');
+    const rightButtonContainer = document.getElementById('right-menu-button-container');
+    const leftButton = document.getElementById('left-menu-button');
+    const rightButton$1 = document.getElementById('right-menu-button');
+
+    const mainAppContainer = document.getElementById('main-app-container');
+    const statsContainer$1 = document.getElementById('stats-container');
+    const faqContainer$1 = document.getElementById('faq-container');
+    const menuContainer = document.getElementById('menu-container');
+
+    const explorePane = document.getElementById('explore-container');
+    const studyPane = document.getElementById('study-container');
+
+    const containers = [mainAppContainer, statsContainer$1, faqContainer$1, menuContainer];
+    const panes = [explorePane, studyPane];
+
+    // TODO(refactor): I'm gonna go out on a limb and say there's a better way...
+    const stateKeys = {
+        main: 'main',
+        study: 'study',
+        faq: 'faq',
+        stats: 'stats',
+        menu: 'menu'
+    };
+
+    const states$1 = {
+        main: {
+            leftButtonClass: 'menu-button',
+            rightButtonClass: 'study-button',
+            activeContainer: mainAppContainer,
+            activePane: explorePane,
+            leftState: 'menu',
+            rightState: 'study',
+            paneAnimation: 'slide-in'
+        },
+        study: {
+            leftButtonClass: 'menu-button',
+            rightButtonClass: 'explore-button',
+            activeContainer: mainAppContainer,
+            activePane: studyPane,
+            leftState: 'menu',
+            rightState: 'main',
+            paneAnimation: 'slide-in'
+        },
+        faq: {
+            leftButtonClass: 'exit-button',
+            activeContainer: faqContainer$1,
+            statePreserving: true,
+            leftState: 'previous',
+            animation: 'slide-in'
+        },
+        stats: {
+            leftButtonClass: 'exit-button',
+            activeContainer: statsContainer$1,
+            statePreserving: true,
+            leftState: 'main',
+            animation: 'slide-in'
+        },
+        menu: {
+            leftButtonClass: 'exit-button',
+            activeContainer: menuContainer,
+            statePreserving: true,
+            leftState: 'previous',
+            animation: 'slide-in'
+        }
+    };
+
+    let prevState = null;
+    let currentState = stateKeys.main;
+
+    function switchToState(state) {
+        if (state === currentState) {
+            // no sense doing extra work...
+            return;
+        }
+        // if we don't have the new state, treat it as indicating we must go back
+        // for now we don't support chains of back/forward, it's just one
+        const stateConfig = states$1[state] || states$1[prevState];
+
+        for (const container of containers) {
+            if (container.id !== stateConfig.activeContainer.id) {
+                container.style.display = 'none';
+                container.dispatchEvent(new Event('hidden'));
+            }
+        }
+        stateConfig.activeContainer.removeAttribute('style');
+        stateConfig.activeContainer.dispatchEvent(new Event('shown'));
+        if (stateConfig.animation) {
+            stateConfig.activeContainer.classList.add(stateConfig.animation);
+            stateConfig.activeContainer.addEventListener('animationend', function () {
+                stateConfig.activeContainer.classList.remove(stateConfig.animation);
+            }, { once: true });
+        }
+
+        if (stateConfig.activePane) {
+            for (const pane of panes) {
+                if (pane.id !== stateConfig.activePane.id) {
+                    pane.style.display = 'none';
+                    pane.dispatchEvent(new Event('hidden'));
+                }
+            }
+            stateConfig.activePane.removeAttribute('style');
+            stateConfig.activePane.dispatchEvent(new Event('shown'));
+            if (stateConfig.paneAnimation) {
+                stateConfig.activePane.classList.add(stateConfig.paneAnimation);
+                stateConfig.activePane.addEventListener('animationend', function () {
+                    stateConfig.activePane.classList.remove(stateConfig.paneAnimation);
+                }, { once: true });
+            }
+        }
+        if (stateConfig.leftButtonClass) {
+            leftButton.className = stateConfig.leftButtonClass;
+            leftButton.removeAttribute('style');
+        } else {
+            leftButton.style.display = 'none';
+        }
+        if (stateConfig.rightButtonClass) {
+            rightButton$1.className = stateConfig.rightButtonClass;
+            rightButton$1.removeAttribute('style');
+        } else {
+            rightButton$1.style.display = 'none';
+        }
+        // this 'previous' string thing is weird, but it might just work
+        // (until we need any notion of reentrancy)
+        let tmp = prevState;
+        if (stateConfig.statePreserving) {
+            prevState = currentState;
+        } else {
+            prevState = null;
+        }
+        if (state === 'previous') {
+            currentState = tmp;
+        } else {
+            currentState = state;
+        }
+    }
+
+    function initialize$5() {
+        leftButtonContainer.addEventListener('click', function () {
+            if (states$1[currentState].leftState) {
+                switchToState(states$1[currentState].leftState);
+            }
+        });
+        rightButtonContainer.addEventListener('click', function () {
+            if (states$1[currentState].rightState) {
+                switchToState(states$1[currentState].rightState);
+            }
+        });
+    }
+
     const faqContainer = document.getElementById('faq-container');
     const faqStudyMode = document.getElementById('faq-study-mode');
     const faqRecommendations = document.getElementById('faq-recommendations');
     const faqContext = document.getElementById('faq-context');
     const faqGeneral = document.getElementById('faq-general');
-    const faqExitButton = document.getElementById('faq-exit-button');
     const showStudyFaq = document.getElementById('show-study-faq');
     const showGeneralFaq = document.getElementById('show-general-faq');
 
@@ -28,15 +174,12 @@
     };
 
     let showFaq = function (faqType) {
-        mainContainer$2.style.display = 'none';
-        faqContainer.removeAttribute('style');
+        switchToState(stateKeys.faq);
         faqTypesToElement[faqType].removeAttribute('style');
     };
 
     let initialize$4 = function () {
-        faqExitButton.addEventListener('click', function () {
-            faqContainer.style.display = 'none';
-            mainContainer$2.removeAttribute('style');
+        faqContainer.addEventListener('hidden', function () {
             Object.values(faqTypesToElement).forEach(x => {
                 x.style.display = 'none';
             });
@@ -469,7 +612,7 @@
                     usedRecommendation = true;
                 }
                 let recommendationsFaqLink = document.createElement('a');
-                recommendationsFaqLink.className = 'faq-link';
+                recommendationsFaqLink.className = 'active-link';
                 recommendationsFaqLink.innerText = "Why?";
                 recommendationsFaqLink.addEventListener('click', function () {
                     showFaq(faqTypes.recommendations);
@@ -523,7 +666,7 @@
     let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
     const legendContainer = document.getElementById('legend');
 
-    let legendElements = document.querySelectorAll('div.circle');
+    let legendElements = document.querySelectorAll('.level-label');
     let graphOptions = {
         oldHsk: {
             display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend
@@ -543,21 +686,14 @@
         return activeGraph;
     };
 
-    //top-level section container
-    const mainContainer$1 = document.getElementById('main-container');
     const graphContainer = document.getElementById('graph-container');
-
-    const exploreTab = document.getElementById('show-explore');
-    const studyTab$1 = document.getElementById('show-study');
 
     const mainHeader = document.getElementById('main-header');
 
     //study items...these may not belong in this file
-    const studyContainer = document.getElementById('study-container');
 
     //explore tab items
     const examplesList = document.getElementById('examples');
-    const exploreContainer = document.getElementById('explore-container');
     //explore tab navigation controls
     const hanziBox = document.getElementById('hanzi-box');
     const hanziSearchForm = document.getElementById('hanzi-choose');
@@ -569,26 +705,27 @@
 
     //menu items
     const graphSelector = document.getElementById('graph-selector');
-    const levelSelector = document.getElementById('level-selector');
-    const menuButton = document.getElementById('menu-button');
-    const menuContainer = document.getElementById('menu-container');
-    const menuExitButton = document.getElementById('menu-exit-button');
     const showPinyinCheckbox = document.getElementById('show-pinyin');
     const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 
     let getZhTts = function () {
         //use the first-encountered zh-CN voice for now
+        if (!'speechSynthesis' in window) {
+            return null;
+        }
         return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
     };
     let zhTts = getZhTts();
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
     //generally, this thing is weird, so uh...
     //ideally we'd not do this or have any global variable
-    speechSynthesis.onvoiceschanged = function () {
-        if (!zhTts) {
-            zhTts = getZhTts();
-        }
-    };
+    if ('speechSynthesis' in window) {
+        speechSynthesis.onvoiceschanged = function () {
+            if (!zhTts) {
+                zhTts = getZhTts();
+            }
+        };
+    }
 
     let runTextToSpeech = function (text, anchors) {
         zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (activeGraph.ttsKey || 'zh-CN'));
@@ -603,9 +740,9 @@
                 }
                 anchors.forEach((character, index) => {
                     if (index >= event.charIndex && index < (event.charIndex + (event.charLength || 1))) {
-                        character.style.fontWeight = 'bold';
+                        character.style.backgroundColor = '#6de200';
                     } else {
-                        character.style.fontWeight = 'normal';
+                        character.removeAttribute('style');
                     }
                 });
             });
@@ -620,7 +757,7 @@
 
     let addTextToSpeech = function (container, text, aList) {
         let textToSpeechButton = document.createElement('span');
-        textToSpeechButton.className = 'volume';
+        textToSpeechButton.className = 'speak-button';
         textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
         container.appendChild(textToSpeechButton);
     };
@@ -646,7 +783,7 @@
     function loadState(state) {
         const term = decodeURIComponent(state.word);
         hanziBox.value = term;
-        search(term, levelSelector.value);
+        search(term, 6);
     }
 
     // window.onpopstate = (event) => {
@@ -770,7 +907,7 @@
             contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${cardData.count} flash cards (${cardData.performance}% correct). `;
         });
         let contextFaqLink = document.createElement('a');
-        contextFaqLink.className = 'faq-link';
+        contextFaqLink.className = 'active-link';
         contextFaqLink.textContent = "Learn more.";
         contextFaqLink.addEventListener('click', function () {
             showFaq(faqTypes.context);
@@ -834,7 +971,7 @@
 
     let nodeTapHandler = function (evt) {
         let id = evt.target.id();
-        let maxLevel = levelSelector.value;
+        let maxLevel = 6;
         //not needed if currentHanzi contains id, which would mean the nodes have already been added
         //includes O(N) but currentHanzi almost always < 10 elements
         if (currentHanzi && !currentHanzi.includes(id)) {
@@ -842,7 +979,7 @@
         }
         hanziBox.value = id;
         setupExamples([id]);
-        exploreTab.click();
+        switchToState(stateKeys.main);
         mainHeader.scrollIntoView();
         updateVisited([id]);
         notFoundElement.style.display = 'none';
@@ -851,8 +988,7 @@
         let words = evt.target.data('words');
         hanziBox.value = words[0];
         setupExamples(words);
-        //TODO toggle functions
-        exploreTab.click();
+        switchToState(stateKeys.main);
         mainHeader.scrollIntoView();
         updateVisited([evt.target.source().id(), evt.target.target().id()]);
         notFoundElement.style.display = 'none';
@@ -905,7 +1041,7 @@
             //add a default graph on page load to illustrate the concept
             let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
             walkThrough.removeAttribute('style');
-            updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], levelSelector.value);
+            updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], 6);
         }
         let oldState = JSON.parse(localStorage.getItem('state'));
         if (oldState) {
@@ -914,15 +1050,13 @@
                 if (activeGraphKey) {
                     activeGraph = graphOptions[activeGraphKey];
                     legendElements.forEach((x, index) => {
-                        x.innerText = activeGraph.legend[index];
+                        x.textContent = activeGraph.legend[index];
                     });
                     graphSelector.value = state.currentGraph;
                 }
             }
             if (oldState.activeTab === tabs.study) {
-                //reallllllly need a toggle method
-                //this does set up the current card, etc.
-                studyTab$1.click();
+                switchToState(states.study);
             }
         }
         matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
@@ -943,7 +1077,7 @@
                 a.addEventListener('click', function () {
                     if (hanzi[character]) {
                         if (currentHanzi && !currentHanzi.includes(character)) {
-                            updateGraph(character, levelSelector.value);
+                            updateGraph(character, 6);
                         }
                         //enable seamless switching, but don't update if we're already showing examples for character
                         if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
@@ -1018,13 +1152,8 @@
     };
     hanziSearchForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        search(hanziBox.value, levelSelector.value);
-    });
-
-    levelSelector.addEventListener('change', function () {
-        //TODO hide edges in existing graph rather than rebuilding
-        //TODO refresh after level change can be weird
-        updateGraph(currentHanzi[currentHanzi.length - 1], levelSelector.value);
+        search(hanziBox.value, 6);
+        switchToState(stateKeys.main);
     });
     showPinyinCheckbox.addEventListener('change', function () {
         let toggleLabel = togglePinyinLabel;
@@ -1034,38 +1163,10 @@
             toggleLabel.innerText = 'Turn on pinyin in examples';
         }
     });
-    exploreTab.addEventListener('click', function () {
-        exploreContainer.removeAttribute('style');
-        studyContainer.style.display = 'none';
-        //TODO could likely do all of this with CSS
-        exploreTab.classList.add('active');
-        studyTab$1.classList.remove('active');
-        activeTab = tabs.explore;
-        // the user's choice of word hasn't changed, but they've switched modes
-        persistUIState();
-    });
-
-    studyTab$1.addEventListener('click', function () {
-        exploreContainer.style.display = 'none';
-        studyContainer.removeAttribute('style');
-        studyTab$1.classList.add('active');
-        exploreTab.classList.remove('active');
-        activeTab = tabs.study;
-        persistUIState();
-    });
 
     recommendationsDifficultySelector.addEventListener('change', function () {
         let val = recommendationsDifficultySelector.value;
         preferencesChanged(val);
-    });
-
-    menuButton.addEventListener('click', function () {
-        mainContainer$1.style.display = 'none';
-        menuContainer.removeAttribute('style');
-    });
-    menuExitButton.addEventListener('click', function () {
-        menuContainer.style.display = 'none';
-        mainContainer$1.removeAttribute('style');
     });
 
     let switchGraph = function () {
@@ -1101,8 +1202,7 @@
 
     graphSelector.addEventListener('change', switchGraph);
 
-    //TODO probably doesn't belong here and should instead be indirected (could also just export from base)
-    const studyTab = document.getElementById('show-study');
+    const studyContainer = document.getElementById('study-container');
 
     const exportStudyListButton = document.getElementById('exportStudyListButton');
     const cardQuestionContainer = document.getElementById('card-question-container');
@@ -1128,6 +1228,9 @@
     const clozePlaceholderCharacter = "_";
     const clozePlaceholder = clozePlaceholderCharacter + clozePlaceholderCharacter + clozePlaceholderCharacter;
 
+    const explanationContainer = document.getElementById('study-explain-container');
+    const explanationHideButton = document.getElementById('hide-study-explanation');
+
     let currentKey = null;
 
     // TODO: must match cardTypes, which sucks
@@ -1140,7 +1243,7 @@
             for (let i = 0; i < aList.length; i++) {
                 aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
             }
-            cardQuestionContainer.style.flexDirection = 'row';
+            cardQuestionContainer.classList.add('target');
             addTextToSpeech(cardQuestionContainer, question, aList);
             cardAnswerElement.textContent = currentCard.en;
 
@@ -1155,6 +1258,9 @@
                 taskDescriptionElement.innerText = `Can you translate the text below to Chinese?`;
             }
             cardAnswerElement.innerHTML = '';
+            cardQuestionContainer.classList.remove('target');
+            // TODO(refactor): target causes side effects
+            // cardAnswerContainer.classList.add('target');
             let aList = makeSentenceNavigable(answer, cardAnswerElement);
             for (let i = 0; i < aList.length; i++) {
                 aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
@@ -1174,6 +1280,9 @@
             }
             let clozeContainer = document.createElement('p');
             clozeContainer.className = 'cloze-container';
+            //TODO(refactor): target shouldn't make this thing into a flex element the way it does now
+            cardQuestionContainer.classList.remove('target');
+            // cardAnswerContainer.classList.add('target');
             let aList = makeSentenceNavigable(clozedSentence, clozeContainer);
             for (let i = 0; i < aList.length; i++) {
                 // TODO yuck
@@ -1184,7 +1293,6 @@
                 }
                 aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
             }
-            cardQuestionContainer.style.flexDirection = 'column';
             cardQuestionContainer.appendChild(clozeContainer);
             let clozeAnswerContainer = document.createElement('p');
             clozeAnswerContainer.className = 'cloze-container';
@@ -1242,17 +1350,17 @@
         cardsDueCounter.textContent = counter;
         cardQuestionContainer.innerHTML = '';
         if (counter === 0) {
-            taskCompleteElement.style.display = 'inline';
+            taskCompleteElement.removeAttribute('style');
             taskDescriptionElement.style.display = 'none';
             showAnswerButton.style.display = 'none';
             return;
         }
 
         taskCompleteElement.style.display = 'none';
-        showAnswerButton.style.display = 'block';
+        showAnswerButton.removeAttribute('style');
         // Old cards have no type property, but all are recognition
         cardRenderers[currentCard.type || cardTypes.RECOGNITION](currentCard);
-        taskDescriptionElement.style.display = 'inline';
+        taskDescriptionElement.removeAttribute('style');
 
         if (currentCard.wrongCount + currentCard.rightCount != 0) {
             cardOldMessageElement.removeAttribute('style');
@@ -1270,7 +1378,7 @@
     let initialize$1 = function () {
         showAnswerButton.addEventListener('click', function () {
             showAnswerButton.innerText = "Answer:";
-            cardAnswerContainer.style.display = 'block';
+            cardAnswerContainer.removeAttribute('style');
             showAnswerButton.scrollIntoView();
         });
         wrongButton.addEventListener('click', function () {
@@ -1333,17 +1441,21 @@
             }
             setupStudyMode();
         });
-        studyTab.addEventListener('click', function () {
+        studyContainer.addEventListener('shown', function () {
             setupStudyMode();
+        });
+        explanationHideButton.addEventListener('click', function () {
+            explanationContainer.addEventListener('animationend', function () {
+                explanationContainer.style.display = 'none';
+                explanationContainer.classList.remove('fade');
+            });
+            explanationContainer.classList.add('fade');
         });
     };
 
-    //TODO move these to a central spot
-    const mainContainer = document.getElementById('main-container');
     const statsContainer = document.getElementById('stats-container');
 
-    const statsShow = document.getElementById('stats-show');
-    const statsExitButton = document.getElementById('exit-button');
+    const statsShow = document.getElementById('stats-link');
 
     const hourlyGraphDetail = document.getElementById('hourly-graph-detail');
     const addedCalendarDetail = document.getElementById('added-calendar-detail');
@@ -1352,6 +1464,7 @@
     const visitedGraphDetail = document.getElementById('visited-graph-detail');
 
     let lastLevelUpdatePrefix = '';
+    let shown = false;
 
     function sameDay(d1, d2) {
         return d1.getUTCFullYear() == d2.getUTCFullYear() &&
@@ -1832,17 +1945,18 @@
                 lastLevelUpdatePrefix = activeGraph.prefix;
                 updateTotalsByLevel();
             }
-            mainContainer.style.display = 'none';
-            statsContainer.removeAttribute('style');
+            switchToState(stateKeys.stats);
+            shown = true;
             createVisitedGraphs(getVisited(), activeGraph.legend);
             createCardGraphs(getStudyList(), activeGraph.legend);
             createStudyResultGraphs(getStudyResults(), activeGraph.legend);
         });
 
-        statsExitButton.addEventListener('click', function () {
-            statsContainer.style.display = 'none';
-            mainContainer.removeAttribute('style');
-            //TODO this is silly
+        statsContainer.addEventListener('hidden', function () {
+            //TODO(refactor) this is all silly
+            if (!shown) {
+                return;
+            }
             studyGraphDetail.innerText = '';
             addedCalendarDetail.innerText = '';
             visitedGraphDetail.innerText = '';
@@ -1864,6 +1978,7 @@
                 .then(data => window.definitions = data)
         ]
     ).then(_ => {
+        initialize$5();
         initialize$1();
         initialize$2();
         initialize();

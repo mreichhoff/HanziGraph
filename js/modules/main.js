@@ -1,3 +1,4 @@
+import { initialize as menuOrchestratorInit } from "./menu-orchestrator.js"
 import { initialize as baseInit } from "./base.js";
 import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
@@ -17,6 +18,7 @@ Promise.all(
             .then(data => window.definitions = data)
     ]
 ).then(_ => {
+    menuOrchestratorInit();
     studyModeInit();
     baseInit();
     statsInit();

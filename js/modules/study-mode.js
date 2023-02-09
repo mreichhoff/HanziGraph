@@ -1,8 +1,7 @@
 import { makeSentenceNavigable, addTextToSpeech } from "./base.js";
 import { dataTypes, registerCallback, saveStudyList, getStudyList, findOtherCards, removeFromStudyList, recordEvent, studyResult, updateCard, cardTypes } from "./data-layer.js";
 
-//TODO probably doesn't belong here and should instead be indirected (could also just export from base)
-const studyTab = document.getElementById('show-study');
+const studyContainer = document.getElementById('study-container');
 
 const exportStudyListButton = document.getElementById('exportStudyListButton');
 const cardQuestionContainer = document.getElementById('card-question-container');
@@ -28,6 +27,9 @@ const cardPercentageElement = document.getElementById('card-percentage');
 const clozePlaceholderCharacter = "_";
 const clozePlaceholder = clozePlaceholderCharacter + clozePlaceholderCharacter + clozePlaceholderCharacter;
 
+const explanationContainer = document.getElementById('study-explain-container');
+const explanationHideButton = document.getElementById('hide-study-explanation');
+
 let currentKey = null;
 
 // TODO: must match cardTypes, which sucks
@@ -40,7 +42,7 @@ const cardRenderers = {
         for (let i = 0; i < aList.length; i++) {
             aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
         }
-        cardQuestionContainer.style.flexDirection = 'row';
+        cardQuestionContainer.classList.add('target');
         addTextToSpeech(cardQuestionContainer, question, aList);
         cardAnswerElement.textContent = currentCard.en;
 
@@ -55,6 +57,9 @@ const cardRenderers = {
             taskDescriptionElement.innerText = `Can you translate the text below to Chinese?`;
         }
         cardAnswerElement.innerHTML = '';
+        cardQuestionContainer.classList.remove('target');
+        // TODO(refactor): target causes side effects
+        // cardAnswerContainer.classList.add('target');
         let aList = makeSentenceNavigable(answer, cardAnswerElement);
         for (let i = 0; i < aList.length; i++) {
             aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
@@ -74,6 +79,9 @@ const cardRenderers = {
         }
         let clozeContainer = document.createElement('p');
         clozeContainer.className = 'cloze-container';
+        //TODO(refactor): target shouldn't make this thing into a flex element the way it does now
+        cardQuestionContainer.classList.remove('target');
+        // cardAnswerContainer.classList.add('target');
         let aList = makeSentenceNavigable(clozedSentence, clozeContainer);
         for (let i = 0; i < aList.length; i++) {
             // TODO yuck
@@ -84,7 +92,6 @@ const cardRenderers = {
             }
             aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
         }
-        cardQuestionContainer.style.flexDirection = 'column';
         cardQuestionContainer.appendChild(clozeContainer);
         let clozeAnswerContainer = document.createElement('p');
         clozeAnswerContainer.className = 'cloze-container';
@@ -142,17 +149,17 @@ let setupStudyMode = function () {
     cardsDueCounter.textContent = counter;
     cardQuestionContainer.innerHTML = '';
     if (counter === 0) {
-        taskCompleteElement.style.display = 'inline';
+        taskCompleteElement.removeAttribute('style');
         taskDescriptionElement.style.display = 'none';
         showAnswerButton.style.display = 'none';
         return;
     }
 
     taskCompleteElement.style.display = 'none';
-    showAnswerButton.style.display = 'block';
+    showAnswerButton.removeAttribute('style');
     // Old cards have no type property, but all are recognition
     cardRenderers[currentCard.type || cardTypes.RECOGNITION](currentCard);
-    taskDescriptionElement.style.display = 'inline';
+    taskDescriptionElement.removeAttribute('style');
 
     if (currentCard.wrongCount + currentCard.rightCount != 0) {
         cardOldMessageElement.removeAttribute('style');
@@ -170,7 +177,7 @@ let setupStudyMode = function () {
 let initialize = function () {
     showAnswerButton.addEventListener('click', function () {
         showAnswerButton.innerText = "Answer:";
-        cardAnswerContainer.style.display = 'block';
+        cardAnswerContainer.removeAttribute('style');
         showAnswerButton.scrollIntoView();
     });
     wrongButton.addEventListener('click', function () {
@@ -233,9 +240,16 @@ let initialize = function () {
         }
         setupStudyMode();
     });
-    studyTab.addEventListener('click', function () {
+    studyContainer.addEventListener('shown', function () {
         setupStudyMode();
     });
+    explanationHideButton.addEventListener('click', function () {
+        explanationContainer.addEventListener('animationend', function () {
+            explanationContainer.style.display = 'none';
+            explanationContainer.classList.remove('fade');
+        });
+        explanationContainer.classList.add('fade');
+    })
 };
 
 export { initialize }

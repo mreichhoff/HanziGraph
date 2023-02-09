@@ -1,12 +1,10 @@
 import { getVisited, getStudyResults, getStudyList } from "./data-layer.js";
 import { getActiveGraph } from "./base.js";
+import { switchToState, stateKeys } from "./menu-orchestrator.js";
 
-//TODO move these to a central spot
-const mainContainer = document.getElementById('main-container');
 const statsContainer = document.getElementById('stats-container');
 
-const statsShow = document.getElementById('stats-show');
-const statsExitButton = document.getElementById('exit-button');
+const statsShow = document.getElementById('stats-link');
 
 const hourlyGraphDetail = document.getElementById('hourly-graph-detail');
 const addedCalendarDetail = document.getElementById('added-calendar-detail');
@@ -15,6 +13,7 @@ const studyGraphDetail = document.getElementById('studied-graph-detail');
 const visitedGraphDetail = document.getElementById('visited-graph-detail');
 
 let lastLevelUpdatePrefix = '';
+let shown = false;
 
 function sameDay(d1, d2) {
     return d1.getUTCFullYear() == d2.getUTCFullYear() &&
@@ -495,17 +494,18 @@ let initialize = function () {
             lastLevelUpdatePrefix = activeGraph.prefix;
             updateTotalsByLevel();
         }
-        mainContainer.style.display = 'none';
-        statsContainer.removeAttribute('style');
+        switchToState(stateKeys.stats);
+        shown = true;
         createVisitedGraphs(getVisited(), activeGraph.legend);
         createCardGraphs(getStudyList(), activeGraph.legend);
         createStudyResultGraphs(getStudyResults(), activeGraph.legend);
     });
 
-    statsExitButton.addEventListener('click', function () {
-        statsContainer.style.display = 'none';
-        mainContainer.removeAttribute('style');
-        //TODO this is silly
+    statsContainer.addEventListener('hidden', function () {
+        //TODO(refactor) this is all silly
+        if (!shown) {
+            return;
+        }
         studyGraphDetail.innerText = '';
         addedCalendarDetail.innerText = '';
         visitedGraphDetail.innerText = '';
