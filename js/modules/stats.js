@@ -1,6 +1,6 @@
 import { getVisited, getStudyResults, getStudyList } from "./data-layer.js";
 import { getActiveGraph } from "./base.js";
-import { switchToState, stateKeys } from "./menu-orchestrator.js";
+import { switchToState, stateKeys } from "./ui-orchestrator.js";
 
 const statsContainer = document.getElementById('stats-container');
 

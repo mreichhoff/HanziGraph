@@ -40,6 +40,7 @@
     --legend-height: 50px;
     --legend-circle-height: 20px;
     --legend-circle-margin: 0.5px 4px;
+    --level-marker-margin: 0px auto;
 }
 
 html {
@@ -126,7 +127,7 @@ ul {
 
 .output-container {
     height: var(--output-container-height);
-    /* TODO: should probably be grid */
+    /* TODO: should probably be grid, but that interacts strangely with cytoscape resizing */
     display: flex;
     max-width: 1300px;
     margin: 0 auto;
@@ -224,7 +225,7 @@ ul {
 .level-marker {
     height: 5px;
     width: 70%;
-    margin: 0px auto;
+    margin: var(--level-marker-margin);
 }
 
 #show-pinyin:checked~* .transcription {
@@ -694,8 +695,11 @@ p.related-card {
         --legend-height: 38px;
         --legend-circle-margin: 0 0.5px;
         --legend-circle-height: 14px;
+        --level-marker-margin: 5px auto 0 auto;
     }
 
+    /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
+    /* ideally only variables */
     .output-container {
         display: block;
     }

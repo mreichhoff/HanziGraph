@@ -136,4 +136,8 @@ let updateColorScheme = function () {
     cy.style(getStylesheet());
 };
 
+// TODO(refactor): this file should own the entire graph. It should just be given what to render
+// and set up its own event handlers and everything else instead of having base.js listen to events
+// and delegate, though there may be some need to have other files be aware (e.g., when switching graphs between
+// traditional and simplified)
 export { initializeGraph, addToGraph, isInGraph, updateColorScheme }

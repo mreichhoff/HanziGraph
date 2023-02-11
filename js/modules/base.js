@@ -2,7 +2,7 @@ import { faqTypes, showFaq } from "./faq.js";
 import { updateVisited, getVisited, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
 import { addToGraph, initializeGraph, updateColorScheme } from "./graph.js";
 import { graphChanged, preferencesChanged } from "./recommendations.js";
-import { switchToState, stateKeys } from "./menu-orchestrator.js";
+import { switchToState, stateKeys } from "./ui-orchestrator.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point

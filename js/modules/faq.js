@@ -1,4 +1,4 @@
-import { switchToState, stateKeys } from "./menu-orchestrator";
+import { switchToState, stateKeys } from "./ui-orchestrator";
 
 const faqContainer = document.getElementById('faq-container');
 const faqStudyMode = document.getElementById('faq-study-mode');
