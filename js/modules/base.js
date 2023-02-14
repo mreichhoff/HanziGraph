@@ -1,19 +1,20 @@
 import { faqTypes, showFaq } from "./faq.js";
 import { updateVisited, getVisited, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
-import { addToGraph, initializeGraph, updateColorScheme } from "./graph.js";
+import { addToGraph, initializeGraph, inCurrentPath } from "./graph.js";
 import { graphChanged, preferencesChanged } from "./recommendations.js";
 import { switchToState, stateKeys } from "./ui-orchestrator.js";
+import { hanziBox } from "./dom.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
 let maxExamples = 5;
 let currentExamples = {};
-let currentHanzi = [];
 let currentWord = '';
 let tabs = {
     explore: 'explore',
     study: 'study'
 };
+
 let wordSet = new Set();
 let activeTab = tabs.explore;
 
@@ -44,14 +45,9 @@ let getActiveGraph = function () {
 
 const graphContainer = document.getElementById('graph-container');
 
-const mainHeader = document.getElementById('main-header');
-
-//study items...these may not belong in this file
-
 //explore tab items
 const examplesList = document.getElementById('examples');
 //explore tab navigation controls
-const hanziBox = document.getElementById('hanzi-box');
 const hanziSearchForm = document.getElementById('hanzi-choose');
 const notFoundElement = document.getElementById('not-found-message');
 //recommendations
@@ -66,12 +62,14 @@ const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 
 let getZhTts = function () {
     //use the first-encountered zh-CN voice for now
-    if (!'speechSynthesis' in window) {
+    if (!('speechSynthesis' in window)) {
         return null;
     }
     return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
 };
+
 let zhTts = getZhTts();
+
 //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
 //generally, this thing is weird, so uh...
 //ideally we'd not do this or have any global variable
@@ -306,6 +304,7 @@ let setupExamples = function (words) {
     currentExamples = {};
     // if we're showing examples, never show the walkthrough.
     walkThrough.style.display = 'none';
+    notFoundElement.style.display = 'none';
     //TODO this mixes markup modification and example finding
     //refactor needed
     while (examplesList.firstChild) {
@@ -346,36 +345,8 @@ let getCardFromDefinitions = function (text, definitionList) {
     return result;
 };
 
-let nodeTapHandler = function (evt) {
-    let id = evt.target.id();
-    let maxLevel = 6;
-    //not needed if currentHanzi contains id, which would mean the nodes have already been added
-    //includes O(N) but currentHanzi almost always < 10 elements
-    if (currentHanzi && !currentHanzi.includes(id)) {
-        addToExistingGraph(id, maxLevel);
-    }
-    hanziBox.value = id;
-    setupExamples([id]);
-    persistState();
-    switchToState(stateKeys.main);
-    mainHeader.scrollIntoView();
-    updateVisited([id]);
-    notFoundElement.style.display = 'none';
-};
-let edgeTapHandler = function (evt) {
-    let words = evt.target.data('words');
-    hanziBox.value = words[0];
-    setupExamples(words);
-    persistState();
-    switchToState(stateKeys.main);
-    mainHeader.scrollIntoView();
-    updateVisited([evt.target.source().id(), evt.target.target().id()]);
-    notFoundElement.style.display = 'none';
-};
 let addToExistingGraph = function (character, maxLevel) {
     addToGraph(character, maxLevel);
-    //currentHanzi must be set up before this call
-    currentHanzi.push(character);
 };
 let updateGraph = function (value, maxLevel, skipState) {
     document.getElementById('graph').remove();
@@ -385,8 +356,7 @@ let updateGraph = function (value, maxLevel, skipState) {
     graphContainer.insertBefore(nextGraph, legendContainer);
 
     if (value && hanzi[value]) {
-        initializeGraph(value, maxLevel, nextGraph, nodeTapHandler, edgeTapHandler);
-        currentHanzi = [value];
+        initializeGraph(value, maxLevel, nextGraph);
     }
 };
 let getWordSet = function (graph) {
@@ -438,7 +408,13 @@ let initialize = function () {
             switchToState(states.study);
         }
     }
-    matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
+    document.addEventListener('explore-update', function (event) {
+        hanziBox.value = event.detail[0];
+        setupExamples(event.detail);
+        persistState();
+        switchToState(stateKeys.main);
+        updateVisited(event.detail);
+    });
 };
 
 let makeSentenceNavigable = function (text, container, noExampleChange) {
@@ -455,7 +431,8 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
             }
             a.addEventListener('click', function () {
                 if (hanzi[character]) {
-                    if (currentHanzi && !currentHanzi.includes(character)) {
+                    // TODO(refactor): can we push the inCurrentPath bit into the graph module?
+                    if (inCurrentPath(character)) {
                         updateGraph(character, 6);
                     }
                     //enable seamless switching, but don't update if we're already showing examples for character
@@ -585,4 +562,4 @@ let switchGraph = function () {
 
 graphSelector.addEventListener('change', switchGraph);
 
-export { initialize, makeSentenceNavigable, addTextToSpeech, getActiveGraph };
+export { initialize, setupExamples, makeSentenceNavigable, addTextToSpeech, getActiveGraph };

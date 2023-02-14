@@ -43,10 +43,12 @@ let getVisited = function () {
 //because in those cases no examples are shown
 let updateVisited = function (nodes) {
     for (let i = 0; i < nodes.length; i++) {
-        if (!visited[nodes[i]]) {
-            visited[nodes[i]] = 0;
+        for (let j = 0; j < nodes[i].length; j++) {
+            if (!visited[nodes[i][j]]) {
+                visited[nodes[i][j]] = 0;
+            }
+            visited[nodes[i][j]]++;
         }
-        visited[nodes[i]]++;
     }
     localStorage.setItem('visited', JSON.stringify(visited));
     callbacks[dataTypes.visited].forEach(x => x(visited));

@@ -229,10 +229,12 @@
     //because in those cases no examples are shown
     let updateVisited = function (nodes) {
         for (let i = 0; i < nodes.length; i++) {
-            if (!visited[nodes[i]]) {
-                visited[nodes[i]] = 0;
+            for (let j = 0; j < nodes[i].length; j++) {
+                if (!visited[nodes[i][j]]) {
+                    visited[nodes[i][j]] = 0;
+                }
+                visited[nodes[i][j]]++;
             }
-            visited[nodes[i]]++;
         }
         localStorage.setItem('visited', JSON.stringify(visited));
         callbacks[dataTypes.visited].forEach(x => x(visited));
@@ -413,8 +415,9 @@
     };
 
     let cy = null;
+    let currentHanzi = [];
 
-    let dfs = function (start, elements, maxDepth, visited, maxLevel) {
+    function dfs(start, elements, maxDepth, visited, maxLevel) {
         if (maxDepth < 0) {
             return;
         }
@@ -444,9 +447,9 @@
                 dfs(key, elements, maxDepth - 1, visited, maxLevel);
             }
         }
-    };
+    }
     //this file meant to hold all cytoscape-related code
-    let levelColor = function (element) {
+    function levelColor(element) {
         let level = element.data('level');
         switch (level) {
             case 6:
@@ -462,9 +465,9 @@
             case 1:
                 return '#ff635f';
         }
-    };
+    }
 
-    let layout = function (root, numNodes) {
+    function layout(root, numNodes) {
         //very scientifically chosen 95 (不 was slow to load)
         //the grid layout appears to be far faster than cose
         //keeping root around in case we want to switch back to bfs
@@ -477,10 +480,10 @@
             name: 'cose',
             animate: false
         };
-    };
-    let getStylesheet = function () {
+    }
+    function getStylesheet() {
         //TODO make this injectable
-        let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+        let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         return [
             {
                 selector: 'node',
@@ -500,17 +503,30 @@
                     'target-arrow-shape': 'none',
                     'curve-style': 'straight',
                     'label': 'data(displayWord)',
-                    'color': (_ => prefersLight ? 'black' : '#eee'),
+                    'color': (_ => prefersDark ? '#eee' : '#000'),
                     'font-size': '10px',
-                    'text-background-color': (_ => prefersLight ? 'white' : 'black'),
+                    'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
                     'text-background-opacity': '1',
                     'text-background-shape': 'round-rectangle',
                     'text-events': 'yes'
                 }
             }
         ];
-    };
-    let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
+    }
+    function nodeTapHandler(evt) {
+        let id = evt.target.id();
+        let maxLevel = 6;
+        //not needed if currentHanzi contains id, which would mean the nodes have already been added
+        //includes O(N) but currentHanzi almost always < 10 elements
+        if (currentHanzi && !currentHanzi.includes(id)) {
+            addToGraph(id, maxLevel);
+        }
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: [evt.target.id()] }));
+    }
+    function edgeTapHandler(evt) {
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: evt.target.data('words') }));
+    }
+    function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
         cy = cytoscape({
             container: graphContainer,
             elements: elements,
@@ -521,14 +537,15 @@
         });
         cy.on('tap', 'node', nodeEventHandler);
         cy.on('tap', 'edge', edgeEventHandler);
-    };
-    let initializeGraph = function (value, maxLevel, containerElement, nodeEventHandler, edgeEventHandler) {
+    }
+    function initializeGraph(value, maxLevel, containerElement) {
         let result = { 'nodes': [], 'edges': [] };
         let maxDepth = 1;
         dfs(value, result, maxDepth, {}, maxLevel);
-        setupCytoscape(value, result, containerElement, nodeEventHandler, edgeEventHandler);
-    };
-    let addToGraph = function (character, maxLevel) {
+        setupCytoscape(value, result, containerElement, nodeTapHandler, edgeTapHandler);
+        currentHanzi = [value];
+    }
+    function addToGraph(character, maxLevel) {
         let result = { 'nodes': [], 'edges': [] };
         let maxDepth = 1;
         dfs(character, result, maxDepth, {}, maxLevel);
@@ -539,20 +556,29 @@
             //if we've actually added to the graph, re-render it; else just let it be
             cy.layout(layout(character, cy.nodes().length)).run();
         }
-    };
-    let isInGraph = function (node) {
+        currentHanzi.push(character);
+    }
+    function isInGraph(node) {
         return cy && cy.getElementById(node).length;
-    };
-    let updateColorScheme = function () {
+    }
+    function updateColorScheme() {
         if (!cy) {
             return;
         }
         cy.style(getStylesheet());
-    };
+    }
+
+    function inCurrentPath(character) {
+        return (currentHanzi && !currentHanzi.includes(character));
+    }
+
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
+
+    // TODO(refactor): there probably shouldn't be shared elements, but going this route for now
+    const hanziBox = document.getElementById('hanzi-box');
 
     //TODO: like in other files, remove these dups
     const recommendationsContainer = document.getElementById('recommendations-container');
-    const hanziBox$1 = document.getElementById('hanzi-box');
     let recommendationsWorker = null;
 
     let initialize$3 = function () {
@@ -593,7 +619,7 @@
                     curr.className = 'recommendation';
                     curr.addEventListener('click', function (event) {
                         //can I do this?
-                        hanziBox$1.value = event.target.innerText;
+                        hanziBox.value = event.target.innerText;
                         document.querySelector('#hanzi-choose input[type=submit]').click();
                         event.target.style.display = 'none';
                         let otherRecs = document.querySelectorAll('.recommendation');
@@ -652,12 +678,12 @@
     //refactor badly needed...hacks on top of hacks at this point
     let maxExamples = 5;
     let currentExamples = {};
-    let currentHanzi = [];
     let currentWord = '';
     let tabs = {
         explore: 'explore',
         study: 'study'
     };
+
     let wordSet = new Set();
     let activeTab = tabs.explore;
 
@@ -688,14 +714,13 @@
 
     const graphContainer = document.getElementById('graph-container');
 
-    const mainHeader = document.getElementById('main-header');
+    document.getElementById('main-header');
 
     //study items...these may not belong in this file
 
     //explore tab items
     const examplesList = document.getElementById('examples');
     //explore tab navigation controls
-    const hanziBox = document.getElementById('hanzi-box');
     const hanziSearchForm = document.getElementById('hanzi-choose');
     const notFoundElement = document.getElementById('not-found-message');
     //recommendations
@@ -710,12 +735,14 @@
 
     let getZhTts = function () {
         //use the first-encountered zh-CN voice for now
-        if (!'speechSynthesis' in window) {
+        if (!('speechSynthesis' in window)) {
             return null;
         }
         return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
     };
+
     let zhTts = getZhTts();
+
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
     //generally, this thing is weird, so uh...
     //ideally we'd not do this or have any global variable
@@ -929,6 +956,7 @@
         currentExamples = {};
         // if we're showing examples, never show the walkthrough.
         walkThrough.style.display = 'none';
+        notFoundElement.style.display = 'none';
         //TODO this mixes markup modification and example finding
         //refactor needed
         while (examplesList.firstChild) {
@@ -969,34 +997,8 @@
         return result;
     };
 
-    let nodeTapHandler = function (evt) {
-        let id = evt.target.id();
-        let maxLevel = 6;
-        //not needed if currentHanzi contains id, which would mean the nodes have already been added
-        //includes O(N) but currentHanzi almost always < 10 elements
-        if (currentHanzi && !currentHanzi.includes(id)) {
-            addToExistingGraph(id, maxLevel);
-        }
-        hanziBox.value = id;
-        setupExamples([id]);
-        switchToState(stateKeys.main);
-        mainHeader.scrollIntoView();
-        updateVisited([id]);
-        notFoundElement.style.display = 'none';
-    };
-    let edgeTapHandler = function (evt) {
-        let words = evt.target.data('words');
-        hanziBox.value = words[0];
-        setupExamples(words);
-        switchToState(stateKeys.main);
-        mainHeader.scrollIntoView();
-        updateVisited([evt.target.source().id(), evt.target.target().id()]);
-        notFoundElement.style.display = 'none';
-    };
     let addToExistingGraph = function (character, maxLevel) {
         addToGraph(character, maxLevel);
-        //currentHanzi must be set up before this call
-        currentHanzi.push(character);
     };
     let updateGraph = function (value, maxLevel, skipState) {
         document.getElementById('graph').remove();
@@ -1006,8 +1008,7 @@
         graphContainer.insertBefore(nextGraph, legendContainer);
 
         if (value && hanzi[value]) {
-            initializeGraph(value, maxLevel, nextGraph, nodeTapHandler, edgeTapHandler);
-            currentHanzi = [value];
+            initializeGraph(value, maxLevel, nextGraph);
         }
     };
     let getWordSet = function (graph) {
@@ -1059,7 +1060,12 @@
                 switchToState(states.study);
             }
         }
-        matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
+        document.addEventListener('explore-update', function (event) {
+            hanziBox.value = event.detail[0];
+            setupExamples(event.detail);
+            switchToState(stateKeys.main);
+            updateVisited(event.detail);
+        });
     };
 
     let makeSentenceNavigable = function (text, container, noExampleChange) {
@@ -1076,7 +1082,8 @@
                 }
                 a.addEventListener('click', function () {
                     if (hanzi[character]) {
-                        if (currentHanzi && !currentHanzi.includes(character)) {
+                        // TODO(refactor): can we push the inCurrentPath bit into the graph module?
+                        if (inCurrentPath(character)) {
                             updateGraph(character, 6);
                         }
                         //enable seamless switching, but don't update if we're already showing examples for character

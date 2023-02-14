@@ -1,6 +1,7 @@
 let cy = null;
+let currentHanzi = [];
 
-let dfs = function (start, elements, maxDepth, visited, maxLevel) {
+function dfs(start, elements, maxDepth, visited, maxLevel) {
     if (maxDepth < 0) {
         return;
     }
@@ -30,9 +31,9 @@ let dfs = function (start, elements, maxDepth, visited, maxLevel) {
             dfs(key, elements, maxDepth - 1, visited, maxLevel);
         }
     }
-};
+}
 //this file meant to hold all cytoscape-related code
-let levelColor = function (element) {
+function levelColor(element) {
     let level = element.data('level');
     switch (level) {
         case 6:
@@ -48,9 +49,9 @@ let levelColor = function (element) {
         case 1:
             return '#ff635f';
     }
-};
+}
 
-let layout = function (root, numNodes) {
+function layout(root, numNodes) {
     //very scientifically chosen 95 (不 was slow to load)
     //the grid layout appears to be far faster than cose
     //keeping root around in case we want to switch back to bfs
@@ -63,10 +64,10 @@ let layout = function (root, numNodes) {
         name: 'cose',
         animate: false
     };
-};
-let getStylesheet = function () {
+}
+function getStylesheet() {
     //TODO make this injectable
-    let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+    let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     return [
         {
             selector: 'node',
@@ -86,9 +87,9 @@ let getStylesheet = function () {
                 'target-arrow-shape': 'none',
                 'curve-style': 'straight',
                 'label': 'data(displayWord)',
-                'color': (_ => prefersLight ? 'black' : '#eee'),
+                'color': (_ => prefersDark ? '#eee' : '#000'),
                 'font-size': '10px',
-                'text-background-color': (_ => prefersLight ? 'white' : 'black'),
+                'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
                 'text-background-opacity': '1',
                 'text-background-shape': 'round-rectangle',
                 'text-events': 'yes'
@@ -96,7 +97,20 @@ let getStylesheet = function () {
         }
     ];
 }
-let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
+function nodeTapHandler(evt) {
+    let id = evt.target.id();
+    let maxLevel = 6;
+    //not needed if currentHanzi contains id, which would mean the nodes have already been added
+    //includes O(N) but currentHanzi almost always < 10 elements
+    if (currentHanzi && !currentHanzi.includes(id)) {
+        addToGraph(id, maxLevel);
+    }
+    document.dispatchEvent(new CustomEvent('explore-update', { detail: [evt.target.id()] }));
+}
+function edgeTapHandler(evt) {
+    document.dispatchEvent(new CustomEvent('explore-update', { detail: evt.target.data('words') }));
+}
+function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
     cy = cytoscape({
         container: graphContainer,
         elements: elements,
@@ -107,14 +121,15 @@ let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler,
     });
     cy.on('tap', 'node', nodeEventHandler);
     cy.on('tap', 'edge', edgeEventHandler);
-};
-let initializeGraph = function (value, maxLevel, containerElement, nodeEventHandler, edgeEventHandler) {
+}
+function initializeGraph(value, maxLevel, containerElement) {
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
     dfs(value, result, maxDepth, {}, maxLevel);
-    setupCytoscape(value, result, containerElement, nodeEventHandler, edgeEventHandler);
-};
-let addToGraph = function (character, maxLevel) {
+    setupCytoscape(value, result, containerElement, nodeTapHandler, edgeTapHandler);
+    currentHanzi = [value];
+}
+function addToGraph(character, maxLevel) {
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
     dfs(character, result, maxDepth, {}, maxLevel);
@@ -125,19 +140,26 @@ let addToGraph = function (character, maxLevel) {
         //if we've actually added to the graph, re-render it; else just let it be
         cy.layout(layout(character, cy.nodes().length)).run();
     }
-};
-let isInGraph = function (node) {
+    currentHanzi.push(character);
+}
+function isInGraph(node) {
     return cy && cy.getElementById(node).length;
-};
-let updateColorScheme = function () {
+}
+function updateColorScheme() {
     if (!cy) {
         return;
     }
     cy.style(getStylesheet());
-};
+}
+
+function inCurrentPath(character) {
+    return (currentHanzi && !currentHanzi.includes(character));
+}
+
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
 
 // TODO(refactor): this file should own the entire graph. It should just be given what to render
 // and set up its own event handlers and everything else instead of having base.js listen to events
 // and delegate, though there may be some need to have other files be aware (e.g., when switching graphs between
 // traditional and simplified)
-export { initializeGraph, addToGraph, isInGraph, updateColorScheme }
+export { initializeGraph, inCurrentPath, addToGraph, isInGraph, updateColorScheme }

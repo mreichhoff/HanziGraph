@@ -1,10 +1,10 @@
 import { getVisited, registerCallback, dataTypes } from "./data-layer.js";
 import { isInGraph } from "./graph.js";
 import { showFaq, faqTypes } from "./faq.js";
+import { hanziBox } from "./dom.js";
 
 //TODO: like in other files, remove these dups
 const recommendationsContainer = document.getElementById('recommendations-container');
-const hanziBox = document.getElementById('hanzi-box');
 let recommendationsWorker = null;
 
 let initialize = function () {
