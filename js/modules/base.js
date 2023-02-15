@@ -1,6 +1,5 @@
 import { faqTypes, showFaq } from "./faq.js";
 import { updateVisited, getVisited, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
-import { addToGraph, initializeGraph, inCurrentPath } from "./graph.js";
 import { graphChanged, preferencesChanged } from "./recommendations.js";
 import { switchToState, stateKeys } from "./ui-orchestrator.js";
 import { hanziBox } from "./dom.js";
@@ -21,7 +20,6 @@ let activeTab = tabs.explore;
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
 let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
 let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
-const legendContainer = document.getElementById('legend');
 
 let legendElements = document.querySelectorAll('.level-label');
 let graphOptions = {
@@ -42,8 +40,6 @@ let activeGraph = graphOptions.simplified;
 let getActiveGraph = function () {
     return activeGraph;
 }
-
-const graphContainer = document.getElementById('graph-container');
 
 //explore tab items
 const examplesList = document.getElementById('examples');
@@ -158,7 +154,7 @@ function parseUrl(path) {
 function loadState(state) {
     const term = decodeURIComponent(state.word);
     hanziBox.value = term;
-    search(term, 6, true);
+    search(term, true);
 }
 
 // window.onpopstate = (event) => {
@@ -345,20 +341,6 @@ let getCardFromDefinitions = function (text, definitionList) {
     return result;
 };
 
-let addToExistingGraph = function (character, maxLevel) {
-    addToGraph(character, maxLevel);
-};
-let updateGraph = function (value, maxLevel, skipState) {
-    document.getElementById('graph').remove();
-    let nextGraph = document.createElement("div");
-    nextGraph.id = 'graph';
-    //TODO: makes assumption about markup order
-    graphContainer.insertBefore(nextGraph, legendContainer);
-
-    if (value && hanzi[value]) {
-        initializeGraph(value, maxLevel, nextGraph);
-    }
-};
 let getWordSet = function (graph) {
     //yeah, probably a better way...
     let wordSet = new Set();
@@ -390,7 +372,8 @@ let initialize = function () {
         //add a default graph on page load to illustrate the concept
         let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
         walkThrough.removeAttribute('style');
-        updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], 6);
+        document.dispatchEvent(new CustomEvent('graph-update',
+            { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
     }
     let oldState = JSON.parse(localStorage.getItem('state'));
     if (oldState) {
@@ -432,8 +415,8 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
             a.addEventListener('click', function () {
                 if (hanzi[character]) {
                     // TODO(refactor): can we push the inCurrentPath bit into the graph module?
-                    if (inCurrentPath(character)) {
-                        updateGraph(character, 6);
+                    if (character in hanzi) {
+                        document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
                     }
                     //enable seamless switching, but don't update if we're already showing examples for character
                     if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
@@ -451,44 +434,6 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
     return anchorList;
 };
 
-let addEdges = function (word) {
-    for (let i = 0; i < word.length; i++) {
-        let curr = word[i];
-        if (!hanzi[curr]) { continue; }
-        for (let j = 0; j < word.length; j++) {
-            if (i === j || !hanzi[word[j]]) { continue; }
-            if (!hanzi[curr].edges[word[j]]) {
-                hanzi[curr].edges[word[j]] = {
-                    // TODO: stop it
-                    level: 6,
-                    words: []
-                };
-            }
-            // not that efficient, but we almost never see more than 5 items in words, so NBD
-            if (hanzi[curr].edges[word[j]].words.indexOf(word) < 0) {
-                hanzi[curr].edges[word[j]].words.push(word);
-            }
-        }
-    }
-};
-// build a graph based on a word rather than just a character like updateGraph
-let buildGraph = function (value, maxLevel) {
-    let ranUpdate = false;
-    // we don't necessarily populate all via the script
-    addEdges(value);
-    for (let i = 0; i < value.length; i++) {
-        if (hanzi[value[i]]) {
-            if (!ranUpdate) {
-                //TODO do we need this?
-                ranUpdate = true;
-                updateGraph(value[i], maxLevel);
-            } else {
-                addToExistingGraph(value[i], maxLevel);
-            }
-        }
-    }
-};
-
 let allInGraph = function (word) {
     for (let i = 0; i < word.length; i++) {
         if (!hanzi[word[i]]) {
@@ -497,10 +442,10 @@ let allInGraph = function (word) {
     }
     return true;
 };
-let search = function (value, maxLevel, skipState) {
+let search = function (value, skipState) {
     if (value && allInGraph(value) && (definitions[value] || wordSet.has(value))) {
         notFoundElement.style.display = 'none';
-        buildGraph(value, maxLevel);
+        document.dispatchEvent(new CustomEvent('graph-update', { detail: value }))
         setupExamples([value]);
         if (!skipState) {
             persistState();
@@ -512,7 +457,7 @@ let search = function (value, maxLevel, skipState) {
 }
 hanziSearchForm.addEventListener('submit', function (event) {
     event.preventDefault();
-    search(hanziBox.value, 6);
+    search(hanziBox.value);
     switchToState(stateKeys.main);
 });
 showPinyinCheckbox.addEventListener('change', function () {

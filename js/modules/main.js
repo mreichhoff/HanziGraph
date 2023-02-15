@@ -4,6 +4,7 @@ import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
 import { initialize as statsInit } from "./stats.js";
 import { initialize as recommendationsInit } from "./recommendations.js";
+import { initialize as graphInit } from "./graph.js";
 
 Promise.all(
     [
@@ -19,6 +20,7 @@ Promise.all(
     ]
 ).then(_ => {
     menuOrchestratorInit();
+    graphInit();
     studyModeInit();
     baseInit();
     statsInit();

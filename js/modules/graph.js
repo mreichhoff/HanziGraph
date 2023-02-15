@@ -1,7 +1,30 @@
-let cy = null;
-let currentHanzi = [];
+const graphContainer = document.getElementById('graph');
 
-function dfs(start, elements, maxDepth, visited, maxLevel) {
+let cy = null;
+let currentPath = [];
+
+function addEdges(word) {
+    for (let i = 0; i < word.length; i++) {
+        let curr = word[i];
+        if (!hanzi[curr]) { continue; }
+        for (let j = 0; j < word.length; j++) {
+            if (i === j || !hanzi[word[j]]) { continue; }
+            if (!hanzi[curr].edges[word[j]]) {
+                hanzi[curr].edges[word[j]] = {
+                    // TODO: stop it
+                    level: 6,
+                    words: []
+                };
+            }
+            // not that efficient, but we almost never see more than 5 items in words, so NBD
+            if (hanzi[curr].edges[word[j]].words.indexOf(word) < 0) {
+                hanzi[curr].edges[word[j]].words.push(word);
+            }
+        }
+    }
+};
+
+function dfs(start, elements, maxDepth, visited) {
     if (maxDepth < 0) {
         return;
     }
@@ -10,7 +33,7 @@ function dfs(start, elements, maxDepth, visited, maxLevel) {
     visited[start] = true;
     for (const [key, value] of Object.entries(curr.edges)) {
         //don't add outgoing edges when we won't process the next layer
-        if (maxDepth > 0 && value.level <= maxLevel) {
+        if (maxDepth > 0) {
             if (!visited[key]) {
                 elements.edges.push({
                     data: {
@@ -26,13 +49,12 @@ function dfs(start, elements, maxDepth, visited, maxLevel) {
         }
     }
     elements.nodes.push({ data: { id: start, level: curr.node.level } });
-    for (const [key, value] of Object.entries(curr.edges)) {
-        if (!visited[key] && value.level <= maxLevel) {
-            dfs(key, elements, maxDepth - 1, visited, maxLevel);
+    for (const key of Object.keys(curr.edges)) {
+        if (!visited[key]) {
+            dfs(key, elements, maxDepth - 1, visited);
         }
     }
 }
-//this file meant to hold all cytoscape-related code
 function levelColor(element) {
     let level = element.data('level');
     switch (level) {
@@ -99,11 +121,10 @@ function getStylesheet() {
 }
 function nodeTapHandler(evt) {
     let id = evt.target.id();
-    let maxLevel = 6;
     //not needed if currentHanzi contains id, which would mean the nodes have already been added
     //includes O(N) but currentHanzi almost always < 10 elements
-    if (currentHanzi && !currentHanzi.includes(id)) {
-        addToGraph(id, maxLevel);
+    if (currentPath && !currentPath.includes(id)) {
+        addToGraph(id);
     }
     document.dispatchEvent(new CustomEvent('explore-update', { detail: [evt.target.id()] }));
 }
@@ -122,17 +143,22 @@ function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEv
     cy.on('tap', 'node', nodeEventHandler);
     cy.on('tap', 'edge', edgeEventHandler);
 }
-function initializeGraph(value, maxLevel, containerElement) {
+function renderGraph(value, containerElement) {
+    if (inCurrentPath(value)) {
+        return;
+    }
+    graphContainer.innerHTML = '';
+    graphContainer.className = '';
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
-    dfs(value, result, maxDepth, {}, maxLevel);
+    dfs(value, result, maxDepth, {});
     setupCytoscape(value, result, containerElement, nodeTapHandler, edgeTapHandler);
-    currentHanzi = [value];
+    currentPath = [value];
 }
-function addToGraph(character, maxLevel) {
+function addToGraph(character) {
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
-    dfs(character, result, maxDepth, {}, maxLevel);
+    dfs(character, result, maxDepth, {});
     let preNodeCount = cy.nodes().length;
     let preEdgeCount = cy.edges().length;
     cy.add(result);
@@ -140,7 +166,7 @@ function addToGraph(character, maxLevel) {
         //if we've actually added to the graph, re-render it; else just let it be
         cy.layout(layout(character, cy.nodes().length)).run();
     }
-    currentHanzi.push(character);
+    currentPath.push(character);
 }
 function isInGraph(node) {
     return cy && cy.getElementById(node).length;
@@ -153,13 +179,35 @@ function updateColorScheme() {
 }
 
 function inCurrentPath(character) {
-    return (currentHanzi && !currentHanzi.includes(character));
+    return (currentPath && currentPath.includes(character));
+}
+// build a graph based on a word rather than just a character like renderGraph
+function buildGraph(value) {
+    let ranUpdate = false;
+    // we don't necessarily populate all via the script
+    addEdges(value);
+    for (let i = 0; i < value.length; i++) {
+        if (hanzi[value[i]]) {
+            if (!ranUpdate) {
+                //TODO do we need this?
+                ranUpdate = true;
+                renderGraph(value[i], graphContainer);
+            } else {
+                addToGraph(value[i]);
+            }
+        }
+    }
 }
 
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
+function initialize() {
+    document.addEventListener('graph-update', function (event) {
+        buildGraph(event.detail);
+    })
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
+}
 
 // TODO(refactor): this file should own the entire graph. It should just be given what to render
 // and set up its own event handlers and everything else instead of having base.js listen to events
 // and delegate, though there may be some need to have other files be aware (e.g., when switching graphs between
 // traditional and simplified)
-export { initializeGraph, inCurrentPath, addToGraph, isInGraph, updateColorScheme }
+export { initialize, isInGraph }

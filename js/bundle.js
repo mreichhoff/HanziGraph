@@ -138,7 +138,7 @@
         }
     }
 
-    function initialize$5() {
+    function initialize$6() {
         leftButtonContainer.addEventListener('click', function () {
             if (states$1[currentState].leftState) {
                 switchToState(states$1[currentState].leftState);
@@ -178,7 +178,7 @@
         faqTypesToElement[faqType].removeAttribute('style');
     };
 
-    let initialize$4 = function () {
+    let initialize$5 = function () {
         faqContainer.addEventListener('hidden', function () {
             Object.values(faqTypesToElement).forEach(x => {
                 x.style.display = 'none';
@@ -414,10 +414,32 @@
         callbacks[dataTypes.studyResults].forEach(x => x(studyResults));
     };
 
-    let cy = null;
-    let currentHanzi = [];
+    const graphContainer = document.getElementById('graph');
 
-    function dfs(start, elements, maxDepth, visited, maxLevel) {
+    let cy = null;
+    let currentPath = [];
+
+    function addEdges(word) {
+        for (let i = 0; i < word.length; i++) {
+            let curr = word[i];
+            if (!hanzi[curr]) { continue; }
+            for (let j = 0; j < word.length; j++) {
+                if (i === j || !hanzi[word[j]]) { continue; }
+                if (!hanzi[curr].edges[word[j]]) {
+                    hanzi[curr].edges[word[j]] = {
+                        // TODO: stop it
+                        level: 6,
+                        words: []
+                    };
+                }
+                // not that efficient, but we almost never see more than 5 items in words, so NBD
+                if (hanzi[curr].edges[word[j]].words.indexOf(word) < 0) {
+                    hanzi[curr].edges[word[j]].words.push(word);
+                }
+            }
+        }
+    }
+    function dfs(start, elements, maxDepth, visited) {
         if (maxDepth < 0) {
             return;
         }
@@ -426,7 +448,7 @@
         visited[start] = true;
         for (const [key, value] of Object.entries(curr.edges)) {
             //don't add outgoing edges when we won't process the next layer
-            if (maxDepth > 0 && value.level <= maxLevel) {
+            if (maxDepth > 0) {
                 if (!visited[key]) {
                     elements.edges.push({
                         data: {
@@ -442,13 +464,12 @@
             }
         }
         elements.nodes.push({ data: { id: start, level: curr.node.level } });
-        for (const [key, value] of Object.entries(curr.edges)) {
-            if (!visited[key] && value.level <= maxLevel) {
-                dfs(key, elements, maxDepth - 1, visited, maxLevel);
+        for (const key of Object.keys(curr.edges)) {
+            if (!visited[key]) {
+                dfs(key, elements, maxDepth - 1, visited);
             }
         }
     }
-    //this file meant to hold all cytoscape-related code
     function levelColor(element) {
         let level = element.data('level');
         switch (level) {
@@ -515,11 +536,10 @@
     }
     function nodeTapHandler(evt) {
         let id = evt.target.id();
-        let maxLevel = 6;
         //not needed if currentHanzi contains id, which would mean the nodes have already been added
         //includes O(N) but currentHanzi almost always < 10 elements
-        if (currentHanzi && !currentHanzi.includes(id)) {
-            addToGraph(id, maxLevel);
+        if (currentPath && !currentPath.includes(id)) {
+            addToGraph(id);
         }
         document.dispatchEvent(new CustomEvent('explore-update', { detail: [evt.target.id()] }));
     }
@@ -538,17 +558,22 @@
         cy.on('tap', 'node', nodeEventHandler);
         cy.on('tap', 'edge', edgeEventHandler);
     }
-    function initializeGraph(value, maxLevel, containerElement) {
+    function renderGraph(value, containerElement) {
+        if (inCurrentPath(value)) {
+            return;
+        }
+        graphContainer.innerHTML = '';
+        graphContainer.className = '';
         let result = { 'nodes': [], 'edges': [] };
         let maxDepth = 1;
-        dfs(value, result, maxDepth, {}, maxLevel);
+        dfs(value, result, maxDepth, {});
         setupCytoscape(value, result, containerElement, nodeTapHandler, edgeTapHandler);
-        currentHanzi = [value];
+        currentPath = [value];
     }
-    function addToGraph(character, maxLevel) {
+    function addToGraph(character) {
         let result = { 'nodes': [], 'edges': [] };
         let maxDepth = 1;
-        dfs(character, result, maxDepth, {}, maxLevel);
+        dfs(character, result, maxDepth, {});
         let preNodeCount = cy.nodes().length;
         let preEdgeCount = cy.edges().length;
         cy.add(result);
@@ -556,7 +581,7 @@
             //if we've actually added to the graph, re-render it; else just let it be
             cy.layout(layout(character, cy.nodes().length)).run();
         }
-        currentHanzi.push(character);
+        currentPath.push(character);
     }
     function isInGraph(node) {
         return cy && cy.getElementById(node).length;
@@ -569,10 +594,32 @@
     }
 
     function inCurrentPath(character) {
-        return (currentHanzi && !currentHanzi.includes(character));
+        return (currentPath && currentPath.includes(character));
+    }
+    // build a graph based on a word rather than just a character like renderGraph
+    function buildGraph(value) {
+        let ranUpdate = false;
+        // we don't necessarily populate all via the script
+        addEdges(value);
+        for (let i = 0; i < value.length; i++) {
+            if (hanzi[value[i]]) {
+                if (!ranUpdate) {
+                    //TODO do we need this?
+                    ranUpdate = true;
+                    renderGraph(value[i], graphContainer);
+                } else {
+                    addToGraph(value[i]);
+                }
+            }
+        }
     }
 
-    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
+    function initialize$4() {
+        document.addEventListener('graph-update', function (event) {
+            buildGraph(event.detail);
+        });
+        matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
+    }
 
     // TODO(refactor): there probably shouldn't be shared elements, but going this route for now
     const hanziBox = document.getElementById('hanzi-box');
@@ -690,7 +737,6 @@
     let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
     let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
     let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
-    const legendContainer = document.getElementById('legend');
 
     let legendElements = document.querySelectorAll('.level-label');
     let graphOptions = {
@@ -711,12 +757,6 @@
     let getActiveGraph = function () {
         return activeGraph;
     };
-
-    const graphContainer = document.getElementById('graph-container');
-
-    document.getElementById('main-header');
-
-    //study items...these may not belong in this file
 
     //explore tab items
     const examplesList = document.getElementById('examples');
@@ -810,7 +850,7 @@
     function loadState(state) {
         const term = decodeURIComponent(state.word);
         hanziBox.value = term;
-        search(term, 6);
+        search(term);
     }
 
     // window.onpopstate = (event) => {
@@ -997,20 +1037,6 @@
         return result;
     };
 
-    let addToExistingGraph = function (character, maxLevel) {
-        addToGraph(character, maxLevel);
-    };
-    let updateGraph = function (value, maxLevel, skipState) {
-        document.getElementById('graph').remove();
-        let nextGraph = document.createElement("div");
-        nextGraph.id = 'graph';
-        //TODO: makes assumption about markup order
-        graphContainer.insertBefore(nextGraph, legendContainer);
-
-        if (value && hanzi[value]) {
-            initializeGraph(value, maxLevel, nextGraph);
-        }
-    };
     let getWordSet = function (graph) {
         //yeah, probably a better way...
         let wordSet = new Set();
@@ -1042,7 +1068,8 @@
             //add a default graph on page load to illustrate the concept
             let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
             walkThrough.removeAttribute('style');
-            updateGraph(defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)], 6);
+            document.dispatchEvent(new CustomEvent('graph-update',
+                { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
         }
         let oldState = JSON.parse(localStorage.getItem('state'));
         if (oldState) {
@@ -1083,8 +1110,8 @@
                 a.addEventListener('click', function () {
                     if (hanzi[character]) {
                         // TODO(refactor): can we push the inCurrentPath bit into the graph module?
-                        if (inCurrentPath(character)) {
-                            updateGraph(character, 6);
+                        if (character in hanzi) {
+                            document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
                         }
                         //enable seamless switching, but don't update if we're already showing examples for character
                         if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
@@ -1101,44 +1128,6 @@
         return anchorList;
     };
 
-    let addEdges = function (word) {
-        for (let i = 0; i < word.length; i++) {
-            let curr = word[i];
-            if (!hanzi[curr]) { continue; }
-            for (let j = 0; j < word.length; j++) {
-                if (i === j || !hanzi[word[j]]) { continue; }
-                if (!hanzi[curr].edges[word[j]]) {
-                    hanzi[curr].edges[word[j]] = {
-                        // TODO: stop it
-                        level: 6,
-                        words: []
-                    };
-                }
-                // not that efficient, but we almost never see more than 5 items in words, so NBD
-                if (hanzi[curr].edges[word[j]].words.indexOf(word) < 0) {
-                    hanzi[curr].edges[word[j]].words.push(word);
-                }
-            }
-        }
-    };
-    // build a graph based on a word rather than just a character like updateGraph
-    let buildGraph = function (value, maxLevel) {
-        let ranUpdate = false;
-        // we don't necessarily populate all via the script
-        addEdges(value);
-        for (let i = 0; i < value.length; i++) {
-            if (hanzi[value[i]]) {
-                if (!ranUpdate) {
-                    //TODO do we need this?
-                    ranUpdate = true;
-                    updateGraph(value[i], maxLevel);
-                } else {
-                    addToExistingGraph(value[i], maxLevel);
-                }
-            }
-        }
-    };
-
     let allInGraph = function (word) {
         for (let i = 0; i < word.length; i++) {
             if (!hanzi[word[i]]) {
@@ -1147,10 +1136,10 @@
         }
         return true;
     };
-    let search = function (value, maxLevel, skipState) {
+    let search = function (value, skipState) {
         if (value && allInGraph(value) && (definitions[value] || wordSet.has(value))) {
             notFoundElement.style.display = 'none';
-            buildGraph(value, maxLevel);
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
             setupExamples([value]);
             updateVisited([value]);
         } else {
@@ -1159,7 +1148,7 @@
     };
     hanziSearchForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        search(hanziBox.value, 6);
+        search(hanziBox.value);
         switchToState(stateKeys.main);
     });
     showPinyinCheckbox.addEventListener('change', function () {
@@ -1985,11 +1974,12 @@
                 .then(data => window.definitions = data)
         ]
     ).then(_ => {
-        initialize$5();
+        initialize$6();
+        initialize$4();
         initialize$1();
         initialize$2();
         initialize();
-        initialize$4();
+        initialize$5();
         initialize$3();
     });
     //ideally we'll continue adding to this
