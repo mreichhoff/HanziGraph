@@ -26,7 +26,7 @@
         menu: 'menu'
     };
 
-    const states$1 = {
+    const states = {
         main: {
             leftButtonClass: 'menu-button',
             rightButtonClass: 'study-button',
@@ -78,7 +78,7 @@
         }
         // if we don't have the new state, treat it as indicating we must go back
         // for now we don't support chains of back/forward, it's just one
-        const stateConfig = states$1[state] || states$1[prevState];
+        const stateConfig = states[state] || states[prevState];
 
         for (const container of containers) {
             if (container.id !== stateConfig.activeContainer.id) {
@@ -138,15 +138,15 @@
         }
     }
 
-    function initialize$6() {
+    function initialize$7() {
         leftButtonContainer.addEventListener('click', function () {
-            if (states$1[currentState].leftState) {
-                switchToState(states$1[currentState].leftState);
+            if (states[currentState].leftState) {
+                switchToState(states[currentState].leftState);
             }
         });
         rightButtonContainer.addEventListener('click', function () {
-            if (states$1[currentState].rightState) {
-                switchToState(states$1[currentState].rightState);
+            if (states[currentState].rightState) {
+                switchToState(states[currentState].rightState);
             }
         });
     }
@@ -178,7 +178,7 @@
         faqTypesToElement[faqType].removeAttribute('style');
     };
 
-    let initialize$5 = function () {
+    let initialize$6 = function () {
         faqContainer.addEventListener('hidden', function () {
             Object.values(faqTypesToElement).forEach(x => {
                 x.style.display = 'none';
@@ -414,6 +414,24 @@
         callbacks[dataTypes.studyResults].forEach(x => x(studyResults));
     };
 
+    let readOptionState = function () {
+        return JSON.parse(localStorage.getItem('options'));
+    };
+    let writeOptionState = function (showPinyin, recommendationsDifficulty, selectedCharacterSet) {
+        localStorage.setItem('options', JSON.stringify({
+            transcriptions: showPinyin,
+            recommendationsDifficulty: recommendationsDifficulty,
+            selectedCharacterSet: selectedCharacterSet
+        }));
+    };
+
+    let readExploreState = function () {
+        return JSON.parse(localStorage.getItem('exploreState'));
+    };
+
+    // TODO(refactor): there probably shouldn't be shared elements, but going this route for now
+    const hanziBox = document.getElementById('hanzi-box');
+
     const graphContainer = document.getElementById('graph');
 
     let cy = null;
@@ -614,21 +632,20 @@
         }
     }
 
-    function initialize$4() {
+    function initialize$5() {
         document.addEventListener('graph-update', function (event) {
             buildGraph(event.detail);
         });
         matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
     }
 
-    // TODO(refactor): there probably shouldn't be shared elements, but going this route for now
-    const hanziBox = document.getElementById('hanzi-box');
-
     //TODO: like in other files, remove these dups
     const recommendationsContainer = document.getElementById('recommendations-container');
     let recommendationsWorker = null;
+    let levelPreferences = 'any';
 
-    let initialize$3 = function () {
+
+    let initialize$4 = function () {
         recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
         recommendationsWorker.postMessage({
             type: 'graph',
@@ -638,6 +655,10 @@
             type: 'visited',
             payload: getVisited()
         });
+        // it's possible we remember state from a prior page load, and the variable can be set before initialization.
+        if (levelPreferences !== 'any') {
+            preferencesChanged(levelPreferences);
+        }
         registerCallback(dataTypes.visited, function (visited) {
             recommendationsWorker.postMessage({
                 type: 'visited',
@@ -699,6 +720,10 @@
         };
     };
     let graphChanged = function () {
+        if (!recommendationsWorker) {
+            // if this is called without the worker, NBD. Worst case we'll send it once we initialize.
+            return;
+        }
         recommendationsWorker.postMessage({
             type: 'graph',
             payload: window.hanzi
@@ -712,6 +737,11 @@
         } else if (val === 'hard') {
             minLevel = 4;
         }
+        levelPreferences = val;
+        if (!recommendationsWorker) {
+            // if this is called without the worker, NBD. Worst case we'll send it once we initialize.
+            return;
+        }
         recommendationsWorker.postMessage({
             type: 'levelPreferences',
             payload: {
@@ -721,18 +751,10 @@
         });
     };
 
-    //TODO break this down further
-    //refactor badly needed...hacks on top of hacks at this point
-    let maxExamples = 5;
-    let currentExamples = {};
-    let currentWord = '';
-    let tabs = {
-        explore: 'explore',
-        study: 'study'
-    };
-
-    let wordSet = new Set();
-    let activeTab = tabs.explore;
+    const graphSelector = document.getElementById('graph-selector');
+    const showPinyinCheckbox = document.getElementById('show-pinyin');
+    const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
+    const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
     let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
     let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
@@ -753,25 +775,108 @@
             display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK'
         }
     };
-    let activeGraph = graphOptions.simplified;
-    let getActiveGraph = function () {
-        return activeGraph;
-    };
+    let activeGraphKey = 'simplified';
+
+    function getActiveGraph() {
+        return graphOptions[activeGraphKey];
+    }
+
+    function switchGraph() {
+        let value = graphSelector.value;
+        if (value !== activeGraphKey) {
+            activeGraphKey = value;
+            let activeGraph = graphOptions[activeGraphKey];
+            let prefix = activeGraph.prefix;
+            //fetch regardless...allow service worker and/or browser cache to optimize
+            fetch(`./data/${prefix}/graph.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    window.hanzi = data;
+                    graphChanged();
+                    legendElements.forEach((x, index) => {
+                        x.innerText = activeGraph.legend[index];
+                    });
+                    // TODO(refactor): this will need to change as we switch to a frequency list...
+                    window.wordSet = getWordSet(hanzi);
+                });
+            fetch(`./data/${prefix}/sentences.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    window.sentences = data;
+                });
+            fetch(`./data/${prefix}/definitions.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    window.definitions = data;
+                });
+            writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
+        }
+    }
+
+    function getWordSet(graph) {
+        //yeah, probably a better way...
+        let wordSet = new Set();
+        Object.keys(graph).forEach(x => {
+            wordSet.add(x);
+            Object.keys(graph[x].edges || {}).forEach(edge => {
+                graph[x].edges[edge].words.forEach(word => {
+                    wordSet.add(word);
+                });
+            });
+        });
+        return wordSet;
+    }
+    function initialize$3() {
+        graphSelector.addEventListener('change', switchGraph);
+        showPinyinCheckbox.addEventListener('change', function () {
+            let toggleLabel = togglePinyinLabel;
+            if (showPinyinCheckbox.checked) {
+                toggleLabel.innerText = 'Turn off pinyin in examples';
+            } else {
+                toggleLabel.innerText = 'Turn on pinyin in examples';
+            }
+            writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
+        });
+
+        recommendationsDifficultySelector.addEventListener('change', function () {
+            let val = recommendationsDifficultySelector.value;
+            preferencesChanged(val);
+            writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
+        });
+
+        //TODO(refactor): make readOptionState in data-layer.js, make a write method too, passing in state from this class
+        // then remove all the options state from base, which is mostly in its initialize.
+        // we'll then use different localstorage keys for options state (simplified vs traditional, pinyin checked, etc) vs 
+        // the current UI state (which orchestrator should own) vs what is shown in graph and explore (which explore should own)
+        // though maybe graph could own some too....
+        let pastOptions = readOptionState();
+        if (pastOptions) {
+            showPinyinCheckbox.checked = pastOptions.transcriptions;
+            showPinyinCheckbox.dispatchEvent(new Event('change'));
+            recommendationsDifficultySelector.value = pastOptions.recommendationsDifficulty;
+            recommendationsDifficultySelector.dispatchEvent(new Event('change'));
+            graphSelector.value = pastOptions.selectedCharacterSet;
+            activeGraphKey = pastOptions.selectedCharacterSet;
+            recommendationsDifficultySelector.dispatchEvent(new Event('change'));
+        }
+        window.wordSet = getWordSet(hanzi);
+    }
+
+    //TODO break this down further
+    //refactor badly needed...hacks on top of hacks at this point
+    let maxExamples = 5;
+    let currentExamples = {};
+    let currentWord = '';
+
+    let wordSet = new Set();
 
     //explore tab items
     const examplesList = document.getElementById('examples');
     //explore tab navigation controls
     const hanziSearchForm = document.getElementById('hanzi-choose');
     const notFoundElement = document.getElementById('not-found-message');
-    //recommendations
-    const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
     const walkThrough = document.getElementById('walkthrough');
-
-    //menu items
-    const graphSelector = document.getElementById('graph-selector');
-    const showPinyinCheckbox = document.getElementById('show-pinyin');
-    const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 
     let getZhTts = function () {
         //use the first-encountered zh-CN voice for now
@@ -795,7 +900,7 @@
     }
 
     let runTextToSpeech = function (text, anchors) {
-        zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (activeGraph.ttsKey || 'zh-CN'));
+        zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (getActiveGraph().ttsKey || 'zh-CN'));
         //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
         if (zhTts) {
             let utterance = new SpeechSynthesisUtterance(text);
@@ -839,30 +944,6 @@
         });
         container.appendChild(saveToListButton);
     };
-
-    let persistUIState = function () {
-        localStorage.setItem('state', JSON.stringify({
-            activeTab: activeTab,
-            currentGraph: activeGraph.display,
-            graphPrefix: activeGraph.prefix
-        }));
-    };
-    function loadState(state) {
-        const term = decodeURIComponent(state.word);
-        hanziBox.value = term;
-        search(term);
-    }
-
-    // window.onpopstate = (event) => {
-    //     const state = event.state;
-    //     if (!state || !state.word) {
-    //         walkThrough.removeAttribute('style');
-    //         examplesList.innerHTML = '';
-    //         hanziBox.value = '';
-    //         return;
-    //     }
-    //     loadState(state);
-    // };
 
     let setupDefinitions = function (definitionList, container) {
         for (let i = 0; i < definitionList.length; i++) {
@@ -939,6 +1020,7 @@
 
     // expects callers to ensure augmentation is available
     let augmentExamples = function (word, container) {
+        const activeGraph = getActiveGraph();
         fetch(`./${activeGraph.augmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
             .then(response => response.json())
             .then(function (data) {
@@ -988,7 +1070,7 @@
         container.appendChild(exampleList);
         if (examples.length > 0) {
             setupExampleElements(examples, exampleList);
-        } else if (activeGraph.augmentPath) {
+        } else if (getActiveGraph().augmentPath) {
             augmentExamples(word, exampleList);
         }
     };
@@ -1037,25 +1119,11 @@
         return result;
     };
 
-    let getWordSet = function (graph) {
-        //yeah, probably a better way...
-        let wordSet = new Set();
-        Object.keys(graph).forEach(x => {
-            wordSet.add(x);
-            Object.keys(graph[x].edges || {}).forEach(edge => {
-                graph[x].edges[edge].words.forEach(word => {
-                    wordSet.add(word);
-                });
-            });
-        });
-        return wordSet;
-    };
     let initialize$2 = function () {
-        wordSet = getWordSet(hanzi);
-        if (history.state) {
-            loadState(history.state);
-        }
-        // disabling on main due to github pages hosting pattern
+        // disabling on main branch...github pages doesn't do rewrites currently
+        // if (history.state) {
+        //     loadState(history.state);
+        // }
         //  else if (document.location.pathname !== '/') {
         //     const state = parseUrl(document.location.pathname);
         //     if (state) {
@@ -1063,30 +1131,21 @@
         //         history.pushState(state, '', document.location);
         //     }
         // } 
-        else {
-            //graph chosen is default, no need to modify legend or dropdown
+        let oldState = readExploreState();
+        if (oldState) ; else {
             //add a default graph on page load to illustrate the concept
             let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
             walkThrough.removeAttribute('style');
             document.dispatchEvent(new CustomEvent('graph-update',
                 { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
         }
-        let oldState = JSON.parse(localStorage.getItem('state'));
-        if (oldState) {
-            if (oldState.currentGraph) {
-                let activeGraphKey = Object.keys(graphOptions).find(x => graphOptions[x].display === oldState.currentGraph);
-                if (activeGraphKey) {
-                    activeGraph = graphOptions[activeGraphKey];
-                    legendElements.forEach((x, index) => {
-                        x.textContent = activeGraph.legend[index];
-                    });
-                    graphSelector.value = state.currentGraph;
-                }
-            }
-            if (oldState.activeTab === tabs.study) {
-                switchToState(states.study);
-            }
-        }
+        //TODO(refactor): set this up
+        // let oldState = JSON.parse(localStorage.getItem('state'));
+        // if (oldState) {
+        //     if (oldState.activeTab === tabs.study) {
+        //         switchToState(states.study);
+        //     }
+        // }
         document.addEventListener('explore-update', function (event) {
             hanziBox.value = event.detail[0];
             setupExamples(event.detail);
@@ -1109,14 +1168,12 @@
                 }
                 a.addEventListener('click', function () {
                     if (hanzi[character]) {
-                        // TODO(refactor): can we push the inCurrentPath bit into the graph module?
                         if (character in hanzi) {
                             document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
                         }
                         //enable seamless switching, but don't update if we're already showing examples for character
                         if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
                             setupExamples([character]);
-                            persistUIState();
                         }
                     }
                 });
@@ -1151,52 +1208,6 @@
         search(hanziBox.value);
         switchToState(stateKeys.main);
     });
-    showPinyinCheckbox.addEventListener('change', function () {
-        let toggleLabel = togglePinyinLabel;
-        if (showPinyinCheckbox.checked) {
-            toggleLabel.innerText = 'Turn off pinyin in examples';
-        } else {
-            toggleLabel.innerText = 'Turn on pinyin in examples';
-        }
-    });
-
-    recommendationsDifficultySelector.addEventListener('change', function () {
-        let val = recommendationsDifficultySelector.value;
-        preferencesChanged(val);
-    });
-
-    let switchGraph = function () {
-        let value = graphSelector.value;
-        if (value !== activeGraph.display) {
-            let key = Object.keys(graphOptions).find(x => graphOptions[x].display === value);
-            activeGraph = graphOptions[key];
-            let prefix = activeGraph.prefix;
-            //fetch regardless...allow service worker and/or browser cache to optimize
-            fetch(`./data/${prefix}/graph.json`)
-                .then(response => response.json())
-                .then(function (data) {
-                    window.hanzi = data;
-                    graphChanged();
-                    legendElements.forEach((x, index) => {
-                        x.innerText = activeGraph.legend[index];
-                    });
-                    wordSet = getWordSet(hanzi);
-                });
-            fetch(`./data/${prefix}/sentences.json`)
-                .then(response => response.json())
-                .then(function (data) {
-                    window.sentences = data;
-                });
-            fetch(`./data/${prefix}/definitions.json`)
-                .then(response => response.json())
-                .then(function (data) {
-                    definitions = data;
-                });
-            persistUIState();
-        }
-    };
-
-    graphSelector.addEventListener('change', switchGraph);
 
     const studyContainer = document.getElementById('study-container');
 
@@ -1974,13 +1985,14 @@
                 .then(data => window.definitions = data)
         ]
     ).then(_ => {
-        initialize$6();
-        initialize$4();
+        initialize$7();
+        initialize$3();
+        initialize$5();
         initialize$1();
         initialize$2();
         initialize();
-        initialize$5();
-        initialize$3();
+        initialize$6();
+        initialize$4();
     });
     //ideally we'll continue adding to this
 

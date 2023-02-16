@@ -1,8 +1,8 @@
 import { faqTypes, showFaq } from "./faq.js";
-import { updateVisited, getVisited, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
-import { graphChanged, preferencesChanged } from "./recommendations.js";
+import { updateVisited, getVisited, addCards, inStudyList, getCardPerformance, readExploreState } from "./data-layer.js";
 import { switchToState, stateKeys } from "./ui-orchestrator.js";
 import { hanziBox } from "./dom.js";
+import { getActiveGraph } from "./options.js";
 
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
@@ -15,46 +15,16 @@ let tabs = {
 };
 
 let wordSet = new Set();
+//TODO(refactor): move activetab to orchestrator
 let activeTab = tabs.explore;
-
-let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
-let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
-let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
-
-let legendElements = document.querySelectorAll('.level-label');
-let graphOptions = {
-    oldHsk: {
-        display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend
-    },
-    simplified: {
-        display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100
-    },
-    traditional: {
-        display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100
-    },
-    cantonese: {
-        display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK'
-    }
-};
-let activeGraph = graphOptions.simplified;
-let getActiveGraph = function () {
-    return activeGraph;
-}
 
 //explore tab items
 const examplesList = document.getElementById('examples');
 //explore tab navigation controls
 const hanziSearchForm = document.getElementById('hanzi-choose');
 const notFoundElement = document.getElementById('not-found-message');
-//recommendations
-const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
 const walkThrough = document.getElementById('walkthrough');
-
-//menu items
-const graphSelector = document.getElementById('graph-selector');
-const showPinyinCheckbox = document.getElementById('show-pinyin');
-const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 
 let getZhTts = function () {
     //use the first-encountered zh-CN voice for now
@@ -78,7 +48,7 @@ if ('speechSynthesis' in window) {
 }
 
 let runTextToSpeech = function (text, anchors) {
-    zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (activeGraph.ttsKey || 'zh-CN'));
+    zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (getActiveGraph().ttsKey || 'zh-CN'));
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
     if (zhTts) {
         let utterance = new SpeechSynthesisUtterance(text);
@@ -129,44 +99,6 @@ let persistState = function () {
     //     word: currentWord,
     // }, '', newUrl);
 };
-
-let persistUIState = function () {
-    localStorage.setItem('state', JSON.stringify({
-        activeTab: activeTab,
-        currentGraph: activeGraph.display,
-        graphPrefix: activeGraph.prefix
-    }));
-}
-
-function parseUrl(path) {
-    if (path[0] === '/') {
-        path = path.substring(1);
-    }
-    const segments = path.split('/');
-    if (segments.length !== 1) {
-        return null;
-    }
-    const term = segments[0];
-    return {
-        word: term
-    };
-}
-function loadState(state) {
-    const term = decodeURIComponent(state.word);
-    hanziBox.value = term;
-    search(term, true);
-}
-
-// window.onpopstate = (event) => {
-//     const state = event.state;
-//     if (!state || !state.word) {
-//         walkThrough.removeAttribute('style');
-//         examplesList.innerHTML = '';
-//         hanziBox.value = '';
-//         return;
-//     }
-//     loadState(state);
-// };
 
 let setupDefinitions = function (definitionList, container) {
     for (let i = 0; i < definitionList.length; i++) {
@@ -243,6 +175,7 @@ let getPartition = function (word, numPartitions) {
 
 // expects callers to ensure augmentation is available
 let augmentExamples = function (word, container) {
+    const activeGraph = getActiveGraph();
     fetch(`./${activeGraph.augmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
         .then(response => response.json())
         .then(function (data) {
@@ -292,7 +225,7 @@ let renderExamples = function (word, examples, container) {
     container.appendChild(exampleList);
     if (examples.length > 0) {
         setupExampleElements(examples, exampleList);
-    } else if (activeGraph.augmentPath) {
+    } else if (getActiveGraph().augmentPath) {
         augmentExamples(word, exampleList);
     }
 };
@@ -341,25 +274,11 @@ let getCardFromDefinitions = function (text, definitionList) {
     return result;
 };
 
-let getWordSet = function (graph) {
-    //yeah, probably a better way...
-    let wordSet = new Set();
-    Object.keys(graph).forEach(x => {
-        wordSet.add(x);
-        Object.keys(graph[x].edges || {}).forEach(edge => {
-            graph[x].edges[edge].words.forEach(word => {
-                wordSet.add(word);
-            });
-        });
-    });
-    return wordSet;
-};
 let initialize = function () {
-    wordSet = getWordSet(hanzi);
-    if (history.state) {
-        loadState(history.state);
-    }
-    // disabling on main due to github pages hosting pattern
+    // disabling on main branch...github pages doesn't do rewrites currently
+    // if (history.state) {
+    //     loadState(history.state);
+    // }
     //  else if (document.location.pathname !== '/') {
     //     const state = parseUrl(document.location.pathname);
     //     if (state) {
@@ -367,34 +286,26 @@ let initialize = function () {
     //         history.pushState(state, '', document.location);
     //     }
     // } 
-    else {
-        //graph chosen is default, no need to modify legend or dropdown
+    let oldState = readExploreState();
+    if (oldState) {
+
+    } else {
         //add a default graph on page load to illustrate the concept
         let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
         walkThrough.removeAttribute('style');
         document.dispatchEvent(new CustomEvent('graph-update',
             { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
     }
-    let oldState = JSON.parse(localStorage.getItem('state'));
-    if (oldState) {
-        if (oldState.currentGraph) {
-            let activeGraphKey = Object.keys(graphOptions).find(x => graphOptions[x].display === oldState.currentGraph);
-            if (activeGraphKey) {
-                activeGraph = graphOptions[activeGraphKey];
-                legendElements.forEach((x, index) => {
-                    x.textContent = activeGraph.legend[index];
-                });
-                graphSelector.value = state.currentGraph;
-            }
-        }
-        if (oldState.activeTab === tabs.study) {
-            switchToState(states.study);
-        }
-    }
+    //TODO(refactor): set this up
+    // let oldState = JSON.parse(localStorage.getItem('state'));
+    // if (oldState) {
+    //     if (oldState.activeTab === tabs.study) {
+    //         switchToState(states.study);
+    //     }
+    // }
     document.addEventListener('explore-update', function (event) {
         hanziBox.value = event.detail[0];
         setupExamples(event.detail);
-        persistState();
         switchToState(stateKeys.main);
         updateVisited(event.detail);
     });
@@ -414,15 +325,12 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
             }
             a.addEventListener('click', function () {
                 if (hanzi[character]) {
-                    // TODO(refactor): can we push the inCurrentPath bit into the graph module?
                     if (character in hanzi) {
                         document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
                     }
                     //enable seamless switching, but don't update if we're already showing examples for character
                     if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
                         setupExamples([character]);
-                        persistState();
-                        persistUIState();
                     }
                 }
             });
@@ -460,51 +368,5 @@ hanziSearchForm.addEventListener('submit', function (event) {
     search(hanziBox.value);
     switchToState(stateKeys.main);
 });
-showPinyinCheckbox.addEventListener('change', function () {
-    let toggleLabel = togglePinyinLabel;
-    if (showPinyinCheckbox.checked) {
-        toggleLabel.innerText = 'Turn off pinyin in examples';
-    } else {
-        toggleLabel.innerText = 'Turn on pinyin in examples';
-    }
-});
 
-recommendationsDifficultySelector.addEventListener('change', function () {
-    let val = recommendationsDifficultySelector.value;
-    preferencesChanged(val);
-});
-
-let switchGraph = function () {
-    let value = graphSelector.value;
-    if (value !== activeGraph.display) {
-        let key = Object.keys(graphOptions).find(x => graphOptions[x].display === value);
-        activeGraph = graphOptions[key];
-        let prefix = activeGraph.prefix;
-        //fetch regardless...allow service worker and/or browser cache to optimize
-        fetch(`./data/${prefix}/graph.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                window.hanzi = data;
-                graphChanged();
-                legendElements.forEach((x, index) => {
-                    x.innerText = activeGraph.legend[index];
-                });
-                wordSet = getWordSet(hanzi);
-            });
-        fetch(`./data/${prefix}/sentences.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                window.sentences = data;
-            });
-        fetch(`./data/${prefix}/definitions.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                definitions = data;
-            });
-        persistUIState();
-    }
-}
-
-graphSelector.addEventListener('change', switchGraph);
-
-export { initialize, setupExamples, makeSentenceNavigable, addTextToSpeech, getActiveGraph };
+export { initialize, makeSentenceNavigable, addTextToSpeech };

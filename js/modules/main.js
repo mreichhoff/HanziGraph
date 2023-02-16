@@ -5,6 +5,7 @@ import { initialize as studyModeInit } from "./study-mode.js";
 import { initialize as statsInit } from "./stats.js";
 import { initialize as recommendationsInit } from "./recommendations.js";
 import { initialize as graphInit } from "./graph.js";
+import { initialize as optionsInit } from "./options.js";
 
 Promise.all(
     [
@@ -20,6 +21,7 @@ Promise.all(
     ]
 ).then(_ => {
     menuOrchestratorInit();
+    optionsInit();
     graphInit();
     studyModeInit();
     baseInit();

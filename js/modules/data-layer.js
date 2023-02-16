@@ -228,6 +228,21 @@ let recordEvent = function (result) {
     callbacks[dataTypes.studyResults].forEach(x => x(studyResults));
 };
 
+let readOptionState = function () {
+    return JSON.parse(localStorage.getItem('options'));
+};
+let writeOptionState = function (showPinyin, recommendationsDifficulty, selectedCharacterSet) {
+    localStorage.setItem('options', JSON.stringify({
+        transcriptions: showPinyin,
+        recommendationsDifficulty: recommendationsDifficulty,
+        selectedCharacterSet: selectedCharacterSet
+    }));
+};
+
+let readExploreState = function () {
+    return JSON.parse(localStorage.getItem('exploreState'));
+};
+
 let initialize = function () { };
 
-export { getVisited, updateVisited, registerCallback, saveStudyList, addCards, inStudyList, getCardPerformance, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }
+export { readExploreState, readOptionState, writeOptionState, getVisited, updateVisited, registerCallback, saveStudyList, addCards, inStudyList, getCardPerformance, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }

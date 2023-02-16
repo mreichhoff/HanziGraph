@@ -6,6 +6,8 @@ import { hanziBox } from "./dom.js";
 //TODO: like in other files, remove these dups
 const recommendationsContainer = document.getElementById('recommendations-container');
 let recommendationsWorker = null;
+let levelPreferences = 'any';
+
 
 let initialize = function () {
     recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
@@ -17,6 +19,10 @@ let initialize = function () {
         type: 'visited',
         payload: getVisited()
     });
+    // it's possible we remember state from a prior page load, and the variable can be set before initialization.
+    if (levelPreferences !== 'any') {
+        preferencesChanged(levelPreferences);
+    }
     registerCallback(dataTypes.visited, function (visited) {
         recommendationsWorker.postMessage({
             type: 'visited',
@@ -78,6 +84,10 @@ let initialize = function () {
     }
 };
 let graphChanged = function () {
+    if (!recommendationsWorker) {
+        // if this is called without the worker, NBD. Worst case we'll send it once we initialize.
+        return;
+    }
     recommendationsWorker.postMessage({
         type: 'graph',
         payload: window.hanzi
@@ -90,6 +100,11 @@ let preferencesChanged = function (val) {
         maxLevel = 3;
     } else if (val === 'hard') {
         minLevel = 4;
+    }
+    levelPreferences = val;
+    if (!recommendationsWorker) {
+        // if this is called without the worker, NBD. Worst case we'll send it once we initialize.
+        return;
     }
     recommendationsWorker.postMessage({
         type: 'levelPreferences',

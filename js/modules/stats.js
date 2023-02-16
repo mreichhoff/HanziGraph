@@ -1,5 +1,5 @@
 import { getVisited, getStudyResults, getStudyList } from "./data-layer.js";
-import { getActiveGraph } from "./base.js";
+import { getActiveGraph } from "./options.js";
 import { switchToState, stateKeys } from "./ui-orchestrator.js";
 
 const statsContainer = document.getElementById('stats-container');
