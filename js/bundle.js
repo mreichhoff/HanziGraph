@@ -428,9 +428,16 @@
     let readExploreState = function () {
         return JSON.parse(localStorage.getItem('exploreState'));
     };
+    let writeExploreState = function (word) {
+        localStorage.setItem('exploreState', JSON.stringify({
+            word: word
+        }));
+    };
 
     // TODO(refactor): there probably shouldn't be shared elements, but going this route for now
     const hanziBox = document.getElementById('hanzi-box');
+    const notFoundElement = document.getElementById('not-found-message');
+    const walkThrough = document.getElementById('walkthrough');
 
     const graphContainer = document.getElementById('graph');
 
@@ -560,9 +567,11 @@
             addToGraph(id);
         }
         document.dispatchEvent(new CustomEvent('explore-update', { detail: [evt.target.id()] }));
+        switchToState(stateKeys.main);
     }
     function edgeTapHandler(evt) {
         document.dispatchEvent(new CustomEvent('explore-update', { detail: evt.target.data('words') }));
+        switchToState(stateKeys.main);
     }
     function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
         cy = cytoscape({
@@ -763,16 +772,16 @@
     let legendElements = document.querySelectorAll('.level-label');
     let graphOptions = {
         oldHsk: {
-            display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend
+            display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend, defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"]
         },
         simplified: {
-            display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100
+            display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100, defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"]
         },
         traditional: {
-            display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100
+            display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100, defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"]
         },
         cantonese: {
-            display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK'
+            display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK', defaultHanzi: ["我", "哥", "路", "細"], transcriptionName: 'jyutping'
         }
     };
     let activeGraphKey = 'simplified';
@@ -810,6 +819,8 @@
                     window.definitions = data;
                 });
             writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
+            setTranscriptionLabel();
+            document.dispatchEvent(new Event('character-set-changed'));
         }
     }
 
@@ -826,15 +837,17 @@
         });
         return wordSet;
     }
+    function setTranscriptionLabel() {
+        if (showPinyinCheckbox.checked) {
+            togglePinyinLabel.innerText = `Turn off ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
+        } else {
+            togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
+        }
+    }
     function initialize$3() {
         graphSelector.addEventListener('change', switchGraph);
         showPinyinCheckbox.addEventListener('change', function () {
-            let toggleLabel = togglePinyinLabel;
-            if (showPinyinCheckbox.checked) {
-                toggleLabel.innerText = 'Turn off pinyin in examples';
-            } else {
-                toggleLabel.innerText = 'Turn on pinyin in examples';
-            }
+            setTranscriptionLabel();
             writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
         });
 
@@ -851,61 +864,54 @@
         // though maybe graph could own some too....
         let pastOptions = readOptionState();
         if (pastOptions) {
+            graphSelector.value = pastOptions.selectedCharacterSet;
+            activeGraphKey = pastOptions.selectedCharacterSet;
             showPinyinCheckbox.checked = pastOptions.transcriptions;
             showPinyinCheckbox.dispatchEvent(new Event('change'));
             recommendationsDifficultySelector.value = pastOptions.recommendationsDifficulty;
-            recommendationsDifficultySelector.dispatchEvent(new Event('change'));
-            graphSelector.value = pastOptions.selectedCharacterSet;
-            activeGraphKey = pastOptions.selectedCharacterSet;
             recommendationsDifficultySelector.dispatchEvent(new Event('change'));
         }
         window.wordSet = getWordSet(hanzi);
     }
 
-    //TODO break this down further
-    //refactor badly needed...hacks on top of hacks at this point
     let maxExamples = 5;
     let currentExamples = {};
     let currentWord = '';
 
-    let wordSet = new Set();
+    //TODO(refactor): move notion of activetab to orchestrator
 
     //explore tab items
     const examplesList = document.getElementById('examples');
-    //explore tab navigation controls
-    const hanziSearchForm = document.getElementById('hanzi-choose');
-    const notFoundElement = document.getElementById('not-found-message');
 
-    const walkThrough = document.getElementById('walkthrough');
-
-    let getZhTts = function () {
+    // TODO(refactor): this keeps state around and thus fails when switching to cantonese
+    let getVoice = function () {
         //use the first-encountered zh-CN voice for now
         if (!('speechSynthesis' in window)) {
             return null;
         }
-        return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
+        return speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (getActiveGraph().ttsKey || 'zh-CN'));
     };
 
-    let zhTts = getZhTts();
+    let voice = getVoice();
 
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
     //generally, this thing is weird, so uh...
     //ideally we'd not do this or have any global variable
     if ('speechSynthesis' in window) {
         speechSynthesis.onvoiceschanged = function () {
-            if (!zhTts) {
-                zhTts = getZhTts();
+            if (!voice) {
+                voice = getVoice();
             }
         };
     }
 
     let runTextToSpeech = function (text, anchors) {
-        zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (getActiveGraph().ttsKey || 'zh-CN'));
         //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
-        if (zhTts) {
+        voice = voice || getVoice();
+        if (voice) {
             let utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = zhTts.lang;
-            utterance.voice = zhTts;
+            utterance.lang = voice.lang;
+            utterance.voice = voice;
             utterance.addEventListener('boundary', function (event) {
                 if (event.charIndex == null || event.charLength == null) {
                     return false;
@@ -1080,7 +1086,6 @@
         walkThrough.style.display = 'none';
         notFoundElement.style.display = 'none';
         //TODO this mixes markup modification and example finding
-        //refactor needed
         while (examplesList.firstChild) {
             examplesList.firstChild.remove();
         }
@@ -1104,6 +1109,7 @@
             examplesList.append(item);
         }
         currentWord = words[0];
+        writeExploreState(currentWord);
     };
 
     //TODO can this be combined with the definition rendering part?
@@ -1120,38 +1126,18 @@
     };
 
     let initialize$2 = function () {
-        // disabling on main branch...github pages doesn't do rewrites currently
-        // if (history.state) {
-        //     loadState(history.state);
-        // }
-        //  else if (document.location.pathname !== '/') {
-        //     const state = parseUrl(document.location.pathname);
-        //     if (state) {
-        //         loadState(state);
-        //         history.pushState(state, '', document.location);
-        //     }
-        // } 
-        let oldState = readExploreState();
-        if (oldState) ; else {
-            //add a default graph on page load to illustrate the concept
-            let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
-            walkThrough.removeAttribute('style');
-            document.dispatchEvent(new CustomEvent('graph-update',
-                { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
-        }
-        //TODO(refactor): set this up
-        // let oldState = JSON.parse(localStorage.getItem('state'));
-        // if (oldState) {
-        //     if (oldState.activeTab === tabs.study) {
-        //         switchToState(states.study);
-        //     }
-        // }
+        // Note: github pages rewrites are only possible via a 404 hack,
+        // so removing the history API integration on the main branch.
+        //TODO(refactor): show study when it was the last state
         document.addEventListener('explore-update', function (event) {
             hanziBox.value = event.detail[0];
             setupExamples(event.detail);
-            switchToState(stateKeys.main);
             updateVisited(event.detail);
         });
+        document.addEventListener('character-set-changed', function () {
+            voice = getVoice();
+        });
+        voice = getVoice();
     };
 
     let makeSentenceNavigable = function (text, container, noExampleChange) {
@@ -1184,30 +1170,6 @@
         container.appendChild(sentenceContainer);
         return anchorList;
     };
-
-    let allInGraph = function (word) {
-        for (let i = 0; i < word.length; i++) {
-            if (!hanzi[word[i]]) {
-                return false;
-            }
-        }
-        return true;
-    };
-    let search = function (value, skipState) {
-        if (value && allInGraph(value) && (definitions[value] || wordSet.has(value))) {
-            notFoundElement.style.display = 'none';
-            document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
-            setupExamples([value]);
-            updateVisited([value]);
-        } else {
-            notFoundElement.removeAttribute('style');
-        }
-    };
-    hanziSearchForm.addEventListener('submit', function (event) {
-        event.preventDefault();
-        search(hanziBox.value);
-        switchToState(stateKeys.main);
-    });
 
     const studyContainer = document.getElementById('study-container');
 
@@ -1972,6 +1934,26 @@
         });
     };
 
+    const hanziSearchForm = document.getElementById('hanzi-choose');
+
+    function allInGraph(word) {
+        for (let i = 0; i < word.length; i++) {
+            if (!hanzi[word[i]]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    function search(value) {
+        if (value && allInGraph(value) && (definitions[value] || wordSet.has(value))) {
+            notFoundElement.style.display = 'none';
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: [value] }));
+        } else {
+            notFoundElement.removeAttribute('style');
+        }
+    }
+
     Promise.all(
         [
             window.graphFetch
@@ -1993,6 +1975,26 @@
         initialize();
         initialize$6();
         initialize$4();
+
+        hanziSearchForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            search(hanziBox.value);
+            switchToState(stateKeys.main);
+        });
+
+        let oldState = readExploreState();
+        if (oldState) {
+            document.dispatchEvent(new CustomEvent('graph-update',
+                { detail: oldState.word }));
+            document.dispatchEvent(new CustomEvent('explore-update',
+                { detail: [oldState.word] }));
+        } else {
+            //add a default graph on page load to illustrate the concept
+            walkThrough.removeAttribute('style');
+            const defaultHanzi = getActiveGraph().defaultHanzi;
+            document.dispatchEvent(new CustomEvent('graph-update',
+                { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
+        }
     });
     //ideally we'll continue adding to this
 

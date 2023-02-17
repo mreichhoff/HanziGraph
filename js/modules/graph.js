@@ -1,3 +1,4 @@
+import { switchToState, stateKeys } from "./ui-orchestrator";
 const graphContainer = document.getElementById('graph');
 
 let cy = null;
@@ -127,9 +128,11 @@ function nodeTapHandler(evt) {
         addToGraph(id);
     }
     document.dispatchEvent(new CustomEvent('explore-update', { detail: [evt.target.id()] }));
+    switchToState(stateKeys.main);
 }
 function edgeTapHandler(evt) {
     document.dispatchEvent(new CustomEvent('explore-update', { detail: evt.target.data('words') }));
+    switchToState(stateKeys.main);
 }
 function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
     cy = cytoscape({

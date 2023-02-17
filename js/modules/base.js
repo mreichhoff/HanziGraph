@@ -1,59 +1,46 @@
 import { faqTypes, showFaq } from "./faq.js";
-import { updateVisited, getVisited, addCards, inStudyList, getCardPerformance, readExploreState } from "./data-layer.js";
-import { switchToState, stateKeys } from "./ui-orchestrator.js";
-import { hanziBox } from "./dom.js";
+import { updateVisited, writeExploreState, getVisited, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
+import { hanziBox, notFoundElement, walkThrough } from "./dom.js";
 import { getActiveGraph } from "./options.js";
 
-//TODO break this down further
-//refactor badly needed...hacks on top of hacks at this point
 let maxExamples = 5;
 let currentExamples = {};
 let currentWord = '';
-let tabs = {
-    explore: 'explore',
-    study: 'study'
-};
 
-let wordSet = new Set();
-//TODO(refactor): move activetab to orchestrator
-let activeTab = tabs.explore;
+//TODO(refactor): move notion of activetab to orchestrator
 
 //explore tab items
 const examplesList = document.getElementById('examples');
-//explore tab navigation controls
-const hanziSearchForm = document.getElementById('hanzi-choose');
-const notFoundElement = document.getElementById('not-found-message');
 
-const walkThrough = document.getElementById('walkthrough');
-
-let getZhTts = function () {
+// TODO(refactor): this keeps state around and thus fails when switching to cantonese
+let getVoice = function () {
     //use the first-encountered zh-CN voice for now
     if (!('speechSynthesis' in window)) {
         return null;
     }
-    return speechSynthesis.getVoices().find(voice => (voice.lang === "zh-CN" || voice.lang === "zh_CN"));
+    return speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (getActiveGraph().ttsKey || 'zh-CN'));
 };
 
-let zhTts = getZhTts();
+let voice = getVoice();
 
 //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
 //generally, this thing is weird, so uh...
 //ideally we'd not do this or have any global variable
 if ('speechSynthesis' in window) {
     speechSynthesis.onvoiceschanged = function () {
-        if (!zhTts) {
-            zhTts = getZhTts();
+        if (!voice) {
+            voice = getVoice();
         }
     };
 }
 
 let runTextToSpeech = function (text, anchors) {
-    zhTts = speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (getActiveGraph().ttsKey || 'zh-CN'));
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
-    if (zhTts) {
+    voice = voice || getVoice();
+    if (voice) {
         let utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = zhTts.lang;
-        utterance.voice = zhTts;
+        utterance.lang = voice.lang;
+        utterance.voice = voice;
         utterance.addEventListener('boundary', function (event) {
             if (event.charIndex == null || event.charLength == null) {
                 return false;
@@ -91,13 +78,6 @@ let addSaveToListButton = function (container, text) {
         saveToListButton.textContent = buttonTexts[0];
     });
     container.appendChild(saveToListButton);
-};
-
-let persistState = function () {
-    // const newUrl = `/${currentWord}`;
-    // history.pushState({
-    //     word: currentWord,
-    // }, '', newUrl);
 };
 
 let setupDefinitions = function (definitionList, container) {
@@ -235,7 +215,6 @@ let setupExamples = function (words) {
     walkThrough.style.display = 'none';
     notFoundElement.style.display = 'none';
     //TODO this mixes markup modification and example finding
-    //refactor needed
     while (examplesList.firstChild) {
         examplesList.firstChild.remove();
     }
@@ -259,6 +238,7 @@ let setupExamples = function (words) {
         examplesList.append(item);
     }
     currentWord = words[0];
+    writeExploreState(currentWord);
 };
 
 //TODO can this be combined with the definition rendering part?
@@ -275,40 +255,18 @@ let getCardFromDefinitions = function (text, definitionList) {
 };
 
 let initialize = function () {
-    // disabling on main branch...github pages doesn't do rewrites currently
-    // if (history.state) {
-    //     loadState(history.state);
-    // }
-    //  else if (document.location.pathname !== '/') {
-    //     const state = parseUrl(document.location.pathname);
-    //     if (state) {
-    //         loadState(state);
-    //         history.pushState(state, '', document.location);
-    //     }
-    // } 
-    let oldState = readExploreState();
-    if (oldState) {
-
-    } else {
-        //add a default graph on page load to illustrate the concept
-        let defaultHanzi = ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"];
-        walkThrough.removeAttribute('style');
-        document.dispatchEvent(new CustomEvent('graph-update',
-            { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
-    }
-    //TODO(refactor): set this up
-    // let oldState = JSON.parse(localStorage.getItem('state'));
-    // if (oldState) {
-    //     if (oldState.activeTab === tabs.study) {
-    //         switchToState(states.study);
-    //     }
-    // }
+    // Note: github pages rewrites are only possible via a 404 hack,
+    // so removing the history API integration on the main branch.
+    //TODO(refactor): show study when it was the last state
     document.addEventListener('explore-update', function (event) {
         hanziBox.value = event.detail[0];
         setupExamples(event.detail);
-        switchToState(stateKeys.main);
         updateVisited(event.detail);
     });
+    document.addEventListener('character-set-changed', function () {
+        voice = getVoice();
+    });
+    voice = getVoice();
 };
 
 let makeSentenceNavigable = function (text, container, noExampleChange) {
@@ -341,32 +299,5 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
     container.appendChild(sentenceContainer);
     return anchorList;
 };
-
-let allInGraph = function (word) {
-    for (let i = 0; i < word.length; i++) {
-        if (!hanzi[word[i]]) {
-            return false;
-        }
-    }
-    return true;
-};
-let search = function (value, skipState) {
-    if (value && allInGraph(value) && (definitions[value] || wordSet.has(value))) {
-        notFoundElement.style.display = 'none';
-        document.dispatchEvent(new CustomEvent('graph-update', { detail: value }))
-        setupExamples([value]);
-        if (!skipState) {
-            persistState();
-        }
-        updateVisited([value]);
-    } else {
-        notFoundElement.removeAttribute('style');
-    }
-}
-hanziSearchForm.addEventListener('submit', function (event) {
-    event.preventDefault();
-    search(hanziBox.value);
-    switchToState(stateKeys.main);
-});
 
 export { initialize, makeSentenceNavigable, addTextToSpeech };

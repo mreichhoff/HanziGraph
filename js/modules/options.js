@@ -13,16 +13,16 @@ let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
 let legendElements = document.querySelectorAll('.level-label');
 let graphOptions = {
     oldHsk: {
-        display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend
+        display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend, defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"]
     },
     simplified: {
-        display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100
+        display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100, defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"]
     },
     traditional: {
-        display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100
+        display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100, defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"]
     },
     cantonese: {
-        display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK'
+        display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK', defaultHanzi: ["我", "哥", "路", "細"], transcriptionName: 'jyutping'
     }
 };
 let activeGraphKey = 'simplified';
@@ -60,6 +60,8 @@ function switchGraph() {
                 window.definitions = data;
             });
         writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
+        setTranscriptionLabel();
+        document.dispatchEvent(new Event('character-set-changed'));
     }
 }
 
@@ -77,15 +79,17 @@ function getWordSet(graph) {
     return wordSet;
 };
 
+function setTranscriptionLabel() {
+    if (showPinyinCheckbox.checked) {
+        togglePinyinLabel.innerText = `Turn off ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
+    } else {
+        togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
+    }
+}
 function initialize() {
     graphSelector.addEventListener('change', switchGraph);
     showPinyinCheckbox.addEventListener('change', function () {
-        let toggleLabel = togglePinyinLabel;
-        if (showPinyinCheckbox.checked) {
-            toggleLabel.innerText = 'Turn off pinyin in examples';
-        } else {
-            toggleLabel.innerText = 'Turn on pinyin in examples';
-        }
+        setTranscriptionLabel();
         writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
     });
 
@@ -102,12 +106,11 @@ function initialize() {
     // though maybe graph could own some too....
     let pastOptions = readOptionState();
     if (pastOptions) {
+        graphSelector.value = pastOptions.selectedCharacterSet;
+        activeGraphKey = pastOptions.selectedCharacterSet;
         showPinyinCheckbox.checked = pastOptions.transcriptions;
         showPinyinCheckbox.dispatchEvent(new Event('change'));
         recommendationsDifficultySelector.value = pastOptions.recommendationsDifficulty;
-        recommendationsDifficultySelector.dispatchEvent(new Event('change'));
-        graphSelector.value = pastOptions.selectedCharacterSet;
-        activeGraphKey = pastOptions.selectedCharacterSet;
         recommendationsDifficultySelector.dispatchEvent(new Event('change'));
     }
     window.wordSet = getWordSet(hanzi);

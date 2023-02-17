@@ -242,7 +242,12 @@ let writeOptionState = function (showPinyin, recommendationsDifficulty, selected
 let readExploreState = function () {
     return JSON.parse(localStorage.getItem('exploreState'));
 };
+let writeExploreState = function (word) {
+    localStorage.setItem('exploreState', JSON.stringify({
+        word: word
+    }));
+}
 
 let initialize = function () { };
 
-export { readExploreState, readOptionState, writeOptionState, getVisited, updateVisited, registerCallback, saveStudyList, addCards, inStudyList, getCardPerformance, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }
+export { readExploreState, writeExploreState, readOptionState, writeOptionState, getVisited, updateVisited, registerCallback, saveStudyList, addCards, inStudyList, getCardPerformance, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }
