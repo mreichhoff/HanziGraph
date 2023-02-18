@@ -1,5 +1,5 @@
 import { initialize as orchestratorInit, stateKeys, switchToState } from "./ui-orchestrator.js"
-import { initialize as baseInit } from "./base.js";
+import { initialize as exploreInit } from "./explore.js";
 import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
 import { initialize as statsInit } from "./stats.js";
@@ -46,7 +46,7 @@ Promise.all(
     optionsInit();
     graphInit();
     studyModeInit();
-    baseInit();
+    exploreInit();
     statsInit();
     faqInit();
     recommendationsInit();
@@ -56,7 +56,7 @@ Promise.all(
         search(hanziBox.value);
         switchToState(stateKeys.main);
     });
-
+    // TODO(refactor): this belongs in explore rather than main
     let oldState = readExploreState();
     if (oldState) {
         document.dispatchEvent(new CustomEvent('graph-update',

@@ -1,4 +1,4 @@
-import { makeSentenceNavigable, addTextToSpeech } from "./base.js";
+import { makeSentenceNavigable, addTextToSpeech } from "./explore.js";
 import { dataTypes, registerCallback, saveStudyList, getStudyList, findOtherCards, removeFromStudyList, recordEvent, studyResult, updateCard, cardTypes } from "./data-layer.js";
 
 const studyContainer = document.getElementById('study-container');

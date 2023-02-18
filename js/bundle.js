@@ -1981,7 +1981,7 @@
             search(hanziBox.value);
             switchToState(stateKeys.main);
         });
-
+        // TODO(refactor): this belongs in explore rather than main
         let oldState = readExploreState();
         if (oldState) {
             document.dispatchEvent(new CustomEvent('graph-update',
