@@ -452,7 +452,7 @@
                 if (i === j || !hanzi[word[j]]) { continue; }
                 if (!hanzi[curr].edges[word[j]]) {
                     hanzi[curr].edges[word[j]] = {
-                        // TODO: stop it
+                        // TODO(refactor): stop it
                         level: 6,
                         words: []
                     };
@@ -585,8 +585,8 @@
         cy.on('tap', 'node', nodeEventHandler);
         cy.on('tap', 'edge', edgeEventHandler);
     }
-    function renderGraph(value, containerElement) {
-        if (inCurrentPath(value)) {
+    function renderGraph(value, containerElement, skipPathCheck) {
+        if (!skipPathCheck && inCurrentPath(value)) {
             return;
         }
         graphContainer.innerHTML = '';
@@ -633,7 +633,7 @@
                 if (!ranUpdate) {
                     //TODO do we need this?
                     ranUpdate = true;
-                    renderGraph(value[i], graphContainer);
+                    renderGraph(value[i], graphContainer, true);
                 } else {
                     addToGraph(value[i]);
                 }
@@ -645,6 +645,7 @@
         document.addEventListener('graph-update', function (event) {
             buildGraph(event.detail);
         });
+        // TODO(refactor): listen to character-set-changed event
         matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
     }
 
@@ -760,28 +761,127 @@
         });
     };
 
+    function getWordLevelsFromGraph(graph) {
+        let ranks = {};
+        Object.keys(graph).forEach(x => {
+            ranks[x] = graph[x].node.level;
+            Object.keys(graph[x].edges || {}).forEach(edge => {
+                graph[x].edges[edge].words.forEach(word => {
+                    ranks[word] = graph[x].edges[edge].level;
+                });
+            });
+        });
+        return ranks;
+    }
+
+    function getWordSetFromFrequency(list) {
+        let ranks = {};
+        for (let i = 0; i < list.length; i++) {
+            ranks[list[i]] = i + 1;//plus one to not zero index frequencies
+        }
+        return ranks;
+    }
+    // Attempting to mostly recreate the scripts/hanzi_graph.py on the client...
+    function buildGraphFromFrequencyList(freqs, ranks) {
+        const maxEdges = 8;
+        const maxWordsPerEdge = 2;
+        const maxIndexForMultipleWordsOnEdge = 20000;
+        let graph = {};
+        let currentLevel = 0;
+        let maxForCurrentLevel = ranks[currentLevel];
+        for (let i = 0; i < freqs.length; i++) {
+            if (i > maxForCurrentLevel) {
+                currentLevel++;
+                maxForCurrentLevel = ranks[currentLevel];
+            }
+            const word = freqs[i];
+            // first, ensure all the characters in this word are in the graph with the current level.
+            for (let j = 0; j < word.length; j++) {
+                const character = word[j];
+                if (!(character in graph)) {
+                    graph[character] = {
+                        node: {
+                            level: currentLevel + 1 //avoid zero index
+                        },
+                        edges: {}
+                    };
+                }
+            }
+            for (let j = 0; j < word.length; j++) {
+                const outerCharacter = word[j];
+                for (let k = 0; k < word.length; k++) {
+                    const character = word[k];
+                    if (j === k) {
+                        continue;
+                    }
+                    if (!(outerCharacter in graph[character].edges) && Object.keys(graph[character].edges).length < maxEdges) {
+                        graph[character].edges[outerCharacter] = { level: currentLevel + 1, words: [] };
+                    }
+                    if (graph[character].edges[outerCharacter] && graph[character].edges[outerCharacter].words.length < maxWordsPerEdge
+                        && !graph[character].edges[outerCharacter].words.includes(word)) {
+                        if (i < maxIndexForMultipleWordsOnEdge || graph[character].edges[outerCharacter].words.length === 0) {
+                            graph[character].edges[outerCharacter].words.push(word);
+                        }
+                    }
+                }
+            }
+        }
+        return graph;
+    }
+
     const graphSelector = document.getElementById('graph-selector');
     const showPinyinCheckbox = document.getElementById('show-pinyin');
     const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
     const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
     let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
-    let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
-    let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
+    let freqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
+    let freqRanks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
 
     let legendElements = document.querySelectorAll('.level-label');
-    let graphOptions = {
-        oldHsk: {
-            display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend, defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"]
+    const graphOptions = {
+        hsk: {
+            display: 'HSK Wordlist',
+            prefix: 'hsk',
+            legend: hskLegend,
+            defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
+            // while the other options load a wordset for the entire language, and use frequency for sorting,
+            // HSK is based on a specific test instead. It accordingly places less weight on frequency.
+            type: 'test'
         },
         simplified: {
-            display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100, defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"]
+            display: 'Simplified',
+            prefix: 'simplified',
+            legend: freqLegend,
+            ranks: freqRanks,
+            augmentPath: 'data/simplified',
+            definitionsAugmentPath: 'data/simplified/definitions',
+            partitionCount: 100,
+            defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
+            type: 'frequency'
         },
         traditional: {
-            display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100, defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"]
+            display: 'Traditional',
+            prefix: 'traditional',
+            legend: freqLegend,
+            ranks: freqRanks,
+            augmentPath: 'data/traditional',
+            definitionsAugmentPath: 'data/traditional/definitions',
+            partitionCount: 100,
+            defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"],
+            type: 'frequency'
         },
         cantonese: {
-            display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK', defaultHanzi: ["我", "哥", "路", "細"], transcriptionName: 'jyutping'
+            display: 'Cantonese',
+            prefix: 'cantonese',
+            legend: freqLegend,
+            ranks: freqRanks,
+            definitionsAugmentPath: 'data/cantonese/definitions',
+            partitionCount: 100,
+            ttsKey: 'zh-HK',
+            defaultHanzi: ["我", "哥", "路", "細"],
+            transcriptionName: 'jyutping',
+            type: 'frequency'
         }
     };
     let activeGraphKey = 'simplified';
@@ -796,47 +896,55 @@
             activeGraphKey = value;
             let activeGraph = graphOptions[activeGraphKey];
             let prefix = activeGraph.prefix;
+            let promises = [];
+            // TODO(refactor): can we combine loading logic here and in main.js?
             //fetch regardless...allow service worker and/or browser cache to optimize
-            fetch(`./data/${prefix}/graph.json`)
-                .then(response => response.json())
-                .then(function (data) {
-                    window.hanzi = data;
-                    graphChanged();
-                    legendElements.forEach((x, index) => {
-                        x.innerText = activeGraph.legend[index];
-                    });
-                    // TODO(refactor): this will need to change as we switch to a frequency list...
-                    window.wordSet = getWordSet(hanzi);
-                });
-            fetch(`./data/${prefix}/sentences.json`)
-                .then(response => response.json())
-                .then(function (data) {
-                    window.sentences = data;
-                });
-            fetch(`./data/${prefix}/definitions.json`)
-                .then(response => response.json())
-                .then(function (data) {
-                    window.definitions = data;
-                });
+            if (activeGraph.type === 'frequency') {
+                promises.push(
+                    fetch(`./data/${prefix}/wordlist.json`)
+                        .then(response => response.json())
+                        .then(function (data) {
+                            window.wordSet = getWordSetFromFrequency(data);
+                            window.hanzi = buildGraphFromFrequencyList(data, activeGraph.ranks);
+                            graphChanged();
+                        }));
+            } else if (activeGraph.type === 'test') {
+                promises.push(
+                    fetch(`./data/${prefix}/graph.json`)
+                        .then(response => response.json())
+                        .then(function (data) {
+                            window.hanzi = data;
+                            window.wordSet = getWordLevelsFromGraph(hanzi);
+                            graphChanged();
+                        })
+                );
+            }
+            promises.push(
+                fetch(`./data/${prefix}/sentences.json`)
+                    .then(response => response.json())
+                    .then(function (data) {
+                        window.sentences = data;
+                    })
+            );
+            promises.push(
+                fetch(`./data/${prefix}/definitions.json`)
+                    .then(response => response.json())
+                    .then(function (data) {
+                        window.definitions = data;
+                    })
+            );
             writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
             setTranscriptionLabel();
-            document.dispatchEvent(new Event('character-set-changed'));
+            // TODO(refactor): have recommendations.js react to the character-set-changed event
+            legendElements.forEach((x, index) => {
+                x.innerText = activeGraph.legend[index];
+            });
+            Promise.all(promises).then(() => {
+                document.dispatchEvent(new CustomEvent('character-set-changed', { detail: activeGraph }));
+            });
         }
     }
 
-    function getWordSet(graph) {
-        //yeah, probably a better way...
-        let wordSet = new Set();
-        Object.keys(graph).forEach(x => {
-            wordSet.add(x);
-            Object.keys(graph[x].edges || {}).forEach(edge => {
-                graph[x].edges[edge].words.forEach(word => {
-                    wordSet.add(word);
-                });
-            });
-        });
-        return wordSet;
-    }
     function setTranscriptionLabel() {
         if (showPinyinCheckbox.checked) {
             togglePinyinLabel.innerText = `Turn off ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
@@ -853,15 +961,11 @@
 
         recommendationsDifficultySelector.addEventListener('change', function () {
             let val = recommendationsDifficultySelector.value;
+            // TODO(refactor): should this be another event type? Should recommendations just own this?
             preferencesChanged(val);
             writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
         });
 
-        //TODO(refactor): make readOptionState in data-layer.js, make a write method too, passing in state from this class
-        // then remove all the options state from base, which is mostly in its initialize.
-        // we'll then use different localstorage keys for options state (simplified vs traditional, pinyin checked, etc) vs 
-        // the current UI state (which orchestrator should own) vs what is shown in graph and explore (which explore should own)
-        // though maybe graph could own some too....
         let pastOptions = readOptionState();
         if (pastOptions) {
             graphSelector.value = pastOptions.selectedCharacterSet;
@@ -871,7 +975,12 @@
             recommendationsDifficultySelector.value = pastOptions.recommendationsDifficulty;
             recommendationsDifficultySelector.dispatchEvent(new Event('change'));
         }
-        window.wordSet = getWordSet(hanzi);
+        if (graphOptions[activeGraphKey].type === 'frequency') {
+            window.wordSet = getWordSetFromFrequency(window.freqs);
+            window.hanzi = buildGraphFromFrequencyList(window.freqs, graphOptions[activeGraphKey].ranks);
+        } else {
+            window.wordSet = getWordLevelsFromGraph(window.hanzi);
+        }
     }
 
     let maxExamples = 5;
@@ -1038,11 +1147,29 @@
                 currentExamples[word].push(...examples);
             });
     };
-    let renderDefinitions = function (definitionList, container) {
+
+    let augmentDefinitions = function (word, container) {
+        const activeGraph = getActiveGraph();
+        fetch(`./${activeGraph.definitionsAugmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
+            .then(response => response.json())
+            .then(function (data) {
+                if (!container) {
+                    return false;
+                }
+                setupDefinitions(data[word], container);
+                // TODO(refactor): should this be moved to setupDefinitions (and same with setupExamples/augmentExamples)?
+                currentExamples[word].push(getCardFromDefinitions(word, data[word]));
+            });
+    };
+    let renderDefinitions = function (word, definitionList, container) {
         let definitionsContainer = document.createElement('ul');
         definitionsContainer.className = 'definitions';
-        setupDefinitions(definitionList, definitionsContainer);
         container.appendChild(definitionsContainer);
+        if (definitionList.length > 0) {
+            setupDefinitions(definitionList, definitionsContainer);
+        } else if (getActiveGraph().definitionsAugmentPath) {
+            augmentDefinitions(word, definitionsContainer);
+        }
     };
     let renderWordHeader = function (word, container) {
         let wordHolder = document.createElement('h2');
@@ -1102,7 +1229,7 @@
             let item = document.createElement('li');
             item.classList.add('word-data');
             renderWordHeader(words[i], item);
-            renderDefinitions(definitionList, item);
+            renderDefinitions(words[i], definitionList, item);
             renderContext(words[i], item);
             renderExamples(words[i], examples, item);
 
@@ -1936,16 +2063,8 @@
 
     const hanziSearchForm = document.getElementById('hanzi-choose');
 
-    function allInGraph(word) {
-        for (let i = 0; i < word.length; i++) {
-            if (!hanzi[word[i]]) {
-                return false;
-            }
-        }
-        return true;
-    }
     function search(value) {
-        if (value && allInGraph(value) && (definitions[value] || wordSet.has(value))) {
+        if (value && (definitions[value] || (value in wordSet))) {
             notFoundElement.style.display = 'none';
             document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
             document.dispatchEvent(new CustomEvent('explore-update', { detail: [value] }));
@@ -1953,19 +2072,40 @@
             notFoundElement.removeAttribute('style');
         }
     }
-
-    Promise.all(
-        [
+    let dataLoads;
+    if (window.graphFetch) {
+        dataLoads = [
             window.graphFetch
                 .then(response => response.json())
-                .then(data => window.hanzi = data),
+                .then(data => {
+                    window.hanzi = data;
+                }),
             window.sentencesFetch
                 .then(response => response.json())
                 .then(data => window.sentences = data),
             window.definitionsFetch
                 .then(response => response.json())
                 .then(data => window.definitions = data)
-        ]
+        ];
+    } else {
+        // assume freqs are used instead, and the graph is derived from that
+        dataLoads = [
+            window.freqsFetch
+                .then(response => response.json())
+                .then(data => {
+                    window.freqs = data;
+                }),
+            window.sentencesFetch
+                .then(response => response.json())
+                .then(data => window.sentences = data),
+            window.definitionsFetch
+                .then(response => response.json())
+                .then(data => window.definitions = data)
+        ];
+    }
+
+    Promise.all(
+        dataLoads
     ).then(_ => {
         initialize$7();
         initialize$3();
@@ -1996,6 +2136,5 @@
                 { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
         }
     });
-    //ideally we'll continue adding to this
 
 })();

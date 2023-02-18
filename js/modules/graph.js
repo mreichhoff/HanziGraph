@@ -12,7 +12,7 @@ function addEdges(word) {
             if (i === j || !hanzi[word[j]]) { continue; }
             if (!hanzi[curr].edges[word[j]]) {
                 hanzi[curr].edges[word[j]] = {
-                    // TODO: stop it
+                    // TODO(refactor): stop it
                     level: 6,
                     words: []
                 };
@@ -146,8 +146,8 @@ function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEv
     cy.on('tap', 'node', nodeEventHandler);
     cy.on('tap', 'edge', edgeEventHandler);
 }
-function renderGraph(value, containerElement) {
-    if (inCurrentPath(value)) {
+function renderGraph(value, containerElement, skipPathCheck) {
+    if (!skipPathCheck && inCurrentPath(value)) {
         return;
     }
     graphContainer.innerHTML = '';
@@ -194,7 +194,7 @@ function buildGraph(value) {
             if (!ranUpdate) {
                 //TODO do we need this?
                 ranUpdate = true;
-                renderGraph(value[i], graphContainer);
+                renderGraph(value[i], graphContainer, true);
             } else {
                 addToGraph(value[i]);
             }
@@ -205,12 +205,9 @@ function buildGraph(value) {
 function initialize() {
     document.addEventListener('graph-update', function (event) {
         buildGraph(event.detail);
-    })
+    });
+    // TODO(refactor): listen to character-set-changed event
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
 }
 
-// TODO(refactor): this file should own the entire graph. It should just be given what to render
-// and set up its own event handlers and everything else instead of having base.js listen to events
-// and delegate, though there may be some need to have other files be aware (e.g., when switching graphs between
-// traditional and simplified)
 export { initialize, isInGraph }

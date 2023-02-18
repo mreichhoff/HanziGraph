@@ -1,5 +1,6 @@
 import { graphChanged, preferencesChanged } from "./recommendations.js"
 import { readOptionState, writeOptionState } from "./data-layer.js"
+import { getWordLevelsFromGraph, getWordSetFromFrequency, buildGraphFromFrequencyList } from "./graph-functions.js";
 
 const graphSelector = document.getElementById('graph-selector');
 const showPinyinCheckbox = document.getElementById('show-pinyin');
@@ -7,22 +8,53 @@ const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
-let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
-let bigFreqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
+let freqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
+let freqRanks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
 
 let legendElements = document.querySelectorAll('.level-label');
-let graphOptions = {
-    oldHsk: {
-        display: 'HSK Wordlist', prefix: 'hsk', legend: hskLegend, defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"]
+const graphOptions = {
+    hsk: {
+        display: 'HSK Wordlist',
+        prefix: 'hsk',
+        legend: hskLegend,
+        defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
+        // while the other options load a wordset for the entire language, and use frequency for sorting,
+        // HSK is based on a specific test instead. It accordingly places less weight on frequency.
+        type: 'test'
     },
     simplified: {
-        display: 'Simplified', prefix: 'simplified', legend: bigFreqLegend, augmentPath: 'data/simplified', partitionCount: 100, defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"]
+        display: 'Simplified',
+        prefix: 'simplified',
+        legend: freqLegend,
+        ranks: freqRanks,
+        augmentPath: 'data/simplified',
+        definitionsAugmentPath: 'data/simplified/definitions',
+        partitionCount: 100,
+        defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
+        type: 'frequency'
     },
     traditional: {
-        display: 'Traditional', prefix: 'traditional', legend: bigFreqLegend, augmentPath: 'data/traditional', partitionCount: 100, defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"]
+        display: 'Traditional',
+        prefix: 'traditional',
+        legend: freqLegend,
+        ranks: freqRanks,
+        augmentPath: 'data/traditional',
+        definitionsAugmentPath: 'data/traditional/definitions',
+        partitionCount: 100,
+        defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"],
+        type: 'frequency'
     },
     cantonese: {
-        display: 'Cantonese', prefix: 'cantonese', legend: freqLegend, ttsKey: 'zh-HK', defaultHanzi: ["我", "哥", "路", "細"], transcriptionName: 'jyutping'
+        display: 'Cantonese',
+        prefix: 'cantonese',
+        legend: freqLegend,
+        ranks: freqRanks,
+        definitionsAugmentPath: 'data/cantonese/definitions',
+        partitionCount: 100,
+        ttsKey: 'zh-HK',
+        defaultHanzi: ["我", "哥", "路", "細"],
+        transcriptionName: 'jyutping',
+        type: 'frequency'
     }
 };
 let activeGraphKey = 'simplified';
@@ -37,47 +69,54 @@ function switchGraph() {
         activeGraphKey = value;
         let activeGraph = graphOptions[activeGraphKey];
         let prefix = activeGraph.prefix;
+        let promises = [];
+        // TODO(refactor): can we combine loading logic here and in main.js?
         //fetch regardless...allow service worker and/or browser cache to optimize
-        fetch(`./data/${prefix}/graph.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                window.hanzi = data;
-                graphChanged();
-                legendElements.forEach((x, index) => {
-                    x.innerText = activeGraph.legend[index];
-                });
-                // TODO(refactor): this will need to change as we switch to a frequency list...
-                window.wordSet = getWordSet(hanzi);
-            });
-        fetch(`./data/${prefix}/sentences.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                window.sentences = data;
-            });
-        fetch(`./data/${prefix}/definitions.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                window.definitions = data;
-            });
+        if (activeGraph.type === 'frequency') {
+            promises.push(
+                fetch(`./data/${prefix}/wordlist.json`)
+                    .then(response => response.json())
+                    .then(function (data) {
+                        window.wordSet = getWordSetFromFrequency(data);
+                        window.hanzi = buildGraphFromFrequencyList(data, activeGraph.ranks);
+                        graphChanged();
+                    }));
+        } else if (activeGraph.type === 'test') {
+            promises.push(
+                fetch(`./data/${prefix}/graph.json`)
+                    .then(response => response.json())
+                    .then(function (data) {
+                        window.hanzi = data;
+                        window.wordSet = getWordLevelsFromGraph(hanzi);
+                        graphChanged();
+                    })
+            );
+        }
+        promises.push(
+            fetch(`./data/${prefix}/sentences.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    window.sentences = data;
+                })
+        );
+        promises.push(
+            fetch(`./data/${prefix}/definitions.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    window.definitions = data;
+                })
+        );
         writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
         setTranscriptionLabel();
-        document.dispatchEvent(new Event('character-set-changed'));
+        // TODO(refactor): have recommendations.js react to the character-set-changed event
+        legendElements.forEach((x, index) => {
+            x.innerText = activeGraph.legend[index];
+        });
+        Promise.all(promises).then(() => {
+            document.dispatchEvent(new CustomEvent('character-set-changed', { detail: activeGraph }));
+        });
     }
 }
-
-function getWordSet(graph) {
-    //yeah, probably a better way...
-    let wordSet = new Set();
-    Object.keys(graph).forEach(x => {
-        wordSet.add(x);
-        Object.keys(graph[x].edges || {}).forEach(edge => {
-            graph[x].edges[edge].words.forEach(word => {
-                wordSet.add(word);
-            });
-        });
-    });
-    return wordSet;
-};
 
 function setTranscriptionLabel() {
     if (showPinyinCheckbox.checked) {
@@ -95,15 +134,11 @@ function initialize() {
 
     recommendationsDifficultySelector.addEventListener('change', function () {
         let val = recommendationsDifficultySelector.value;
+        // TODO(refactor): should this be another event type? Should recommendations just own this?
         preferencesChanged(val);
         writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
     });
 
-    //TODO(refactor): make readOptionState in data-layer.js, make a write method too, passing in state from this class
-    // then remove all the options state from base, which is mostly in its initialize.
-    // we'll then use different localstorage keys for options state (simplified vs traditional, pinyin checked, etc) vs 
-    // the current UI state (which orchestrator should own) vs what is shown in graph and explore (which explore should own)
-    // though maybe graph could own some too....
     let pastOptions = readOptionState();
     if (pastOptions) {
         graphSelector.value = pastOptions.selectedCharacterSet;
@@ -113,7 +148,12 @@ function initialize() {
         recommendationsDifficultySelector.value = pastOptions.recommendationsDifficulty;
         recommendationsDifficultySelector.dispatchEvent(new Event('change'));
     }
-    window.wordSet = getWordSet(hanzi);
+    if (graphOptions[activeGraphKey].type === 'frequency') {
+        window.wordSet = getWordSetFromFrequency(window.freqs);
+        window.hanzi = buildGraphFromFrequencyList(window.freqs, graphOptions[activeGraphKey].ranks);
+    } else {
+        window.wordSet = getWordLevelsFromGraph(window.hanzi);
+    }
 }
 
 export { initialize, getActiveGraph }

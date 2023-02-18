@@ -11,16 +11,8 @@ import { hanziBox, notFoundElement, walkThrough } from "./dom.js";
 
 const hanziSearchForm = document.getElementById('hanzi-choose');
 
-function allInGraph(word) {
-    for (let i = 0; i < word.length; i++) {
-        if (!hanzi[word[i]]) {
-            return false;
-        }
-    }
-    return true;
-}
 function search(value) {
-    if (value && allInGraph(value) && (definitions[value] || wordSet.has(value))) {
+    if (value && (definitions[value] || (value in wordSet))) {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
         document.dispatchEvent(new CustomEvent('explore-update', { detail: [value] }));
@@ -28,12 +20,14 @@ function search(value) {
         notFoundElement.removeAttribute('style');
     }
 }
-
-Promise.all(
-    [
+let dataLoads;
+if (window.graphFetch) {
+    dataLoads = [
         window.graphFetch
             .then(response => response.json())
-            .then(data => window.hanzi = data),
+            .then(data => {
+                window.hanzi = data;
+            }),
         window.sentencesFetch
             .then(response => response.json())
             .then(data => window.sentences = data),
@@ -41,6 +35,25 @@ Promise.all(
             .then(response => response.json())
             .then(data => window.definitions = data)
     ]
+} else {
+    // assume freqs are used instead, and the graph is derived from that
+    dataLoads = [
+        window.freqsFetch
+            .then(response => response.json())
+            .then(data => {
+                window.freqs = data;
+            }),
+        window.sentencesFetch
+            .then(response => response.json())
+            .then(data => window.sentences = data),
+        window.definitionsFetch
+            .then(response => response.json())
+            .then(data => window.definitions = data)
+    ]
+}
+
+Promise.all(
+    dataLoads
 ).then(_ => {
     orchestratorInit();
     optionsInit();
@@ -71,4 +84,3 @@ Promise.all(
             { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
     }
 });
-//ideally we'll continue adding to this

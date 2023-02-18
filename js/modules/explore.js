@@ -167,11 +167,29 @@ let augmentExamples = function (word, container) {
             currentExamples[word].push(...examples);
         });
 };
-let renderDefinitions = function (definitionList, container) {
+
+let augmentDefinitions = function (word, container) {
+    const activeGraph = getActiveGraph();
+    fetch(`./${activeGraph.definitionsAugmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
+        .then(response => response.json())
+        .then(function (data) {
+            if (!container) {
+                return false;
+            }
+            setupDefinitions(data[word], container);
+            // TODO(refactor): should this be moved to setupDefinitions (and same with setupExamples/augmentExamples)?
+            currentExamples[word].push(getCardFromDefinitions(word, data[word]));
+        });
+};
+let renderDefinitions = function (word, definitionList, container) {
     let definitionsContainer = document.createElement('ul');
     definitionsContainer.className = 'definitions';
-    setupDefinitions(definitionList, definitionsContainer);
     container.appendChild(definitionsContainer);
+    if (definitionList.length > 0) {
+        setupDefinitions(definitionList, definitionsContainer);
+    } else if (getActiveGraph().definitionsAugmentPath) {
+        augmentDefinitions(word, definitionsContainer);
+    }
 }
 let renderWordHeader = function (word, container) {
     let wordHolder = document.createElement('h2');
@@ -231,7 +249,7 @@ let setupExamples = function (words) {
         let item = document.createElement('li');
         item.classList.add('word-data');
         renderWordHeader(words[i], item);
-        renderDefinitions(definitionList, item);
+        renderDefinitions(words[i], definitionList, item);
         renderContext(words[i], item);
         renderExamples(words[i], examples, item);
 
