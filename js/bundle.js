@@ -2112,9 +2112,6 @@
         initialize$5();
         initialize$1();
         initialize$2();
-        initialize();
-        initialize$6();
-        initialize$4();
 
         hanziSearchForm.addEventListener('submit', function (event) {
             event.preventDefault();
@@ -2135,6 +2132,10 @@
             document.dispatchEvent(new CustomEvent('graph-update',
                 { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
         }
+        // These happen last due to being secondary functionality
+        initialize();
+        initialize$6();
+        initialize$4();
     });
 
 })();

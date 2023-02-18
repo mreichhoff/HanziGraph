@@ -60,9 +60,6 @@ Promise.all(
     graphInit();
     studyModeInit();
     exploreInit();
-    statsInit();
-    faqInit();
-    recommendationsInit();
 
     hanziSearchForm.addEventListener('submit', function (event) {
         event.preventDefault();
@@ -83,4 +80,8 @@ Promise.all(
         document.dispatchEvent(new CustomEvent('graph-update',
             { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
     }
+    // These happen last due to being secondary functionality
+    statsInit();
+    faqInit();
+    recommendationsInit();
 });

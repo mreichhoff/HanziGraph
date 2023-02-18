@@ -12,7 +12,7 @@ let currentWord = '';
 //explore tab items
 const examplesList = document.getElementById('examples');
 
-// TODO(refactor): this keeps state around and thus fails when switching to cantonese
+// TODO(refactor): consider removal of getActiveGraph...
 let getVoice = function () {
     //use the first-encountered zh-CN voice for now
     if (!('speechSynthesis' in window)) {

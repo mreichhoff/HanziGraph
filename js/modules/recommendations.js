@@ -3,7 +3,7 @@ import { isInGraph } from "./graph.js";
 import { showFaq, faqTypes } from "./faq.js";
 import { hanziBox } from "./dom.js";
 
-//TODO: like in other files, remove these dups
+//TODO: like in other files, remove dups from dom.js if possible
 const recommendationsContainer = document.getElementById('recommendations-container');
 let recommendationsWorker = null;
 let levelPreferences = 'any';

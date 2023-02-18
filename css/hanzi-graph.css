@@ -558,6 +558,16 @@ ul {
     -webkit-user-select: none;
 }
 
+.result-indicator-right {
+    background-color: #6de200;
+    color: black;
+}
+
+.result-indicator-wrong {
+    background-color: #ff635f;
+    color: black;
+}
+
 .card-question,
 .card-answer {
     text-align: center;
