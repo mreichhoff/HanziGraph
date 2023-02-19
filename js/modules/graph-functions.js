@@ -22,7 +22,7 @@ function getWordSetFromFrequency(list) {
 function buildGraphFromFrequencyList(freqs, ranks) {
     const maxEdges = 8;
     const maxWordsPerEdge = 2;
-    const maxIndexForMultipleWordsOnEdge = 20000;
+    const maxIndexForMultipleWordsOnEdge = 10000;
     let graph = {};
     let currentLevel = 0;
     let maxForCurrentLevel = ranks[currentLevel];

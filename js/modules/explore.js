@@ -2,6 +2,10 @@ import { faqTypes, showFaq } from "./faq.js";
 import { updateVisited, writeExploreState, getVisited, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough } from "./dom.js";
 import { getActiveGraph } from "./options.js";
+import { renderCoverageGraph } from "./coverage-graph"
+
+let coverageGraph = {};
+let charFreqs = {};
 
 let maxExamples = 5;
 let currentExamples = {};
@@ -203,10 +207,9 @@ let renderContext = function (word, container) {
     let contextHolder = document.createElement('p');
     //TODO not so thrilled with 'context' as the name here
     contextHolder.className = 'context';
-    contextHolder.innerText += "Previously: ";
     [...word].forEach(x => {
         let cardData = getCardPerformance(x);
-        contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${cardData.count} flash cards (${cardData.performance}% correct). `;
+        contextHolder.innerText += `You've seen ${x} ${getVisited()[x] || 0} times. It's in ${cardData.count} flash cards (${cardData.performance}% correct). `;
     });
     let contextFaqLink = document.createElement('a');
     contextFaqLink.className = 'active-link';
@@ -214,7 +217,10 @@ let renderContext = function (word, container) {
     contextFaqLink.addEventListener('click', function () {
         showFaq(faqTypes.context);
     });
-    contextHolder.appendChild(contextFaqLink);
+    let contextFaqContainer = document.createElement('p');
+    contextFaqContainer.classList.add('context-line');
+    contextFaqContainer.appendChild(contextFaqLink);
+    contextHolder.appendChild(contextFaqContainer);
     container.appendChild(contextHolder);
 };
 let renderExamples = function (word, examples, container) {
@@ -227,6 +233,82 @@ let renderExamples = function (word, examples, container) {
         augmentExamples(word, exampleList);
     }
 };
+let renderMeaning = function (word, definitionList, examples, container) {
+    renderDefinitions(word, definitionList, container);
+    renderExamples(word, examples, container);
+};
+let renderStats = function (word, container) {
+    renderContext(word, container);
+    let wordFreqHeader = document.createElement('h3');
+    wordFreqHeader.classList.add('explore-stat-header');
+    wordFreqHeader.innerText = 'Word Frequency Stats';
+    if (coverageGraph && ('words' in coverageGraph) && (word in wordSet)) {
+        container.appendChild(wordFreqHeader);
+        renderCoverageGraph(coverageGraph['words'], word, wordSet[word], 'word', container);
+    }
+    let charFreqHeader = document.createElement('h3');
+    charFreqHeader.classList.add('explore-stat-header');
+    charFreqHeader.innerText = 'Character Frequency Stats';
+    container.appendChild(charFreqHeader);
+    let rendered = false;
+    for (const character of word) {
+        if (charFreqs && (character in charFreqs) && coverageGraph && ('chars' in coverageGraph)) {
+            renderCoverageGraph(coverageGraph['chars'], character, charFreqs[character], 'character', container);
+            rendered = true;
+        }
+    }
+    if (!rendered) {
+        charFreqHeader.style.display = 'none';
+    }
+    //TODO(refactor): render the coverage stats, if available
+    // if not available, still render the "word ranks X, characters rank Y"
+};
+
+function switchToTab(id, tabs) {
+    for (const [tabId, elements] of Object.entries(tabs)) {
+        const separator = elements.tab.querySelector('.separator');
+        if (id === tabId) {
+            elements.tab.classList.add('active');
+            separator.classList.add('expand');
+            elements.panel.removeAttribute('style');
+            elements.panel.classList.add(elements.transitionClass);
+            elements.callback();
+        } else {
+            elements.tab.classList.remove('active');
+            separator.classList.remove('expand');
+            elements.panel.classList.remove(elements.transitionClass);
+            elements.panel.style.display = 'none';
+        }
+    }
+}
+
+let renderTabs = function (container, texts, panels, renderCallbacks, transitionClasses) {
+    // TODO(refactor): callbacks to hide/show the panels
+    let tabs = {};
+    for (let i = 0; i < texts.length; i++) {
+        let tabContainer = document.createElement('span');
+        tabContainer.classList.add('explore-tab');
+        tabContainer.id = `tab-${texts[i].toLowerCase()}`;
+        if (i === 0) {
+            tabContainer.classList.add('active');
+        }
+        tabContainer.innerText = texts[i];
+        let separator = document.createElement('span');
+        separator.classList.add('separator');
+        tabContainer.appendChild(separator);
+        container.appendChild(tabContainer);
+        tabs[tabContainer.id] = {
+            tab: tabContainer,
+            panel: panels[i],
+            callback: renderCallbacks[i],
+            transitionClass: transitionClasses[i]
+        };
+
+        tabContainer.addEventListener('click', function (event) {
+            switchToTab(event.target.id, tabs);
+        });
+    }
+}
 let setupExamples = function (words) {
     currentExamples = {};
     // if we're showing examples, never show the walkthrough.
@@ -246,12 +328,23 @@ let setupExamples = function (words) {
         //setup current examples for potential future export
         currentExamples[words[i]].push(...examples);
 
-        let item = document.createElement('li');
+        let item = document.createElement('div');
         item.classList.add('word-data');
+        let tabs = document.createElement('div');
         renderWordHeader(words[i], item);
-        renderDefinitions(words[i], definitionList, item);
-        renderContext(words[i], item);
-        renderExamples(words[i], examples, item);
+        tabs.classList.add('explore-tabs');
+        item.appendChild(tabs);
+        let meaningContainer = document.createElement('div');
+        meaningContainer.classList.add('explore-subpane');
+        let statsContainer = document.createElement('div');
+        statsContainer.classList.add('explore-subpane');
+        renderTabs(tabs, ['Meaning', 'Stats'], [meaningContainer, statsContainer], [() => { }, function () {
+            statsContainer.innerHTML = '';
+            renderStats(words[i], statsContainer)
+        }], ['slide-in', 'slide-in']);
+        item.appendChild(meaningContainer);
+        renderMeaning(words[i], definitionList, examples, meaningContainer);
+        item.appendChild(statsContainer);
 
         examplesList.append(item);
     }
@@ -271,7 +364,25 @@ let getCardFromDefinitions = function (text, definitionList) {
     result['en'] = answer;
     return result;
 };
-
+let fetchStats = function () {
+    const activeGraph = getActiveGraph();
+    if (activeGraph.hasCoverage === 'all') {
+        fetch(`./data/${activeGraph.prefix}/coverage_stats.json`)
+            .then(response => response.json())
+            .then(data => coverageGraph = data);
+        fetch(`./data/${activeGraph.prefix}/character_freq_list.json`)
+            .then(response => response.json())
+            .then(data => {
+                charFreqs = {}
+                for (let i = 0; i < data.length; i++) {
+                    charFreqs[data[i]] = i + 1;//avoid zero indexing
+                }
+            });
+    } else {
+        charFreqs = null;
+        coverageGraph = null;
+    }
+}
 let initialize = function () {
     // Note: github pages rewrites are only possible via a 404 hack,
     // so removing the history API integration on the main branch.
@@ -283,8 +394,10 @@ let initialize = function () {
     });
     document.addEventListener('character-set-changed', function () {
         voice = getVoice();
+        fetchStats();
     });
     voice = getVoice();
+    fetchStats();
 };
 
 let makeSentenceNavigable = function (text, container, noExampleChange) {

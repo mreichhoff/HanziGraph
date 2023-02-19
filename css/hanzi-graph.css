@@ -162,12 +162,57 @@ ul {
     height: var(--graph-height);
 }
 
-.word-header {
+#examples {
+    /* avoid scrollbars while animations run, otherwise unnecessary */
+    overflow-x: hidden;
+    margin-top: 4px;
+}
+
+.explore-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    text-align: center;
+    margin: 4px auto;
     border-bottom: var(--border);
 }
 
+.explore-tab {
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.separator {
+    display: none;
+}
+
+.explore-tab.active {
+    opacity: 1;
+}
+
+.explore-tab.active .separator {
+    width: 60px;
+    height: 4px;
+    display: block;
+    background: #ff635f;
+    margin: 2px auto 0 auto;
+}
+
+.expand {
+    animation: expand 0.5s;
+}
+
+@keyframes expand {
+    0% {
+        width: 0;
+    }
+
+    100% {
+        width: 60px;
+    }
+}
+
 .definitions {
-    margin-top: 6px;
+    margin: 6px 0;
 }
 
 .definition {
@@ -175,7 +220,16 @@ ul {
 }
 
 .example {
-    margin: 20px 0;
+    margin: 16px 0;
+}
+
+.explore-stat-header {
+    margin: 0;
+    text-align: center;
+}
+
+.coverage-explanation {
+    margin: 0 0 6px 0;
 }
 
 .target {
@@ -200,10 +254,9 @@ ul {
     font-size: var(--base-language-font-size);
 }
 
-.context {
-    margin: 0 0 12px 0;
-    font-size: var(--base-language-font-size);
-    opacity: var(--tertiary-opacity);
+.context,
+.context-line {
+    margin: 4px 0 0 0;
 }
 
 .recommendations {
@@ -661,6 +714,20 @@ p.related-card {
 
 .slide-in {
     animation: slide-in 0.25s;
+}
+
+@keyframes slide-from-right {
+    0% {
+        transform: translateX(25%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.slide-from-right {
+    animation: slide-from-right 0.25s;
 }
 
 @media (prefers-color-scheme: dark) {

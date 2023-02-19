@@ -31,7 +31,8 @@ const graphOptions = {
         definitionsAugmentPath: 'data/simplified/definitions',
         partitionCount: 100,
         defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
-        type: 'frequency'
+        type: 'frequency',
+        hasCoverage: 'all'
     },
     traditional: {
         display: 'Traditional',
@@ -42,7 +43,8 @@ const graphOptions = {
         definitionsAugmentPath: 'data/traditional/definitions',
         partitionCount: 100,
         defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"],
-        type: 'frequency'
+        type: 'frequency',
+        hasCoverage: 'all'
     },
     cantonese: {
         display: 'Cantonese',
