@@ -41,6 +41,7 @@
     --legend-circle-height: 20px;
     --legend-circle-margin: 0.5px 4px;
     --level-marker-margin: 0px auto;
+    --stat-pane-into-font-size: 16px;
 }
 
 html {
@@ -230,6 +231,11 @@ ul {
 
 .coverage-explanation {
     margin: 0 0 6px 0;
+}
+
+.context,
+.coverage-explanation {
+    font-size: var(--stat-pane-into-font-size);
 }
 
 .target {
@@ -773,6 +779,7 @@ p.related-card {
         --legend-circle-margin: 0 0.5px;
         --legend-circle-height: 14px;
         --level-marker-margin: 5px auto 0 auto;
+        --stat-pane-into-font-size: 14px;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
