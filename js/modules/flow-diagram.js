@@ -190,7 +190,7 @@ function initialize() {
     });
     container.addEventListener('hidden', function () {
         showingFlow = false;
-        switchButton.innerText = "Show Flow Diagram";
+        switchButton.innerText = "Show Flow";
     });
     switchButtonContainer.addEventListener('click', function () {
         if (!showingFlow) {
