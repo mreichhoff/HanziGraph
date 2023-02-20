@@ -32,7 +32,8 @@ const graphOptions = {
         partitionCount: 100,
         defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
         type: 'frequency',
-        hasCoverage: 'all'
+        hasCoverage: 'all',
+        collocationsPath: 'data/simplified/collocations'
     },
     traditional: {
         display: 'Traditional',
@@ -44,7 +45,8 @@ const graphOptions = {
         partitionCount: 100,
         defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"],
         type: 'frequency',
-        hasCoverage: 'all'
+        hasCoverage: 'all',
+        collocationsPath: 'data/traditional/collocations'
     },
     cantonese: {
         display: 'Cantonese',
@@ -60,6 +62,14 @@ const graphOptions = {
     }
 };
 let activeGraphKey = 'simplified';
+
+function getPartition(word, numPartitions) {
+    let total = 0;
+    for (let i = 0; i < word.length; i++) {
+        total += word.charCodeAt(i);
+    }
+    return total % numPartitions;
+};
 
 function getActiveGraph() {
     return graphOptions[activeGraphKey];
@@ -158,4 +168,4 @@ function initialize() {
     }
 }
 
-export { initialize, getActiveGraph }
+export { initialize, getActiveGraph, getPartition }

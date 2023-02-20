@@ -7,6 +7,8 @@
     --primary-header-font-size: 30px;
     --secondary-header-font-size: 28px;
     --tertiary-header-font-size: 24px;
+    --secondary-control-font-size: 14px;
+    --secondary-input-container-columns: 1fr 160px;
     --header-font-family: Times, serif;
     --border: 1px solid #3333;
     --search-font-size: 20px;
@@ -42,6 +44,7 @@
     --legend-circle-margin: 0.5px 4px;
     --level-marker-margin: 0px auto;
     --stat-pane-into-font-size: 16px;
+    --secondary-input-container-width: 80%;
 }
 
 html {
@@ -57,6 +60,7 @@ body {
     font-weight: var(--primary-font-weight);
     background-color: var(--background-color);
     color: var(--primary-font-color);
+    overflow-x: hidden;
 }
 
 a {
@@ -122,6 +126,19 @@ ul {
     box-shadow: var(--primary-input-box-shadow);
 }
 
+.secondary-input-container {
+    display: grid;
+    grid-template-columns: var(--secondary-input-container-columns);
+    width: var(--secondary-input-container-width);
+    margin: 0 auto;
+}
+
+.secondary-input {
+    font-size: var(--secondary-control-font-size);
+    margin: 10px 4px 0 0;
+    text-align: right;
+}
+
 .primary-container {
     height: var(--primary-container-height);
 }
@@ -159,8 +176,15 @@ ul {
     font-size: 30px;
 }
 
-#graph {
+#graph,
+#flow-diagram-container {
     height: var(--graph-height);
+}
+
+.flow-explanation {
+    margin: 10px auto;
+    text-align: center;
+    font-size: var(--secondary-control-font-size);
 }
 
 #examples {
@@ -266,12 +290,13 @@ ul {
 }
 
 .recommendations {
-    margin: 0;
-    font-size: var(--base-language-font-size);
+    margin: 0 0 0 6px;
+    font-size: var(--secondary-control-font-size);
+    text-align: left;
 }
 
 .recommendation {
-    margin: 0 12px;
+    margin: 0 10px;
     font-size: var(--target-language-secondary-font-size);
 }
 
@@ -755,7 +780,8 @@ p.related-card {
         --section-container-margin: 0 10px;
         --bar-chart-width: 100%;
         --bar-chart-height: 250px;
-        --bar-chart-font-size: 12px
+        --bar-chart-font-size: 12px;
+        --secondary-input-container-width: 100%;
     }
 }
 
@@ -780,6 +806,9 @@ p.related-card {
         --legend-circle-height: 14px;
         --level-marker-margin: 5px auto 0 auto;
         --stat-pane-into-font-size: 14px;
+        --secondary-control-font-size: 12px;
+        --secondary-input-container-columns: 1fr 115px;
+        --target-language-font-size: 22px;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
@@ -796,7 +825,9 @@ p.related-card {
         height: 45%;
     }
 
-    #graph-container {
+    /* TODO(refactor): why is this media query using graph-container but the main one uses graph? */
+    #graph-container,
+    #flow-diagram-container {
         height: 55%;
     }
 }

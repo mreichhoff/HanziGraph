@@ -63,7 +63,7 @@ let initialize = function () {
                         }
                     }
                     if (!stillShown) {
-                        recommendationsContainer.style.display = 'none';
+                        recommendationsContainer.style.visibility = 'hidden';
                     }
                 });
                 recommendationsContainer.appendChild(curr);
@@ -79,7 +79,7 @@ let initialize = function () {
                 recommendationsContainer.appendChild(recommendationsFaqLink);
             }
         } else {
-            recommendationsContainer.style.display = 'none';
+            recommendationsContainer.style.visibility = 'hidden';
         }
     }
 };

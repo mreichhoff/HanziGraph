@@ -8,6 +8,7 @@ import { initialize as graphInit } from "./graph.js";
 import { initialize as optionsInit, getActiveGraph } from "./options.js";
 import { readExploreState } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough } from "./dom.js";
+import { initialize as flowDiagramInit } from "./flow-diagram.js";
 
 const hanziSearchForm = document.getElementById('hanzi-choose');
 
@@ -60,7 +61,7 @@ Promise.all(
     graphInit();
     studyModeInit();
     exploreInit();
-
+    flowDiagramInit();
     hanziSearchForm.addEventListener('submit', function (event) {
         event.preventDefault();
         search(hanziBox.value);

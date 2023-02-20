@@ -35,7 +35,11 @@
             <form id="hanzi-choose">
                 <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word" type="search"
                     enterkeyhint="search" class="primary-input" />
-                <div id="recommendations-container" class="recommendations" style="display:none"></div>
+                <div id="query-options-container" class="secondary-input-container">
+                    <div id="recommendations-container" class="recommendations" style="visibility: hidden;"></div>
+                    <div id="graph-switch-container" class="secondary-input" style="display:none"><a class="active-link"
+                            id="graph-switch">Show Flow Diagram</a></div>
+                </div>
                 <!-- TODO: remove that recommendations hack... -->
                 <input id="submit-button" type="submit" value="Go!" style="display:none" />
             </form>
@@ -138,6 +142,7 @@
                     </div>
                 </div>
             </div>
+            <div id="flow-diagram-container" class="primary-panel" style="display:none"></div>
         </div>
     </div>
     <div id="stats-container" style="display:none">

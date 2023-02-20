@@ -138,7 +138,40 @@
         }
     }
 
-    function initialize$7() {
+    const diagrams = {
+        main: {
+            element: document.getElementById('graph-container'),
+            animation: 'slide-from-right'
+        },
+        flow: {
+            element: document.getElementById('flow-diagram-container'),
+            animation: 'slide-from-right'
+        }
+    };
+    const diagramKeys = { main: 'main', flow: 'flow' };
+    let currentDiagramKey = diagramKeys.main;
+
+    function switchDiagramView(diagramKey) {
+        if (diagramKey === currentDiagramKey) {
+            return;
+        }
+        for (const [key, diagram] of Object.entries(diagrams)) {
+            if (key !== diagramKey) {
+                diagram.element.style.display = 'none';
+                diagram.element.dispatchEvent(new Event('hidden'));
+            } else {
+                diagram.element.removeAttribute('style');
+                diagram.element.classList.add(diagram.animation);
+                diagram.element.addEventListener('animationend', function () {
+                    diagram.element.classList.remove(diagram.animation);
+                }, { once: true });
+                diagram.element.dispatchEvent(new Event('shown'));
+            }
+        }
+        currentDiagramKey = diagramKey;
+    }
+
+    function initialize$8() {
         leftButtonContainer.addEventListener('click', function () {
             if (states[currentState].leftState) {
                 switchToState(states[currentState].leftState);
@@ -178,7 +211,7 @@
         faqTypesToElement[faqType].removeAttribute('style');
     };
 
-    let initialize$6 = function () {
+    let initialize$7 = function () {
         faqContainer.addEventListener('hidden', function () {
             Object.values(faqTypesToElement).forEach(x => {
                 x.style.display = 'none';
@@ -641,7 +674,7 @@
         }
     }
 
-    function initialize$5() {
+    function initialize$6() {
         document.addEventListener('graph-update', function (event) {
             buildGraph(event.detail);
         });
@@ -655,7 +688,7 @@
     let levelPreferences = 'any';
 
 
-    let initialize$4 = function () {
+    let initialize$5 = function () {
         recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
         recommendationsWorker.postMessage({
             type: 'graph',
@@ -709,7 +742,7 @@
                             }
                         }
                         if (!stillShown) {
-                            recommendationsContainer.style.display = 'none';
+                            recommendationsContainer.style.visibility = 'hidden';
                         }
                     });
                     recommendationsContainer.appendChild(curr);
@@ -725,7 +758,7 @@
                     recommendationsContainer.appendChild(recommendationsFaqLink);
                 }
             } else {
-                recommendationsContainer.style.display = 'none';
+                recommendationsContainer.style.visibility = 'hidden';
             }
         };
     };
@@ -859,7 +892,8 @@
             partitionCount: 100,
             defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
             type: 'frequency',
-            hasCoverage: 'all'
+            hasCoverage: 'all',
+            collocationsPath: 'data/simplified/collocations'
         },
         traditional: {
             display: 'Traditional',
@@ -871,7 +905,8 @@
             partitionCount: 100,
             defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"],
             type: 'frequency',
-            hasCoverage: 'all'
+            hasCoverage: 'all',
+            collocationsPath: 'data/traditional/collocations'
         },
         cantonese: {
             display: 'Cantonese',
@@ -888,6 +923,13 @@
     };
     let activeGraphKey = 'simplified';
 
+    function getPartition(word, numPartitions) {
+        let total = 0;
+        for (let i = 0; i < word.length; i++) {
+            total += word.charCodeAt(i);
+        }
+        return total % numPartitions;
+    }
     function getActiveGraph() {
         return graphOptions[activeGraphKey];
     }
@@ -954,7 +996,7 @@
             togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
         }
     }
-    function initialize$3() {
+    function initialize$4() {
         graphSelector.addEventListener('change', switchGraph);
         showPinyinCheckbox.addEventListener('change', function () {
             setTranscriptionLabel();
@@ -1090,6 +1132,68 @@
       return [min, max];
     }
 
+    class InternMap extends Map {
+      constructor(entries, key = keyof) {
+        super();
+        Object.defineProperties(this, {_intern: {value: new Map()}, _key: {value: key}});
+        if (entries != null) for (const [key, value] of entries) this.set(key, value);
+      }
+      get(key) {
+        return super.get(intern_get(this, key));
+      }
+      has(key) {
+        return super.has(intern_get(this, key));
+      }
+      set(key, value) {
+        return super.set(intern_set(this, key), value);
+      }
+      delete(key) {
+        return super.delete(intern_delete(this, key));
+      }
+    }
+
+    class InternSet extends Set {
+      constructor(values, key = keyof) {
+        super();
+        Object.defineProperties(this, {_intern: {value: new Map()}, _key: {value: key}});
+        if (values != null) for (const value of values) this.add(value);
+      }
+      has(value) {
+        return super.has(intern_get(this, value));
+      }
+      add(value) {
+        return super.add(intern_set(this, value));
+      }
+      delete(value) {
+        return super.delete(intern_delete(this, value));
+      }
+    }
+
+    function intern_get({_intern, _key}, value) {
+      const key = _key(value);
+      return _intern.has(key) ? _intern.get(key) : value;
+    }
+
+    function intern_set({_intern, _key}, value) {
+      const key = _key(value);
+      if (_intern.has(key)) return _intern.get(key);
+      _intern.set(key, value);
+      return value;
+    }
+
+    function intern_delete({_intern, _key}, value) {
+      const key = _key(value);
+      if (_intern.has(key)) {
+        value = _intern.get(key);
+        _intern.delete(key);
+      }
+      return value;
+    }
+
+    function keyof(value) {
+      return value !== null && typeof value === "object" ? value.valueOf() : value;
+    }
+
     const e10 = Math.sqrt(50),
         e5 = Math.sqrt(10),
         e2 = Math.sqrt(2);
@@ -1146,7 +1250,7 @@
       return (reverse ? -1 : 1) * (inc < 0 ? 1 / -inc : inc);
     }
 
-    function max(values, valueof) {
+    function max$1(values, valueof) {
       let max;
       if (valueof === undefined) {
         for (const value of values) {
@@ -1187,15 +1291,25 @@
       return Array.from(values, (value, index) => mapper(value, index, values));
     }
 
+    function union(...others) {
+      const set = new InternSet();
+      for (const other of others) {
+        for (const o of other) {
+          set.add(o);
+        }
+      }
+      return set;
+    }
+
     function identity$3(x) {
       return x;
     }
 
     var top = 1,
-        right = 2,
+        right$1 = 2,
         bottom = 3,
-        left = 4,
-        epsilon$1 = 1e-6;
+        left$1 = 4,
+        epsilon$2 = 1e-6;
 
     function translateX(x) {
       return "translate(" + x + ",0)";
@@ -1209,7 +1323,7 @@
       return d => +scale(d);
     }
 
-    function center(scale, offset) {
+    function center$1(scale, offset) {
       offset = Math.max(0, scale.bandwidth() - offset * 2) / 2;
       if (scale.round()) offset = Math.round(offset);
       return d => +scale(d) + offset;
@@ -1227,8 +1341,8 @@
           tickSizeOuter = 6,
           tickPadding = 3,
           offset = typeof window !== "undefined" && window.devicePixelRatio > 1 ? 0 : 0.5,
-          k = orient === top || orient === left ? -1 : 1,
-          x = orient === left || orient === right ? "x" : "y",
+          k = orient === top || orient === left$1 ? -1 : 1,
+          x = orient === left$1 || orient === right$1 ? "x" : "y",
           transform = orient === top || orient === bottom ? translateX : translateY;
 
       function axis(context) {
@@ -1238,7 +1352,7 @@
             range = scale.range(),
             range0 = +range[0] + offset,
             range1 = +range[range.length - 1] + offset,
-            position = (scale.bandwidth ? center : number$1)(scale.copy(), offset),
+            position = (scale.bandwidth ? center$1 : number$1)(scale.copy(), offset),
             selection = context.selection ? context.selection() : context,
             path = selection.selectAll(".domain").data([null]),
             tick = selection.selectAll(".tick").data(values, scale).order(),
@@ -1269,18 +1383,18 @@
           text = text.transition(context);
 
           tickExit = tickExit.transition(context)
-              .attr("opacity", epsilon$1)
+              .attr("opacity", epsilon$2)
               .attr("transform", function(d) { return isFinite(d = position(d)) ? transform(d + offset) : this.getAttribute("transform"); });
 
           tickEnter
-              .attr("opacity", epsilon$1)
+              .attr("opacity", epsilon$2)
               .attr("transform", function(d) { var p = this.parentNode.__axis; return transform((p && isFinite(p = p(d)) ? p : position(d)) + offset); });
         }
 
         tickExit.remove();
 
         path
-            .attr("d", orient === left || orient === right
+            .attr("d", orient === left$1 || orient === right$1
                 ? (tickSizeOuter ? "M" + k * tickSizeOuter + "," + range0 + "H" + offset + "V" + range1 + "H" + k * tickSizeOuter : "M" + offset + "," + range0 + "V" + range1)
                 : (tickSizeOuter ? "M" + range0 + "," + k * tickSizeOuter + "V" + offset + "H" + range1 + "V" + k * tickSizeOuter : "M" + range0 + "," + offset + "H" + range1));
 
@@ -1299,7 +1413,7 @@
             .attr("fill", "none")
             .attr("font-size", 10)
             .attr("font-family", "sans-serif")
-            .attr("text-anchor", orient === right ? "start" : orient === left ? "end" : "middle");
+            .attr("text-anchor", orient === right$1 ? "start" : orient === left$1 ? "end" : "middle");
 
         selection
             .each(function() { this.__axis = position; });
@@ -1353,7 +1467,7 @@
     }
 
     function axisLeft(scale) {
-      return axis(left, scale);
+      return axis(left$1, scale);
     }
 
     var noop = {value: () => {}};
@@ -1555,11 +1669,11 @@
       };
     }
 
-    var find = Array.prototype.find;
+    var find$1 = Array.prototype.find;
 
     function childFind(match) {
       return function() {
-        return find.call(this.children, match);
+        return find$1.call(this.children, match);
       };
     }
 
@@ -1627,7 +1741,7 @@
       querySelectorAll: function(selector) { return this._parent.querySelectorAll(selector); }
     };
 
-    function constant$2(x) {
+    function constant$4(x) {
       return function() {
         return x;
       };
@@ -1714,7 +1828,7 @@
           parents = this._parents,
           groups = this._groups;
 
-      if (typeof value !== "function") value = constant$2(value);
+      if (typeof value !== "function") value = constant$4(value);
 
       for (var m = groups.length, update = new Array(m), enter = new Array(m), exit = new Array(m), j = 0; j < m; ++j) {
         var parent = parents[j],
@@ -2773,7 +2887,7 @@
           : m1) * 255;
     }
 
-    var constant$1 = x => () => x;
+    var constant$3 = x => () => x;
 
     function linear$1(a, d) {
       return function(t) {
@@ -2789,13 +2903,13 @@
 
     function gamma(y) {
       return (y = +y) === 1 ? nogamma : function(a, b) {
-        return b - a ? exponential(a, b, y) : constant$1(isNaN(a) ? b : a);
+        return b - a ? exponential(a, b, y) : constant$3(isNaN(a) ? b : a);
       };
     }
 
     function nogamma(a, b) {
       var d = b - a;
-      return d ? linear$1(a, d) : constant$1(isNaN(a) ? b : a);
+      return d ? linear$1(a, d) : constant$3(isNaN(a) ? b : a);
     }
 
     var interpolateRgb = (function rgbGamma(y) {
@@ -2951,7 +3065,7 @@
 
     function interpolate$1(a, b) {
       var t = typeof b, c;
-      return b == null || t === "boolean" ? constant$1(b)
+      return b == null || t === "boolean" ? constant$3(b)
           : (t === "number" ? interpolateNumber
           : t === "string" ? ((c = color(b)) ? (b = c, interpolateRgb) : interpolateString)
           : b instanceof color ? interpolateRgb
@@ -4061,10 +4175,10 @@
     selection.prototype.interrupt = selection_interrupt;
     selection.prototype.transition = selection_transition;
 
-    const pi = Math.PI,
-        tau = 2 * pi,
-        epsilon = 1e-6,
-        tauEpsilon = tau - epsilon;
+    const pi$1 = Math.PI,
+        tau$1 = 2 * pi$1,
+        epsilon$1 = 1e-6,
+        tauEpsilon$1 = tau$1 - epsilon$1;
 
     function append(strings) {
       this._ += strings[0];
@@ -4086,7 +4200,7 @@
       };
     }
 
-    class Path {
+    class Path$1 {
       constructor(digits) {
         this._x0 = this._y0 = // start of current subpath
         this._x1 = this._y1 = null; // end of current subpath
@@ -4131,12 +4245,12 @@
         }
 
         // Or, is (x1,y1) coincident with (x0,y0)? Do nothing.
-        else if (!(l01_2 > epsilon));
+        else if (!(l01_2 > epsilon$1));
 
         // Or, are (x0,y0), (x1,y1) and (x2,y2) collinear?
         // Equivalently, is (x1,y1) coincident with (x2,y2)?
         // Or, is the radius zero? Line to (x1,y1).
-        else if (!(Math.abs(y01 * x21 - y21 * x01) > epsilon) || !r) {
+        else if (!(Math.abs(y01 * x21 - y21 * x01) > epsilon$1) || !r) {
           this._append`L${this._x1 = x1},${this._y1 = y1}`;
         }
 
@@ -4148,12 +4262,12 @@
               l20_2 = x20 * x20 + y20 * y20,
               l21 = Math.sqrt(l21_2),
               l01 = Math.sqrt(l01_2),
-              l = r * Math.tan((pi - Math.acos((l21_2 + l01_2 - l20_2) / (2 * l21 * l01))) / 2),
+              l = r * Math.tan((pi$1 - Math.acos((l21_2 + l01_2 - l20_2) / (2 * l21 * l01))) / 2),
               t01 = l / l01,
               t21 = l / l21;
 
           // If the start tangent is not coincident with (x0,y0), line to.
-          if (Math.abs(t01 - 1) > epsilon) {
+          if (Math.abs(t01 - 1) > epsilon$1) {
             this._append`L${x1 + t01 * x01},${y1 + t01 * y01}`;
           }
 
@@ -4179,7 +4293,7 @@
         }
 
         // Or, is (x0,y0) not coincident with the previous point? Line to (x0,y0).
-        else if (Math.abs(this._x1 - x0) > epsilon || Math.abs(this._y1 - y0) > epsilon) {
+        else if (Math.abs(this._x1 - x0) > epsilon$1 || Math.abs(this._y1 - y0) > epsilon$1) {
           this._append`L${x0},${y0}`;
         }
 
@@ -4187,16 +4301,16 @@
         if (!r) return;
 
         // Does the angle go the wrong way? Flip the direction.
-        if (da < 0) da = da % tau + tau;
+        if (da < 0) da = da % tau$1 + tau$1;
 
         // Is this a complete circle? Draw two arcs to complete the circle.
-        if (da > tauEpsilon) {
+        if (da > tauEpsilon$1) {
           this._append`A${r},${r},0,1,${cw},${x - dx},${y - dy}A${r},${r},0,1,${cw},${this._x1 = x0},${this._y1 = y0}`;
         }
 
         // Is this arc non-empty? Draw an arc!
-        else if (da > epsilon) {
-          this._append`A${r},${r},0,${+(da >= pi)},${cw},${this._x1 = x + r * Math.cos(a1)},${this._y1 = y + r * Math.sin(a1)}`;
+        else if (da > epsilon$1) {
+          this._append`A${r},${r},0,${+(da >= pi$1)},${cw},${this._x1 = x + r * Math.cos(a1)},${this._y1 = y + r * Math.sin(a1)}`;
         }
       }
       rect(x, y, w, h) {
@@ -4561,6 +4675,50 @@
       return this;
     }
 
+    const implicit = Symbol("implicit");
+
+    function ordinal() {
+      var index = new InternMap(),
+          domain = [],
+          range = [],
+          unknown = implicit;
+
+      function scale(d) {
+        let i = index.get(d);
+        if (i === undefined) {
+          if (unknown !== implicit) return unknown;
+          index.set(d, i = domain.push(d) - 1);
+        }
+        return range[i % range.length];
+      }
+
+      scale.domain = function(_) {
+        if (!arguments.length) return domain.slice();
+        domain = [], index = new InternMap();
+        for (const value of _) {
+          if (index.has(value)) continue;
+          index.set(value, domain.push(value) - 1);
+        }
+        return scale;
+      };
+
+      scale.range = function(_) {
+        return arguments.length ? (range = Array.from(_), scale) : range.slice();
+      };
+
+      scale.unknown = function(_) {
+        return arguments.length ? (unknown = _, scale) : unknown;
+      };
+
+      scale.copy = function() {
+        return ordinal(domain, range).unknown(unknown);
+      };
+
+      initRange.apply(scale, arguments);
+
+      return scale;
+    }
+
     function constants(x) {
       return function() {
         return x;
@@ -4851,7 +5009,15 @@
       return initInterpolator.apply(scale, arguments);
     }
 
-    function constant(x) {
+    function colors(specifier) {
+      var n = specifier.length / 6 | 0, colors = new Array(n), i = 0;
+      while (i < n) colors[i] = "#" + specifier.slice(i * 6, ++i * 6);
+      return colors;
+    }
+
+    var schemeTableau10 = colors("4e79a7f28e2ce1575976b7b259a14fedc949af7aa1ff9da79c755fbab0ab");
+
+    function constant$2(x) {
       return function constant() {
         return x;
       };
@@ -4872,7 +5038,7 @@
         return shape;
       };
 
-      return () => new Path(digits);
+      return () => new Path$1(digits);
     }
 
     function array(x) {
@@ -4913,23 +5079,23 @@
       return new Linear(context);
     }
 
-    function x(p) {
+    function x$1(p) {
       return p[0];
     }
 
-    function y(p) {
+    function y$1(p) {
       return p[1];
     }
 
-    function d3line(x$1, y$1) {
-      var defined = constant(true),
+    function d3line(x, y) {
+      var defined = constant$2(true),
           context = null,
           curve = curveLinear,
           output = null,
           path = withPath(line);
 
-      x$1 = typeof x$1 === "function" ? x$1 : (x$1 === undefined) ? x : constant(x$1);
-      y$1 = typeof y$1 === "function" ? y$1 : (y$1 === undefined) ? y : constant(y$1);
+      x = typeof x === "function" ? x : (x === undefined) ? x$1 : constant$2(x);
+      y = typeof y === "function" ? y : (y === undefined) ? y$1 : constant$2(y);
 
       function line(data) {
         var i,
@@ -4945,22 +5111,22 @@
             if (defined0 = !defined0) output.lineStart();
             else output.lineEnd();
           }
-          if (defined0) output.point(+x$1(d, i, data), +y$1(d, i, data));
+          if (defined0) output.point(+x(d, i, data), +y(d, i, data));
         }
 
         if (buffer) return output = null, buffer + "" || null;
       }
 
       line.x = function(_) {
-        return arguments.length ? (x$1 = typeof _ === "function" ? _ : constant(+_), line) : x$1;
+        return arguments.length ? (x = typeof _ === "function" ? _ : constant$2(+_), line) : x;
       };
 
       line.y = function(_) {
-        return arguments.length ? (y$1 = typeof _ === "function" ? _ : constant(+_), line) : y$1;
+        return arguments.length ? (y = typeof _ === "function" ? _ : constant$2(+_), line) : y;
       };
 
       line.defined = function(_) {
-        return arguments.length ? (defined = typeof _ === "function" ? _ : constant(!!_), line) : defined;
+        return arguments.length ? (defined = typeof _ === "function" ? _ : constant$2(!!_), line) : defined;
       };
 
       line.curve = function(_) {
@@ -5076,7 +5242,7 @@
 
         // Compute default domains.
         if (xDomain === undefined) xDomain = extent(X);
-        if (yDomain === undefined) yDomain = [0, max(Y)];
+        if (yDomain === undefined) yDomain = [0, max$1(Y)];
 
         // Construct scales and axes.
         const xScale = xType(xDomain, xRange);
@@ -5277,13 +5443,6 @@
             exampleHolder.appendChild(enHolder);
             exampleList.appendChild(exampleHolder);
         }
-    };
-    let getPartition = function (word, numPartitions) {
-        let total = 0;
-        for (let i = 0; i < word.length; i++) {
-            total += word.charCodeAt(i);
-        }
-        return total % numPartitions;
     };
 
     // expects callers to ensure augmentation is available
@@ -5512,7 +5671,7 @@
             coverageGraph = null;
         }
     };
-    let initialize$2 = function () {
+    let initialize$3 = function () {
         // Note: github pages rewrites are only possible via a 404 hack,
         // so removing the history API integration on the main branch.
         //TODO(refactor): show study when it was the last state
@@ -5544,6 +5703,7 @@
                 a.addEventListener('click', function () {
                     if (hanzi[character]) {
                         if (character in hanzi) {
+                            switchDiagramView(diagramKeys.main);
                             document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
                         }
                         //enable seamless switching, but don't update if we're already showing examples for character
@@ -5733,7 +5893,7 @@
         relatedCardsContainer.style.display = 'none';
     };
 
-    let initialize$1 = function () {
+    let initialize$2 = function () {
         showAnswerButton.addEventListener('click', function () {
             showAnswerButton.innerText = "Answer:";
             cardAnswerContainer.removeAttribute('style');
@@ -6294,7 +6454,7 @@
         document.getElementById('hourly-container').removeAttribute('style');
     };
 
-    let initialize = function () {
+    let initialize$1 = function () {
         lastLevelUpdatePrefix = getActiveGraph().prefix;
         updateTotalsByLevel();
         statsShow.addEventListener('click', function () {
@@ -6322,6 +6482,1035 @@
             hourlyGraphDetail.innerText = '';
         });
     };
+
+    function max(values, valueof) {
+      let max;
+      if (valueof === undefined) {
+        for (const value of values) {
+          if (value != null
+              && (max < value || (max === undefined && value >= value))) {
+            max = value;
+          }
+        }
+      } else {
+        let index = -1;
+        for (let value of values) {
+          if ((value = valueof(value, ++index, values)) != null
+              && (max < value || (max === undefined && value >= value))) {
+            max = value;
+          }
+        }
+      }
+      return max;
+    }
+
+    function min(values, valueof) {
+      let min;
+      if (valueof === undefined) {
+        for (const value of values) {
+          if (value != null
+              && (min > value || (min === undefined && value >= value))) {
+            min = value;
+          }
+        }
+      } else {
+        let index = -1;
+        for (let value of values) {
+          if ((value = valueof(value, ++index, values)) != null
+              && (min > value || (min === undefined && value >= value))) {
+            min = value;
+          }
+        }
+      }
+      return min;
+    }
+
+    function sum(values, valueof) {
+      let sum = 0;
+      if (valueof === undefined) {
+        for (let value of values) {
+          if (value = +value) {
+            sum += value;
+          }
+        }
+      } else {
+        let index = -1;
+        for (let value of values) {
+          if (value = +valueof(value, ++index, values)) {
+            sum += value;
+          }
+        }
+      }
+      return sum;
+    }
+
+    function targetDepth(d) {
+      return d.target.depth;
+    }
+
+    function left(node) {
+      return node.depth;
+    }
+
+    function right(node, n) {
+      return n - 1 - node.height;
+    }
+
+    function justify(node, n) {
+      return node.sourceLinks.length ? node.depth : n - 1;
+    }
+
+    function center(node) {
+      return node.targetLinks.length ? node.depth
+          : node.sourceLinks.length ? min(node.sourceLinks, targetDepth) - 1
+          : 0;
+    }
+
+    function constant$1(x) {
+      return function() {
+        return x;
+      };
+    }
+
+    function ascendingSourceBreadth(a, b) {
+      return ascendingBreadth(a.source, b.source) || a.index - b.index;
+    }
+
+    function ascendingTargetBreadth(a, b) {
+      return ascendingBreadth(a.target, b.target) || a.index - b.index;
+    }
+
+    function ascendingBreadth(a, b) {
+      return a.y0 - b.y0;
+    }
+
+    function value(d) {
+      return d.value;
+    }
+
+    function defaultId(d) {
+      return d.index;
+    }
+
+    function defaultNodes(graph) {
+      return graph.nodes;
+    }
+
+    function defaultLinks(graph) {
+      return graph.links;
+    }
+
+    function find(nodeById, id) {
+      const node = nodeById.get(id);
+      if (!node) throw new Error("missing: " + id);
+      return node;
+    }
+
+    function computeLinkBreadths({nodes}) {
+      for (const node of nodes) {
+        let y0 = node.y0;
+        let y1 = y0;
+        for (const link of node.sourceLinks) {
+          link.y0 = y0 + link.width / 2;
+          y0 += link.width;
+        }
+        for (const link of node.targetLinks) {
+          link.y1 = y1 + link.width / 2;
+          y1 += link.width;
+        }
+      }
+    }
+
+    function Sankey() {
+      let x0 = 0, y0 = 0, x1 = 1, y1 = 1; // extent
+      let dx = 24; // nodeWidth
+      let dy = 8, py; // nodePadding
+      let id = defaultId;
+      let align = justify;
+      let sort;
+      let linkSort;
+      let nodes = defaultNodes;
+      let links = defaultLinks;
+      let iterations = 6;
+
+      function sankey() {
+        const graph = {nodes: nodes.apply(null, arguments), links: links.apply(null, arguments)};
+        computeNodeLinks(graph);
+        computeNodeValues(graph);
+        computeNodeDepths(graph);
+        computeNodeHeights(graph);
+        computeNodeBreadths(graph);
+        computeLinkBreadths(graph);
+        return graph;
+      }
+
+      sankey.update = function(graph) {
+        computeLinkBreadths(graph);
+        return graph;
+      };
+
+      sankey.nodeId = function(_) {
+        return arguments.length ? (id = typeof _ === "function" ? _ : constant$1(_), sankey) : id;
+      };
+
+      sankey.nodeAlign = function(_) {
+        return arguments.length ? (align = typeof _ === "function" ? _ : constant$1(_), sankey) : align;
+      };
+
+      sankey.nodeSort = function(_) {
+        return arguments.length ? (sort = _, sankey) : sort;
+      };
+
+      sankey.nodeWidth = function(_) {
+        return arguments.length ? (dx = +_, sankey) : dx;
+      };
+
+      sankey.nodePadding = function(_) {
+        return arguments.length ? (dy = py = +_, sankey) : dy;
+      };
+
+      sankey.nodes = function(_) {
+        return arguments.length ? (nodes = typeof _ === "function" ? _ : constant$1(_), sankey) : nodes;
+      };
+
+      sankey.links = function(_) {
+        return arguments.length ? (links = typeof _ === "function" ? _ : constant$1(_), sankey) : links;
+      };
+
+      sankey.linkSort = function(_) {
+        return arguments.length ? (linkSort = _, sankey) : linkSort;
+      };
+
+      sankey.size = function(_) {
+        return arguments.length ? (x0 = y0 = 0, x1 = +_[0], y1 = +_[1], sankey) : [x1 - x0, y1 - y0];
+      };
+
+      sankey.extent = function(_) {
+        return arguments.length ? (x0 = +_[0][0], x1 = +_[1][0], y0 = +_[0][1], y1 = +_[1][1], sankey) : [[x0, y0], [x1, y1]];
+      };
+
+      sankey.iterations = function(_) {
+        return arguments.length ? (iterations = +_, sankey) : iterations;
+      };
+
+      function computeNodeLinks({nodes, links}) {
+        for (const [i, node] of nodes.entries()) {
+          node.index = i;
+          node.sourceLinks = [];
+          node.targetLinks = [];
+        }
+        const nodeById = new Map(nodes.map((d, i) => [id(d, i, nodes), d]));
+        for (const [i, link] of links.entries()) {
+          link.index = i;
+          let {source, target} = link;
+          if (typeof source !== "object") source = link.source = find(nodeById, source);
+          if (typeof target !== "object") target = link.target = find(nodeById, target);
+          source.sourceLinks.push(link);
+          target.targetLinks.push(link);
+        }
+        if (linkSort != null) {
+          for (const {sourceLinks, targetLinks} of nodes) {
+            sourceLinks.sort(linkSort);
+            targetLinks.sort(linkSort);
+          }
+        }
+      }
+
+      function computeNodeValues({nodes}) {
+        for (const node of nodes) {
+          node.value = node.fixedValue === undefined
+              ? Math.max(sum(node.sourceLinks, value), sum(node.targetLinks, value))
+              : node.fixedValue;
+        }
+      }
+
+      function computeNodeDepths({nodes}) {
+        const n = nodes.length;
+        let current = new Set(nodes);
+        let next = new Set;
+        let x = 0;
+        while (current.size) {
+          for (const node of current) {
+            node.depth = x;
+            for (const {target} of node.sourceLinks) {
+              next.add(target);
+            }
+          }
+          if (++x > n) throw new Error("circular link");
+          current = next;
+          next = new Set;
+        }
+      }
+
+      function computeNodeHeights({nodes}) {
+        const n = nodes.length;
+        let current = new Set(nodes);
+        let next = new Set;
+        let x = 0;
+        while (current.size) {
+          for (const node of current) {
+            node.height = x;
+            for (const {source} of node.targetLinks) {
+              next.add(source);
+            }
+          }
+          if (++x > n) throw new Error("circular link");
+          current = next;
+          next = new Set;
+        }
+      }
+
+      function computeNodeLayers({nodes}) {
+        const x = max(nodes, d => d.depth) + 1;
+        const kx = (x1 - x0 - dx) / (x - 1);
+        const columns = new Array(x);
+        for (const node of nodes) {
+          const i = Math.max(0, Math.min(x - 1, Math.floor(align.call(null, node, x))));
+          node.layer = i;
+          node.x0 = x0 + i * kx;
+          node.x1 = node.x0 + dx;
+          if (columns[i]) columns[i].push(node);
+          else columns[i] = [node];
+        }
+        if (sort) for (const column of columns) {
+          column.sort(sort);
+        }
+        return columns;
+      }
+
+      function initializeNodeBreadths(columns) {
+        const ky = min(columns, c => (y1 - y0 - (c.length - 1) * py) / sum(c, value));
+        for (const nodes of columns) {
+          let y = y0;
+          for (const node of nodes) {
+            node.y0 = y;
+            node.y1 = y + node.value * ky;
+            y = node.y1 + py;
+            for (const link of node.sourceLinks) {
+              link.width = link.value * ky;
+            }
+          }
+          y = (y1 - y + py) / (nodes.length + 1);
+          for (let i = 0; i < nodes.length; ++i) {
+            const node = nodes[i];
+            node.y0 += y * (i + 1);
+            node.y1 += y * (i + 1);
+          }
+          reorderLinks(nodes);
+        }
+      }
+
+      function computeNodeBreadths(graph) {
+        const columns = computeNodeLayers(graph);
+        py = Math.min(dy, (y1 - y0) / (max(columns, c => c.length) - 1));
+        initializeNodeBreadths(columns);
+        for (let i = 0; i < iterations; ++i) {
+          const alpha = Math.pow(0.99, i);
+          const beta = Math.max(1 - alpha, (i + 1) / iterations);
+          relaxRightToLeft(columns, alpha, beta);
+          relaxLeftToRight(columns, alpha, beta);
+        }
+      }
+
+      // Reposition each node based on its incoming (target) links.
+      function relaxLeftToRight(columns, alpha, beta) {
+        for (let i = 1, n = columns.length; i < n; ++i) {
+          const column = columns[i];
+          for (const target of column) {
+            let y = 0;
+            let w = 0;
+            for (const {source, value} of target.targetLinks) {
+              let v = value * (target.layer - source.layer);
+              y += targetTop(source, target) * v;
+              w += v;
+            }
+            if (!(w > 0)) continue;
+            let dy = (y / w - target.y0) * alpha;
+            target.y0 += dy;
+            target.y1 += dy;
+            reorderNodeLinks(target);
+          }
+          if (sort === undefined) column.sort(ascendingBreadth);
+          resolveCollisions(column, beta);
+        }
+      }
+
+      // Reposition each node based on its outgoing (source) links.
+      function relaxRightToLeft(columns, alpha, beta) {
+        for (let n = columns.length, i = n - 2; i >= 0; --i) {
+          const column = columns[i];
+          for (const source of column) {
+            let y = 0;
+            let w = 0;
+            for (const {target, value} of source.sourceLinks) {
+              let v = value * (target.layer - source.layer);
+              y += sourceTop(source, target) * v;
+              w += v;
+            }
+            if (!(w > 0)) continue;
+            let dy = (y / w - source.y0) * alpha;
+            source.y0 += dy;
+            source.y1 += dy;
+            reorderNodeLinks(source);
+          }
+          if (sort === undefined) column.sort(ascendingBreadth);
+          resolveCollisions(column, beta);
+        }
+      }
+
+      function resolveCollisions(nodes, alpha) {
+        const i = nodes.length >> 1;
+        const subject = nodes[i];
+        resolveCollisionsBottomToTop(nodes, subject.y0 - py, i - 1, alpha);
+        resolveCollisionsTopToBottom(nodes, subject.y1 + py, i + 1, alpha);
+        resolveCollisionsBottomToTop(nodes, y1, nodes.length - 1, alpha);
+        resolveCollisionsTopToBottom(nodes, y0, 0, alpha);
+      }
+
+      // Push any overlapping nodes down.
+      function resolveCollisionsTopToBottom(nodes, y, i, alpha) {
+        for (; i < nodes.length; ++i) {
+          const node = nodes[i];
+          const dy = (y - node.y0) * alpha;
+          if (dy > 1e-6) node.y0 += dy, node.y1 += dy;
+          y = node.y1 + py;
+        }
+      }
+
+      // Push any overlapping nodes up.
+      function resolveCollisionsBottomToTop(nodes, y, i, alpha) {
+        for (; i >= 0; --i) {
+          const node = nodes[i];
+          const dy = (node.y1 - y) * alpha;
+          if (dy > 1e-6) node.y0 -= dy, node.y1 -= dy;
+          y = node.y0 - py;
+        }
+      }
+
+      function reorderNodeLinks({sourceLinks, targetLinks}) {
+        if (linkSort === undefined) {
+          for (const {source: {sourceLinks}} of targetLinks) {
+            sourceLinks.sort(ascendingTargetBreadth);
+          }
+          for (const {target: {targetLinks}} of sourceLinks) {
+            targetLinks.sort(ascendingSourceBreadth);
+          }
+        }
+      }
+
+      function reorderLinks(nodes) {
+        if (linkSort === undefined) {
+          for (const {sourceLinks, targetLinks} of nodes) {
+            sourceLinks.sort(ascendingTargetBreadth);
+            targetLinks.sort(ascendingSourceBreadth);
+          }
+        }
+      }
+
+      // Returns the target.y0 that would produce an ideal link from source to target.
+      function targetTop(source, target) {
+        let y = source.y0 - (source.sourceLinks.length - 1) * py / 2;
+        for (const {target: node, width} of source.sourceLinks) {
+          if (node === target) break;
+          y += width + py;
+        }
+        for (const {source: node, width} of target.targetLinks) {
+          if (node === source) break;
+          y -= width;
+        }
+        return y;
+      }
+
+      // Returns the source.y0 that would produce an ideal link from source to target.
+      function sourceTop(source, target) {
+        let y = target.y0 - (target.targetLinks.length - 1) * py / 2;
+        for (const {source: node, width} of target.targetLinks) {
+          if (node === source) break;
+          y += width + py;
+        }
+        for (const {target: node, width} of source.sourceLinks) {
+          if (node === target) break;
+          y -= width;
+        }
+        return y;
+      }
+
+      return sankey;
+    }
+
+    var pi = Math.PI,
+        tau = 2 * pi,
+        epsilon = 1e-6,
+        tauEpsilon = tau - epsilon;
+
+    function Path() {
+      this._x0 = this._y0 = // start of current subpath
+      this._x1 = this._y1 = null; // end of current subpath
+      this._ = "";
+    }
+
+    function path() {
+      return new Path;
+    }
+
+    Path.prototype = path.prototype = {
+      constructor: Path,
+      moveTo: function(x, y) {
+        this._ += "M" + (this._x0 = this._x1 = +x) + "," + (this._y0 = this._y1 = +y);
+      },
+      closePath: function() {
+        if (this._x1 !== null) {
+          this._x1 = this._x0, this._y1 = this._y0;
+          this._ += "Z";
+        }
+      },
+      lineTo: function(x, y) {
+        this._ += "L" + (this._x1 = +x) + "," + (this._y1 = +y);
+      },
+      quadraticCurveTo: function(x1, y1, x, y) {
+        this._ += "Q" + (+x1) + "," + (+y1) + "," + (this._x1 = +x) + "," + (this._y1 = +y);
+      },
+      bezierCurveTo: function(x1, y1, x2, y2, x, y) {
+        this._ += "C" + (+x1) + "," + (+y1) + "," + (+x2) + "," + (+y2) + "," + (this._x1 = +x) + "," + (this._y1 = +y);
+      },
+      arcTo: function(x1, y1, x2, y2, r) {
+        x1 = +x1, y1 = +y1, x2 = +x2, y2 = +y2, r = +r;
+        var x0 = this._x1,
+            y0 = this._y1,
+            x21 = x2 - x1,
+            y21 = y2 - y1,
+            x01 = x0 - x1,
+            y01 = y0 - y1,
+            l01_2 = x01 * x01 + y01 * y01;
+
+        // Is the radius negative? Error.
+        if (r < 0) throw new Error("negative radius: " + r);
+
+        // Is this path empty? Move to (x1,y1).
+        if (this._x1 === null) {
+          this._ += "M" + (this._x1 = x1) + "," + (this._y1 = y1);
+        }
+
+        // Or, is (x1,y1) coincident with (x0,y0)? Do nothing.
+        else if (!(l01_2 > epsilon));
+
+        // Or, are (x0,y0), (x1,y1) and (x2,y2) collinear?
+        // Equivalently, is (x1,y1) coincident with (x2,y2)?
+        // Or, is the radius zero? Line to (x1,y1).
+        else if (!(Math.abs(y01 * x21 - y21 * x01) > epsilon) || !r) {
+          this._ += "L" + (this._x1 = x1) + "," + (this._y1 = y1);
+        }
+
+        // Otherwise, draw an arc!
+        else {
+          var x20 = x2 - x0,
+              y20 = y2 - y0,
+              l21_2 = x21 * x21 + y21 * y21,
+              l20_2 = x20 * x20 + y20 * y20,
+              l21 = Math.sqrt(l21_2),
+              l01 = Math.sqrt(l01_2),
+              l = r * Math.tan((pi - Math.acos((l21_2 + l01_2 - l20_2) / (2 * l21 * l01))) / 2),
+              t01 = l / l01,
+              t21 = l / l21;
+
+          // If the start tangent is not coincident with (x0,y0), line to.
+          if (Math.abs(t01 - 1) > epsilon) {
+            this._ += "L" + (x1 + t01 * x01) + "," + (y1 + t01 * y01);
+          }
+
+          this._ += "A" + r + "," + r + ",0,0," + (+(y01 * x20 > x01 * y20)) + "," + (this._x1 = x1 + t21 * x21) + "," + (this._y1 = y1 + t21 * y21);
+        }
+      },
+      arc: function(x, y, r, a0, a1, ccw) {
+        x = +x, y = +y, r = +r, ccw = !!ccw;
+        var dx = r * Math.cos(a0),
+            dy = r * Math.sin(a0),
+            x0 = x + dx,
+            y0 = y + dy,
+            cw = 1 ^ ccw,
+            da = ccw ? a0 - a1 : a1 - a0;
+
+        // Is the radius negative? Error.
+        if (r < 0) throw new Error("negative radius: " + r);
+
+        // Is this path empty? Move to (x0,y0).
+        if (this._x1 === null) {
+          this._ += "M" + x0 + "," + y0;
+        }
+
+        // Or, is (x0,y0) not coincident with the previous point? Line to (x0,y0).
+        else if (Math.abs(this._x1 - x0) > epsilon || Math.abs(this._y1 - y0) > epsilon) {
+          this._ += "L" + x0 + "," + y0;
+        }
+
+        // Is this arc empty? We’re done.
+        if (!r) return;
+
+        // Does the angle go the wrong way? Flip the direction.
+        if (da < 0) da = da % tau + tau;
+
+        // Is this a complete circle? Draw two arcs to complete the circle.
+        if (da > tauEpsilon) {
+          this._ += "A" + r + "," + r + ",0,1," + cw + "," + (x - dx) + "," + (y - dy) + "A" + r + "," + r + ",0,1," + cw + "," + (this._x1 = x0) + "," + (this._y1 = y0);
+        }
+
+        // Is this arc non-empty? Draw an arc!
+        else if (da > epsilon) {
+          this._ += "A" + r + "," + r + ",0," + (+(da >= pi)) + "," + cw + "," + (this._x1 = x + r * Math.cos(a1)) + "," + (this._y1 = y + r * Math.sin(a1));
+        }
+      },
+      rect: function(x, y, w, h) {
+        this._ += "M" + (this._x0 = this._x1 = +x) + "," + (this._y0 = this._y1 = +y) + "h" + (+w) + "v" + (+h) + "h" + (-w) + "Z";
+      },
+      toString: function() {
+        return this._;
+      }
+    };
+
+    function constant(x) {
+      return function constant() {
+        return x;
+      };
+    }
+
+    function x(p) {
+      return p[0];
+    }
+
+    function y(p) {
+      return p[1];
+    }
+
+    var slice = Array.prototype.slice;
+
+    function linkSource(d) {
+      return d.source;
+    }
+
+    function linkTarget(d) {
+      return d.target;
+    }
+
+    function link(curve) {
+      var source = linkSource,
+          target = linkTarget,
+          x$1 = x,
+          y$1 = y,
+          context = null;
+
+      function link() {
+        var buffer, argv = slice.call(arguments), s = source.apply(this, argv), t = target.apply(this, argv);
+        if (!context) context = buffer = path();
+        curve(context, +x$1.apply(this, (argv[0] = s, argv)), +y$1.apply(this, argv), +x$1.apply(this, (argv[0] = t, argv)), +y$1.apply(this, argv));
+        if (buffer) return context = null, buffer + "" || null;
+      }
+
+      link.source = function(_) {
+        return arguments.length ? (source = _, link) : source;
+      };
+
+      link.target = function(_) {
+        return arguments.length ? (target = _, link) : target;
+      };
+
+      link.x = function(_) {
+        return arguments.length ? (x$1 = typeof _ === "function" ? _ : constant(+_), link) : x$1;
+      };
+
+      link.y = function(_) {
+        return arguments.length ? (y$1 = typeof _ === "function" ? _ : constant(+_), link) : y$1;
+      };
+
+      link.context = function(_) {
+        return arguments.length ? ((context = _ == null ? null : _), link) : context;
+      };
+
+      return link;
+    }
+
+    function curveHorizontal(context, x0, y0, x1, y1) {
+      context.moveTo(x0, y0);
+      context.bezierCurveTo(x0 = (x0 + x1) / 2, y0, x0, y1, x1, y1);
+    }
+
+    function linkHorizontal() {
+      return link(curveHorizontal);
+    }
+
+    function horizontalSource(d) {
+      return [d.source.x1, d.y0];
+    }
+
+    function horizontalTarget(d) {
+      return [d.target.x0, d.y1];
+    }
+
+    function sankeyLinkHorizontal() {
+      return linkHorizontal()
+          .source(horizontalSource)
+          .target(horizontalTarget);
+    }
+
+    const container = document.getElementById('flow-diagram-container');
+    const switchButtonContainer = document.getElementById('graph-switch-container');
+    const switchButton = document.getElementById('graph-switch');
+
+    function addToTrie(trie, collocation, count, term, maxDepth) {
+        let words = collocation.split(' ');
+        // Avoid clutter via this one simple trick
+        if (words.length > maxDepth) {
+            return maxDepth;
+        }
+        let i = 0;
+        if (!trie[0]) {
+            trie[0] = {};
+            trie[0][term] = { edges: {}, collocations: new Set() };
+        }
+        for (i = 0; i < words.length; i++) {
+            if (words[i] === term) {
+                break;
+            }
+        }
+        // TODO: combine these for loops
+        // TODO are these counts right, especially for those edges distance 1 from the search term?
+        for (let j = i + 1; j < words.length; j++) {
+            if (!trie[j - i]) {
+                trie[j - i] = {};
+            }
+            if (!trie[j - i][words[j]]) {
+                trie[j - i][words[j]] = { edges: {}, collocations: new Set() };
+            }
+            trie[j - i][words[j]].collocations.add(collocation);
+            if (!trie[j - i - 1][words[j - 1]].edges[words[j]]) {
+                trie[j - i - 1][words[j - 1]].edges[words[j]] = 0;
+            }
+            let currentCount = trie[j - i - 1][words[j - 1]].edges[words[j]];
+            trie[j - i - 1][words[j - 1]].edges[words[j]] = Math.max(count, currentCount);//+=count;
+            trie[j - i - 1][words[j - 1]].collocations.add(collocation);
+        }
+        for (let j = i - 1; j >= 0; j--) {
+            if (!trie[j - i]) {
+                trie[j - i] = {};
+            }
+            if (!trie[j - i][words[j]]) {
+                trie[j - i][words[j]] = { edges: {}, collocations: new Set() };
+            }
+            trie[j - i][words[j]].collocations.add(collocation);
+            if (!trie[j - i][words[j]].edges[words[j + 1]]) {
+                trie[j - i][words[j]].edges[words[j + 1]] = 0;
+            }
+            let currentCount = trie[j - i][words[j]].edges[words[j + 1]] || 0;
+            trie[j - i][words[j]].edges[words[j + 1]] = Math.max(count, currentCount);//+=count;
+            trie[j - i][words[j]].collocations.add(collocation);
+        }
+        return -i;
+    }
+
+    function getDiagramElements(trie, rootDepth) {
+        let elements = { nodes: [], edges: [], labels: {}, collocations: {} };
+        let nonRoots = {};
+        nonRoots[rootDepth] = new Set();
+        for (let level = rootDepth; level in trie; level++) {
+            const nodes = trie[level];
+            for (const [node, data] of Object.entries(nodes)) {
+                if (!(node in window.wordSet)) {
+                    continue;
+                }
+                elements.nodes.push({
+                    id: `${node}-${level}`
+                });
+                elements.labels[`${node}-${level}`] = node;
+                elements.collocations[`${node}-${level}`] = data.collocations;
+                for (const edge of Object.keys(data.edges)) {
+                    if (!(edge in wordSet)) {
+                        continue;
+                    }
+                    if (!nonRoots[level + 1]) {
+                        nonRoots[level + 1] = new Set();
+                    }
+                    nonRoots[level + 1].add(edge);
+                    elements.edges.push({
+                        //id: `${node}-${level}-${edge}`,
+                        source: `${node}-${level}`,
+                        target: `${edge}-${parseInt(level) + 1}`,
+                        value: data.edges[edge] //TODO switch to iterator on key/value pairs
+                    });
+                }
+            }
+        }
+        return elements;
+    }
+
+    function getDepth(width) {
+        // TODO: leaving this here for now. Possibly should be able to be modified via a preference or something.
+        // clutter gets bad fast, however.
+        return 3;
+    }
+
+    function getFontSize(width) {
+        if (width >= 600) {
+            return 16;
+        }
+        return 14;
+    }
+
+    function getHeight(containerHeight) {
+        return Math.min(500, containerHeight - 40);
+    }
+
+    function renderUsageDiagram(term, collocations, container) {
+        container.innerHTML = '';
+        let explanation = document.createElement('p');
+        // TODO(refactor): consolidate explanation classes
+        explanation.classList.add('flow-explanation');
+        container.appendChild(explanation);
+        if (!collocations) {
+            explanation.innerText = `Sorry, we found no data for ${word}`;
+            return;
+        }
+        explanation.innerText = 'This diagram illustrates how words flow together. Taller bars mean more frequent use.';
+        let trie = {};
+        let rootDepth = 0;
+        // Build what is effectively a level-order trie based on the collocations.
+        // Level ordering ensures nodes are not confused in cases where the same word appears at multiple depths.
+        for (const [collocation, count] of Object.entries(collocations)) {
+            rootDepth = Math.min(rootDepth, addToTrie(trie, collocation, count, term, getDepth(container.offsetWidth)));
+        }
+        // Once the trie is built, convert that to a set of nodes and edges, and render a sankey diagram.
+        let elements = getDiagramElements(trie, rootDepth);
+        let chart = SankeyChart({
+            nodes: elements.nodes,
+            links: elements.edges
+        }, {
+            nodeGroup: d => d.id.split('-')[0],
+            // TODO: not sure this can be done via CSS breakpoints given svg viewport, etc.?
+            // should probably also have main be responsible for this instead of reading window directly
+            width: Math.min(container.offsetWidth, 1000),
+            height: getHeight(container.offsetHeight),
+            nodeLabel: d => elements.labels[d.id],
+            nodeAlign: 'center',
+            linkTitle: d => `${elements.labels[d.source.id]} ${elements.labels[d.target.id]}: ${d.value}`,
+            linkClickHandler: (d, i) => document.dispatchEvent(new CustomEvent('explore-update', { detail: [elements.labels[i.id]] })),
+            fontColor: 'currentColor',
+            fontSize: getFontSize(container.offsetWidth)
+        });
+        container.appendChild(chart);
+    }
+    let activeWord = null;
+    let activeCollocations = null;
+    let showingFlow = false;
+
+    function toggleShowButton() {
+        if (!getActiveGraph().collocationsPath) {
+            switchButtonContainer.style.display = 'none';
+        } else {
+            switchButtonContainer.removeAttribute('style');
+        }
+    }
+    function getCollocations(word) {
+        activeWord = word;
+        const activeGraph = getActiveGraph();
+        fetch(`./${activeGraph.collocationsPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
+            .then(response => response.json())
+            .then(data => {
+                if (word != activeWord) {
+                    return;
+                }
+                activeCollocations = data[word];
+                if (showingFlow) {
+                    renderUsageDiagram(activeWord, activeCollocations, container);
+                }
+            });
+    }
+    function initialize() {
+        toggleShowButton();
+        document.addEventListener('character-set-changed', toggleShowButton);
+        // TODO: should we listen to graph-update in addition to (or instead of) explore-update?
+        document.addEventListener('explore-update', function (event) {
+            getCollocations(event.detail[0]);
+        });
+        container.addEventListener('shown', function () {
+            switchButton.innerText = "Show Graph";
+            showingFlow = true;
+            renderUsageDiagram(activeWord, activeCollocations, container);
+        });
+        container.addEventListener('hidden', function () {
+            showingFlow = false;
+            switchButton.innerText = "Show Flow Diagram";
+        });
+        switchButtonContainer.addEventListener('click', function () {
+            if (!showingFlow) {
+                if (!activeWord) {
+                    getCollocations('中文');
+                }
+                switchDiagramView(diagramKeys.flow);
+            } else {
+                switchDiagramView(diagramKeys.main);
+            }
+        });
+    }
+
+    //TODO: mostly copy/pasted from observable
+    // Copyright 2021 Observable, Inc.
+    // Released under the ISC license.
+    // https://observablehq.com/@d3/sankey-diagram
+    function SankeyChart({
+        nodes, // an iterable of node objects (typically [{id}, …]); implied by links if missing
+        links // an iterable of link objects (typically [{source, target}, …])
+    }, {
+        format: format$1 = ",", // a function or format specifier for values in titles
+        align = "justify", // convenience shorthand for nodeAlign
+        fontColor = 'black',
+        fontSize = 16,
+        nodeId = d => d.id, // given d in nodes, returns a unique identifier (string)
+        nodeGroup, // given d in nodes, returns an (ordinal) value for color
+        nodeGroups, // an array of ordinal values representing the node groups
+        nodeLabel, // given d in (computed) nodes, text to label the associated rect
+        nodeTitle = _ => ``, // given d in (computed) nodes, hover text
+        nodeAlign = align, // Sankey node alignment strategy: left, right, justify, center
+        nodeWidth = 25, // width of node rects
+        nodePadding = 10, // vertical separation between adjacent nodes
+        nodeLabelPadding = 2, // horizontal separation between node and label
+        nodeStroke = "currentColor", // stroke around node rects
+        nodeStrokeWidth, // width of stroke around node rects, in pixels
+        nodeStrokeOpacity, // opacity of stroke around node rects
+        nodeStrokeLinejoin, // line join for stroke around node rects
+        linkSource = ({ source }) => source, // given d in links, returns a node identifier string
+        linkTarget = ({ target }) => target, // given d in links, returns a node identifier string
+        linkValue = ({ value }) => value, // given d in links, returns the quantitative value
+        linkPath = sankeyLinkHorizontal(), // given d in (computed) links, returns the SVG path
+        linkTitle = d => `${d.source.id}  ${d.target.id}: ${d.value}`, // given d in (computed) links
+        linkClickHandler = function (d, i) { },
+        linkColor = "source-target", // source, target, source-target, or static color
+        linkStrokeOpacity = 0.4, // link stroke opacity
+        //linkMixBlendMode = "", // link blending mode, which some mobile browsers do not support on <svg>
+        colors = schemeTableau10, // array of colors
+        width = 640, // outer width, in pixels
+        height = 400, // outer height, in pixels
+        marginTop = 5, // top margin, in pixels
+        marginRight = 1, // right margin, in pixels
+        marginBottom = 5, // bottom margin, in pixels
+        marginLeft = 1, // left margin, in pixels
+    } = {}) {
+        // Convert nodeAlign from a name to a function (since d3-sankey is not part of core d3).
+        if (typeof nodeAlign !== "function") nodeAlign = {
+            left: left,
+            right: right,
+            center: center
+        }[nodeAlign] ?? justify;
+
+        // Compute values.
+        const LS = map$1(links, linkSource).map(intern);
+        const LT = map$1(links, linkTarget).map(intern);
+        const LV = map$1(links, linkValue);
+        if (nodes === undefined) nodes = Array.from(union(LS, LT), id => ({ id }));
+        const N = map$1(nodes, nodeId).map(intern);
+        const G = nodeGroup == null ? null : map$1(nodes, nodeGroup).map(intern);
+
+        // Replace the input nodes and links with mutable objects for the simulation.
+        nodes = map$1(nodes, (_, i) => ({ id: N[i] }));
+        links = map$1(links, (_, i) => ({ source: LS[i], target: LT[i], value: LV[i] }));
+
+        // Ignore a group-based linkColor option if no groups are specified.
+        if (!G && ["source", "target", "source-target"].includes(linkColor)) linkColor = "currentColor";
+
+        // Compute default domains.
+        if (G && nodeGroups === undefined) nodeGroups = G;
+
+        // Construct the scales.
+        const color = nodeGroup == null ? null : ordinal(nodeGroups, colors);
+
+        // Compute the Sankey layout.
+        Sankey()
+            .nodeId(({ index: i }) => N[i])
+            .nodeAlign(nodeAlign)
+            .nodeWidth(nodeWidth)
+            .nodePadding(nodePadding)
+            .extent([[marginLeft, marginTop], [width - marginRight, height - marginBottom]])
+            ({ nodes, links });
+
+        // Compute titles and labels using layout nodes, so as to access aggregate values.
+        if (typeof format$1 !== "function") format$1 = format(format$1);
+        const Tl = nodeLabel === undefined ? N : nodeLabel == null ? null : map$1(nodes, nodeLabel);
+        const Tt = nodeTitle == null ? null : map$1(nodes, nodeTitle);
+        const Lt = linkTitle == null ? null : map$1(links, linkTitle);
+
+        // A unique identifier for clip paths (to avoid conflicts).
+        const uid = `O-${Math.random().toString(16).slice(2)}`;
+
+        const svg = create$1("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("viewBox", [0, 0, width, height])
+            .attr("style", "max-width: 100%; height: auto; height: intrinsic;");
+
+        const node = svg.append("g")
+            .attr("stroke", nodeStroke)
+            .attr("stroke-width", nodeStrokeWidth)
+            .attr("stroke-opacity", nodeStrokeOpacity)
+            .attr("stroke-linejoin", nodeStrokeLinejoin)
+            .selectAll("rect")
+            .data(nodes)
+            .join("rect")
+            .attr("x", d => d.x0)
+            .attr("y", d => d.y0)
+            .attr("height", d => d.y1 - d.y0)
+            .attr("width", d => d.x1 - d.x0);
+
+        if (G) node.attr("fill", ({ index: i }) => color(G[i]));
+        if (Tt) node.append("title").text(({ index: i }) => Tt[i]);
+
+        const link = svg.append("g")
+            .attr("fill", "none")
+            .attr("stroke-opacity", linkStrokeOpacity)
+            .selectAll("g")
+            .data(links)
+            .join("g");
+        //.style("mix-blend-mode", linkMixBlendMode);
+
+        if (linkColor === "source-target") link.append("linearGradient")
+            .attr("id", d => `${uid}-link-${d.index}`)
+            .attr("gradientUnits", "userSpaceOnUse")
+            .attr("x1", d => d.source.x1)
+            .attr("x2", d => d.target.x0)
+            .call(gradient => gradient.append("stop")
+                .attr("offset", "0%")
+                .attr("stop-color", ({ source: { index: i } }) => color(G[i])))
+            .call(gradient => gradient.append("stop")
+                .attr("offset", "100%")
+                .attr("stop-color", ({ target: { index: i } }) => color(G[i])));
+
+        link.append("path")
+            .attr("d", linkPath)
+            .attr("stroke", linkColor === "source-target" ? ({ index: i }) => `url(#${uid}-link-${i})`
+                : linkColor === "source" ? ({ source: { index: i } }) => color(G[i])
+                    : linkColor === "target" ? ({ target: { index: i } }) => color(G[i])
+                        : linkColor)
+            .attr("stroke-width", ({ width }) => Math.max(1, width))
+            .call(Lt ? path => path.append("title").text(({ index: i }) => Lt[i]) : () => { });
+
+        if (Tl) svg.append("g")
+            .attr("font-family", "sans-serif")
+            .attr("font-weight", "bold")
+            .attr("fill", fontColor)
+            .attr("font-size", fontSize)
+            .attr("cursor", "pointer")
+            .selectAll("text")
+            .data(nodes)
+            .join("text")
+            .attr("x", d => d.x0 < width / 2 ? d.x1 + nodeLabelPadding : d.x0 - nodeLabelPadding)
+            .attr("y", d => (d.y1 + d.y0) / 2)
+            .attr("dy", "0.35em")
+            .attr("text-anchor", d => d.x0 < width / 2 ? "start" : "end")
+            .text(({ index: i }) => Tl[i])
+            .on('click', linkClickHandler);
+
+        function intern(value) {
+            return value !== null && typeof value === "object" ? value.valueOf() : value;
+        }
+
+        return Object.assign(svg.node(), { scales: { color } });
+    }
 
     const hanziSearchForm = document.getElementById('hanzi-choose');
 
@@ -6369,12 +7558,12 @@
     Promise.all(
         dataLoads
     ).then(_ => {
-        initialize$7();
-        initialize$3();
-        initialize$5();
-        initialize$1();
+        initialize$8();
+        initialize$4();
+        initialize$6();
         initialize$2();
-
+        initialize$3();
+        initialize();
         hanziSearchForm.addEventListener('submit', function (event) {
             event.preventDefault();
             search(hanziBox.value);
@@ -6395,9 +7584,9 @@
                 { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
         }
         // These happen last due to being secondary functionality
-        initialize();
-        initialize$6();
-        initialize$4();
+        initialize$1();
+        initialize$7();
+        initialize$5();
     });
 
 })();

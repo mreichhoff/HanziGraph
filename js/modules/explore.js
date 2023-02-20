@@ -1,8 +1,9 @@
 import { faqTypes, showFaq } from "./faq.js";
 import { updateVisited, writeExploreState, getVisited, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough } from "./dom.js";
-import { getActiveGraph } from "./options.js";
+import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
+import { diagramKeys, switchDiagramView } from "./ui-orchestrator.js";
 
 let coverageGraph = {};
 let charFreqs = {};
@@ -148,13 +149,6 @@ let setupExampleElements = function (examples, exampleList) {
         exampleHolder.appendChild(enHolder);
         exampleList.appendChild(exampleHolder);
     }
-};
-let getPartition = function (word, numPartitions) {
-    let total = 0;
-    for (let i = 0; i < word.length; i++) {
-        total += word.charCodeAt(i);
-    }
-    return total % numPartitions;
 };
 
 // expects callers to ensure augmentation is available
@@ -415,6 +409,7 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
             a.addEventListener('click', function () {
                 if (hanzi[character]) {
                     if (character in hanzi) {
+                        switchDiagramView(diagramKeys.main);
                         document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
                     }
                     //enable seamless switching, but don't update if we're already showing examples for character

@@ -17,7 +17,7 @@ def get_partition(word, total_partitions):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='partition some sentence files that are too large to be loaded immediately on the client side')
+        description='partition some files that are too large to be loaded immediately on the client side')
     parser.add_argument('--dictionary-filename',
                         help='The dictionary file to partition', required=True)
     parser.add_argument(

@@ -135,6 +135,39 @@ function switchToState(state) {
     }
 }
 
+const diagrams = {
+    main: {
+        element: document.getElementById('graph-container'),
+        animation: 'slide-from-right'
+    },
+    flow: {
+        element: document.getElementById('flow-diagram-container'),
+        animation: 'slide-from-right'
+    }
+};
+const diagramKeys = { main: 'main', flow: 'flow' };
+let currentDiagramKey = diagramKeys.main;
+
+function switchDiagramView(diagramKey) {
+    if (diagramKey === currentDiagramKey) {
+        return;
+    }
+    for (const [key, diagram] of Object.entries(diagrams)) {
+        if (key !== diagramKey) {
+            diagram.element.style.display = 'none';
+            diagram.element.dispatchEvent(new Event('hidden'));
+        } else {
+            diagram.element.removeAttribute('style');
+            diagram.element.classList.add(diagram.animation);
+            diagram.element.addEventListener('animationend', function () {
+                diagram.element.classList.remove(diagram.animation);
+            }, { once: true });
+            diagram.element.dispatchEvent(new Event('shown'));
+        }
+    }
+    currentDiagramKey = diagramKey;
+}
+
 function initialize() {
     leftButtonContainer.addEventListener('click', function () {
         if (states[currentState].leftState) {
@@ -148,4 +181,4 @@ function initialize() {
     })
 }
 
-export { initialize, switchToState, stateKeys }
+export { initialize, switchToState, switchDiagramView, stateKeys, diagramKeys }
