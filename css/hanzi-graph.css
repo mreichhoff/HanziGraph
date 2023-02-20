@@ -829,5 +829,6 @@ p.related-card {
     #graph-container,
     #flow-diagram-container {
         height: 55%;
+        border-top: var(--border);
     }
 }
