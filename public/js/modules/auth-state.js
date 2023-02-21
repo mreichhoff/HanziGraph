@@ -25,9 +25,14 @@ let initialize = function () {
         signOut(auth).then(() => {
             localStorage.removeItem('studyList');
             localStorage.removeItem('studyListDirty');
+            localStorage.removeItem('dailyDirty');
+            localStorage.removeItem('hourlyDirty');
             localStorage.removeItem('visited');
+            localStorage.removeItem('visitedDirty');
             localStorage.removeItem('studyResults');
             localStorage.removeItem('state');
+            localStorage.removeItem('options');
+            localStorage.removeItem('exploreState');
             document.location.reload();
         }).catch((error) => {
             console.log(error);

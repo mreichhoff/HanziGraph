@@ -1,3 +1,52 @@
+:root {
+    --background-color: #fff;
+    --primary-font-color: rgba(0, 0, 0, 0.87);
+    --primary-font: Roboto, Helvetica, Arial, sans-serif;
+    --primary-font-weight: 300;
+    --primary-header-height: 40px;
+    --primary-header-font-size: 30px;
+    --secondary-header-font-size: 28px;
+    --tertiary-header-font-size: 24px;
+    --secondary-control-font-size: 16px;
+    --secondary-input-container-columns: 1fr 160px;
+    --header-font-family: Times, serif;
+    --border: 1px solid #3333;
+    --search-font-size: 20px;
+    --search-input-height: 32px;
+    --primary-opacity: 0.95;
+    --secondary-opacity: 0.85;
+    --tertiary-opacity: 0.75;
+    --target-language-font-size: 24px;
+    --target-language-secondary-font-size: 20px;
+    --target-language-font-weight: 400;
+    --base-language-font-size: 14px;
+    --example-item-margin: 4px 0;
+    --link-font-color: rgb(21, 36, 255);
+    --input-background-color: #fff;
+    --primary-input-box-shadow: 0 2px 3px 1px #eeee;
+    --positive-button-color: #6de200;
+    --right-button-margin: 10px 0 0 20px;
+    --menu-button-margin: 18px 0 0 0;
+    --primary-container-height: calc(100% - 42px);
+    --graph-height: calc(100% - 50px);
+    --section-container-margin: 0 20px;
+    --calendar-day-color: #eee;
+    --bar-chart-separator-color: #121212;
+    --bar-chart-height: 400px;
+    --bar-chart-width: 600px;
+    --bar-chart-font-size: 14px;
+    --output-container-height: calc(100% - 72px);
+    --control-container-height: 70px;
+    --study-result-buttons-width: 50%;
+    --legend-font-size: 14px;
+    --legend-height: 50px;
+    --legend-circle-height: 20px;
+    --legend-circle-margin: 0.5px 4px;
+    --level-marker-margin: 0px auto;
+    --stat-pane-into-font-size: 16px;
+    --secondary-input-container-width: 80%;
+}
+
 html {
     height: 100%;
 }
@@ -7,85 +56,274 @@ body {
     height: 100%;
     margin: 0;
     padding: 0;
-    color: rgba(255, 255, 255, 0.87);
-    background: #121212;
-    font-family: Roboto, Helvetica, Arial, sans-serif;
-    font-weight: 300;
+    font-family: var(--primary-font);
+    font-weight: var(--primary-font-weight);
+    background-color: var(--background-color);
+    color: var(--primary-font-color);
+    overflow-x: hidden;
 }
 
 a {
-    color: rgba(255, 255, 255, 0.87);
-}
-
-#main-container {
-    width: 100%;
-    height: 100%;
-}
-
-#container {
-    display: flex;
-    /* 44 for the height of the header plus 1 for the border */
-    height: calc(100% - 45px);
-}
-
-#control-pane {
-    width: 40%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: auto;
-    border-right: 1px solid #333;
-}
-
-#graph-container {
-    width: 60%;
-    height: 100%;
-    background: #020202;
-}
-
-#graph {
-    height: calc(100% - 60px);
-}
-
-.header {
-    display: flex;
-    height: 44px;
-    border-bottom: 1px solid #333;
-}
-
-.menu-container {
-    flex: 1;
-    text-align: left;
-    margin-left: 8px;
-    margin-top: 4px;
+    color: var(--primary-font-color);
     cursor: pointer;
 }
 
-.menu-expand {
+input[type="search"] {
+    background-color: var(--input-background-color);
+    border: var(--border);
+    color: var(--primary-font-color);
+}
+
+h1 {
+    font-size: var(--primary-header-font-size);
+    margin: 4px;
+    font-family: var(--header-font-family);
+}
+
+h2 {
+    font-size: var(--secondary-header-font-size);
+    font-family: var(--header-font-family);
+    margin: 0;
+}
+
+h3 {
+    font-size: var(--tertiary-header-font-size);
+    font-family: var(--header-font-family);
+    margin: 0;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.header {
+    display: grid;
+    grid-template-columns: 50px 1fr 50px;
+    height: var(--primary-header-height);
+    text-align: center;
+    border-bottom: var(--border);
+}
+
+.control-container {
+    max-width: 1000px;
+    height: var(--control-container-height);
+    margin: 0 auto;
+    text-align: center;
+    border-bottom: var(--border);
+}
+
+.primary-input {
+    width: 80%;
+    text-align: center;
+    height: var(--search-input-height);
+    font-size: var(--search-font-size);
+    margin: 10px auto auto 0;
+    padding: 0;
+    text-align: center;
+    border: var(--border);
+    border-radius: 16px;
+    box-shadow: var(--primary-input-box-shadow);
+}
+
+.secondary-input-container {
+    display: grid;
+    grid-template-columns: var(--secondary-input-container-columns);
+    width: var(--secondary-input-container-width);
+    margin: 0 auto;
+}
+
+.secondary-input {
+    font-size: var(--secondary-control-font-size);
+    margin: 8px 4px 0 0;
+    text-align: right;
+}
+
+.primary-container {
+    height: var(--primary-container-height);
+}
+
+.output-container {
+    height: var(--output-container-height);
+    /* TODO: should probably be grid, but that interacts strangely with cytoscape resizing */
+    display: flex;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+.primary-panel {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+}
+
+.section-container {
+    margin: var(--section-container-margin);
+    flex-grow: 1;
+    overflow: auto;
+}
+
+.sentence-container {
+    width: calc(100% - 70px);
+}
+
+.add-button {
+    color: var(--positive-button-color);
+    cursor: pointer;
+    float: right;
+    margin-right: 20px;
+    /* TODO: skipping variable for now, since this is in one spot only and isn't a broader pattern */
+    font-size: 30px;
+}
+
+#graph,
+#flow-diagram-container {
+    height: var(--graph-height);
+}
+
+.flow-explanation {
+    margin: 10px auto;
+    text-align: center;
+    font-size: var(--secondary-control-font-size);
+}
+
+#examples {
+    /* avoid scrollbars while animations run, otherwise unnecessary */
+    overflow-x: hidden;
+    margin-top: 4px;
+}
+
+.explore-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    text-align: center;
+    margin: 4px auto;
+    border-bottom: var(--border);
+}
+
+.explore-tab {
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.separator {
+    display: none;
+}
+
+.explore-tab.active {
+    opacity: 1;
+}
+
+.explore-tab.active .separator {
+    width: 60px;
+    height: 4px;
+    display: block;
+    background: #ff635f;
+    margin: 2px auto 0 auto;
+}
+
+.expand {
+    animation: expand 0.5s;
+}
+
+@keyframes expand {
+    0% {
+        width: 0;
+    }
+
+    100% {
+        width: 60px;
+    }
+}
+
+.definitions {
+    margin: 6px 0;
+}
+
+.definition {
+    margin: 6px 0;
+}
+
+.example {
+    margin: 16px 0;
+}
+
+.explore-stat-header {
+    margin: 0;
+    text-align: center;
+}
+
+.coverage-explanation {
+    margin: 0 0 6px 0;
+}
+
+.context,
+.coverage-explanation {
+    font-size: var(--stat-pane-into-font-size);
+}
+
+.target {
+    font-size: var(--target-language-font-size);
+    font-weight: var(--target-language-font-weight);
+    /* TODO(refactor) why flex? */
+    display: flex;
+    opacity: var(--primary-opacity);
+    margin: var(--example-item-margin);
+}
+
+.base {
+    margin: var(--example-item-margin);
+    opacity: var(--secondary-opacity);
+    font-size: var(--base-language-font-size);
+}
+
+.transcription {
+    display: none;
+    margin: var(--example-item-margin);
+    opacity: var(--tertiary-opacity);
+    font-size: var(--base-language-font-size);
+}
+
+.context,
+.context-line {
+    margin: 4px 0 0 0;
+}
+
+.recommendations {
+    margin: 0 0 0 6px;
+    font-size: var(--secondary-control-font-size);
+    text-align: left;
+}
+
+.recommendation {
+    margin: 0 10px;
+    font-size: var(--target-language-secondary-font-size);
+}
+
+.active-link {
+    text-decoration: underline;
+    color: var(--link-font-color);
+    cursor: pointer;
+}
+
+.level-marker {
+    height: 5px;
+    width: 70%;
+    margin: var(--level-marker-margin);
+}
+
+#show-pinyin:checked~* .transcription {
+    display: block;
+}
+
+/* CSS icons */
+.menu-button {
     width: 20px;
     height: 2px;
     box-shadow: inset 0 0 0 32px, 0 -6px, 0 6px;
     display: inline-block;
-    margin-top: 14px;
-}
-
-.main-header {
-    flex: 1;
-    font-family: Times, serif;
-    text-align: center;
-}
-
-.stats-container {
-    flex: 1;
-    text-align: right;
-    margin-right: 8px;
-}
-
-.exit-container {
-    flex: 1;
-    text-align: left;
-    margin-left: 8px;
-    margin-top: 2px;
+    margin: var(--menu-button-margin);
+    cursor: pointer;
 }
 
 .stats-button {
@@ -114,7 +352,7 @@ a {
     box-shadow: inset 0 -8px 0 0, 6px 0, 12px 7px, 18px 5px;
 }
 
-.exit-arrow {
+.exit-button {
     cursor: pointer;
     box-sizing: border-box;
     position: relative;
@@ -122,11 +360,12 @@ a {
     width: 30px;
     height: 30px;
     border: 2px solid;
-    border-radius: 4px
+    border-radius: 4px;
+    margin-top: 2px;
 }
 
-.exit-arrow::after,
-.exit-arrow::before {
+.exit-button::after,
+.exit-button::before {
     content: "";
     display: block;
     box-sizing: border-box;
@@ -134,7 +373,7 @@ a {
     left: 6px
 }
 
-.exit-arrow::after {
+.exit-button::after {
     width: 10px;
     height: 10px;
     border-bottom: 2px solid;
@@ -143,498 +382,51 @@ a {
     bottom: 8px
 }
 
-.exit-arrow::before {
+.exit-button::before {
     width: 14px;
     height: 2px;
     bottom: 12px;
-    background: #eee;
+    background: currentColor;
 }
 
-.tabs {
-    display: flex;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #333;
-    font-weight: 400;
-    font-family: Times, serif;
-}
-
-.tab {
-    font-size: 18px;
-    padding: 10px;
-    width: 50%;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.tab.left {
-    border-right: 1px solid #333;
-}
-
-.tab.active {
-    font-weight: bold;
-    background-color: #3336;
-}
-
-.menu {
-    width: 80%;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 20px;
-}
-
-.menu-item {
-    font-size: 18px;
-    height: 60px;
-    cursor: pointer;
-}
-
-.menu-item-text {
-    cursor: pointer;
-}
-
-.menu-item-clickable {
-    text-decoration: underline;
-}
-
-#menu-button {
+.study-button {
+    box-sizing: border-box;
+    position: relative;
     display: block;
-    width: 25%;
-    height: 100%;
+    width: 20px;
+    height: 22px;
+    border: 2px solid;
+    border-radius: 3px;
     cursor: pointer;
+    margin: var(--right-button-margin);
 }
 
-.authn-button {
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-.recommendations {
-    margin: 0;
-    font-size: 14px;
-}
-
-.recommendation {
-    margin-right: 10px;
-    cursor: pointer;
-    font-size: 22px;
-}
-
-.recommendation-message {
-    margin-right: 4px;
-}
-
-.search-box {
-    font-size: 20px;
-    font-weight: 300;
-    width: 100%;
-    height: 34px;
-    border-radius: 10px;
-    background-color: rgba(74, 74, 74, 0.9);
-    border: 1px solid #3333;
-    color: rgba(255, 255, 255, 0.87);
-    padding-left: 12px;
-    box-shadow: 0 2px 3px 1px #3333;
-}
-
-#submit-button {
-    width: 65px;
-    font-size: 16px;
-}
-
-.faq-link {
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-.faq {
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 80%;
-    font-size: 16px;
-}
-
-.faq h3 {
-    font-family: Times, serif;
-    font-size: 20px;
-}
-
-ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-h1 {
-    margin: 2px 0 0 0;
-}
-
-h2 {
-    margin-bottom: 0;
-    font-size: 28px;
-    font-family: sans-serif;
-}
-
-h2 span {
-    font-weight: normal;
-}
-
-.circle {
-    width: 40px;
-    height: 36px;
-    border-radius: 50%;
-    margin-bottom: 4px;
-    font-size: 12px;
-    text-align: center;
-    line-height: 36px;
-    color: black;
-    margin-top: 4px;
-    margin-left: 0.5px;
-    margin-right: 0.5px;
-}
-
-#legend {
-    font-size: 14px;
-    text-align: center;
-    margin: 0;
-    height: 60px;
-    background-color: #020202;
-}
-
-#legend p {
-    margin: 0;
-    padding: 0;
-}
-
-#level-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/*TODO: use classes to make this sane again*/
-#examples {
-    margin-top: 0;
-}
-
-.word-header {
-    margin-top: 16px;
-    border-bottom: 1px solid #333;
-}
-
-.example {
-    font-size: 16px;
-    margin-bottom: 12px;
-}
-
-#examples ul {
-    margin-left: 0px;
-    margin-right: 4px;
-}
-
-.target {
-    font-size: 24px;
-    font-weight: 400;
-    display: flex;
-    opacity: 1;
-    margin: 4px 0;
-}
-
-.base {
-    margin: 4px 0;
-    opacity: 0.9;
-    font-size: 14px;
-}
-
-.transcription {
-    display: none;
-    margin: 4px 0;
-    opacity: 0.8;
-    font-size: 14px;
-}
-
-#show-pinyin:checked~* .transcription {
+.study-button::after,
+.study-button::before {
+    content: "";
     display: block;
+    box-sizing: border-box;
+    position: absolute;
+    border-radius: 3px;
+    height: 2px;
+    background: currentColor;
+    left: 2px
 }
 
-a.navigable {
-    cursor: pointer;
+.study-button::before {
+    box-shadow:
+        0 4px 0,
+        0 8px 0;
+    width: 12px;
+    top: 4px
 }
 
-.context {
-    margin: 0;
-    margin-bottom: 12px;
-    font-size: 14px;
-    opacity: 0.8;
+.study::after {
+    width: 6px;
+    top: 14px
 }
 
-#controls {
-    margin-bottom: 0;
-    margin-top: 0;
-    display: flex;
-}
-
-.control {
-    margin: 0;
-    line-height: 28px;
-    width: 100%;
-}
-
-#explore-container {
-    flex-grow: 1;
-    margin-left: 14px;
-    margin-right: 8px;
-}
-
-#study-container {
-    flex-grow: 1;
-    margin-left: 8px;
-    margin-right: 8px;
-    text-align: center;
-}
-
-#show-answer-button {
-    cursor: pointer;
-    text-decoration: underline;
-}
-
-.sentence-container {
-    width: calc(100% - 38px);
-}
-
-.walkthrough p {
-    font-size: 16px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
-
-/*TODO refactor this...too much repetition, selectors too specific */
-.definition {
-    margin-top: 4px;
-    margin-bottom: 4px;
-    font-size: 16px;
-}
-
-#study-call-to-action {
-    cursor: default;
-}
-
-#study-call-to-action span a {
-    color: black;
-}
-
-.study-call-to-action {
-    margin: 20px auto;
-    font-size: 18px;
-}
-
-#result-buttons {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-}
-
-#result-buttons li {
-    width: 50%;
-    padding: 8px;
-    text-align: center;
-    cursor: pointer;
-    margin-bottom: 20px;
-    margin-right: auto;
-    margin-left: auto;
-    font-size: 20px;
-    height: 50px;
-    line-height: 50px;
-}
-
-#wrong-button {
-    background-color: #ff635f;
-    color: black;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-#right-button {
-    background-color: #6de200;
-    color: black;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-#card-question-container {
-    display: flex;
-    font-size: 24px;
-    justify-content: center;
-    font-weight: 400;
-}
-
-.cloze-container {
-    margin: 2px;
-}
-
-.cloze-placeholder {
-    color: #ff635f;
-    font-weight: bold;
-}
-
-#card-answer {
-    font-size: 24px;
-    width: 95%;
-    display: flex;
-    justify-content: center;
-}
-
-.card-detail {
-    font-size: 16px;
-    margin: 10px auto;
-    text-align: center;
-    width: 80%;
-}
-
-.card-detail p {
-    margin: 0 2px;
-}
-
-.related-cards {
-    font-size: 20px;
-}
-
-p.related-card {
-    margin: 6px auto;
-}
-
-.related-card-performance {
-    font-size: 16px;
-}
-
-#delete-card-button {
-    text-align: center;
-    margin-top: 50px;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
-#explain-text {
-    margin: 0;
-    font-size: 14px;
-}
-
-#cards-due {
-    margin-top: 20px;
-}
-
-main.auth-form {
-    width: 275px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.auth-form li {
-    margin-bottom: 30px;
-    margin-top: 12px;
-}
-
-.auth-form input {
-    font-size: 16px;
-}
-
-.auth-form input[type=email] {
-    height: 28px;
-    width: 270px;
-}
-
-.auth-form input[type=password] {
-    height: 28px;
-    width: 270px;
-}
-
-.auth-form input[type=submit] {
-    width: 100%;
-    height: 28px;
-    font-size: 18px;
-    cursor: pointer;
-}
-
-.auth-form label {
-    font-size: 22px;
-}
-
-.auth-form img {
-    cursor: pointer;
-}
-
-.auth-form h1 {
-    font-size: 30px;
-}
-
-.auth-form #forgot-password {
-    font-size: 18px;
-    text-decoration: underline;
-    text-align: center;
-    cursor: pointer;
-}
-
-.auth-form #alternate-signins {
-    font-size: 18px;
-}
-
-.auth-form .secondary-signin-link {
-    text-decoration: underline;
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 28px;
-    max-width: 130px;
-}
-
-.example-warning {
-    max-width: 95%;
-}
-
-select {
-    font-size: 16px;
-}
-
-.result-indicator-wrong {
-    background-color: #ff635f;
-    color: black;
-}
-
-.result-indicator-right {
-    background-color: #6de200;
-    color: black;
-}
-
-.bar-chart {
-    display: grid;
-    width: 600px;
-    height: 400px;
-    margin: 0 auto;
-    grid-template-rows: repeat(100, 1fr) 1px 20px;
-    column-gap: 6px;
-    font-size: 14px;
-}
-
-.hours.bar-chart {
-    height: 300px;
-    width: 85%;
-    overflow-x: scroll;
-    overflow-y: hidden;
-}
-
-.bar-chart-separator {
-    background: white;
-}
-
-.bar-chart-x-label {
-    margin-top: 2px;
-}
-
-.bar-chart-y-label {
-    grid-column: 1;
-    text-align: right;
-}
-
-.volume {
+.speak-button {
     box-sizing: border-box;
     position: relative;
     display: inline-block;
@@ -648,7 +440,7 @@ select {
     margin-left: 16px;
 }
 
-.volume::before {
+.speak-button::before {
     content: "";
     display: inline-block;
     box-sizing: border-box;
@@ -662,149 +454,67 @@ select {
     left: 7px
 }
 
-@media (max-width:1024px) {
-
-    #graph-container,
-    #control-pane {
-        width: 50%;
-    }
-
-    .tab {
-        font-size: 16px;
-    }
-
-    .hours.bar-chart {
-        height: 250px;
-        width: 100%;
-    }
+.explore-button {
+    box-sizing: border-box;
+    position: relative;
+    display: block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid;
+    border-radius: 100%;
+    cursor: pointer;
+    margin: var(--right-button-margin);
 }
 
-@media (max-width:664px) {
-    #container {
-        display: block;
-    }
-
-    #control-pane {
-        width: 100%;
-        height: calc(50% - 2px);
-        border-right: 0;
-        border-bottom: 1px solid #333;
-    }
-
-    #explore-container {
-        margin-left: 10px;
-    }
-
-    #graph-container {
-        width: 100%;
-        height: 50%;
-    }
-
-    h1 {
-        font-size: 26px;
-    }
-
-    .study-call-to-action {
-        font-size: 18px;
-    }
-
-    #result-buttons li {
-        padding: 10px;
-        font-size: 22px;
-    }
-
-    h2 {
-        font-size: 30px;
-    }
-
-    #card-question-container a {
-        font-size: 26px;
-    }
-
-    .target {
-        font-size: 26px;
-    }
-
-    .bar-chart {
-        width: 100%;
-        height: 250px;
-        font-size: 12px;
-    }
-
-    .menu {
-        width: 98%;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    #result-buttons li {
-        width: 80%;
-    }
-
-    #graph {
-        height: calc(100% - 38px);
-    }
-
-    #legend {
-        font-size: 10px;
-        height: 38px;
-    }
-
-    /* circle becomes a misnomer */
-    .circle {
-        height: 16px;
-        line-height: 16px;
-        border-radius: 12px;
-        font-size: 10px;
-        margin-bottom: 0;
-        margin-top: 0;
-    }
+.explore-button::after {
+    content: "";
+    display: block;
+    box-sizing: border-box;
+    position: absolute;
+    border-radius: 3px;
+    width: 2px;
+    height: 8px;
+    background: currentColor;
+    transform: rotate(-45deg);
+    top: 10px;
+    left: 12px
 }
 
-@media (max-width:360px) {
-    .study-call-to-action {
-        font-size: 14px;
-    }
-
-    h2 {
-        font-size: 24px;
-    }
-
-    #controls input[type=submit] {
-        font-size: 12px;
-    }
-}
-
-header.stats-header {
+/* Legend stuff, ugly but less critical */
+/* could do some vars, I guess */
+.circle {
+    width: 40px;
+    height: var(--legend-circle-height);
+    font-size: var(--legend-font-size);
     text-align: center;
+    line-height: var(--legend-circle-height);
+    margin: var(--legend-circle-margin);
 }
 
-header.stats-header a {
-    text-decoration: none;
-}
-
-main.stats {
-    margin-left: auto;
-    margin-right: auto;
+#legend {
+    font-size: var(--legend-font-size);
     text-align: center;
-    max-width: 98%;
+    margin: 0;
+    height: var(--legend-height);
 }
 
-main.stats section h2 {
-    font-size: 20px;
-    font-family: Times, serif;
-    font-weight: 300;
+#legend p {
+    margin: 0;
+    padding: 0;
 }
 
-main.stats section h3 {
-    font-size: 16px;
-    font-weight: 300;
-    opacity: 0.85;
+#level-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-main.stats section p {
-    font-size: 14px;
-    opacity: 0.8;
+/* TODO: do we need these to be different classes? */
+.stats-category,
+.explanation,
+.stats-header {
+    text-align: center;
+    margin: 14px 8px;
 }
 
 #hourly-graph {
@@ -815,9 +525,38 @@ main.stats section p {
     width: 16px;
 }
 
+.bar-chart {
+    display: grid;
+    width: var(--bar-chart-width);
+    height: var(--bar-chart-height);
+    margin: 0 auto;
+    grid-template-rows: repeat(100, 1fr) 1px 20px;
+    column-gap: 6px;
+    font-size: var(--bar-chart-font-size);
+}
+
+.hours.bar-chart {
+    height: 300px;
+    width: 85%;
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
+
+.bar-chart-separator {
+    background: var(--bar-chart-separator-color);
+}
+
+.bar-chart-x-label {
+    margin-top: 2px;
+}
+
+.bar-chart-y-label {
+    grid-column: 1;
+    text-align: right;
+}
+
 .calendar-day {
-    color: black;
-    background-color: #333;
+    background-color: var(--calendar-day-color);
     width: 17px;
     height: 17px;
     margin: 3px;
@@ -863,81 +602,297 @@ main.stats section p {
     margin: 0 auto;
 }
 
-@media (prefers-color-scheme: light) {
-    .header {
-        border-bottom: 1px solid #3333;
-        background: #fcfcfc;
-    }
-
-    .search-box {
-        background-color: rgba(255, 255, 255, 0.9);
-        color: black;
-        box-shadow: 0 2px 3px 1px #eeee;
-    }
-
-    .word-header {
-        margin-top: 16px;
-        border-bottom: 1px solid #3333;
-    }
-
-    #control-pane {
-        border-right: 1px solid #3333;
-    }
-
-    .tabs {
-        border-bottom: 1px solid #3333;
-    }
-
-    .tab.left {
-        border-right: 1px solid #3333;
-    }
-
-    .tab {
-        opacity: 0.85;
-    }
-
-    .tab.active {
-        opacity: 1;
-        background-color: #fff;
-    }
-
-    body {
-        color: rgba(0, 0, 0, 0.87);
-        background: #fff;
-    }
-
-    a {
-        color: rgba(0, 0, 0, 0.87);
-    }
-
-    #legend,
-    #graph-container {
-        background: white;
-    }
-
-    .exit-arrow::before {
-        background: black;
-    }
-
-    .calendar-day {
-        background-color: #eee;
-    }
-
-    .bar-chart-separator {
-        background: black;
-    }
+/* TODO(refactor): study mode stuff needs to be made cleaner, too */
+.study-call-to-action {
+    margin: 20px auto;
+    font-size: 18px;
+    text-align: center;
 }
 
-@media (prefers-color-scheme: light) and (max-width:664px) {
-    #control-pane {
-        border-bottom: 1px solid #3333;
-        border-right: 0;
-    }
+#result-buttons {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
 }
 
-.add-button {
-    color: #6de200;
+#result-buttons li {
+    width: var(--study-result-buttons-width);
+    padding: 8px;
+    text-align: center;
     cursor: pointer;
-    float: right;
-    margin-right: 20px;
+    margin-bottom: 20px;
+    margin-right: auto;
+    margin-left: auto;
+    font-size: 20px;
+    height: 50px;
+    line-height: 50px;
+}
+
+#wrong-button {
+    background-color: #ff635f;
+    color: black;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#right-button {
+    background-color: #6de200;
+    color: black;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.result-indicator-right {
+    background-color: #6de200;
+    color: black;
+}
+
+.result-indicator-wrong {
+    background-color: #ff635f;
+    color: black;
+}
+
+.card-question,
+.card-answer {
+    text-align: center;
+    font-size: var(--target-language-font-size);
+}
+
+.cloze-container {
+    margin: 2px;
+}
+
+.cloze-placeholder {
+    color: #ff635f;
+    font-weight: bold;
+}
+
+.card-detail {
+    font-size: 16px;
+    margin: 10px auto;
+    text-align: center;
+    width: 80%;
+}
+
+.card-detail p {
+    margin: 0 2px;
+}
+
+.related-cards {
+    font-size: 20px;
+}
+
+p.related-card {
+    margin: 6px auto;
+}
+
+.related-card-performance {
+    font-size: 16px;
+}
+
+#delete-card-button {
+    text-align: center;
+    margin-top: 50px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#cards-due {
+    margin-top: 20px;
+}
+
+.faq {
+    max-width: 1000px;
+    font-size: 16px;
+    margin: 14px 40px;
+}
+
+.menu {
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+}
+
+.menu-item {
+    font-size: 18px;
+    height: 60px;
+}
+
+/* TODO(refactor): signin form stuff should be cleaned */
+main.auth-form {
+    width: 275px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.auth-form li {
+    margin-bottom: 30px;
+    margin-top: 12px;
+}
+
+.auth-form input {
+    font-size: 16px;
+}
+
+.auth-form input[type=email] {
+    height: 28px;
+    width: 270px;
+}
+
+.auth-form input[type=password] {
+    height: 28px;
+    width: 270px;
+}
+
+.auth-form input[type=submit] {
+    width: 100%;
+    height: 28px;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.auth-form label {
+    font-size: 22px;
+}
+
+.auth-form img {
+    cursor: pointer;
+}
+
+.auth-form h1 {
+    font-size: 26px;
+}
+
+.auth-form #forgot-password {
+    font-size: 18px;
+    text-decoration: underline;
+    text-align: center;
+    cursor: pointer;
+}
+
+.auth-form #alternate-signins {
+    font-size: 18px;
+}
+
+.auth-form .secondary-signin-link {
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 28px;
+    max-width: 130px;
+}
+
+@keyframes fade {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.fade {
+    animation: fade 0.25s;
+}
+
+@keyframes slide-in {
+    0% {
+        transform: translateX(-25%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.slide-in {
+    animation: slide-in 0.25s;
+}
+
+@keyframes slide-from-right {
+    0% {
+        transform: translateX(25%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.slide-from-right {
+    animation: slide-from-right 0.25s;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-color: #121212;
+        --primary-font-color: rgba(255, 255, 255, 0.87);
+        --border: 1px solid #333;
+        --link-font-color: #68aaee;
+        --input-background-color: #fff;
+        --primary-input-box-shadow: 0 2px 3px 1px #3333;
+        --input-background-color: rgba(74, 74, 74, 0.9);
+        --calendar-day-color: #333;
+        --bar-chart-separator-color: #fff;
+    }
+}
+
+@media (max-width: 1024px) {
+    :root {
+        --section-container-margin: 0 10px;
+        --bar-chart-width: 100%;
+        --bar-chart-height: 250px;
+        --bar-chart-font-size: 12px;
+        --secondary-input-container-width: 100%;
+    }
+}
+
+@media (max-width:664px) {
+    :root {
+        --primary-header-font-size: 26px;
+        --secondary-header-font-size: 24px;
+        --tertiary-header-font-size: 22px;
+        --primary-header-height: 34px;
+        --right-button-margin: 6px 0 0 20px;
+        --menu-button-margin: 16px 0 0 0;
+        --primary-container-height: calc(100% - 35px);
+        --graph-height: calc(100% - 38px);
+        --search-input-height: 26px;
+        --search-font-size: 18px;
+        --output-container-height: calc(100% - 66px);
+        --control-container-height: 64px;
+        --study-result-buttons-width: 80%;
+        --legend-font-size: 10px;
+        --legend-height: 38px;
+        --legend-circle-margin: 0 0.5px;
+        --legend-circle-height: 14px;
+        --level-marker-margin: 5px auto 0 auto;
+        --stat-pane-into-font-size: 14px;
+        --secondary-control-font-size: 14px;
+        --secondary-input-container-columns: 1fr 90px;
+        --target-language-font-size: 22px;
+    }
+
+    /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
+    /* ideally only variables */
+    .output-container {
+        display: block;
+    }
+
+    .primary-panel {
+        width: 100%;
+    }
+
+    #text-container {
+        height: 45%;
+    }
+
+    /* TODO(refactor): why is this media query using graph-container but the main one uses graph? */
+    #graph-container,
+    #flow-diagram-container {
+        height: 55%;
+        border-top: var(--border);
+    }
 }

@@ -1,6 +1,31 @@
-let cy = null;
+import { switchToState, stateKeys } from "./ui-orchestrator";
+const graphContainer = document.getElementById('graph');
 
-let dfs = function (start, elements, maxDepth, visited, maxLevel) {
+let cy = null;
+let currentPath = [];
+
+function addEdges(word) {
+    for (let i = 0; i < word.length; i++) {
+        let curr = word[i];
+        if (!hanzi[curr]) { continue; }
+        for (let j = 0; j < word.length; j++) {
+            if (i === j || !hanzi[word[j]]) { continue; }
+            if (!hanzi[curr].edges[word[j]]) {
+                hanzi[curr].edges[word[j]] = {
+                    // TODO(refactor): stop it
+                    level: 6,
+                    words: []
+                };
+            }
+            // not that efficient, but we almost never see more than 5 items in words, so NBD
+            if (hanzi[curr].edges[word[j]].words.indexOf(word) < 0) {
+                hanzi[curr].edges[word[j]].words.push(word);
+            }
+        }
+    }
+};
+
+function dfs(start, elements, maxDepth, visited) {
     if (maxDepth < 0) {
         return;
     }
@@ -9,7 +34,7 @@ let dfs = function (start, elements, maxDepth, visited, maxLevel) {
     visited[start] = true;
     for (const [key, value] of Object.entries(curr.edges)) {
         //don't add outgoing edges when we won't process the next layer
-        if (maxDepth > 0 && value.level <= maxLevel) {
+        if (maxDepth > 0) {
             if (!visited[key]) {
                 elements.edges.push({
                     data: {
@@ -25,14 +50,13 @@ let dfs = function (start, elements, maxDepth, visited, maxLevel) {
         }
     }
     elements.nodes.push({ data: { id: start, level: curr.node.level } });
-    for (const [key, value] of Object.entries(curr.edges)) {
-        if (!visited[key] && value.level <= maxLevel) {
-            dfs(key, elements, maxDepth - 1, visited, maxLevel);
+    for (const key of Object.keys(curr.edges)) {
+        if (!visited[key]) {
+            dfs(key, elements, maxDepth - 1, visited);
         }
     }
-};
-//this file meant to hold all cytoscape-related code
-let levelColor = function (element) {
+}
+function levelColor(element) {
     let level = element.data('level');
     switch (level) {
         case 6:
@@ -48,9 +72,9 @@ let levelColor = function (element) {
         case 1:
             return '#ff635f';
     }
-};
+}
 
-let layout = function (root, numNodes) {
+function layout(root, numNodes) {
     //very scientifically chosen 95 (不 was slow to load)
     //the grid layout appears to be far faster than cose
     //keeping root around in case we want to switch back to bfs
@@ -63,10 +87,10 @@ let layout = function (root, numNodes) {
         name: 'cose',
         animate: false
     };
-};
-let getStylesheet = function () {
+}
+function getStylesheet() {
     //TODO make this injectable
-    let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+    let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     return [
         {
             selector: 'node',
@@ -86,9 +110,9 @@ let getStylesheet = function () {
                 'target-arrow-shape': 'none',
                 'curve-style': 'straight',
                 'label': 'data(displayWord)',
-                'color': (_ => prefersLight ? 'black' : '#eee'),
+                'color': (_ => prefersDark ? '#eee' : '#000'),
                 'font-size': '10px',
-                'text-background-color': (_ => prefersLight ? 'white' : 'black'),
+                'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
                 'text-background-opacity': '1',
                 'text-background-shape': 'round-rectangle',
                 'text-events': 'yes'
@@ -96,7 +120,21 @@ let getStylesheet = function () {
         }
     ];
 }
-let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
+function nodeTapHandler(evt) {
+    let id = evt.target.id();
+    //not needed if currentHanzi contains id, which would mean the nodes have already been added
+    //includes O(N) but currentHanzi almost always < 10 elements
+    if (currentPath && !currentPath.includes(id)) {
+        addToGraph(id);
+    }
+    document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.id()] } }));
+    switchToState(stateKeys.main);
+}
+function edgeTapHandler(evt) {
+    document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: evt.target.data('words') } }));
+    switchToState(stateKeys.main);
+}
+function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
     cy = cytoscape({
         container: graphContainer,
         elements: elements,
@@ -107,17 +145,23 @@ let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler,
     });
     cy.on('tap', 'node', nodeEventHandler);
     cy.on('tap', 'edge', edgeEventHandler);
-};
-let initializeGraph = function (value, maxLevel, containerElement, nodeEventHandler, edgeEventHandler) {
+}
+function renderGraph(value, containerElement, skipPathCheck) {
+    if (!skipPathCheck && inCurrentPath(value)) {
+        return;
+    }
+    graphContainer.innerHTML = '';
+    graphContainer.className = '';
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
-    dfs(value, result, maxDepth, {}, maxLevel);
-    setupCytoscape(value, result, containerElement, nodeEventHandler, edgeEventHandler);
-};
-let addToGraph = function (character, maxLevel) {
+    dfs(value, result, maxDepth, {});
+    setupCytoscape(value, result, containerElement, nodeTapHandler, edgeTapHandler);
+    currentPath = [value];
+}
+function addToGraph(character) {
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
-    dfs(character, result, maxDepth, {}, maxLevel);
+    dfs(character, result, maxDepth, {});
     let preNodeCount = cy.nodes().length;
     let preEdgeCount = cy.edges().length;
     cy.add(result);
@@ -125,15 +169,45 @@ let addToGraph = function (character, maxLevel) {
         //if we've actually added to the graph, re-render it; else just let it be
         cy.layout(layout(character, cy.nodes().length)).run();
     }
-};
-let isInGraph = function (node) {
+    currentPath.push(character);
+}
+function isInGraph(node) {
     return cy && cy.getElementById(node).length;
-};
-let updateColorScheme = function () {
+}
+function updateColorScheme() {
     if (!cy) {
         return;
     }
     cy.style(getStylesheet());
-};
+}
 
-export { initializeGraph, addToGraph, isInGraph, updateColorScheme }
+function inCurrentPath(character) {
+    return (currentPath && currentPath.includes(character));
+}
+// build a graph based on a word rather than just a character like renderGraph
+function buildGraph(value) {
+    let ranUpdate = false;
+    // we don't necessarily populate all via the script
+    addEdges(value);
+    for (let i = 0; i < value.length; i++) {
+        if (hanzi[value[i]]) {
+            if (!ranUpdate) {
+                //TODO do we need this?
+                ranUpdate = true;
+                renderGraph(value[i], graphContainer, true);
+            } else {
+                addToGraph(value[i]);
+            }
+        }
+    }
+}
+
+function initialize() {
+    document.addEventListener('graph-update', function (event) {
+        buildGraph(event.detail);
+    });
+    // TODO(refactor): listen to character-set-changed event
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
+}
+
+export { initialize, isInGraph }

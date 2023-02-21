@@ -1,11 +1,13 @@
 import { getVisited, registerCallback, dataTypes } from "./data-layer.js";
 import { isInGraph } from "./graph.js";
 import { showFaq, faqTypes } from "./faq.js";
+import { hanziBox } from "./dom.js";
 
-//TODO: like in other files, remove these dups
+//TODO: like in other files, remove dups from dom.js if possible
 const recommendationsContainer = document.getElementById('recommendations-container');
-const hanziBox = document.getElementById('hanzi-box');
 let recommendationsWorker = null;
+let levelPreferences = 'any';
+
 
 let initialize = function () {
     recommendationsWorker = new Worker('/js/modules/recommendations-worker.js');
@@ -17,6 +19,10 @@ let initialize = function () {
         type: 'visited',
         payload: getVisited()
     });
+    // it's possible we remember state from a prior page load, and the variable can be set before initialization.
+    if (levelPreferences !== 'any') {
+        preferencesChanged(levelPreferences);
+    }
     registerCallback(dataTypes.visited, function (visited) {
         recommendationsWorker.postMessage({
             type: 'visited',
@@ -57,14 +63,14 @@ let initialize = function () {
                         }
                     }
                     if (!stillShown) {
-                        recommendationsContainer.style.display = 'none';
+                        recommendationsContainer.style.visibility = 'hidden';
                     }
                 });
                 recommendationsContainer.appendChild(curr);
                 usedRecommendation = true;
             }
             let recommendationsFaqLink = document.createElement('a');
-            recommendationsFaqLink.className = 'faq-link';
+            recommendationsFaqLink.className = 'active-link';
             recommendationsFaqLink.innerText = "Why?"
             recommendationsFaqLink.addEventListener('click', function () {
                 showFaq(faqTypes.recommendations);
@@ -73,11 +79,15 @@ let initialize = function () {
                 recommendationsContainer.appendChild(recommendationsFaqLink);
             }
         } else {
-            recommendationsContainer.style.display = 'none';
+            recommendationsContainer.style.visibility = 'hidden';
         }
     }
 };
 let graphChanged = function () {
+    if (!recommendationsWorker) {
+        // if this is called without the worker, NBD. Worst case we'll send it once we initialize.
+        return;
+    }
     recommendationsWorker.postMessage({
         type: 'graph',
         payload: window.hanzi
@@ -90,6 +100,11 @@ let preferencesChanged = function (val) {
         maxLevel = 3;
     } else if (val === 'hard') {
         minLevel = 4;
+    }
+    levelPreferences = val;
+    if (!recommendationsWorker) {
+        // if this is called without the worker, NBD. Worst case we'll send it once we initialize.
+        return;
     }
     recommendationsWorker.postMessage({
         type: 'levelPreferences',
