@@ -53,9 +53,7 @@ if (window.graphFetch) {
     ]
 }
 
-Promise.all(
-    dataLoads
-).then(_ => {
+Promise.all(dataLoads).then(_ => {
     orchestratorInit();
     optionsInit();
     graphInit();

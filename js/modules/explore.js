@@ -86,6 +86,9 @@ let addSaveToListButton = function (container, text) {
 };
 
 let setupDefinitions = function (definitionList, container) {
+    if (!definitionList) {
+        return;
+    }
     for (let i = 0; i < definitionList.length; i++) {
         let definitionItem = document.createElement('li');
         definitionItem.classList.add('definition');
@@ -183,7 +186,7 @@ let renderDefinitions = function (word, definitionList, container) {
     let definitionsContainer = document.createElement('ul');
     definitionsContainer.className = 'definitions';
     container.appendChild(definitionsContainer);
-    if (definitionList.length > 0) {
+    if (definitionList && definitionList.length > 0) {
         setupDefinitions(definitionList, definitionsContainer);
     } else if (getActiveGraph().definitionsAugmentPath) {
         augmentDefinitions(word, definitionsContainer);
