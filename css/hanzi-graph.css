@@ -167,6 +167,10 @@ ul {
     width: calc(100% - 70px);
 }
 
+.clickable {
+    cursor: pointer;
+}
+
 .add-button {
     color: var(--positive-button-color);
     cursor: pointer;
@@ -214,11 +218,15 @@ ul {
     opacity: 1;
 }
 
+.word-header.active .separator,
 .explore-tab.active .separator {
     width: 60px;
     height: 4px;
     display: block;
     background: #ff635f;
+}
+
+.explore-tab.active .separator {
     margin: 2px auto 0 auto;
 }
 
@@ -511,10 +519,15 @@ ul {
 
 /* TODO: do we need these to be different classes? */
 .stats-category,
-.explanation,
 .stats-header {
     text-align: center;
     margin: 14px 8px;
+}
+
+/* TODO(refactor): consolidate these explanation classes */
+.explanation {
+    text-align: center;
+    margin: 0;
 }
 
 #hourly-graph {

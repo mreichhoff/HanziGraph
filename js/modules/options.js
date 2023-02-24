@@ -20,7 +20,8 @@ const graphOptions = {
         defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
         // while the other options load a wordset for the entire language, and use frequency for sorting,
         // HSK is based on a specific test instead. It accordingly places less weight on frequency.
-        type: 'test'
+        type: 'test',
+        locale: 'zh-CN',
     },
     simplified: {
         display: 'Simplified',
@@ -31,6 +32,7 @@ const graphOptions = {
         definitionsAugmentPath: 'data/simplified/definitions',
         partitionCount: 100,
         defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
+        locale: 'zh-CN',
         type: 'frequency',
         hasCoverage: 'all',
         collocationsPath: 'data/simplified/collocations'
@@ -43,6 +45,7 @@ const graphOptions = {
         augmentPath: 'data/traditional',
         definitionsAugmentPath: 'data/traditional/definitions',
         partitionCount: 100,
+        locale: 'zh-TW',
         defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"],
         type: 'frequency',
         hasCoverage: 'all',
@@ -55,7 +58,9 @@ const graphOptions = {
         ranks: freqRanks,
         definitionsAugmentPath: 'data/cantonese/definitions',
         partitionCount: 100,
+        // TODO(refactor): we differentiate locale from TTS locale due to zh-TW/zh-CN voice coverage, but it's wacky
         ttsKey: 'zh-HK',
+        locale: 'zh-HK',
         defaultHanzi: ["我", "哥", "路", "細"],
         transcriptionName: 'jyutping',
         type: 'frequency'

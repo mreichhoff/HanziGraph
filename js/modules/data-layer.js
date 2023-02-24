@@ -242,9 +242,9 @@ let writeOptionState = function (showPinyin, recommendationsDifficulty, selected
 let readExploreState = function () {
     return JSON.parse(localStorage.getItem('exploreState'));
 };
-let writeExploreState = function (word) {
+let writeExploreState = function (words) {
     localStorage.setItem('exploreState', JSON.stringify({
-        word: word
+        words: words
     }));
 }
 

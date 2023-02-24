@@ -9,6 +9,7 @@ import { initialize as optionsInit, getActiveGraph } from "./options.js";
 import { readExploreState } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough } from "./dom.js";
 import { initialize as flowDiagramInit } from "./flow-diagram.js";
+import { segment, initialize as searchInit } from "./search.js";
 
 const hanziSearchForm = document.getElementById('hanzi-choose');
 
@@ -16,9 +17,25 @@ function search(value) {
     if (value && (definitions[value] || (value in wordSet))) {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: [value] }));
-    } else {
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
+        return;
+    }
+    const segments = segment(value, getActiveGraph().locale);
+    let found = false;
+    let wordForGraph = '';
+    for (const segment of segments) {
+        if (!segment.ignore && segment in wordSet) {
+            wordForGraph = segment;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
         notFoundElement.removeAttribute('style');
+    } else {
+        notFoundElement.style.display = 'none';
+        document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: value } }));
     }
 }
 let dataLoads;
@@ -67,11 +84,11 @@ Promise.all(dataLoads).then(_ => {
     });
     // TODO(refactor): this belongs in explore rather than main
     let oldState = readExploreState();
-    if (oldState) {
+    if (oldState && oldState.words) {
         document.dispatchEvent(new CustomEvent('graph-update',
-            { detail: oldState.word }));
+            { detail: oldState.words[0] }));
         document.dispatchEvent(new CustomEvent('explore-update',
-            { detail: [oldState.word] }));
+            { detail: { words: oldState.words, display: oldState.words.join('') } }));
     } else {
         //add a default graph on page load to illustrate the concept
         walkThrough.removeAttribute('style');
@@ -83,4 +100,5 @@ Promise.all(dataLoads).then(_ => {
     statsInit();
     faqInit();
     recommendationsInit();
+    searchInit();
 });

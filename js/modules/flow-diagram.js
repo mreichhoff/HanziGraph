@@ -117,7 +117,7 @@ function renderUsageDiagram(term, collocations, container) {
     explanation.classList.add('flow-explanation');
     container.appendChild(explanation);
     if (!collocations) {
-        explanation.innerText = `Sorry, we found no data for ${word}`;
+        explanation.innerText = `Sorry, we found no data for ${term}`;
         return;
     }
     explanation.innerText = 'This diagram illustrates how words flow together. Taller bars mean more frequent use.';
@@ -142,7 +142,10 @@ function renderUsageDiagram(term, collocations, container) {
         nodeLabel: d => elements.labels[d.id],
         nodeAlign: 'center',
         linkTitle: d => `${elements.labels[d.source.id]} ${elements.labels[d.target.id]}: ${d.value}`,
-        linkClickHandler: (d, i) => document.dispatchEvent(new CustomEvent('explore-update', { detail: [elements.labels[i.id]] })),
+        linkClickHandler: (d, i) => {
+            getCollocations(elements.labels[i.id]);
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [elements.labels[i.id]] } }));
+        },
         fontColor: 'currentColor',
         fontSize: getFontSize(container.offsetWidth)
     });
@@ -179,9 +182,9 @@ function getCollocations(word) {
 function initialize() {
     toggleShowButton();
     document.addEventListener('character-set-changed', toggleShowButton)
-    // TODO: should we listen to graph-update in addition to (or instead of) explore-update?
-    document.addEventListener('explore-update', function (event) {
-        getCollocations(event.detail[0]);
+    // TODO: should we listen to explore-update in addition to (or instead of) graph-update?
+    document.addEventListener('graph-update', function (event) {
+        getCollocations(event.detail);
     });
     container.addEventListener('shown', function () {
         switchButton.innerText = "Show Graph";

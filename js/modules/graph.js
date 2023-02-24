@@ -127,11 +127,11 @@ function nodeTapHandler(evt) {
     if (currentPath && !currentPath.includes(id)) {
         addToGraph(id);
     }
-    document.dispatchEvent(new CustomEvent('explore-update', { detail: [evt.target.id()] }));
+    document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.id()] } }));
     switchToState(stateKeys.main);
 }
 function edgeTapHandler(evt) {
-    document.dispatchEvent(new CustomEvent('explore-update', { detail: evt.target.data('words') }));
+    document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: evt.target.data('words') } }));
     switchToState(stateKeys.main);
 }
 function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {

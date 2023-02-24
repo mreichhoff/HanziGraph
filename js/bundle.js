@@ -171,7 +171,7 @@
         currentDiagramKey = diagramKey;
     }
 
-    function initialize$8() {
+    function initialize$9() {
         leftButtonContainer.addEventListener('click', function () {
             if (states[currentState].leftState) {
                 switchToState(states[currentState].leftState);
@@ -211,7 +211,7 @@
         faqTypesToElement[faqType].removeAttribute('style');
     };
 
-    let initialize$7 = function () {
+    let initialize$8 = function () {
         faqContainer.addEventListener('hidden', function () {
             Object.values(faqTypesToElement).forEach(x => {
                 x.style.display = 'none';
@@ -461,9 +461,9 @@
     let readExploreState = function () {
         return JSON.parse(localStorage.getItem('exploreState'));
     };
-    let writeExploreState = function (word) {
+    let writeExploreState = function (words) {
         localStorage.setItem('exploreState', JSON.stringify({
-            word: word
+            words: words
         }));
     };
 
@@ -599,11 +599,11 @@
         if (currentPath && !currentPath.includes(id)) {
             addToGraph(id);
         }
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: [evt.target.id()] }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.id()] } }));
         switchToState(stateKeys.main);
     }
     function edgeTapHandler(evt) {
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: evt.target.data('words') }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: evt.target.data('words') } }));
         switchToState(stateKeys.main);
     }
     function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
@@ -674,7 +674,7 @@
         }
     }
 
-    function initialize$6() {
+    function initialize$7() {
         document.addEventListener('graph-update', function (event) {
             buildGraph(event.detail);
         });
@@ -688,7 +688,7 @@
     let levelPreferences = 'any';
 
 
-    let initialize$5 = function () {
+    let initialize$6 = function () {
         recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
         recommendationsWorker.postMessage({
             type: 'graph',
@@ -880,7 +880,8 @@
             defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
             // while the other options load a wordset for the entire language, and use frequency for sorting,
             // HSK is based on a specific test instead. It accordingly places less weight on frequency.
-            type: 'test'
+            type: 'test',
+            locale: 'zh-CN',
         },
         simplified: {
             display: 'Simplified',
@@ -891,6 +892,7 @@
             definitionsAugmentPath: 'data/simplified/definitions',
             partitionCount: 100,
             defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
+            locale: 'zh-CN',
             type: 'frequency',
             hasCoverage: 'all',
             collocationsPath: 'data/simplified/collocations'
@@ -903,6 +905,7 @@
             augmentPath: 'data/traditional',
             definitionsAugmentPath: 'data/traditional/definitions',
             partitionCount: 100,
+            locale: 'zh-TW',
             defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"],
             type: 'frequency',
             hasCoverage: 'all',
@@ -915,7 +918,9 @@
             ranks: freqRanks,
             definitionsAugmentPath: 'data/cantonese/definitions',
             partitionCount: 100,
+            // TODO(refactor): we differentiate locale from TTS locale due to zh-TW/zh-CN voice coverage, but it's wacky
             ttsKey: 'zh-HK',
+            locale: 'zh-HK',
             defaultHanzi: ["我", "哥", "路", "細"],
             transcriptionName: 'jyutping',
             type: 'frequency'
@@ -996,7 +1001,7 @@
             togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
         }
     }
-    function initialize$4() {
+    function initialize$5() {
         graphSelector.addEventListener('change', switchGraph);
         showPinyinCheckbox.addEventListener('change', function () {
             setTranscriptionLabel();
@@ -5304,7 +5309,7 @@
 
     let maxExamples = 5;
     let currentExamples = {};
-    let currentWord = '';
+    let currentWords = [];
 
     //TODO(refactor): move notion of activetab to orchestrator
 
@@ -5391,7 +5396,8 @@
             container.appendChild(definitionItem);
         }
     };
-    let findExamples = function (word, sentences) {
+    let findExamples = function (word, sentences, max) {
+        max = max || maxExamples;
         let examples = [];
         //used for e.g., missing translation
         let lessDesirableExamples = [];
@@ -5401,16 +5407,16 @@
             if (sentences[i].zh.includes(word) || (word.length === 1 && sentences[i].zh.join('').includes(word))) {
                 if (sentences[i].en && sentences[i].pinyin) {
                     examples.push(sentences[i]);
-                    if (examples.length === maxExamples) {
+                    if (examples.length === max) {
                         break;
                     }
-                } else if (lessDesirableExamples.length < maxExamples) {
+                } else if (lessDesirableExamples.length < max) {
                     lessDesirableExamples.push(sentences[i]);
                 }
             }
         }
-        if (examples.length < maxExamples && lessDesirableExamples.length > 0) {
-            examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (maxExamples - examples.length)));
+        if (examples.length < max && lessDesirableExamples.length > 0) {
+            examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (max - examples.length)));
         }
         //TODO...improve
         examples.sort((a, b) => {
@@ -5457,7 +5463,7 @@
                 if (!container) {
                     return false;
                 }
-                let examples = findExamples(word, data);
+                let examples = findExamples(word, data, 2);
                 setupExampleElements(examples, container);
                 currentExamples[word].push(...examples);
             });
@@ -5486,12 +5492,28 @@
             augmentDefinitions(word, definitionsContainer);
         }
     };
-    let renderWordHeader = function (word, container) {
+    let renderWordHeader = function (word, container, active) {
         let wordHolder = document.createElement('h2');
         wordHolder.classList.add('word-header');
-        wordHolder.textContent = word;
+        let wordSpan = document.createElement('span');
+        wordSpan.textContent = word;
+        wordSpan.classList.add('clickable');
+        wordHolder.appendChild(wordSpan);
         addTextToSpeech(wordHolder, word, []);
         addSaveToListButton(wordHolder, word);
+        let separator = renderSeparator(wordHolder);
+        if (active) {
+            wordHolder.classList.add('active');
+            separator.classList.add('expand');
+        }
+        wordSpan.addEventListener('click', function () {
+            if (!wordHolder.classList.contains('active')) {
+                document.querySelectorAll('.word-header').forEach(x => x.classList.remove('active'));
+                wordHolder.classList.add('active');
+                separator.classList.add('expand');
+            }
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
+        });
         container.appendChild(wordHolder);
     };
     let renderContext = function (word, container) {
@@ -5572,6 +5594,12 @@
             }
         }
     }
+    function renderSeparator(container) {
+        let separator = document.createElement('span');
+        separator.classList.add('separator');
+        container.appendChild(separator);
+        return separator;
+    }
 
     let renderTabs = function (container, texts, panels, renderCallbacks, transitionClasses) {
         // TODO(refactor): callbacks to hide/show the panels
@@ -5584,9 +5612,7 @@
                 tabContainer.classList.add('active');
             }
             tabContainer.innerText = texts[i];
-            let separator = document.createElement('span');
-            separator.classList.add('separator');
-            tabContainer.appendChild(separator);
+            renderSeparator(tabContainer);
             container.appendChild(tabContainer);
             tabs[tabContainer.id] = {
                 tab: tabContainer,
@@ -5600,6 +5626,23 @@
             });
         }
     };
+    function renderExplore(word, container, definitionList, examples, active) {
+        let tabs = document.createElement('div');
+        renderWordHeader(word, container, active);
+        tabs.classList.add('explore-tabs');
+        container.appendChild(tabs);
+        let meaningContainer = document.createElement('div');
+        meaningContainer.classList.add('explore-subpane');
+        let statsContainer = document.createElement('div');
+        statsContainer.classList.add('explore-subpane');
+        renderTabs(tabs, ['Meaning', 'Stats'], [meaningContainer, statsContainer], [() => { }, function () {
+            statsContainer.innerHTML = '';
+            renderStats(word, statsContainer);
+        }], ['slide-in', 'slide-in']);
+        container.appendChild(meaningContainer);
+        renderMeaning(word, definitionList, examples, meaningContainer);
+        container.appendChild(statsContainer);
+    }
     let setupExamples = function (words) {
         currentExamples = {};
         // if we're showing examples, never show the walkthrough.
@@ -5609,8 +5652,17 @@
         while (examplesList.firstChild) {
             examplesList.firstChild.remove();
         }
+        let numExamples = maxExamples;
+        if (words.length > 1) {
+            numExamples = 3;
+            let instructions = document.createElement('p');
+            instructions.classList.add('explanation');
+            instructions.innerText = 'There are multiple words. Click one to update the diagram.';
+            examplesList.appendChild(instructions);
+        }
+        let rendered = false;
         for (let i = 0; i < words.length; i++) {
-            let examples = findExamples(words[i], sentences);
+            let examples = findExamples(words[i], sentences, numExamples);
             let definitionList = definitions[words[i]] || [];
 
             currentExamples[words[i]] = [];
@@ -5621,26 +5673,24 @@
 
             let item = document.createElement('div');
             item.classList.add('word-data');
-            let tabs = document.createElement('div');
-            renderWordHeader(words[i], item);
-            tabs.classList.add('explore-tabs');
-            item.appendChild(tabs);
-            let meaningContainer = document.createElement('div');
-            meaningContainer.classList.add('explore-subpane');
-            let statsContainer = document.createElement('div');
-            statsContainer.classList.add('explore-subpane');
-            renderTabs(tabs, ['Meaning', 'Stats'], [meaningContainer, statsContainer], [() => { }, function () {
-                statsContainer.innerHTML = '';
-                renderStats(words[i], statsContainer);
-            }], ['slide-in', 'slide-in']);
-            item.appendChild(meaningContainer);
-            renderMeaning(words[i], definitionList, examples, meaningContainer);
-            item.appendChild(statsContainer);
+            // TODO(refactor):
+            // a) this "each word is either ignore or an actual word" thing is weird
+            // b) render some message that's clearer
+            if (words[i].ignore) {
+                let ignoredHeader = document.createElement('h2');
+                ignoredHeader.innerText = words[i].word;
+                ignoredHeader.classList.add('word-header');
+                item.appendChild(ignoredHeader);
+                examplesList.append(item);
+                continue;
+            }
+            renderExplore(words[i], item, definitionList, examples, (!rendered && words.length > 1));
+            rendered = true;
 
             examplesList.append(item);
         }
-        currentWord = words[0];
-        writeExploreState(currentWord);
+        currentWords = words;
+        writeExploreState(currentWords);
     };
 
     //TODO can this be combined with the definition rendering part?
@@ -5674,14 +5724,14 @@
             coverageGraph = null;
         }
     };
-    let initialize$3 = function () {
+    let initialize$4 = function () {
         // Note: github pages rewrites are only possible via a 404 hack,
         // so removing the history API integration on the main branch.
         //TODO(refactor): show study when it was the last state
         document.addEventListener('explore-update', function (event) {
-            hanziBox.value = event.detail[0];
-            setupExamples(event.detail);
-            updateVisited(event.detail);
+            hanziBox.value = event.detail.display || event.detail.words[0];
+            setupExamples(event.detail.words);
+            updateVisited(event.detail.words);
         });
         document.addEventListener('character-set-changed', function () {
             voice = getVoice();
@@ -5710,7 +5760,7 @@
                             document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
                         }
                         //enable seamless switching, but don't update if we're already showing examples for character
-                        if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
+                        if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== character))) {
                             setupExamples([character]);
                         }
                     }
@@ -5896,7 +5946,7 @@
         relatedCardsContainer.style.display = 'none';
     };
 
-    let initialize$2 = function () {
+    let initialize$3 = function () {
         showAnswerButton.addEventListener('click', function () {
             showAnswerButton.innerText = "Answer:";
             cardAnswerContainer.removeAttribute('style');
@@ -6457,7 +6507,7 @@
         document.getElementById('hourly-container').removeAttribute('style');
     };
 
-    let initialize$1 = function () {
+    let initialize$2 = function () {
         lastLevelUpdatePrefix = getActiveGraph().prefix;
         updateTotalsByLevel();
         statsShow.addEventListener('click', function () {
@@ -7268,7 +7318,7 @@
         explanation.classList.add('flow-explanation');
         container.appendChild(explanation);
         if (!collocations) {
-            explanation.innerText = `Sorry, we found no data for ${word}`;
+            explanation.innerText = `Sorry, we found no data for ${term}`;
             return;
         }
         explanation.innerText = 'This diagram illustrates how words flow together. Taller bars mean more frequent use.';
@@ -7293,7 +7343,10 @@
             nodeLabel: d => elements.labels[d.id],
             nodeAlign: 'center',
             linkTitle: d => `${elements.labels[d.source.id]} ${elements.labels[d.target.id]}: ${d.value}`,
-            linkClickHandler: (d, i) => document.dispatchEvent(new CustomEvent('explore-update', { detail: [elements.labels[i.id]] })),
+            linkClickHandler: (d, i) => {
+                getCollocations(elements.labels[i.id]);
+                document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [elements.labels[i.id]] } }));
+            },
             fontColor: 'currentColor',
             fontSize: getFontSize(container.offsetWidth)
         });
@@ -7325,12 +7378,12 @@
                 }
             });
     }
-    function initialize() {
+    function initialize$1() {
         toggleShowButton();
         document.addEventListener('character-set-changed', toggleShowButton);
-        // TODO: should we listen to graph-update in addition to (or instead of) explore-update?
-        document.addEventListener('explore-update', function (event) {
-            getCollocations(event.detail[0]);
+        // TODO: should we listen to explore-update in addition to (or instead of) graph-update?
+        document.addEventListener('graph-update', function (event) {
+            getCollocations(event.detail);
         });
         container.addEventListener('shown', function () {
             switchButton.innerText = "Show Graph";
@@ -7515,15 +7568,88 @@
         return Object.assign(svg.node(), { scales: { color } });
     }
 
+    let jiebaCut = null;
+
+    // lol
+    function vetCandidate(candidate) {
+        if (!(candidate in wordSet)) {
+            if (!isNaN(candidate)) {
+                // it's not not a number, so ignore it.
+                return [{ word: candidate, ignore: true }];
+            }
+            if (/^[\x00-\xFF]*$/.test(candidate)) {
+                // it's not Chinese, so ignore it
+                return [{ word: candidate, ignore: true }];
+            }
+            // For two character words not in the wordSet, just add individual characters.
+            if (candidate.length === 2) {
+                if (candidate[0] in wordSet && candidate[1] in wordSet) {
+                    return [candidate[0], candidate[1]];
+                }
+            }
+            // it's not a number, it's not english or something, it's more than two characters, so not some trivial
+            // fixup case...for now, ignore. We should probably handle 3 and 4 character non-wordSet candidates though.
+            return [{ word: candidate, ignore: true }];
+        }
+        return [candidate];
+    }
+
+    function segment(text, locale) {
+        if (!jiebaCut && (!Intl || !Intl.Segmenter)) {
+            return [text];
+        }
+        text = text.replace(/[？。！，·【】；：、?,'!]/g, '');
+        let candidates = [];
+        let result = [];
+        if (jiebaCut) {
+            candidates = jiebaCut(text, true);
+            for (const candidate of candidates) {
+                result.push(...(vetCandidate(candidate)));
+            }
+        } else {
+            const segmenter = new Intl.Segmenter(locale, { granularity: "word" });
+            candidates = Array.from(segmenter.segment(text));
+            for (const candidate of candidates) {
+                result.push(...(vetCandidate(candidate.segment)));
+            }
+        }
+
+        return result;
+    }
+
+    async function initialize() {
+        const { default: init,
+            cut,
+        } = await import('../../../../../../js/external/jieba_rs_wasm.js');
+        await init();
+        jiebaCut = cut;
+    }
+
     const hanziSearchForm = document.getElementById('hanzi-choose');
 
     function search(value) {
         if (value && (definitions[value] || (value in wordSet))) {
             notFoundElement.style.display = 'none';
             document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
-            document.dispatchEvent(new CustomEvent('explore-update', { detail: [value] }));
-        } else {
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
+            return;
+        }
+        const segments = segment(value, getActiveGraph().locale);
+        let found = false;
+        let wordForGraph = '';
+        for (const segment of segments) {
+            if (!segment.ignore && segment in wordSet) {
+                wordForGraph = segment;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
             notFoundElement.removeAttribute('style');
+        } else {
+            notFoundElement.style.display = 'none';
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: value } }));
         }
     }
     let dataLoads;
@@ -7559,12 +7685,12 @@
     }
 
     Promise.all(dataLoads).then(_ => {
-        initialize$8();
-        initialize$4();
-        initialize$6();
-        initialize$2();
+        initialize$9();
+        initialize$5();
+        initialize$7();
         initialize$3();
-        initialize();
+        initialize$4();
+        initialize$1();
         hanziSearchForm.addEventListener('submit', function (event) {
             event.preventDefault();
             search(hanziBox.value);
@@ -7572,11 +7698,11 @@
         });
         // TODO(refactor): this belongs in explore rather than main
         let oldState = readExploreState();
-        if (oldState) {
+        if (oldState && oldState.words) {
             document.dispatchEvent(new CustomEvent('graph-update',
-                { detail: oldState.word }));
+                { detail: oldState.words[0] }));
             document.dispatchEvent(new CustomEvent('explore-update',
-                { detail: [oldState.word] }));
+                { detail: { words: oldState.words, display: oldState.words.join('') } }));
         } else {
             //add a default graph on page load to illustrate the concept
             walkThrough.removeAttribute('style');
@@ -7585,9 +7711,10 @@
                 { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
         }
         // These happen last due to being secondary functionality
-        initialize$1();
-        initialize$7();
-        initialize$5();
+        initialize$2();
+        initialize$8();
+        initialize$6();
+        initialize();
     });
 
 })();
