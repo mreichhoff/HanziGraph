@@ -2,6 +2,7 @@ import { sankey, sankeyLinkHorizontal, sankeyCenter, sankeyJustify, sankeyRight,
 import { map, schemeTableau10, union, scaleOrdinal, format as d3format, create } from "d3";
 import { getPartition, getActiveGraph } from "./options";
 import { diagramKeys, switchDiagramView } from "./ui-orchestrator";
+import { faqTypes, showFaq } from "./faq";
 
 const container = document.getElementById('flow-diagram-container');
 const switchButtonContainer = document.getElementById('graph-switch-container');
@@ -120,7 +121,14 @@ function renderUsageDiagram(term, collocations, container) {
         explanation.innerText = `Sorry, we found no data for ${term}`;
         return;
     }
-    explanation.innerText = 'This diagram illustrates how words flow together. Taller bars mean more frequent use.';
+    explanation.innerText = 'Click any word for examples. ';
+    let faqLink = document.createElement('a');
+    faqLink.className = 'active-link';
+    faqLink.textContent = "Learn more.";
+    faqLink.addEventListener('click', function () {
+        showFaq(faqTypes.flow);
+    });
+    explanation.appendChild(faqLink);
     let trie = {};
     let rootDepth = 0;
     // Build what is effectively a level-order trie based on the collocations.
