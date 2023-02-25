@@ -10,7 +10,7 @@ let charFreqs = {};
 
 let maxExamples = 5;
 let currentExamples = {};
-let currentWord = '';
+let currentWords = [];
 
 //TODO(refactor): move notion of activetab to orchestrator
 // TODO(refactor): consider removal of getActiveGraph...
@@ -82,6 +82,9 @@ let addSaveToListButton = function (container, text) {
 };
 
 let setupDefinitions = function (definitionList, container) {
+    if (!definitionList) {
+        return;
+    }
     for (let i = 0; i < definitionList.length; i++) {
         let definitionItem = document.createElement('li');
         definitionItem.classList.add('definition');
@@ -90,7 +93,8 @@ let setupDefinitions = function (definitionList, container) {
         container.appendChild(definitionItem);
     }
 };
-let findExamples = function (word, sentences) {
+let findExamples = function (word, sentences, max) {
+    max = max || maxExamples;
     let examples = [];
     //used for e.g., missing translation
     let lessDesirableExamples = [];
@@ -100,16 +104,16 @@ let findExamples = function (word, sentences) {
         if (sentences[i].zh.includes(word) || (word.length === 1 && sentences[i].zh.join('').includes(word))) {
             if (sentences[i].en && sentences[i].pinyin) {
                 examples.push(sentences[i]);
-                if (examples.length === maxExamples) {
+                if (examples.length === max) {
                     break;
                 }
-            } else if (lessDesirableExamples.length < maxExamples) {
+            } else if (lessDesirableExamples.length < max) {
                 lessDesirableExamples.push(sentences[i]);
             }
         }
     }
-    if (examples.length < maxExamples && lessDesirableExamples.length > 0) {
-        examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (maxExamples - examples.length)));
+    if (examples.length < max && lessDesirableExamples.length > 0) {
+        examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (max - examples.length)));
     }
     //TODO...improve
     examples.sort((a, b) => {
@@ -156,7 +160,7 @@ let augmentExamples = function (word, container) {
             if (!container) {
                 return false;
             }
-            let examples = findExamples(word, data);
+            let examples = findExamples(word, data, 2);
             setupExampleElements(examples, container);
             currentExamples[word].push(...examples);
         });
@@ -170,27 +174,44 @@ let augmentDefinitions = function (word, container) {
             if (!container) {
                 return false;
             }
-            setupDefinitions(data[word], container);
+            let definitionList = data[word] || [];
+            setupDefinitions(definitionList, container);
             // TODO(refactor): should this be moved to setupDefinitions (and same with setupExamples/augmentExamples)?
-            currentExamples[word].push(getCardFromDefinitions(word, data[word]));
+            currentExamples[word].push(getCardFromDefinitions(word, definitionList));
         });
 };
 let renderDefinitions = function (word, definitionList, container) {
     let definitionsContainer = document.createElement('ul');
     definitionsContainer.className = 'definitions';
     container.appendChild(definitionsContainer);
-    if (definitionList.length > 0) {
+    if (definitionList && definitionList.length > 0) {
         setupDefinitions(definitionList, definitionsContainer);
     } else if (getActiveGraph().definitionsAugmentPath) {
         augmentDefinitions(word, definitionsContainer);
     }
 }
-let renderWordHeader = function (word, container) {
+let renderWordHeader = function (word, container, active) {
     let wordHolder = document.createElement('h2');
-    wordHolder.classList.add('word-header')
-    wordHolder.textContent = word;
+    wordHolder.classList.add('word-header');
+    let wordSpan = document.createElement('span');
+    wordSpan.textContent = word;
+    wordSpan.classList.add('clickable');
+    wordHolder.appendChild(wordSpan);
     addTextToSpeech(wordHolder, word, []);
     addSaveToListButton(wordHolder, word);
+    let separator = renderSeparator(wordHolder);
+    if (active) {
+        wordHolder.classList.add('active');
+        separator.classList.add('expand');
+    }
+    wordSpan.addEventListener('click', function () {
+        if (!wordHolder.classList.contains('active')) {
+            document.querySelectorAll('.word-header').forEach(x => x.classList.remove('active'));
+            wordHolder.classList.add('active');
+            separator.classList.add('expand');
+        }
+        document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
+    });
     container.appendChild(wordHolder);
 };
 let renderContext = function (word, container) {
@@ -271,6 +292,12 @@ function switchToTab(id, tabs) {
         }
     }
 }
+function renderSeparator(container) {
+    let separator = document.createElement('span');
+    separator.classList.add('separator');
+    container.appendChild(separator);
+    return separator;
+}
 
 let renderTabs = function (container, texts, panels, renderCallbacks, transitionClasses) {
     // TODO(refactor): callbacks to hide/show the panels
@@ -283,9 +310,7 @@ let renderTabs = function (container, texts, panels, renderCallbacks, transition
             tabContainer.classList.add('active');
         }
         tabContainer.innerText = texts[i];
-        let separator = document.createElement('span');
-        separator.classList.add('separator');
-        tabContainer.appendChild(separator);
+        renderSeparator(tabContainer);
         container.appendChild(tabContainer);
         tabs[tabContainer.id] = {
             tab: tabContainer,
@@ -299,6 +324,25 @@ let renderTabs = function (container, texts, panels, renderCallbacks, transition
         });
     }
 }
+
+function renderExplore(word, container, definitionList, examples, active) {
+    let tabs = document.createElement('div');
+    renderWordHeader(word, container, active);
+    tabs.classList.add('explore-tabs');
+    container.appendChild(tabs);
+    let meaningContainer = document.createElement('div');
+    meaningContainer.classList.add('explore-subpane');
+    let statsContainer = document.createElement('div');
+    statsContainer.classList.add('explore-subpane');
+    renderTabs(tabs, ['Meaning', 'Stats'], [meaningContainer, statsContainer], [() => { }, function () {
+        statsContainer.innerHTML = '';
+        renderStats(word, statsContainer)
+    }], ['slide-in', 'slide-in']);
+    container.appendChild(meaningContainer);
+    renderMeaning(word, definitionList, examples, meaningContainer);
+    container.appendChild(statsContainer);
+}
+
 let setupExamples = function (words, skipState) {
     currentExamples = {};
     // if we're showing examples, never show the walkthrough.
@@ -308,8 +352,17 @@ let setupExamples = function (words, skipState) {
     while (examplesList.firstChild) {
         examplesList.firstChild.remove();
     }
+    let numExamples = maxExamples;
+    if (words.length > 1) {
+        numExamples = 3;
+        let instructions = document.createElement('p');
+        instructions.classList.add('explanation');
+        instructions.innerText = 'There are multiple words. Click one to update the diagram.';
+        examplesList.appendChild(instructions);
+    }
+    let rendered = false;
     for (let i = 0; i < words.length; i++) {
-        let examples = findExamples(words[i], sentences);
+        let examples = findExamples(words[i], sentences, numExamples);
         let definitionList = definitions[words[i]] || [];
 
         currentExamples[words[i]] = [];
@@ -320,36 +373,34 @@ let setupExamples = function (words, skipState) {
 
         let item = document.createElement('div');
         item.classList.add('word-data');
-        let tabs = document.createElement('div');
-        renderWordHeader(words[i], item);
-        tabs.classList.add('explore-tabs');
-        item.appendChild(tabs);
-        let meaningContainer = document.createElement('div');
-        meaningContainer.classList.add('explore-subpane');
-        let statsContainer = document.createElement('div');
-        statsContainer.classList.add('explore-subpane');
-        renderTabs(tabs, ['Meaning', 'Stats'], [meaningContainer, statsContainer], [() => { }, function () {
-            statsContainer.innerHTML = '';
-            renderStats(words[i], statsContainer)
-        }], ['slide-in', 'slide-in']);
-        item.appendChild(meaningContainer);
-        renderMeaning(words[i], definitionList, examples, meaningContainer);
-        item.appendChild(statsContainer);
+        // TODO(refactor):
+        // a) this "each word is either ignore or an actual word" thing is weird
+        // b) render some message that's clearer
+        if (words[i].ignore) {
+            let ignoredHeader = document.createElement('h2');
+            ignoredHeader.innerText = words[i].word;
+            ignoredHeader.classList.add('word-header');
+            item.appendChild(ignoredHeader);
+            examplesList.append(item);
+            continue;
+        }
+        renderExplore(words[i], item, definitionList, examples, (!rendered && words.length > 1));
+        rendered = true;
 
         examplesList.append(item);
     }
-    currentWord = words[0];
+    currentWords = words;
     if (!skipState) {
-        persistNavigationState(currentWord);
-        writeExploreState(currentWord);
+        persistNavigationState(currentWords);
+        writeExploreState(currentWords);
     }
 };
 
-let persistNavigationState = function (word) {
+let persistNavigationState = function (words) {
     const activeGraph = getActiveGraph();
-    const newUrl = `/${activeGraph.prefix}/${word}`;
+    const newUrl = `/${activeGraph.prefix}/${words.join('')}`;
     history.pushState({
-        word: word,
+        word: words.join(''),
     }, '', newUrl);
 };
 
@@ -389,7 +440,7 @@ let initialize = function () {
     // so removing the history API integration on the main branch.
     //TODO(refactor): show study when it was the last state
     document.addEventListener('explore-update', function (event) {
-        hanziBox.value = event.detail.words[0];
+        hanziBox.value = event.detail.display || event.detail.words[0];
         setupExamples(event.detail.words, event.detail.skipState);
         updateVisited(event.detail.words);
     });
@@ -420,7 +471,7 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
                         document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
                     }
                     //enable seamless switching, but don't update if we're already showing examples for character
-                    if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
+                    if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== character))) {
                         setupExamples([character]);
                     }
                 }

@@ -1935,7 +1935,7 @@
         databaseURL: "https://hanzigraph.firebaseio.com"
     };
 
-    let initialize$b = function () {
+    let initialize$c = function () {
         initializeApp(firebaseConfig);
     };
 
@@ -7374,7 +7374,7 @@
     const welcomeMessageContainer = document.getElementById('welcome-message-container');
     const welcomeMessage = document.getElementById('welcome-message');
 
-    let initialize$a = function () {
+    let initialize$b = function () {
         const auth = getAuth();
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -7579,7 +7579,7 @@
         currentDiagramKey = diagramKey;
     }
 
-    function initialize$9() {
+    function initialize$a() {
         leftButtonContainer.addEventListener('click', function () {
             if (states[currentState].leftState) {
                 switchToState(states[currentState].leftState);
@@ -7595,6 +7595,7 @@
     const faqContainer = document.getElementById('faq-container');
     const faqStudyMode = document.getElementById('faq-study-mode');
     const faqRecommendations = document.getElementById('faq-recommendations');
+    const faqFlow = document.getElementById('faq-flow');
     const faqContext = document.getElementById('faq-context');
     const faqGeneral = document.getElementById('faq-general');
     const showStudyFaq = document.getElementById('show-study-faq');
@@ -7605,13 +7606,15 @@
         studyMode: faqStudyMode,
         context: faqContext,
         general: faqGeneral,
-        recommendations: faqRecommendations
+        recommendations: faqRecommendations,
+        flow: faqFlow
     };
     const faqTypes = {
         studyMode: 'studyMode',
         context: 'context',
         general: 'general',
-        recommendations: 'recommendations'
+        recommendations: 'recommendations',
+        flow: 'flow'
     };
 
     let showFaq = function (faqType) {
@@ -7619,7 +7622,7 @@
         faqTypesToElement[faqType].removeAttribute('style');
     };
 
-    let initialize$8 = function () {
+    let initialize$9 = function () {
         faqContainer.addEventListener('hidden', function () {
             Object.values(faqTypesToElement).forEach(x => {
                 x.style.display = 'none';
@@ -19788,7 +19791,7 @@
         //defensive check
         return (results[studyResult.CORRECT] || 0) + (results[studyResult.INCORRECT] || 0);
     };
-    let initialize$7 = function () {
+    let initialize$8 = function () {
         let auth = getAuth();
         // TODO cancel callback?
         onAuthStateChanged(auth, (user) => {
@@ -20048,9 +20051,9 @@
     let readExploreState = function () {
         return JSON.parse(localStorage.getItem('exploreState'));
     };
-    let writeExploreState = function (word) {
+    let writeExploreState = function (words) {
         localStorage.setItem('exploreState', JSON.stringify({
-            word: word
+            words: words
         }));
     };
 
@@ -20188,10 +20191,14 @@
             addToGraph(id);
         }
         document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.id()] } }));
+        // notify the flow diagrams...sigh
+        document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.id() }));
         switchToState(stateKeys.main);
     }
     function edgeTapHandler(evt) {
         document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: evt.target.data('words') } }));
+        // notify the flow diagrams...sigh
+        document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('words')[0] }));
         switchToState(stateKeys.main);
     }
     function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
@@ -20262,7 +20269,7 @@
         }
     }
 
-    function initialize$6() {
+    function initialize$7() {
         document.addEventListener('graph-update', function (event) {
             buildGraph(event.detail);
         });
@@ -20276,7 +20283,7 @@
     let levelPreferences = 'any';
 
 
-    let initialize$5 = function () {
+    let initialize$6 = function () {
         recommendationsWorker = new Worker('/js/modules/recommendations-worker.js');
         recommendationsWorker.postMessage({
             type: 'graph',
@@ -20468,7 +20475,8 @@
             defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
             // while the other options load a wordset for the entire language, and use frequency for sorting,
             // HSK is based on a specific test instead. It accordingly places less weight on frequency.
-            type: 'test'
+            type: 'test',
+            locale: 'zh-CN',
         },
         simplified: {
             display: 'Simplified',
@@ -20479,6 +20487,7 @@
             definitionsAugmentPath: 'data/simplified/definitions',
             partitionCount: 100,
             defaultHanzi: ["围", "须", "按", "冲", "店", "课", "右", "怕", "舞", "跳"],
+            locale: 'zh-CN',
             type: 'frequency',
             hasCoverage: 'all',
             collocationsPath: 'data/simplified/collocations'
@@ -20491,6 +20500,7 @@
             augmentPath: 'data/traditional',
             definitionsAugmentPath: 'data/traditional/definitions',
             partitionCount: 100,
+            locale: 'zh-TW',
             defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"],
             type: 'frequency',
             hasCoverage: 'all',
@@ -20503,7 +20513,9 @@
             ranks: freqRanks,
             definitionsAugmentPath: 'data/cantonese/definitions',
             partitionCount: 100,
+            // TODO(refactor): we differentiate locale from TTS locale due to zh-TW/zh-CN voice coverage, but it's wacky
             ttsKey: 'zh-HK',
+            locale: 'zh-HK',
             defaultHanzi: ["我", "哥", "路", "細"],
             transcriptionName: 'jyutping',
             type: 'frequency'
@@ -20584,7 +20596,7 @@
             togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
         }
     }
-    function initialize$4() {
+    function initialize$5() {
         graphSelector.addEventListener('change', switchGraph);
         showPinyinCheckbox.addEventListener('change', function () {
             setTranscriptionLabel();
@@ -24922,7 +24934,7 @@
 
     let maxExamples = 5;
     let currentExamples = {};
-    let currentWord = '';
+    let currentWords = [];
 
     //TODO(refactor): move notion of activetab to orchestrator
     // TODO(refactor): consider removal of getActiveGraph...
@@ -24994,6 +25006,9 @@
     };
 
     let setupDefinitions = function (definitionList, container) {
+        if (!definitionList) {
+            return;
+        }
         for (let i = 0; i < definitionList.length; i++) {
             let definitionItem = document.createElement('li');
             definitionItem.classList.add('definition');
@@ -25002,7 +25017,8 @@
             container.appendChild(definitionItem);
         }
     };
-    let findExamples = function (word, sentences) {
+    let findExamples = function (word, sentences, max) {
+        max = max || maxExamples;
         let examples = [];
         //used for e.g., missing translation
         let lessDesirableExamples = [];
@@ -25012,16 +25028,16 @@
             if (sentences[i].zh.includes(word) || (word.length === 1 && sentences[i].zh.join('').includes(word))) {
                 if (sentences[i].en && sentences[i].pinyin) {
                     examples.push(sentences[i]);
-                    if (examples.length === maxExamples) {
+                    if (examples.length === max) {
                         break;
                     }
-                } else if (lessDesirableExamples.length < maxExamples) {
+                } else if (lessDesirableExamples.length < max) {
                     lessDesirableExamples.push(sentences[i]);
                 }
             }
         }
-        if (examples.length < maxExamples && lessDesirableExamples.length > 0) {
-            examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (maxExamples - examples.length)));
+        if (examples.length < max && lessDesirableExamples.length > 0) {
+            examples.splice(examples.length, 0, ...lessDesirableExamples.slice(0, (max - examples.length)));
         }
         //TODO...improve
         examples.sort((a, b) => {
@@ -25068,7 +25084,7 @@
                 if (!container) {
                     return false;
                 }
-                let examples = findExamples(word, data);
+                let examples = findExamples(word, data, 2);
                 setupExampleElements(examples, container);
                 currentExamples[word].push(...examples);
             });
@@ -25082,27 +25098,44 @@
                 if (!container) {
                     return false;
                 }
-                setupDefinitions(data[word], container);
+                let definitionList = data[word] || [];
+                setupDefinitions(definitionList, container);
                 // TODO(refactor): should this be moved to setupDefinitions (and same with setupExamples/augmentExamples)?
-                currentExamples[word].push(getCardFromDefinitions(word, data[word]));
+                currentExamples[word].push(getCardFromDefinitions(word, definitionList));
             });
     };
     let renderDefinitions = function (word, definitionList, container) {
         let definitionsContainer = document.createElement('ul');
         definitionsContainer.className = 'definitions';
         container.appendChild(definitionsContainer);
-        if (definitionList.length > 0) {
+        if (definitionList && definitionList.length > 0) {
             setupDefinitions(definitionList, definitionsContainer);
         } else if (getActiveGraph().definitionsAugmentPath) {
             augmentDefinitions(word, definitionsContainer);
         }
     };
-    let renderWordHeader = function (word, container) {
+    let renderWordHeader = function (word, container, active) {
         let wordHolder = document.createElement('h2');
         wordHolder.classList.add('word-header');
-        wordHolder.textContent = word;
+        let wordSpan = document.createElement('span');
+        wordSpan.textContent = word;
+        wordSpan.classList.add('clickable');
+        wordHolder.appendChild(wordSpan);
         addTextToSpeech(wordHolder, word, []);
         addSaveToListButton(wordHolder, word);
+        let separator = renderSeparator(wordHolder);
+        if (active) {
+            wordHolder.classList.add('active');
+            separator.classList.add('expand');
+        }
+        wordSpan.addEventListener('click', function () {
+            if (!wordHolder.classList.contains('active')) {
+                document.querySelectorAll('.word-header').forEach(x => x.classList.remove('active'));
+                wordHolder.classList.add('active');
+                separator.classList.add('expand');
+            }
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
+        });
         container.appendChild(wordHolder);
     };
     let renderContext = function (word, container) {
@@ -25183,6 +25216,12 @@
             }
         }
     }
+    function renderSeparator(container) {
+        let separator = document.createElement('span');
+        separator.classList.add('separator');
+        container.appendChild(separator);
+        return separator;
+    }
 
     let renderTabs = function (container, texts, panels, renderCallbacks, transitionClasses) {
         // TODO(refactor): callbacks to hide/show the panels
@@ -25195,9 +25234,7 @@
                 tabContainer.classList.add('active');
             }
             tabContainer.innerText = texts[i];
-            let separator = document.createElement('span');
-            separator.classList.add('separator');
-            tabContainer.appendChild(separator);
+            renderSeparator(tabContainer);
             container.appendChild(tabContainer);
             tabs[tabContainer.id] = {
                 tab: tabContainer,
@@ -25211,6 +25248,25 @@
             });
         }
     };
+
+    function renderExplore(word, container, definitionList, examples, active) {
+        let tabs = document.createElement('div');
+        renderWordHeader(word, container, active);
+        tabs.classList.add('explore-tabs');
+        container.appendChild(tabs);
+        let meaningContainer = document.createElement('div');
+        meaningContainer.classList.add('explore-subpane');
+        let statsContainer = document.createElement('div');
+        statsContainer.classList.add('explore-subpane');
+        renderTabs(tabs, ['Meaning', 'Stats'], [meaningContainer, statsContainer], [() => { }, function () {
+            statsContainer.innerHTML = '';
+            renderStats(word, statsContainer);
+        }], ['slide-in', 'slide-in']);
+        container.appendChild(meaningContainer);
+        renderMeaning(word, definitionList, examples, meaningContainer);
+        container.appendChild(statsContainer);
+    }
+
     let setupExamples = function (words, skipState) {
         currentExamples = {};
         // if we're showing examples, never show the walkthrough.
@@ -25220,8 +25276,17 @@
         while (examplesList.firstChild) {
             examplesList.firstChild.remove();
         }
+        let numExamples = maxExamples;
+        if (words.length > 1) {
+            numExamples = 3;
+            let instructions = document.createElement('p');
+            instructions.classList.add('explanation');
+            instructions.innerText = 'There are multiple words. Click one to update the diagram.';
+            examplesList.appendChild(instructions);
+        }
+        let rendered = false;
         for (let i = 0; i < words.length; i++) {
-            let examples = findExamples(words[i], sentences);
+            let examples = findExamples(words[i], sentences, numExamples);
             let definitionList = definitions[words[i]] || [];
 
             currentExamples[words[i]] = [];
@@ -25232,36 +25297,34 @@
 
             let item = document.createElement('div');
             item.classList.add('word-data');
-            let tabs = document.createElement('div');
-            renderWordHeader(words[i], item);
-            tabs.classList.add('explore-tabs');
-            item.appendChild(tabs);
-            let meaningContainer = document.createElement('div');
-            meaningContainer.classList.add('explore-subpane');
-            let statsContainer = document.createElement('div');
-            statsContainer.classList.add('explore-subpane');
-            renderTabs(tabs, ['Meaning', 'Stats'], [meaningContainer, statsContainer], [() => { }, function () {
-                statsContainer.innerHTML = '';
-                renderStats(words[i], statsContainer);
-            }], ['slide-in', 'slide-in']);
-            item.appendChild(meaningContainer);
-            renderMeaning(words[i], definitionList, examples, meaningContainer);
-            item.appendChild(statsContainer);
+            // TODO(refactor):
+            // a) this "each word is either ignore or an actual word" thing is weird
+            // b) render some message that's clearer
+            if (words[i].ignore) {
+                let ignoredHeader = document.createElement('h2');
+                ignoredHeader.innerText = words[i].word;
+                ignoredHeader.classList.add('word-header');
+                item.appendChild(ignoredHeader);
+                examplesList.append(item);
+                continue;
+            }
+            renderExplore(words[i], item, definitionList, examples, (!rendered && words.length > 1));
+            rendered = true;
 
             examplesList.append(item);
         }
-        currentWord = words[0];
+        currentWords = words;
         if (!skipState) {
-            persistNavigationState(currentWord);
-            writeExploreState(currentWord);
+            persistNavigationState(currentWords);
+            writeExploreState(currentWords);
         }
     };
 
-    let persistNavigationState = function (word) {
+    let persistNavigationState = function (words) {
         const activeGraph = getActiveGraph();
-        const newUrl = `/${activeGraph.prefix}/${word}`;
+        const newUrl = `/${activeGraph.prefix}/${words.join('')}`;
         history.pushState({
-            word: word,
+            word: words.join(''),
         }, '', newUrl);
     };
 
@@ -25296,12 +25359,12 @@
             coverageGraph = null;
         }
     };
-    let initialize$3 = function () {
+    let initialize$4 = function () {
         // Note: github pages rewrites are only possible via a 404 hack,
         // so removing the history API integration on the main branch.
         //TODO(refactor): show study when it was the last state
         document.addEventListener('explore-update', function (event) {
-            hanziBox.value = event.detail.words[0];
+            hanziBox.value = event.detail.display || event.detail.words[0];
             setupExamples(event.detail.words, event.detail.skipState);
             updateVisited(event.detail.words);
         });
@@ -25332,7 +25395,7 @@
                             document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
                         }
                         //enable seamless switching, but don't update if we're already showing examples for character
-                        if (!noExampleChange && (!currentWord || (currentWord.length !== 1 || currentWord[0] !== character))) {
+                        if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== character))) {
                             setupExamples([character]);
                         }
                     }
@@ -25518,7 +25581,7 @@
         relatedCardsContainer.style.display = 'none';
     };
 
-    let initialize$2 = function () {
+    let initialize$3 = function () {
         showAnswerButton.addEventListener('click', function () {
             showAnswerButton.innerText = "Answer:";
             cardAnswerContainer.removeAttribute('style');
@@ -26079,7 +26142,7 @@
         document.getElementById('hourly-container').removeAttribute('style');
     };
 
-    let initialize$1 = function () {
+    let initialize$2 = function () {
         lastLevelUpdatePrefix = getActiveGraph().prefix;
         updateTotalsByLevel();
         statsShow.addEventListener('click', function () {
@@ -26893,7 +26956,14 @@
             explanation.innerText = `Sorry, we found no data for ${term}`;
             return;
         }
-        explanation.innerText = 'This diagram illustrates how words flow together. Taller bars mean more frequent use.';
+        explanation.innerText = 'Click any word for examples. ';
+        let faqLink = document.createElement('a');
+        faqLink.className = 'active-link';
+        faqLink.textContent = "Learn more.";
+        faqLink.addEventListener('click', function () {
+            showFaq(faqTypes.flow);
+        });
+        explanation.appendChild(faqLink);
         let trie = {};
         let rootDepth = 0;
         // Build what is effectively a level-order trie based on the collocations.
@@ -26915,7 +26985,10 @@
             nodeLabel: d => elements.labels[d.id],
             nodeAlign: 'center',
             linkTitle: d => `${elements.labels[d.source.id]} ${elements.labels[d.target.id]}: ${d.value}`,
-            linkClickHandler: (d, i) => document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [elements.labels[i.id]] } })),
+            linkClickHandler: (d, i) => {
+                getCollocations(elements.labels[i.id]);
+                document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [elements.labels[i.id]] } }));
+            },
             fontColor: 'currentColor',
             fontSize: getFontSize(container.offsetWidth)
         });
@@ -26947,12 +27020,17 @@
                 }
             });
     }
-    function initialize() {
+    function initialize$1() {
         toggleShowButton();
         document.addEventListener('character-set-changed', toggleShowButton);
-        // TODO: should we listen to graph-update in addition to (or instead of) explore-update?
-        document.addEventListener('explore-update', function (event) {
-            getCollocations(event.detail.words[0]);
+        // TODO: should we listen to explore-update in addition to (or instead of) graph-update?
+        // not thrilled about the separate listeners, but explore only means hanzi clicks get ignored,
+        // and graph only means graph clicks get ignored, and both means duplicate concurrent events
+        document.addEventListener('graph-update', function (event) {
+            getCollocations(event.detail);
+        });
+        document.addEventListener('graph-interaction', function (event) {
+            getCollocations(event.detail);
         });
         container.addEventListener('shown', function () {
             switchButton.innerText = "Show Graph";
@@ -27137,17 +27215,268 @@
         return Object.assign(svg.node(), { scales: { color } });
     }
 
-    const hanziSearchForm = document.getElementById('hanzi-choose');
+    let jiebaCut = null;
+    let searchSuggestionsWorker = null;
+    const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
 
-    function search(value, skipState) {
+    // lol
+    function vetCandidate(candidate) {
+        if (!(candidate in wordSet)) {
+            if (!isNaN(candidate)) {
+                // it's not not a number, so ignore it.
+                return [{ word: candidate, ignore: true }];
+            }
+            if (/^[\x00-\xFF]*$/.test(candidate)) {
+                // it's ascii, not Chinese, so ignore it
+                // TODO: just use ! in_chinese_char_range 
+                return [{ word: candidate, ignore: true }];
+            }
+            // For two character words not in the wordSet, just add individual characters.
+            if (candidate.length === 2) {
+                if (candidate[0] in wordSet && candidate[1] in wordSet) {
+                    return [candidate[0], candidate[1]];
+                }
+            } else if (candidate.length === 3) {
+                let first = candidate[0];
+                let last = candidate.substring(1);
+                if (first in wordSet && last in wordSet) {
+                    return [first, last];
+                }
+                first = candidate.substring(0, 2);
+                last = candidate.substring(2);
+                if (first in wordSet && last in wordSet) {
+                    return [first, last];
+                }
+                if (candidate[0] in wordSet && candidate[1] in wordSet && candidate[2] in wordSet) {
+                    return [candidate[0], candidate[1], candidate[2]];
+                }
+            } else if (candidate.length === 4) {
+                let first = candidate.substring(0, 2);
+                let last = candidate.substring(2);
+                if (first in wordSet && last in wordSet) {
+                    return [first, last]
+                }
+                if (candidate[0] in wordSet && candidate[1] in wordSet && candidate[2] in wordSet && candidate[3] in wordSet) {
+                    return [candidate[0], candidate[1], candidate[2], candidate[3]];
+                }
+            }
+            // it's not a number, it's not english or something, it's not trivially repaired...ignore
+            return [{ word: candidate, ignore: true }];
+        }
+        return [candidate];
+    }
+
+    function segment(text, locale) {
+        locale = locale || getActiveGraph().locale;
+        if (!jiebaCut && (!Intl || !Intl.Segmenter)) {
+            return [text];
+        }
+        text = text.replace(/[？。！，·【】；：、?,'!]/g, '');
+        let candidates = [];
+        let result = [];
+        if (jiebaCut) {
+            candidates = jiebaCut(text, true);
+        } else {
+            const segmenter = new Intl.Segmenter(locale, { granularity: "word" });
+            candidates = Array.from(segmenter.segment(text)).map(x => x.segment);
+        }
+        for (const candidate of candidates) {
+            result.push(...(vetCandidate(candidate)));
+        }
+        return result;
+    }
+    function suggestSearches() {
+        const partialSearch = hanziBox.value;
+        if (!partialSearch) {
+            clearSuggestions();
+        }
+        let tokens = segment(partialSearch, getActiveGraph().locale);
+        // if it's just a single character, handle it here.
+        let hanziCheck = tokens.length > 1 ? tokens[tokens.length - 1] : partialSearch;
+        if (hanziCheck in hanzi) {
+            const words = [hanziCheck, ...extractWords(hanzi[hanziCheck])];
+            renderSearchSuggestions(partialSearch, words, tokens, searchSuggestionsContainer);
+            return;
+        }
+        // otherwise, pass it off to the worker and let it decide.
+        searchSuggestionsWorker.postMessage({
+            type: 'query',
+            payload: { query: partialSearch, tokens: tokens }
+        });
+    }
+    function extractWords(node) {
+        if (!node.edges) {
+            return [];
+        }
+        let result = new Set();
+        for (const edge of Object.values(node.edges).sort((a, b) => a.level - b.level)) {
+            result.add(...edge.words);
+        }
+        return Array.from(result);
+    }
+    function handleSuggestions(message) {
+        if (!message.data || !message.data.query) {
+            return;
+        }
+        if (message.data.query !== hanziBox.value) {
+            return;
+        }
+        renderSearchSuggestions(message.data.query, message.data.suggestions, message.data.tokens, searchSuggestionsContainer);
+    }
+
+    function renderExplanationItem(text, container) {
+        let instructionsItem = document.createElement('li');
+        instructionsItem.classList.add('suggestions-explanation');
+        instructionsItem.innerText = text;
+        container.appendChild(instructionsItem);
+    }
+    function renderSuggestion(priorWordsForDisplay, suggestion, container) {
+        let prior = document.createElement('span');
+        prior.innerText = priorWordsForDisplay;
+        prior.classList.add('search-suggestion-stem');
+        let current = document.createElement('span');
+        current.innerText = suggestion;
+        current.classList.add('search-suggestion-current');
+        container.appendChild(prior);
+        container.appendChild(current);
+    }
+    function renderSearchSuggestions(query, suggestions, tokens, container) {
+        container.innerHTML = '';
+        const isMultiWord = tokens.length > 1;
+        if (!suggestions || !suggestions.length) {
+            renderExplanationItem(`No suggestions found for ${query}.`, container);
+            return;
+        }
+        let priorWordsForDisplay = '';
+        let allButLastToken = [];
+        if (isMultiWord) {
+            allButLastToken = tokens.slice(0, -1);
+            priorWordsForDisplay = allButLastToken.map(x => {
+                if (x.ignore) {
+                    return x.word;
+                }
+                return x;
+            }).join('');
+        }
+        for (const suggestion of suggestions) {
+            let item = document.createElement('li');
+            item.classList.add('search-suggestion');
+            renderSuggestion(priorWordsForDisplay, suggestion, item);
+            container.appendChild(item);
+            item.addEventListener('mousedown', function () {
+                if (isMultiWord) {
+                    multiWordSearch(priorWordsForDisplay + suggestion, allButLastToken.concat(suggestion));
+                } else {
+                    notFoundElement.style.display = 'none';
+                    document.dispatchEvent(new CustomEvent('graph-update', { detail: suggestion }));
+                    document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [suggestion] } }));
+                }
+                clearSuggestions();
+            });
+        }
+        container.removeAttribute('style');
+    }
+    function clearSuggestions() {
+        searchOpen = false;
+        searchSuggestionsContainer.style.display = 'none';
+        searchSuggestionsContainer.classList.remove('hiding');
+        searchSuggestionsContainer.classList.remove('showing');
+    }
+
+    // TODO(refactor): this is so, so brittle....
+    let searchOpen = false;
+    function initializeSearch() {
+        if (searchOpen) {
+            return;
+        }
+        searchOpen = true;
+        searchSuggestionsContainer.innerHTML = '';
+        searchSuggestionsContainer.removeAttribute('style');
+        searchSuggestionsContainer.classList.add('showing');
+        searchSuggestionsContainer.classList.remove('hiding');
+        if (hanziBox.value) {
+            suggestSearches();
+        } else {
+            renderExplanationItem('Begin typing for suggestions.', searchSuggestionsContainer);
+        }
+        searchSuggestionsContainer.addEventListener('animationend', function () {
+            searchSuggestionsContainer.classList.remove('showing');
+            searchSuggestionsContainer.classList.remove('hiding');
+        }, { once: true });
+    }
+    function closeSearchAnimationHandler() {
+        if (searchOpen) {
+            return;
+        }
+        searchSuggestionsContainer.style.display = 'none';
+        searchSuggestionsContainer.classList.remove('hiding');
+        searchSuggestionsContainer.classList.remove('showing');
+    }
+    function closeSearch() {
+        if (!searchOpen) {
+            return;
+        }
+        searchOpen = false;
+        searchSuggestionsContainer.classList.remove('showing');
+        searchSuggestionsContainer.classList.add('hiding');
+        searchSuggestionsContainer.addEventListener('animationend', closeSearchAnimationHandler, { once: true });
+        searchSuggestionsContainer.addEventListener('animationcancel', closeSearchAnimationHandler, { once: true });
+    }
+    function sendWordSetToWorker() {
+        searchSuggestionsWorker.postMessage({
+            type: 'wordset',
+            payload: window.wordSet
+        });
+    }
+    async function initialize(term) {
+        searchSuggestionsWorker = new Worker('/js/modules/search-suggestions-worker.js');
+        sendWordSetToWorker();
+        document.addEventListener('character-set-changed', sendWordSetToWorker);
+        searchSuggestionsWorker.addEventListener('message', handleSuggestions);
+        hanziBox.addEventListener('input', suggestSearches);
+        hanziBox.addEventListener('focus', initializeSearch);
+        hanziBox.addEventListener('blur', closeSearch);
+        const { default: init,
+            cut,
+        } = await import('../../../../../../../js/external/jieba_rs_wasm.js');
+        await init();
+        jiebaCut = cut;
+        if (term) {
+            search(term, getActiveGraph().locale);
+        }
+    }
+
+    function multiWordSearch(query, segments) {
+        let found = false;
+        let wordForGraph = '';
+        for (const segment of segments) {
+            if (!segment.ignore && segment in wordSet) {
+                wordForGraph = segment;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            notFoundElement.removeAttribute('style');
+        } else {
+            notFoundElement.style.display = 'none';
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query } }));
+        }
+    }
+
+    function search(value, locale) {
+        clearSuggestions();
         if (value && (definitions[value] || (value in wordSet))) {
             notFoundElement.style.display = 'none';
             document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
-            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value], skipState: skipState } }));
-        } else {
-            notFoundElement.removeAttribute('style');
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
+            return;
         }
+        multiWordSearch(value, segment(value, locale));
     }
+
+    const hanziSearchForm = document.getElementById('hanzi-choose');
 
     function loadState(state) {
         const term = decodeURIComponent(state.word || '');
@@ -27201,15 +27530,15 @@
     Promise.all(
         dataLoads
     ).then(_ => {
+        initialize$c();
         initialize$b();
+        initialize$8();
         initialize$a();
+        initialize$5();
         initialize$7();
-        initialize$9();
-        initialize$4();
-        initialize$6();
-        initialize$2();
         initialize$3();
-        initialize();
+        initialize$4();
+        initialize$1();
         hanziSearchForm.addEventListener('submit', function (event) {
             event.preventDefault();
             search(hanziBox.value);
@@ -27220,12 +27549,17 @@
         let urlState = parseUrl(document.location.pathname);
         // precedence goes to the direct URL entered first, then to anything hanging around in history, then localstorage.
         // if none are present, show the walkthrough.
+        let needsTokenization = false;
         if (urlState && urlState.word) {
-            search(urlState.word);
+            if (urlState.word in wordSet) {
+                search(urlState.word);
+            } else {
+                needsTokenization = true;
+            }
         } else if (history.state && history.state.word) {
             search(history.state.word);
-        } else if (oldState && oldState.word && oldState.selectedCharacterSet === getActiveGraph().prefix) {
-            search(oldState.word);
+        } else if (oldState && oldState.words && oldState.selectedCharacterSet === getActiveGraph().prefix) {
+            search(oldState.words.join(''));
         } else {
             //add a default graph on page load to illustrate the concept
             walkThrough.removeAttribute('style');
@@ -27233,10 +27567,16 @@
             document.dispatchEvent(new CustomEvent('graph-update',
                 { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
         }
+        if (needsTokenization) {
+            initialize(urlState.word);
+        }
         // These happen last due to being secondary functionality
-        initialize$1();
-        initialize$8();
-        initialize$5();
+        initialize$2();
+        initialize$9();
+        initialize$6();
+        if (!needsTokenization) {
+            initialize();
+        }
     });
 
 })();

@@ -128,10 +128,14 @@ function nodeTapHandler(evt) {
         addToGraph(id);
     }
     document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.id()] } }));
+    // notify the flow diagrams...sigh
+    document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.id() }));
     switchToState(stateKeys.main);
 }
 function edgeTapHandler(evt) {
     document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: evt.target.data('words') } }));
+    // notify the flow diagrams...sigh
+    document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('words')[0] }));
     switchToState(stateKeys.main);
 }
 function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {

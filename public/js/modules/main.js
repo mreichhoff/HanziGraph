@@ -9,21 +9,12 @@ import { initialize as recommendationsInit } from "./recommendations.js";
 import { initialize as graphInit } from "./graph.js";
 import { initialize as optionsInit, getActiveGraph, parseUrl } from "./options.js";
 import { readExploreState } from "./data-layer.js";
-import { hanziBox, notFoundElement, walkThrough, examplesList } from "./dom.js";
+import { hanziBox, walkThrough, examplesList } from "./dom.js";
 import { initialize as flowDiagramInit } from "./flow-diagram.js";
 import { initialize as dataLayerInit } from "./data-layer.js";
+import { initialize as searchInit, search } from "./search.js";
 
 const hanziSearchForm = document.getElementById('hanzi-choose');
-
-function search(value, skipState) {
-    if (value && (definitions[value] || (value in wordSet))) {
-        notFoundElement.style.display = 'none';
-        document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value], skipState: skipState } }));
-    } else {
-        notFoundElement.removeAttribute('style');
-    }
-}
 
 function loadState(state) {
     const term = decodeURIComponent(state.word || '');
@@ -96,12 +87,17 @@ Promise.all(
     let urlState = parseUrl(document.location.pathname);
     // precedence goes to the direct URL entered first, then to anything hanging around in history, then localstorage.
     // if none are present, show the walkthrough.
+    let needsTokenization = false;
     if (urlState && urlState.word) {
-        search(urlState.word);
+        if (urlState.word in wordSet) {
+            search(urlState.word);
+        } else {
+            needsTokenization = true;
+        }
     } else if (history.state && history.state.word) {
         search(history.state.word);
-    } else if (oldState && oldState.word && oldState.selectedCharacterSet === getActiveGraph().prefix) {
-        search(oldState.word);
+    } else if (oldState && oldState.words && oldState.selectedCharacterSet === getActiveGraph().prefix) {
+        search(oldState.words.join(''));
     } else {
         //add a default graph on page load to illustrate the concept
         walkThrough.removeAttribute('style');
@@ -109,8 +105,14 @@ Promise.all(
         document.dispatchEvent(new CustomEvent('graph-update',
             { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
     }
+    if (needsTokenization) {
+        searchInit(urlState.word);
+    }
     // These happen last due to being secondary functionality
     statsInit();
     faqInit();
     recommendationsInit();
+    if (!needsTokenization) {
+        searchInit();
+    }
 });

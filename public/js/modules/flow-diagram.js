@@ -2,6 +2,7 @@ import { sankey, sankeyLinkHorizontal, sankeyCenter, sankeyJustify, sankeyRight,
 import { map, schemeTableau10, union, scaleOrdinal, format as d3format, create } from "d3";
 import { getPartition, getActiveGraph } from "./options";
 import { diagramKeys, switchDiagramView } from "./ui-orchestrator";
+import { faqTypes, showFaq } from "./faq";
 
 const container = document.getElementById('flow-diagram-container');
 const switchButtonContainer = document.getElementById('graph-switch-container');
@@ -120,7 +121,14 @@ function renderUsageDiagram(term, collocations, container) {
         explanation.innerText = `Sorry, we found no data for ${term}`;
         return;
     }
-    explanation.innerText = 'This diagram illustrates how words flow together. Taller bars mean more frequent use.';
+    explanation.innerText = 'Click any word for examples. ';
+    let faqLink = document.createElement('a');
+    faqLink.className = 'active-link';
+    faqLink.textContent = "Learn more.";
+    faqLink.addEventListener('click', function () {
+        showFaq(faqTypes.flow);
+    });
+    explanation.appendChild(faqLink);
     let trie = {};
     let rootDepth = 0;
     // Build what is effectively a level-order trie based on the collocations.
@@ -142,7 +150,10 @@ function renderUsageDiagram(term, collocations, container) {
         nodeLabel: d => elements.labels[d.id],
         nodeAlign: 'center',
         linkTitle: d => `${elements.labels[d.source.id]} ${elements.labels[d.target.id]}: ${d.value}`,
-        linkClickHandler: (d, i) => document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [elements.labels[i.id]] } })),
+        linkClickHandler: (d, i) => {
+            getCollocations(elements.labels[i.id]);
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [elements.labels[i.id]] } }));
+        },
         fontColor: 'currentColor',
         fontSize: getFontSize(container.offsetWidth)
     });
@@ -179,9 +190,14 @@ function getCollocations(word) {
 function initialize() {
     toggleShowButton();
     document.addEventListener('character-set-changed', toggleShowButton)
-    // TODO: should we listen to graph-update in addition to (or instead of) explore-update?
-    document.addEventListener('explore-update', function (event) {
-        getCollocations(event.detail.words[0]);
+    // TODO: should we listen to explore-update in addition to (or instead of) graph-update?
+    // not thrilled about the separate listeners, but explore only means hanzi clicks get ignored,
+    // and graph only means graph clicks get ignored, and both means duplicate concurrent events
+    document.addEventListener('graph-update', function (event) {
+        getCollocations(event.detail);
+    });
+    document.addEventListener('graph-interaction', function (event) {
+        getCollocations(event.detail);
     });
     container.addEventListener('shown', function () {
         switchButton.innerText = "Show Graph";
