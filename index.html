@@ -34,7 +34,8 @@
         <div id="query-container" class="control-container">
             <form id="hanzi-choose">
                 <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word" type="search"
-                    enterkeyhint="search" class="primary-input" />
+                    enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
+                <ul id="search-suggestions-container" class="search-suggestions" style="display:none"></ul>
                 <div id="query-options-container" class="secondary-input-container">
                     <div id="recommendations-container" class="recommendations" style="visibility: hidden;"></div>
                     <div id="graph-switch-container" class="secondary-input" style="display:none"><a class="active-link"

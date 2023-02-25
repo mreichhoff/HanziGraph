@@ -9,35 +9,10 @@ import { initialize as optionsInit, getActiveGraph } from "./options.js";
 import { readExploreState } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough } from "./dom.js";
 import { initialize as flowDiagramInit } from "./flow-diagram.js";
-import { segment, initialize as searchInit } from "./search.js";
+import { initialize as searchInit, search } from "./search.js";
 
 const hanziSearchForm = document.getElementById('hanzi-choose');
 
-function search(value) {
-    if (value && (definitions[value] || (value in wordSet))) {
-        notFoundElement.style.display = 'none';
-        document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
-        return;
-    }
-    const segments = segment(value, getActiveGraph().locale);
-    let found = false;
-    let wordForGraph = '';
-    for (const segment of segments) {
-        if (!segment.ignore && segment in wordSet) {
-            wordForGraph = segment;
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        notFoundElement.removeAttribute('style');
-    } else {
-        notFoundElement.style.display = 'none';
-        document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: value } }));
-    }
-}
 let dataLoads;
 if (window.graphFetch) {
     dataLoads = [
@@ -79,7 +54,7 @@ Promise.all(dataLoads).then(_ => {
     flowDiagramInit();
     hanziSearchForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        search(hanziBox.value);
+        search(hanziBox.value, getActiveGraph().locale);
         switchToState(stateKeys.main);
     });
     // TODO(refactor): this belongs in explore rather than main

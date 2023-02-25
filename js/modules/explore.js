@@ -178,9 +178,10 @@ let augmentDefinitions = function (word, container) {
             if (!container) {
                 return false;
             }
-            setupDefinitions(data[word], container);
+            let definitionList = data[word] || [];
+            setupDefinitions(definitionList, container);
             // TODO(refactor): should this be moved to setupDefinitions (and same with setupExamples/augmentExamples)?
-            currentExamples[word].push(getCardFromDefinitions(word, data[word]));
+            currentExamples[word].push(getCardFromDefinitions(word, definitionList));
         });
 };
 let renderDefinitions = function (word, definitionList, container) {

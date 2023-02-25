@@ -43,7 +43,7 @@
     --legend-circle-height: 20px;
     --legend-circle-margin: 0.5px 4px;
     --level-marker-margin: 0px auto;
-    --stat-pane-into-font-size: 16px;
+    --instructions-font-size: 16px;
     --secondary-input-container-width: 80%;
 }
 
@@ -107,7 +107,7 @@ ul {
 
 .control-container {
     max-width: 1000px;
-    height: var(--control-container-height);
+    /* height: var(--control-container-height); */
     margin: 0 auto;
     text-align: center;
     border-bottom: var(--border);
@@ -265,9 +265,14 @@ ul {
     margin: 0 0 6px 0;
 }
 
+.suggestions-explanation {
+    font-size: var(--instructions-font-size);
+    margin-top: 4px;
+}
+
 .context,
 .coverage-explanation {
-    font-size: var(--stat-pane-into-font-size);
+    font-size: var(--instructions-font-size);
 }
 
 .target {
@@ -530,6 +535,28 @@ ul {
     margin: 0;
 }
 
+/* TODO(refactor): get this looking nice */
+.search-suggestions {
+    padding: 2px;
+    height: 383px;
+    border: var(--border);
+    margin: 0;
+    font-size: var(--target-language-font-size);
+    text-align: center;
+    list-style-type: none;
+    overflow: hidden;
+}
+
+.search-suggestion {
+    margin: 12px;
+    cursor: pointer;
+}
+
+.search-suggestion-current {
+    margin-left: 8px;
+    font-weight: var(--target-language-font-weight);
+}
+
 #hourly-graph {
     padding-bottom: 40px;
 }
@@ -732,6 +759,34 @@ p.related-card {
     height: 60px;
 }
 
+@keyframes showing {
+    0% {
+        height: 0;
+    }
+
+    100% {
+        height: 383px;
+    }
+}
+
+.showing {
+    animation: showing 0.25s;
+}
+
+@keyframes hiding {
+    0% {
+        height: 383px;
+    }
+
+    100% {
+        height: 0;
+    }
+}
+
+.hiding {
+    animation: hiding 0.1s;
+}
+
 @keyframes fade {
     0% {
         opacity: 1;
@@ -818,7 +873,7 @@ p.related-card {
         --legend-circle-margin: 0 0.5px;
         --legend-circle-height: 14px;
         --level-marker-margin: 5px auto 0 auto;
-        --stat-pane-into-font-size: 14px;
+        --instructions-font-size: 14px;
         --secondary-control-font-size: 14px;
         --secondary-input-container-columns: 1fr 90px;
         --target-language-font-size: 22px;
