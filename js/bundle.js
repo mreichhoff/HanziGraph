@@ -603,10 +603,14 @@
             addToGraph(id);
         }
         document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.id()] } }));
+        // notify the flow diagrams...sigh
+        document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.id() }));
         switchToState(stateKeys.main);
     }
     function edgeTapHandler(evt) {
         document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: evt.target.data('words') } }));
+        // notify the flow diagrams...sigh
+        document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('words')[0] }));
         switchToState(stateKeys.main);
     }
     function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
@@ -7392,7 +7396,12 @@
         toggleShowButton();
         document.addEventListener('character-set-changed', toggleShowButton);
         // TODO: should we listen to explore-update in addition to (or instead of) graph-update?
+        // not thrilled about the separate listeners, but explore only means hanzi clicks get ignored,
+        // and graph only means graph clicks get ignored, and both means duplicate concurrent events
         document.addEventListener('graph-update', function (event) {
+            getCollocations(event.detail);
+        });
+        document.addEventListener('graph-interaction', function (event) {
             getCollocations(event.detail);
         });
         container.addEventListener('shown', function () {

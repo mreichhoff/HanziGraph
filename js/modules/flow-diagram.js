@@ -189,9 +189,14 @@ function getCollocations(word) {
 }
 function initialize() {
     toggleShowButton();
-    document.addEventListener('character-set-changed', toggleShowButton)
+    document.addEventListener('character-set-changed', toggleShowButton);
     // TODO: should we listen to explore-update in addition to (or instead of) graph-update?
+    // not thrilled about the separate listeners, but explore only means hanzi clicks get ignored,
+    // and graph only means graph clicks get ignored, and both means duplicate concurrent events
     document.addEventListener('graph-update', function (event) {
+        getCollocations(event.detail);
+    });
+    document.addEventListener('graph-interaction', function (event) {
         getCollocations(event.detail);
     });
     container.addEventListener('shown', function () {
