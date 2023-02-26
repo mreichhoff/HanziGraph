@@ -166,13 +166,6 @@ function clearSuggestions() {
     searchSuggestionsContainer.style.display = 'none';
 }
 
-function initializeSearch() {
-    searchSuggestionsContainer.innerHTML = '';
-    if (hanziBox.value) {
-        suggestSearches();
-    }
-}
-
 function sendWordSetToWorker() {
     searchSuggestionsWorker.postMessage({
         type: 'wordset',
@@ -185,7 +178,6 @@ async function initialize(term) {
     document.addEventListener('character-set-changed', sendWordSetToWorker);
     searchSuggestionsWorker.addEventListener('message', handleSuggestions);
     hanziBox.addEventListener('input', suggestSearches);
-    hanziBox.addEventListener('focus', initializeSearch);
     hanziBox.addEventListener('blur', clearSuggestions);
     const { default: init,
         cut,
