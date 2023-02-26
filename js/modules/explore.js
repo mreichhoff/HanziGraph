@@ -25,7 +25,8 @@ let getVoice = function () {
     }
     return speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (getActiveGraph().ttsKey || 'zh-CN'));
 };
-
+// hacking around garbage collection issues...
+window.activeUtterances = [];
 let voice = getVoice();
 
 //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
@@ -44,6 +45,7 @@ let runTextToSpeech = function (text, anchors) {
     voice = voice || getVoice();
     if (voice) {
         let utterance = new SpeechSynthesisUtterance(text);
+        activeUtterances.push(utterance);
         utterance.lang = voice.lang;
         utterance.voice = voice;
         utterance.addEventListener('boundary', function (event) {
@@ -62,6 +64,10 @@ let runTextToSpeech = function (text, anchors) {
             anchors.forEach(character => {
                 character.removeAttribute('style');
             });
+            // length check shouldn't be necessary, but just in case, I guess?
+            if (activeUtterances.length !== 0) {
+                activeUtterances.shift();
+            }
         });
         speechSynthesis.speak(utterance);
     }
