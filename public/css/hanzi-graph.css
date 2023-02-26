@@ -538,7 +538,6 @@ ul {
 /* TODO(refactor): get this looking nice */
 .search-suggestions {
     padding: 2px;
-    height: 383px;
     border: var(--border);
     margin: 0;
     font-size: var(--target-language-font-size);
@@ -821,34 +820,6 @@ main.auth-form {
     font-size: 18px;
     line-height: 28px;
     max-width: 130px;
-}
-
-@keyframes showing {
-    0% {
-        height: 0;
-    }
-
-    100% {
-        height: 383px;
-    }
-}
-
-.showing {
-    animation: showing 0.25s;
-}
-
-@keyframes hiding {
-    0% {
-        height: 383px;
-    }
-
-    100% {
-        height: 0;
-    }
-}
-
-.hiding {
-    animation: hiding 0.1s;
 }
 
 @keyframes fade {

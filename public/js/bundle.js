@@ -27377,51 +27377,16 @@
         container.removeAttribute('style');
     }
     function clearSuggestions() {
-        searchOpen = false;
         searchSuggestionsContainer.style.display = 'none';
-        searchSuggestionsContainer.classList.remove('hiding');
-        searchSuggestionsContainer.classList.remove('showing');
     }
 
-    // TODO(refactor): this is so, so brittle....
-    let searchOpen = false;
     function initializeSearch() {
-        if (searchOpen) {
-            return;
-        }
-        searchOpen = true;
         searchSuggestionsContainer.innerHTML = '';
-        searchSuggestionsContainer.removeAttribute('style');
-        searchSuggestionsContainer.classList.add('showing');
-        searchSuggestionsContainer.classList.remove('hiding');
         if (hanziBox.value) {
             suggestSearches();
-        } else {
-            renderExplanationItem('Begin typing for suggestions.', searchSuggestionsContainer);
         }
-        searchSuggestionsContainer.addEventListener('animationend', function () {
-            searchSuggestionsContainer.classList.remove('showing');
-            searchSuggestionsContainer.classList.remove('hiding');
-        }, { once: true });
     }
-    function closeSearchAnimationHandler() {
-        if (searchOpen) {
-            return;
-        }
-        searchSuggestionsContainer.style.display = 'none';
-        searchSuggestionsContainer.classList.remove('hiding');
-        searchSuggestionsContainer.classList.remove('showing');
-    }
-    function closeSearch() {
-        if (!searchOpen) {
-            return;
-        }
-        searchOpen = false;
-        searchSuggestionsContainer.classList.remove('showing');
-        searchSuggestionsContainer.classList.add('hiding');
-        searchSuggestionsContainer.addEventListener('animationend', closeSearchAnimationHandler, { once: true });
-        searchSuggestionsContainer.addEventListener('animationcancel', closeSearchAnimationHandler, { once: true });
-    }
+
     function sendWordSetToWorker() {
         searchSuggestionsWorker.postMessage({
             type: 'wordset',
@@ -27435,7 +27400,7 @@
         searchSuggestionsWorker.addEventListener('message', handleSuggestions);
         hanziBox.addEventListener('input', suggestSearches);
         hanziBox.addEventListener('focus', initializeSearch);
-        hanziBox.addEventListener('blur', closeSearch);
+        hanziBox.addEventListener('blur', clearSuggestions);
         const { default: init,
             cut,
         } = await import('../../../../../../../js/external/jieba_rs_wasm.js');
