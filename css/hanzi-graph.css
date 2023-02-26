@@ -538,7 +538,6 @@ ul {
 /* TODO(refactor): get this looking nice */
 .search-suggestions {
     padding: 2px;
-    height: 383px;
     border: var(--border);
     margin: 0;
     font-size: var(--target-language-font-size);
@@ -757,34 +756,6 @@ p.related-card {
 .menu-item {
     font-size: 18px;
     height: 60px;
-}
-
-@keyframes showing {
-    0% {
-        height: 0;
-    }
-
-    100% {
-        height: 383px;
-    }
-}
-
-.showing {
-    animation: showing 0.25s;
-}
-
-@keyframes hiding {
-    0% {
-        height: 383px;
-    }
-
-    100% {
-        height: 0;
-    }
-}
-
-.hiding {
-    animation: hiding 0.1s;
 }
 
 @keyframes fade {
