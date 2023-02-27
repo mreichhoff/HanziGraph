@@ -20137,7 +20137,7 @@
         }
     }
 
-    function layout(root, numNodes) {
+    function layout(numNodes) {
         //very scientifically chosen 95 (不 was slow to load)
         //the grid layout appears to be far faster than cose
         //keeping root around in case we want to switch back to bfs
@@ -20201,29 +20201,17 @@
         document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('words')[0] }));
         switchToState(stateKeys.main);
     }
-    function setupCytoscape(root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
+    function setupCytoscape(elements, graphContainer, nodeEventHandler, edgeEventHandler) {
         cy = cytoscape({
             container: graphContainer,
             elements: elements,
-            layout: layout(root, elements.nodes.length),
+            layout: layout(elements.nodes.length),
             style: getStylesheet(),
             maxZoom: 10,
             minZoom: 0.5
         });
         cy.on('tap', 'node', nodeEventHandler);
         cy.on('tap', 'edge', edgeEventHandler);
-    }
-    function renderGraph(value, containerElement, skipPathCheck) {
-        if (!skipPathCheck && inCurrentPath(value)) {
-            return;
-        }
-        graphContainer.innerHTML = '';
-        graphContainer.className = '';
-        let result = { 'nodes': [], 'edges': [] };
-        let maxDepth = 1;
-        dfs(value, result, maxDepth, {});
-        setupCytoscape(value, result, containerElement, nodeTapHandler, edgeTapHandler);
-        currentPath = [value];
     }
     function addToGraph(character) {
         let result = { 'nodes': [], 'edges': [] };
@@ -20234,7 +20222,7 @@
         cy.add(result);
         if (cy.nodes().length !== preNodeCount || cy.edges().length !== preEdgeCount) {
             //if we've actually added to the graph, re-render it; else just let it be
-            cy.layout(layout(character, cy.nodes().length)).run();
+            cy.layout(layout(cy.nodes().length)).run();
         }
         currentPath.push(character);
     }
@@ -20247,26 +20235,21 @@
         }
         cy.style(getStylesheet());
     }
-
-    function inCurrentPath(character) {
-        return (currentPath && currentPath.includes(character));
-    }
     // build a graph based on a word rather than just a character like renderGraph
     function buildGraph(value) {
-        let ranUpdate = false;
         // we don't necessarily populate all via the script
+        // TODO: move to after DFS. Get the nodes and edges into result, then add. Decide whether modifying `hanzi` is good
         addEdges(value);
-        for (let i = 0; i < value.length; i++) {
-            if (hanzi[value[i]]) {
-                if (!ranUpdate) {
-                    //TODO do we need this?
-                    ranUpdate = true;
-                    renderGraph(value[i], graphContainer, true);
-                } else {
-                    addToGraph(value[i]);
-                }
-            }
+        graphContainer.innerHTML = '';
+        graphContainer.className = '';
+        let result = { 'nodes': [], 'edges': [] };
+        let maxDepth = 1;
+        // TODO: this is kinda not DFS
+        for (const character of value) {
+            dfs(character, result, maxDepth, {});
         }
+        setupCytoscape(result, graphContainer, nodeTapHandler, edgeTapHandler);
+        currentPath = [...value];
     }
 
     function initialize$7() {
