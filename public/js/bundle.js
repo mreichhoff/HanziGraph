@@ -20067,25 +20067,28 @@
 
     let cy = null;
     let currentPath = [];
-
+    function addEdge(base, target, word) {
+        if (!hanzi[base] || !hanzi[target]) { return; }
+        if (base === target) { return; }
+        if (!hanzi[base].edges[target]) {
+            hanzi[base].edges[target] = {
+                // TODO(refactor): stop it
+                level: 6,
+                words: []
+            };
+        }
+        if (hanzi[base].edges[target].words.indexOf(word) < 0) {
+            // not that efficient, but words is very small
+            hanzi[base].edges[target].words.push(word);
+        }
+    }
     function addEdges(word) {
-        for (let i = 0; i < word.length; i++) {
-            let curr = word[i];
-            if (!hanzi[curr]) { continue; }
-            for (let j = 0; j < word.length; j++) {
-                if (i === j || !hanzi[word[j]]) { continue; }
-                if (!hanzi[curr].edges[word[j]]) {
-                    hanzi[curr].edges[word[j]] = {
-                        // TODO(refactor): stop it
-                        level: 6,
-                        words: []
-                    };
-                }
-                // not that efficient, but we almost never see more than 5 items in words, so NBD
-                if (hanzi[curr].edges[word[j]].words.indexOf(word) < 0) {
-                    hanzi[curr].edges[word[j]].words.push(word);
-                }
-            }
+        for (let i = 0; i < word.length - 1; i++) {
+            addEdge(word[i], word[i + 1], word);
+        }
+        if (word.length > 1) {
+            // also connect last to first
+            addEdge(word[word.length - 1], word[0], word);
         }
     }
     function dfs(start, elements, maxDepth, visited) {
