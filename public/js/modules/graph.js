@@ -3,13 +3,27 @@ const graphContainer = document.getElementById('graph');
 
 let cy = null;
 let currentPath = [];
+// TODO(refactor): consolidate with options
+let ranks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
+
+function findRank(word) {
+    if (!window.wordSet || !(word in wordSet)) {
+        return ranks.length;
+    }
+    let freq = wordSet[word];
+    for (let i = 0; i < ranks.length; i++) {
+        if (freq < ranks[i]) {
+            return i + 1;
+        }
+    }
+    return ranks.length;
+}
 function addEdge(base, target, word) {
     if (!hanzi[base] || !hanzi[target]) { return; }
     if (base === target) { return; }
     if (!hanzi[base].edges[target]) {
         hanzi[base].edges[target] = {
-            // TODO(refactor): stop it
-            level: 6,
+            level: findRank(word),
             words: []
         };
     }
@@ -203,6 +217,11 @@ function initialize() {
     });
     // TODO(refactor): listen to character-set-changed event
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
+    document.addEventListener('character-set-changed', function (event) {
+        if (event.detail.ranks) {
+            ranks = event.detail.ranks;
+        }
+    });
 }
 
 export { initialize, isInGraph }
