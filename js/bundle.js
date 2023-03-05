@@ -494,37 +494,50 @@
         }
         return ranks.length;
     }
-    function addEdge(base, target, word) {
+    function findEdge(base, target, result) {
+        for (const edge of result.edges) {
+            if (edge.data.source === base && edge.data.target === target) {
+                return true;
+            }
+        }
+        return false;
+    }
+    function addEdge(base, target, word, result) {
         if (!hanzi[base] || !hanzi[target]) { return; }
         if (base === target) { return; }
-        if (!hanzi[base].edges[target]) {
-            hanzi[base].edges[target] = {
-                level: findRank(word),
-                words: []
-            };
-        }
-        if (hanzi[base].edges[target].words.indexOf(word) < 0) {
-            // not that efficient, but words is very small
-            hanzi[base].edges[target].words.push(word);
+        if (!findEdge(base, target, result)) {
+            result.edges.push({
+                data: {
+                    id: Array.from(base + target).sort().toString(),
+                    source: base, target: target,
+                    level: findRank(word),
+                    words: [word],
+                    displayWord: word
+                }
+            });
         }
     }
-    function addEdges(word) {
+    function addEdges(word, result) {
         for (let i = 0; i < word.length - 1; i++) {
-            addEdge(word[i], word[i + 1], word);
+            addEdge(word[i], word[i + 1], word, result);
         }
         if (word.length > 1) {
             // also connect last to first
-            addEdge(word[word.length - 1], word[0], word);
+            addEdge(word[word.length - 1], word[0], word, result);
         }
     }
-    function dfs(start, elements, maxDepth, visited) {
+    function dfs(start, elements, maxDepth, visited, maxEdges) {
         if (maxDepth < 0) {
             return;
         }
         let curr = hanzi[start];
         //todo does javascript have a set?
         visited[start] = true;
+        let usedEdges = [];
         for (const [key, value] of Object.entries(curr.edges)) {
+            if (usedEdges.length == maxEdges) {
+                break;
+            }
             //don't add outgoing edges when we won't process the next layer
             if (maxDepth > 0) {
                 if (!visited[key]) {
@@ -538,13 +551,14 @@
                             displayWord: value.words[0]
                         }
                     });
+                    usedEdges.push(key);
                 }
             }
         }
         elements.nodes.push({ data: { id: start, level: curr.node.level } });
-        for (const key of Object.keys(curr.edges)) {
+        for (const key of usedEdges) {
             if (!visited[key]) {
-                dfs(key, elements, maxDepth - 1, visited);
+                dfs(key, elements, maxDepth - 1, visited, maxEdges);
             }
         }
     }
@@ -645,7 +659,8 @@
     function addToGraph(character) {
         let result = { 'nodes': [], 'edges': [] };
         let maxDepth = 1;
-        dfs(character, result, maxDepth, {});
+        let maxEdges = 8;
+        dfs(character, result, maxDepth, {}, maxEdges);
         let preNodeCount = cy.nodes().length;
         let preEdgeCount = cy.edges().length;
         cy.add(result);
@@ -664,19 +679,33 @@
         }
         cy.style(getStylesheet());
     }
-    // build a graph based on a word rather than just a character like renderGraph
+    function getMaxEdges(word) {
+        let unique = new Set();
+        for (const character of word) {
+            unique.add(character);
+        }
+        if (unique.size < 3) {
+            return 8;
+        }
+        if (unique.size < 4) {
+            return 6;
+        }
+        if (unique.size < 5) {
+            return 5;
+        }
+        return 4;
+    }
+
     function buildGraph(value) {
-        // we don't necessarily populate all via the script
-        // TODO: move to after DFS. Get the nodes and edges into result, then add. Decide whether modifying `hanzi` is good
-        addEdges(value);
         graphContainer.innerHTML = '';
         graphContainer.className = '';
         let result = { 'nodes': [], 'edges': [] };
         let maxDepth = 1;
         // TODO: this is kinda not DFS
         for (const character of value) {
-            dfs(character, result, maxDepth, {});
+            dfs(character, result, maxDepth, {}, getMaxEdges(value));
         }
+        addEdges(value, result);
         setupCytoscape(result, graphContainer, nodeTapHandler, edgeTapHandler);
         currentPath = [...value];
     }
@@ -685,8 +714,12 @@
         document.addEventListener('graph-update', function (event) {
             buildGraph(event.detail);
         });
-        // TODO(refactor): listen to character-set-changed event
         matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
+        document.addEventListener('character-set-changed', function (event) {
+            if (event.detail.ranks) {
+                ranks = event.detail.ranks;
+            }
+        });
     }
 
     //TODO: like in other files, remove dups from dom.js if possible
