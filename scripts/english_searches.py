@@ -153,6 +153,12 @@ def main():
             counts = {}
             total = 0
             english_words = [word.lower() for word in definition.split(' ')]
+            if len(english_words) > 1 and len(english_words) < 4:
+                # if it's a two or three word definition, we could do some tfidf thing, but
+                # just trust CEDICT and frequency lists to get to a good state
+                if definition not in english_candidates:
+                    english_candidates[' '.join(english_words)] = {}
+                english_candidates[' '.join(english_words)][chinese_word] = 1
             for word in english_words:
                 if word not in english_candidates:
                     english_candidates[word] = {}
@@ -173,6 +179,8 @@ def main():
     for word, count in document_counts.items():
         idfs[word] = log10(total_documents / count)
     for word, candidates in english_candidates.items():
+        if len(word.split(' ')) > 1:
+            continue
         for candidate, tf in candidates.items():
             english_candidates[word][candidate] = tf * idfs[word]
     result = {}

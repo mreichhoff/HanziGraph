@@ -7859,10 +7859,11 @@
             return;
         }
         if (value && looksLikeEnglish(value) && getActiveGraph().englishPath) {
+            value = value.toLowerCase();
             fetch(`./${getActiveGraph().englishPath}/${getPartition(value, getActiveGraph().partitionCount)}.json`)
                 .then(response => response.json())
                 .then(function (data) {
-                    if (value !== hanziBox.value) {
+                    if (value !== hanziBox.value.toLowerCase()) {
                         return false;
                     }
                     englishSearch(value, data[value]);
