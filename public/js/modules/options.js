@@ -35,7 +35,8 @@ const graphOptions = {
         locale: 'zh-CN',
         type: 'frequency',
         hasCoverage: 'all',
-        collocationsPath: 'data/simplified/collocations'
+        collocationsPath: 'data/simplified/collocations',
+        englishPath: 'data/simplified/english'
     },
     traditional: {
         display: 'Traditional',
@@ -49,7 +50,8 @@ const graphOptions = {
         defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"],
         type: 'frequency',
         hasCoverage: 'all',
-        collocationsPath: 'data/traditional/collocations'
+        collocationsPath: 'data/traditional/collocations',
+        englishPath: 'data/traditional/english'
     },
     cantonese: {
         display: 'Cantonese',

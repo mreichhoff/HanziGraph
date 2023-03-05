@@ -12,7 +12,7 @@ import { readExploreState } from "./data-layer.js";
 import { hanziBox, walkThrough, examplesList } from "./dom.js";
 import { initialize as flowDiagramInit } from "./flow-diagram.js";
 import { initialize as dataLayerInit } from "./data-layer.js";
-import { initialize as searchInit, search } from "./search.js";
+import { initialize as searchInit, search, looksLikeEnglish } from "./search.js";
 
 const hanziSearchForm = document.getElementById('hanzi-choose');
 
@@ -89,7 +89,8 @@ Promise.all(
     // if none are present, show the walkthrough.
     let needsTokenization = false;
     if (urlState && urlState.word) {
-        if (urlState.word in wordSet) {
+        hanziBox.value = urlState.word;
+        if (urlState.word in wordSet || looksLikeEnglish(urlState.word)) {
             search(urlState.word);
         } else {
             needsTokenization = true;

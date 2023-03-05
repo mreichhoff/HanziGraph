@@ -1,9 +1,13 @@
 import { hanziBox, notFoundElement } from "./dom";
-import { getActiveGraph } from "./options";
+import { getActiveGraph, getPartition } from "./options";
 
 let jiebaCut = null;
 let searchSuggestionsWorker = null;
 const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
+
+function looksLikeEnglish(value) {
+    return /^[\x00-\xFF]*$/.test(value);
+}
 
 // lol
 function vetCandidate(candidate) {
@@ -12,7 +16,7 @@ function vetCandidate(candidate) {
             // it's not not a number, so ignore it.
             return [{ word: candidate, ignore: true }];
         }
-        if (/^[\x00-\xFF]*$/.test(candidate)) {
+        if (looksLikeEnglish(candidate)) {
             // it's ascii, not Chinese, so ignore it
             // TODO: just use ! in_chinese_char_range 
             return [{ word: candidate, ignore: true }];
@@ -73,7 +77,8 @@ function segment(text, locale) {
 }
 function suggestSearches() {
     const partialSearch = hanziBox.value;
-    if (!partialSearch) {
+    // For now, don't suggest english words.
+    if (!partialSearch || looksLikeEnglish(partialSearch)) {
         clearSuggestions();
     }
     let tokens = segment(partialSearch, getActiveGraph().locale);
@@ -208,6 +213,16 @@ function multiWordSearch(query, segments) {
     }
 }
 
+function englishSearch(word, data) {
+    if (!data) {
+        notFoundElement.removeAttribute('style');
+    } else {
+        notFoundElement.style.display = 'none';
+        document.dispatchEvent(new CustomEvent('graph-update', { detail: data[0] }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: data, display: word, type: 'english' } }));
+    }
+}
+
 function search(value, locale) {
     clearSuggestions();
     if (value && (definitions[value] || (value in wordSet))) {
@@ -216,7 +231,18 @@ function search(value, locale) {
         document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
         return;
     }
+    if (value && looksLikeEnglish(value) && getActiveGraph().englishPath) {
+        fetch(`/${getActiveGraph().englishPath}/${getPartition(value, getActiveGraph().partitionCount)}.json`)
+            .then(response => response.json())
+            .then(function (data) {
+                if (value !== hanziBox.value) {
+                    return false;
+                }
+                englishSearch(value, data[value]);
+            });
+        return;
+    }
     multiWordSearch(value, segment(value, locale))
 }
 
-export { search, initialize }
+export { search, initialize, looksLikeEnglish }

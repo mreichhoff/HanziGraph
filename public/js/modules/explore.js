@@ -349,7 +349,7 @@ function renderExplore(word, container, definitionList, examples, active) {
     container.appendChild(statsContainer);
 }
 
-let setupExamples = function (words, skipState) {
+let setupExamples = function (words, type, skipState) {
     currentExamples = {};
     // if we're showing examples, never show the walkthrough.
     walkThrough.style.display = 'none';
@@ -361,6 +361,10 @@ let setupExamples = function (words, skipState) {
     let numExamples = maxExamples;
     if (words.length > 1) {
         numExamples = 3;
+        // TODO: numExamples gets ignored when falling back...gotta pass this through
+        if (type === 'english') {
+            numExamples = 1;
+        }
         let instructions = document.createElement('p');
         instructions.classList.add('explanation');
         instructions.innerText = 'There are multiple words. Click one to update the diagram.';
@@ -397,16 +401,16 @@ let setupExamples = function (words, skipState) {
     }
     currentWords = words;
     if (!skipState) {
-        persistNavigationState(currentWords);
+        persistNavigationState(hanziBox.value);
         writeExploreState(currentWords);
     }
 };
 
 let persistNavigationState = function (words) {
     const activeGraph = getActiveGraph();
-    const newUrl = `/${activeGraph.prefix}/${words.join('')}`;
+    const newUrl = `/${activeGraph.prefix}/${words}`;
     history.pushState({
-        word: words.join(''),
+        word: words,
     }, '', newUrl);
 };
 
@@ -447,7 +451,7 @@ let initialize = function () {
     //TODO(refactor): show study when it was the last state
     document.addEventListener('explore-update', function (event) {
         hanziBox.value = event.detail.display || event.detail.words[0];
-        setupExamples(event.detail.words, event.detail.skipState);
+        setupExamples(event.detail.words, event.detail.type || 'chinese', event.detail.skipState);
         updateVisited(event.detail.words);
     });
     document.addEventListener('character-set-changed', function () {
@@ -478,7 +482,7 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
                     }
                     //enable seamless switching, but don't update if we're already showing examples for character
                     if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== character))) {
-                        setupExamples([character]);
+                        setupExamples([character], 'chinese');
                     }
                 }
             });
