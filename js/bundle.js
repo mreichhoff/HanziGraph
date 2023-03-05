@@ -935,7 +935,8 @@
             locale: 'zh-CN',
             type: 'frequency',
             hasCoverage: 'all',
-            collocationsPath: 'data/simplified/collocations'
+            collocationsPath: 'data/simplified/collocations',
+            englishPath: 'data/simplified/english'
         },
         traditional: {
             display: 'Traditional',
@@ -949,7 +950,8 @@
             defaultHanzi: ["按", "店", "右", "怕", "舞", "跳", "動"],
             type: 'frequency',
             hasCoverage: 'all',
-            collocationsPath: 'data/traditional/collocations'
+            collocationsPath: 'data/traditional/collocations',
+            englishPath: 'data/traditional/english'
         },
         cantonese: {
             display: 'Cantonese',
@@ -5690,7 +5692,7 @@
         renderMeaning(word, definitionList, examples, meaningContainer);
         container.appendChild(statsContainer);
     }
-    let setupExamples = function (words) {
+    let setupExamples = function (words, type) {
         currentExamples = {};
         // if we're showing examples, never show the walkthrough.
         walkThrough.style.display = 'none';
@@ -5702,6 +5704,10 @@
         let numExamples = maxExamples;
         if (words.length > 1) {
             numExamples = 3;
+            // TODO: numExamples gets ignored when falling back...gotta pass this through
+            if (type === 'english') {
+                numExamples = 1;
+            }
             let instructions = document.createElement('p');
             instructions.classList.add('explanation');
             instructions.innerText = 'There are multiple words. Click one to update the diagram.';
@@ -5777,7 +5783,7 @@
         //TODO(refactor): show study when it was the last state
         document.addEventListener('explore-update', function (event) {
             hanziBox.value = event.detail.display || event.detail.words[0];
-            setupExamples(event.detail.words);
+            setupExamples(event.detail.words, event.detail.type || 'chinese');
             updateVisited(event.detail.words);
         });
         document.addEventListener('character-set-changed', function () {
@@ -5808,7 +5814,7 @@
                         }
                         //enable seamless switching, but don't update if we're already showing examples for character
                         if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== character))) {
-                            setupExamples([character]);
+                            setupExamples([character], 'chinese');
                         }
                     }
                 });
@@ -7631,6 +7637,10 @@
     let searchSuggestionsWorker = null;
     const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
 
+    function looksLikeEnglish(value) {
+        return /^[\x00-\xFF]*$/.test(value);
+    }
+
     // lol
     function vetCandidate(candidate) {
         if (!(candidate in wordSet)) {
@@ -7638,7 +7648,7 @@
                 // it's not not a number, so ignore it.
                 return [{ word: candidate, ignore: true }];
             }
-            if (/^[\x00-\xFF]*$/.test(candidate)) {
+            if (looksLikeEnglish(candidate)) {
                 // it's ascii, not Chinese, so ignore it
                 // TODO: just use ! in_chinese_char_range 
                 return [{ word: candidate, ignore: true }];
@@ -7698,7 +7708,7 @@
     }
     function suggestSearches() {
         const partialSearch = hanziBox.value;
-        if (!partialSearch) {
+        if (!partialSearch || looksLikeEnglish(partialSearch)) {
             clearSuggestions();
         }
         let tokens = segment(partialSearch, getActiveGraph().locale);
@@ -7830,12 +7840,33 @@
         }
     }
 
+    function englishSearch(word, data) {
+        if (!data) {
+            notFoundElement.removeAttribute('style');
+        } else {
+            notFoundElement.style.display = 'none';
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: data[0] }));
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: data, display: word, type: 'english' } }));
+        }
+    }
+
     function search(value, locale) {
         clearSuggestions();
         if (value && (definitions[value] || (value in wordSet))) {
             notFoundElement.style.display = 'none';
             document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
             document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
+            return;
+        }
+        if (value && looksLikeEnglish(value) && getActiveGraph().englishPath) {
+            fetch(`./${getActiveGraph().englishPath}/${getPartition(value, getActiveGraph().partitionCount)}.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    if (value !== hanziBox.value) {
+                        return false;
+                    }
+                    englishSearch(value, data[value]);
+                });
             return;
         }
         multiWordSearch(value, segment(value, locale));

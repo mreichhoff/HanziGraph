@@ -4,7 +4,7 @@ import argparse
 
 def parse_cedict_line(line, character_type):
     line = line.rstrip('/').split('/')
-    english = ', '.join(line[1:]).strip().rstrip(',')
+    english = line[1:]
     char, pinyin = line[0].split('[')
     traditional, simplified = char.split()
 
@@ -29,12 +29,15 @@ def get_dictionary_entries(dict_filename, character_type, filter_set):
     with open(dict_filename) as f:
         for line in f:
             if not line.startswith('#') and len(line) > 0 and len(line.rstrip('/').split('/')) > 1:
-                entry = parse_cedict_line(line, character_type)
+                entry = parse_cedict_line(line.strip(), character_type)
                 if (not filter_set) or (entry[0] in filter_set):
                     if entry[0] not in result:
                         result[entry[0]] = []
-                    result[entry[0]].append(
-                        {'en': entry[1], 'pinyin': entry[2]})
+                    for definition in entry[1]:
+                        if definition.startswith('variant of ') and entry[0] in definition:
+                            continue
+                        result[entry[0]].append(
+                            {'en': definition, 'pinyin': entry[2]})
     return result
 
 
