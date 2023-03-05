@@ -20063,6 +20063,36 @@
     const walkThrough = document.getElementById('walkthrough');
     const examplesList = document.getElementById('examples');
 
+    function writeSeoMetaTags(urlState, graphDisplay) {
+        let urlMeta = document.createElement('meta');
+        urlMeta.setAttribute('property', 'og:url');
+        urlMeta.setAttribute('content', document.location.href);
+        document.head.appendChild(urlMeta);
+
+        let typeMeta = document.createElement('meta');
+        typeMeta.setAttribute('property', 'og:type');
+        typeMeta.setAttribute('content', 'website');
+        document.head.appendChild(typeMeta);
+
+        let imageMeta = document.createElement('meta');
+        imageMeta.setAttribute('property', 'og:image');
+        imageMeta.setAttribute('content', `${document.location.origin}/images/hanzigraph-192x192.png`);
+        document.head.appendChild(imageMeta);
+
+        let titleMeta = document.createElement('meta');
+        titleMeta.setAttribute('property', 'og:title');
+        titleMeta.setAttribute('content', (urlState && urlState.word) ? `${urlState.word} | ${graphDisplay}` :
+            (urlState && urlState.graph) ? `${graphDisplay}` : `HanziGraph`);
+        document.head.appendChild(titleMeta);
+
+        if (urlState && urlState.graph && !urlState.word) {
+            let canonical = document.createElement('link');
+            canonical.setAttribute('rel', 'canonical');
+            canonical.setAttribute('href', document.location.href);
+            document.head.appendChild(canonical);
+        }
+    }
+
     const graphContainer = document.getElementById('graph');
 
     let cy = null;
@@ -20614,6 +20644,7 @@
             );
             writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
             setTranscriptionLabel();
+            updateWalkthrough();
             // TODO(refactor): have recommendations.js react to the character-set-changed event
             legendElements.forEach((x, index) => {
                 x.innerText = activeGraph.legend[index];
@@ -20630,6 +20661,10 @@
         } else {
             togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
         }
+    }
+    const walkthroughCharacterSet = document.getElementById('walkthrough-character-set');
+    function updateWalkthrough() {
+        walkthroughCharacterSet.innerText = graphOptions[activeGraphKey].display;
     }
     function initialize$5() {
         graphSelector.addEventListener('change', switchGraph);
@@ -20665,6 +20700,7 @@
             window.wordSet = getWordLevelsFromGraph(window.hanzi);
         }
         setTranscriptionLabel();
+        updateWalkthrough();
     }
     function getSelectedGraph(storedOpts, urlOpts) {
         if (urlOpts && urlOpts.graph) {
@@ -25368,6 +25404,7 @@
     let persistNavigationState = function (words) {
         const activeGraph = getActiveGraph();
         const newUrl = `/${activeGraph.prefix}/${words}`;
+        document.title = `${words} | ${activeGraph.display}`;
         history.pushState({
             word: words,
         }, '', newUrl);
@@ -27579,6 +27616,7 @@
         // precedence goes to the direct URL entered first, then to anything hanging around in history, then localstorage.
         // if none are present, show the walkthrough.
         let needsTokenization = false;
+        writeSeoMetaTags(urlState, getActiveGraph().display);
         if (urlState && urlState.word) {
             hanziBox.value = urlState.word;
             if (urlState.word in wordSet || looksLikeEnglish(urlState.word)) {
@@ -27591,6 +27629,10 @@
         } else if (oldState && oldState.words && oldState.selectedCharacterSet === getActiveGraph().prefix) {
             search(oldState.words.join(''));
         } else {
+            // we set a graph, but no word. Set the title.
+            if (urlState && urlState.graph) {
+                document.title = `${getActiveGraph().display} | HanziGraph`;
+            }
             //add a default graph on page load to illustrate the concept
             walkThrough.removeAttribute('style');
             const defaultHanzi = getActiveGraph().defaultHanzi;

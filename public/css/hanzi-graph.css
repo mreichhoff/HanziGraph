@@ -126,6 +126,10 @@ ul {
     box-shadow: var(--primary-input-box-shadow);
 }
 
+#walkthrough-character-set {
+    font-weight: bold;
+}
+
 .secondary-input-container {
     display: grid;
     grid-template-columns: var(--secondary-input-container-columns);

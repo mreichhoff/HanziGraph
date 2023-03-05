@@ -409,6 +409,7 @@ let setupExamples = function (words, type, skipState) {
 let persistNavigationState = function (words) {
     const activeGraph = getActiveGraph();
     const newUrl = `/${activeGraph.prefix}/${words}`;
+    document.title = `${words} | ${activeGraph.display}`;
     history.pushState({
         word: words,
     }, '', newUrl);

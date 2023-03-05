@@ -127,6 +127,7 @@ function switchGraph() {
         );
         writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
         setTranscriptionLabel();
+        updateWalkthrough();
         // TODO(refactor): have recommendations.js react to the character-set-changed event
         legendElements.forEach((x, index) => {
             x.innerText = activeGraph.legend[index];
@@ -143,6 +144,10 @@ function setTranscriptionLabel() {
     } else {
         togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
     }
+}
+const walkthroughCharacterSet = document.getElementById('walkthrough-character-set');
+function updateWalkthrough() {
+    walkthroughCharacterSet.innerText = graphOptions[activeGraphKey].display;
 }
 function initialize() {
     graphSelector.addEventListener('change', switchGraph);
@@ -178,6 +183,7 @@ function initialize() {
         window.wordSet = getWordLevelsFromGraph(window.hanzi);
     }
     setTranscriptionLabel();
+    updateWalkthrough();
 }
 function getSelectedGraph(storedOpts, urlOpts) {
     if (urlOpts && urlOpts.graph) {

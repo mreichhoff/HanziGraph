@@ -9,7 +9,7 @@ import { initialize as recommendationsInit } from "./recommendations.js";
 import { initialize as graphInit } from "./graph.js";
 import { initialize as optionsInit, getActiveGraph, parseUrl } from "./options.js";
 import { readExploreState } from "./data-layer.js";
-import { hanziBox, walkThrough, examplesList } from "./dom.js";
+import { hanziBox, walkThrough, examplesList, writeSeoMetaTags } from "./dom.js";
 import { initialize as flowDiagramInit } from "./flow-diagram.js";
 import { initialize as dataLayerInit } from "./data-layer.js";
 import { initialize as searchInit, search, looksLikeEnglish } from "./search.js";
@@ -88,6 +88,7 @@ Promise.all(
     // precedence goes to the direct URL entered first, then to anything hanging around in history, then localstorage.
     // if none are present, show the walkthrough.
     let needsTokenization = false;
+    writeSeoMetaTags(urlState, getActiveGraph().display);
     if (urlState && urlState.word) {
         hanziBox.value = urlState.word;
         if (urlState.word in wordSet || looksLikeEnglish(urlState.word)) {
@@ -100,6 +101,10 @@ Promise.all(
     } else if (oldState && oldState.words && oldState.selectedCharacterSet === getActiveGraph().prefix) {
         search(oldState.words.join(''));
     } else {
+        // we set a graph, but no word. Set the title.
+        if (urlState && urlState.graph) {
+            document.title = `${getActiveGraph().display} | HanziGraph`;
+        }
         //add a default graph on page load to illustrate the concept
         walkThrough.removeAttribute('style');
         const defaultHanzi = getActiveGraph().defaultHanzi;
