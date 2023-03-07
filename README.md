@@ -1,4 +1,14 @@
 # HanziGraph
+
+## Demo
+
+
+
+https://user-images.githubusercontent.com/17800817/223289973-c4037b6c-a924-4b0e-ae9f-21af073e103d.mov
+
+
+## Description
+
 HanziGraph is a tool for Chinese language learners or those interested in how Chinese characters are used. It represents the Chinese language as [a graph](https://en.wikipedia.org/wiki/Graph_theory), in which individual characters are the [nodes](https://en.wikipedia.org/wiki/Vertex_(graph_theory)), and the [edges](https://en.wikipedia.org/wiki/Glossary_of_graph_theory#edge) are words. As a concrete example, `确` and `定` would each represent a node, and `确定` would be the edge that connects them.
 
 The nodes and edges all have data associated with them. Specifically, each node and edge has:
