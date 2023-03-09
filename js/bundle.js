@@ -7711,15 +7711,17 @@
         if (!partialSearch || looksLikeEnglish(partialSearch)) {
             clearSuggestions();
         }
-        let tokens = segment(partialSearch, getActiveGraph().locale);
         // if it's just a single character, handle it here.
-        let hanziCheck = tokens.length > 1 ? tokens[tokens.length - 1] : partialSearch;
-        if (hanziCheck in hanzi) {
-            const words = [hanziCheck, ...extractWords(hanzi[hanziCheck])];
-            renderSearchSuggestions(partialSearch, words, tokens, searchSuggestionsContainer);
+        // otherwise, pass it off to the worker and let it decide.
+        if (partialSearch.length === 1 && partialSearch in hanzi) {
+            const words = [partialSearch, ...extractWords(hanzi[partialSearch])];
+            let suggestions = {};
+            suggestions[partialSearch] = words;
+            suggestions['tokenized'] = [];
+            renderSearchSuggestions(partialSearch, suggestions, [partialSearch], searchSuggestionsContainer);
             return;
         }
-        // otherwise, pass it off to the worker and let it decide.
+        let tokens = segment(partialSearch, getActiveGraph().locale);
         searchSuggestionsWorker.postMessage({
             type: 'query',
             payload: { query: partialSearch, tokens: tokens }
@@ -7764,7 +7766,7 @@
     function renderSearchSuggestions(query, suggestions, tokens, container) {
         container.innerHTML = '';
         const isMultiWord = tokens.length > 1;
-        if (!suggestions || !suggestions.length) {
+        if (!suggestions || (!suggestions[query].length && !suggestions['tokenized'].length)) {
             renderExplanationItem(`No suggestions found for ${query}.`, container);
             return;
         }
@@ -7779,19 +7781,25 @@
                 return x;
             }).join('');
         }
-        for (const suggestion of suggestions) {
+        for (const suggestion of suggestions[query]) {
+            let item = document.createElement('li');
+            item.classList.add('search-suggestion');
+            renderSuggestion('', suggestion, item);
+            container.appendChild(item);
+            item.addEventListener('mousedown', function () {
+                notFoundElement.style.display = 'none';
+                document.dispatchEvent(new CustomEvent('graph-update', { detail: suggestion }));
+                document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [suggestion] } }));
+                clearSuggestions();
+            });
+        }
+        for (const suggestion of suggestions['tokenized']) {
             let item = document.createElement('li');
             item.classList.add('search-suggestion');
             renderSuggestion(priorWordsForDisplay, suggestion, item);
             container.appendChild(item);
             item.addEventListener('mousedown', function () {
-                if (isMultiWord) {
-                    multiWordSearch(priorWordsForDisplay + suggestion, allButLastToken.concat(suggestion));
-                } else {
-                    notFoundElement.style.display = 'none';
-                    document.dispatchEvent(new CustomEvent('graph-update', { detail: suggestion }));
-                    document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [suggestion] } }));
-                }
+                multiWordSearch(priorWordsForDisplay + suggestion, allButLastToken.concat(suggestion));
                 clearSuggestions();
             });
         }

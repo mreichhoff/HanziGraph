@@ -3,19 +3,12 @@ let trie = {
     children: {},
     words: []
 };
-function getSuggestions(query, tokens) {
-    if (!trie) {
-        return [];
-    }
-    let relevantToken = query;
-    if (tokens.length > 1) {
-        relevantToken = tokens[tokens.length - 1];
-    }
+function queryTrie(term) {
     let node = trie;
-    if (relevantToken.ignore) {
+    if (term.ignore) {
         return [];
     }
-    for (const character of relevantToken) {
+    for (const character of term) {
         if (character in node.children) {
             node = node.children[character]
         } else {
@@ -24,6 +17,18 @@ function getSuggestions(query, tokens) {
     }
 
     return node.words;
+}
+function getSuggestions(query, tokens) {
+    if (!trie) {
+        return [];
+    }
+    let suggestions = {};
+    suggestions[query] = queryTrie(query);
+    suggestions['tokenized'] = [];
+    if (tokens.length > 1) {
+        suggestions['tokenized'] = queryTrie(tokens[tokens.length - 1]);
+    }
+    return suggestions;
 }
 function buildTrie(wordSet) {
     let node = trie;
