@@ -209,16 +209,13 @@ let renderWordHeader = function (word, container, active) {
     wordHolder.appendChild(wordSpan);
     addTextToSpeech(wordHolder, word, []);
     addSaveToListButton(wordHolder, word);
-    let separator = renderSeparator(wordHolder);
     if (active) {
         wordHolder.classList.add('active');
-        separator.classList.add('expand');
     }
     wordSpan.addEventListener('click', function () {
         if (!wordHolder.classList.contains('active')) {
             document.querySelectorAll('.word-header').forEach(x => x.classList.remove('active'));
             wordHolder.classList.add('active');
-            separator.classList.add('expand');
         }
         document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
     });
@@ -395,7 +392,7 @@ let setupExamples = function (words, type) {
             examplesList.append(item);
             continue;
         }
-        renderExplore(words[i], item, definitionList, examples, numExamples, (!rendered && words.length > 1));
+        renderExplore(words[i], item, definitionList, examples, numExamples, !rendered);
         rendered = true;
 
         examplesList.append(item);
