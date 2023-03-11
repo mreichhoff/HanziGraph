@@ -25153,7 +25153,7 @@
     };
 
     // expects callers to ensure augmentation is available
-    let augmentExamples = function (word, container) {
+    let augmentExamples = function (word, container, maxExamples) {
         const activeGraph = getActiveGraph();
         fetch(`/${activeGraph.augmentPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
             .then(response => response.json())
@@ -25161,7 +25161,7 @@
                 if (!container) {
                     return false;
                 }
-                let examples = findExamples(word, data, 2);
+                let examples = findExamples(word, data, maxExamples || 2);
                 setupExampleElements(examples, container);
                 currentExamples[word].push(...examples);
             });
@@ -25235,19 +25235,19 @@
         contextHolder.appendChild(contextFaqContainer);
         container.appendChild(contextHolder);
     };
-    let renderExamples = function (word, examples, container) {
+    let renderExamples = function (word, examples, maxExamples, container) {
         let exampleList = document.createElement('ul');
         exampleList.classList.add('examples');
         container.appendChild(exampleList);
         if (examples.length > 0) {
             setupExampleElements(examples, exampleList);
         } else if (getActiveGraph().augmentPath) {
-            augmentExamples(word, exampleList);
+            augmentExamples(word, exampleList, maxExamples);
         }
     };
-    let renderMeaning = function (word, definitionList, examples, container) {
+    let renderMeaning = function (word, definitionList, examples, maxExamples, container) {
         renderDefinitions(word, definitionList, container);
-        renderExamples(word, examples, container);
+        renderExamples(word, examples, maxExamples, container);
     };
     let renderStats = function (word, container) {
         renderContext(word, container);
@@ -25326,7 +25326,7 @@
         }
     };
 
-    function renderExplore(word, container, definitionList, examples, active) {
+    function renderExplore(word, container, definitionList, examples, maxExamples, active) {
         let tabs = document.createElement('div');
         renderWordHeader(word, container, active);
         tabs.classList.add('explore-tabs');
@@ -25340,7 +25340,7 @@
             renderStats(word, statsContainer);
         }], ['slide-in', 'slide-in']);
         container.appendChild(meaningContainer);
-        renderMeaning(word, definitionList, examples, meaningContainer);
+        renderMeaning(word, definitionList, examples, maxExamples, meaningContainer);
         container.appendChild(statsContainer);
     }
 
@@ -25356,7 +25356,6 @@
         let numExamples = maxExamples;
         if (words.length > 1) {
             numExamples = 3;
-            // TODO: numExamples gets ignored when falling back...gotta pass this through
             if (type === 'english') {
                 numExamples = 1;
             }
@@ -25389,7 +25388,7 @@
                 examplesList.append(item);
                 continue;
             }
-            renderExplore(words[i], item, definitionList, examples, (!rendered && words.length > 1));
+            renderExplore(words[i], item, definitionList, examples, numExamples, (!rendered && words.length > 1));
             rendered = true;
 
             examplesList.append(item);
