@@ -15,6 +15,17 @@ def get_partition(word, total_partitions):
     return total % total_partitions
 
 
+def collapse_sentences(partition):
+    result = []
+    deduplicator = set()
+    for sentences in partition.values():
+        for sentence in sentences:
+            if ''.join(sentence['zh']) not in deduplicator:
+                deduplicator.add(''.join(sentence['zh']))
+                result.append(sentence)
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='partition some files that are too large to be loaded immediately on the client side')
@@ -24,6 +35,8 @@ def main():
         '--n', help='the number of desired partitions')
     parser.add_argument(
         '--output-dir', help='where to write partitioned definitions')
+    parser.add_argument(
+        '--collapse', help='collapse the partition into a single array', action=argparse.BooleanOptionalAction)
     args = parser.parse_args()
     partitions = []
     n = int(args.n)
@@ -38,7 +51,8 @@ def main():
     count = 0
     for partition in partitions:
         with open(f"{args.output_dir}/{count}.json", 'w') as f:
-            json.dump(partition, f, ensure_ascii=False)
+            json.dump(partition if not args.collapse else collapse_sentences(
+                partition), f, ensure_ascii=False)
             count = count+1
 
 
