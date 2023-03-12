@@ -224,7 +224,7 @@ ul {
 }
 
 .word-header .clickable {
-    border-left: 4px solid #ff9b35;
+    border-left: 2px solid #ff9b35;
     padding-left: 6px;
     transition: border-left-width 0.35s, border-left-color 0.35s;
 }
