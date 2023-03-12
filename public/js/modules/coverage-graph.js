@@ -26,6 +26,7 @@ function renderCoverageGraph(percentages, term, rank, type, container) {
         transformedPercentages.push({ x: parseInt(x) + 1, y: y });
     }
 
+    const coverage = findCoverage(transformedPercentages, rank);
     let chart = LineChart(transformedPercentages, {
         x: d => d.x,
         y: d => d.y,
@@ -38,9 +39,11 @@ function renderCoverageGraph(percentages, term, rank, type, container) {
         height: (container.offsetWidth / 1.6),
         color: '#68aaee',
         strokeWidth: 2.5,
-        yFormat: '%'
+        yFormat: '%',
+        horizontalLine: { y: coverage, color: '#de68ee', width: 1.5, opacity: 0.8 },
+        verticalLine: { x: rank, color: '#de68ee', width: 1.5, opacity: 0.8 },
+        horizontalLabel: { x: rank / 2, y: coverage, color: '#de68ee', text: term, weight: 'bold', font: 'sans-serif', fontSize: '16px' },
     });
-    const coverage = findCoverage(transformedPercentages, rank);
     renderExplanation(term, coverage, type, rank, container);
     container.appendChild(chart);
 }
@@ -92,6 +95,10 @@ function LineChart(data, {
     strokeLinejoin = "round", // stroke line join of the line
     strokeWidth = 1.5, // stroke width of line, in pixels
     strokeOpacity = 1, // stroke opacity of line
+    horizontalLine,
+    verticalLine,
+    horizontalLabel,
+    verticalLabel
 } = {}) {
     // Compute values.
     const X = map(data, x);
@@ -155,6 +162,49 @@ function LineChart(data, {
         .attr("stroke-linejoin", strokeLinejoin)
         .attr("stroke-opacity", strokeOpacity)
         .attr("d", line(I));
+
+    if (horizontalLine) {
+        svg.append('line')
+            .attr('x1', xScale(0))
+            .attr('y1', yScale(horizontalLine.y))
+            .attr('x2', xScale(xDomain[1]))
+            .attr('y2', yScale(horizontalLine.y))
+            .attr('stroke', horizontalLine.color)
+            .attr('stroke-opacity', horizontalLine.opacity)
+            .attr("stroke-width", horizontalLine.width)
+            .attr('stroke-dasharray', 4);
+    }
+    if (verticalLine) {
+        svg.append('line')
+            .attr('x1', xScale(verticalLine.x))
+            .attr('y1', yScale(0))
+            .attr('x2', xScale(verticalLine.x))
+            .attr('y2', yScale(horizontalLine ? horizontalLine.y : Y[Y.length - 1]))
+            .attr('stroke', verticalLine.color)
+            .attr('stroke-opacity', verticalLine.opacity)
+            .attr("stroke-width", verticalLine.width)
+            .attr('stroke-dasharray', 4);
+    }
+    if (horizontalLabel) {
+        svg.append('text')
+            .attr('x', xScale(horizontalLabel.x))
+            .attr('y', yScale(horizontalLabel.y) - 6)
+            .attr('fill', horizontalLabel.color)
+            .attr('font-weight', horizontalLabel.weight)
+            .attr('font-size', horizontalLabel.fontSize)
+            .attr('font-family', horizontalLabel.font)
+            .text(horizontalLabel.text);
+    }
+    if (verticalLabel) {
+        svg.append('text')
+            .attr('x', xScale(verticalLabel.x) - 40)
+            .attr('y', yScale(verticalLabel.y))
+            .attr('fill', verticalLabel.color)
+            .attr('font-weight', verticalLabel.weight)
+            .attr('font-size', verticalLabel.fontSize)
+            .attr('font-family', verticalLabel.font)
+            .text(verticalLabel.text);
+    }
 
     return svg.node();
 }
