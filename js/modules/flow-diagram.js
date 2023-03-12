@@ -155,7 +155,8 @@ function renderUsageDiagram(term, collocations, container) {
             document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [elements.labels[i.id]] } }));
         },
         fontColor: 'currentColor',
-        fontSize: getFontSize(container.offsetWidth)
+        fontSize: getFontSize(container.offsetWidth),
+        nodeStroke: null
     });
     rendered = true;
     container.appendChild(chart);
