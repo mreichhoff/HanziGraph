@@ -1,4 +1,5 @@
 import { switchToState, stateKeys } from "./ui-orchestrator";
+const parent = document.getElementById('graph-container');
 const graphContainer = document.getElementById('graph');
 
 let cy = null;
@@ -169,7 +170,7 @@ function edgeTapHandler(evt) {
     document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('words')[0] }));
     switchToState(stateKeys.main);
 }
-function setupCytoscape(elements, graphContainer, nodeEventHandler, edgeEventHandler) {
+function setupCytoscape(elements, graphContainer) {
     cy = cytoscape({
         container: graphContainer,
         elements: elements,
@@ -178,8 +179,8 @@ function setupCytoscape(elements, graphContainer, nodeEventHandler, edgeEventHan
         maxZoom: 10,
         minZoom: 0.5
     });
-    cy.on('tap', 'node', nodeEventHandler);
-    cy.on('tap', 'edge', edgeEventHandler);
+    cy.on('tap', 'node', nodeTapHandler);
+    cy.on('tap', 'edge', edgeTapHandler);
 }
 function addToGraph(character) {
     let result = { 'nodes': [], 'edges': [] };
@@ -236,13 +237,40 @@ function buildGraph(value) {
         dfs(character, result, maxDepth, {}, getMaxEdges(value));
     }
     addEdges(value, result);
-    setupCytoscape(result, graphContainer, nodeTapHandler, edgeTapHandler);
+    if (showingGraph) {
+        setupCytoscape(result, graphContainer);
+    } else {
+        dirty = result;
+    }
     currentPath = [...value];
 }
+
+let showingGraph = true;
+let pendingResizeTimeout = null;
+let dirty = null;
 
 function initialize() {
     document.addEventListener('graph-update', function (event) {
         buildGraph(event.detail);
+    });
+    parent.addEventListener('hidden', function () {
+        showingGraph = false;
+    });
+    parent.addEventListener('shown-animationend', function () {
+        showingGraph = true;
+        if (dirty) {
+            setupCytoscape(dirty, graphContainer);
+            dirty = null;
+        }
+    });
+    window.addEventListener('resize', function () {
+        clearTimeout(pendingResizeTimeout);
+        pendingResizeTimeout = setTimeout(() => {
+            // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
+            if (cy && showingGraph) {
+                cy.layout(layout(cy.nodes().length)).run();
+            }
+        }, 1000);
     });
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
     document.addEventListener('character-set-changed', function (event) {
