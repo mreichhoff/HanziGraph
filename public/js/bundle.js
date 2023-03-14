@@ -26977,6 +26977,9 @@
         if (words.length > maxDepth) {
             return maxDepth;
         }
+        if (words.some(word => (!(word in window.wordSet)))) {
+            return maxDepth;
+        }
         let i = 0;
         if (!trie[0]) {
             trie[0] = {};
@@ -27029,18 +27032,12 @@
         for (let level = rootDepth; level in trie; level++) {
             const nodes = trie[level];
             for (const [node, data] of Object.entries(nodes)) {
-                if (!(node in window.wordSet)) {
-                    continue;
-                }
                 elements.nodes.push({
                     id: `${node}-${level}`
                 });
                 elements.labels[`${node}-${level}`] = node;
                 elements.collocations[`${node}-${level}`] = data.collocations;
                 for (const edge of Object.keys(data.edges)) {
-                    if (!(edge in wordSet)) {
-                        continue;
-                    }
                     if (!nonRoots[level + 1]) {
                         nonRoots[level + 1] = new Set();
                     }
