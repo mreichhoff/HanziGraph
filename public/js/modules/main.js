@@ -1,6 +1,6 @@
 import { initialize as firebaseInit } from './firebase-init.js';
 import { initialize as authStateInit } from './auth-state.js';
-import { initialize as orchestratorInit, stateKeys, switchToState } from "./ui-orchestrator.js"
+import { diagramKeys, initialize as orchestratorInit, stateKeys, switchDiagramView, switchToState } from "./ui-orchestrator.js"
 import { initialize as exploreInit } from "./explore.js";
 import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
@@ -113,6 +113,9 @@ Promise.all(
     }
     if (needsTokenization) {
         searchInit(urlState.word);
+    }
+    if (urlState.mode === 'flow' && getActiveGraph().collocationsPath) {
+        switchDiagramView(diagramKeys.flow);
     }
     // These happen last due to being secondary functionality
     statsInit();

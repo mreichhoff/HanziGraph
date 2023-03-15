@@ -207,6 +207,8 @@ function parseUrl(path) {
         }
     } else if (segments.length === 2) {
         return { graph: segments[0], word: decodeURIComponent(segments[1]) };
+    } else if (segments.length === 3) {
+        return { graph: segments[0], word: decodeURIComponent(segments[1]), mode: segments[2] };
     }
     return {};
 }

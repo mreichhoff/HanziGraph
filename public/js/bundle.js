@@ -20753,6 +20753,8 @@
             }
         } else if (segments.length === 2) {
             return { graph: segments[0], word: decodeURIComponent(segments[1]) };
+        } else if (segments.length === 3) {
+            return { graph: segments[0], word: decodeURIComponent(segments[1]), mode: segments[2] };
         }
         return {};
     }
@@ -27731,6 +27733,9 @@
         }
         if (needsTokenization) {
             initialize(urlState.word);
+        }
+        if (urlState.mode === 'flow' && getActiveGraph().collocationsPath) {
+            switchDiagramView(diagramKeys.flow);
         }
         // These happen last due to being secondary functionality
         initialize$2();
