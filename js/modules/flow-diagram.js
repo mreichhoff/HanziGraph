@@ -185,6 +185,7 @@ function getCollocations(word) {
             }
         });
 }
+let pendingResizeTimeout = null;
 function initialize() {
     toggleShowButton();
     document.addEventListener('character-set-changed', toggleShowButton);
@@ -201,6 +202,14 @@ function initialize() {
         switchButton.innerText = "Show Graph";
         showingFlow = true;
         renderUsageDiagram(activeWord, activeCollocations, container);
+    });
+    window.addEventListener('resize', function () {
+        clearTimeout(pendingResizeTimeout);
+        pendingResizeTimeout = setTimeout(() => {
+            if (showingFlow) {
+                renderUsageDiagram(activeWord, activeCollocations, container);
+            }
+        }, 1000);
     });
     container.addEventListener('hidden', function () {
         showingFlow = false;

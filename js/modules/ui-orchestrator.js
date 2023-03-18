@@ -160,6 +160,7 @@ function switchDiagramView(diagramKey) {
             diagram.element.removeAttribute('style');
             diagram.element.classList.add(diagram.animation);
             diagram.element.addEventListener('animationend', function () {
+                diagram.element.dispatchEvent(new Event('shown-animationend'));
                 diagram.element.classList.remove(diagram.animation);
             }, { once: true });
             diagram.element.dispatchEvent(new Event('shown'));
