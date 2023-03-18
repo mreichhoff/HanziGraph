@@ -4,7 +4,8 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#121212",
-    "description": "Learn Chinese by studying word-forming relationships among characters alongside example sentences that illustrate their use.",
+    "theme_color": "#121212",
+    "description": "Learn Chinese by exploring the relationships between characters alongside examples that illustrate their use.",
     "icons": [
         {
             "src": "images/hanzigraph-192x192.png",
@@ -15,6 +16,23 @@
             "src": "images/hanzigraph-512x512.png",
             "sizes": "512x512",
             "type": "image/png"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Simplified",
+            "url": "/simplified",
+            "description": "Simplified Hanzi"
+        },
+        {
+            "name": "Traditional",
+            "url": "/traditional",
+            "description": "Traditional Hanzi"
+        },
+        {
+            "name": "Cantonese",
+            "url": "/cantonese",
+            "description": "Cantonese [Beta]"
         }
     ]
 }
