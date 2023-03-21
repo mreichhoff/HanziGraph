@@ -1927,7 +1927,7 @@
 
     const firebaseConfig = {
         apiKey: "AIzaSyAddUF68m2igTa-JmIblbZUjmx1CE3xwdQ",
-        authDomain: "hanzigraph.firebaseapp.com",
+        authDomain: "hanzigraph.com",
         projectId: "hanzigraph",
         storageBucket: "hanzigraph.appspot.com",
         messagingSenderId: "317168591112",
