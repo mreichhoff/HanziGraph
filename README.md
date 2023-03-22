@@ -3,18 +3,17 @@
 ## Demo
 
 
-
-https://user-images.githubusercontent.com/17800817/223289973-c4037b6c-a924-4b0e-ae9f-21af073e103d.mov
+https://user-images.githubusercontent.com/17800817/226909950-5448e64b-7d2c-42ef-9edc-6869b082ee7f.mov
 
 
 ## Description
 
-HanziGraph is a tool for Chinese language learners or those interested in how Chinese characters are used. It represents the Chinese language as [a graph](https://en.wikipedia.org/wiki/Graph_theory), in which individual characters are the [nodes](https://en.wikipedia.org/wiki/Vertex_(graph_theory)), and the [edges](https://en.wikipedia.org/wiki/Glossary_of_graph_theory#edge) are words. As a concrete example, `确` and `定` would each represent a node, and `确定` would be the edge that connects them.
+HanziGraph is a Chinese/English dictionary and study tool for Chinese language learners or those interested in how Chinese characters are used. It represents the Chinese language as [a graph](https://en.wikipedia.org/wiki/Graph_theory), in which individual characters are the [nodes](https://en.wikipedia.org/wiki/Vertex_(graph_theory)), and the [edges](https://en.wikipedia.org/wiki/Glossary_of_graph_theory#edge) are words. As a concrete example, `确` and `定` would each represent a node, and `确定` would be the edge that connects them.
 
 The nodes and edges all have data associated with them. Specifically, each node and edge has:
 * Usage frequency data, which takes the form of color coding (red: very frequent; blue: less frequent). Word frequency can also be substituted with color coding by HSK level.
 * Definitions, from [CEDICT](https://cc-cedict.org/editor/editor.php) (and in the case of Cantonese, [CC-CANTO](https://cantonese.org/)).
-* Example sentences, sorted by average word frequency, from [tatoeba](https://tatoeba.org/), [OpenSubtitles](http://www.opensubtitles.org/), and [CommonCrawl](https://opus.nlpl.eu/CCAligned.php).
+* Example sentences, sorted by average word frequency, from [tatoeba](https://tatoeba.org/), [OpenSubtitles](http://www.opensubtitles.org/), [the UN parallel corpus](https://cms.unov.org/UNCorpus), and [WikiMatrix](https://arxiv.org/abs/1907.05791).
 
 In addition to character relationships expressed through a graph structure, the tool uses [collocation](https://en.wikipedia.org/wiki/Collocation) data to show how words relate to one another. It expresses those relationships with [sankey diagrams](https://en.wikipedia.org/wiki/Sankey_diagram). These diagrams can also be thought of as a graph, where each node is a word and each edge is a collocation, with the edge weight representing frequency of use. One example would be `时候` commonly being preceded by `的`. In this case, `时候` and `的` are nodes, and the weight of their connecting edge represents the frequency of the collocation `的时候`.
 
@@ -33,10 +32,10 @@ There's also a port to help learners [study Japanese kanji](https://github.com/m
 Sentence and definition data was pulled from:
 * [Tatoeba](https://tatoeba.org/), which releases data under [CC-BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/)
 * [CEDICT](https://cc-cedict.org/editor/editor.php), which releases data under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Because of sharealike, the definitions files should be considered released under that license as well.
-* [OPUS](https://opus.nlpl.eu/OpenSubtitles2018.php), specifically the [OpenSubtitles](http://www.opensubtitles.org/) and [CommonCrawl](https://opus.nlpl.eu/CCAligned.php) corpuses.
+* [OPUS](https://opus.nlpl.eu/OpenSubtitles2018.php), specifically the [OpenSubtitles](http://www.opensubtitles.org/), [UN parallel](https://cms.unov.org/UNCorpus), and [WikiMatrix](https://arxiv.org/abs/1907.05791) corpuses.
 
 Cantonese frequency data was generated from [a spreadsheet](https://docs.google.com/spreadsheets/d/1ArxEFo46PTrDyDDhWyu3wB0epxqTyd8WBaprnwTEPm4/) found [on reddit](https://www.reddit.com/r/Cantonese/comments/62i3ud/most_common_cantonese_words_frequency_list/), [HKCanCor](https://github.com/fcbond/hkcancor) via [pycantonese](https://github.com/jacksonllee/pycantonese), and tatoeba.
 
-[Jieba](https://github.com/wchan757/jieba) was used to tokenize sentences, including in [Cantonese](https://github.com/wchan757/Cantonese_Word_Segmentation).
+[Jieba](https://github.com/wchan757/jieba) was used to tokenize sentences, including in [Cantonese](https://github.com/wchan757/Cantonese_Word_Segmentation). It is also used [in WASM form](https://github.com/fengkx/jieba-wasm) to tokenize sentences on the frontend.
 
 [CytoscapeJS](https://github.com/cytoscape/cytoscape.js) and [d3](https://github.com/d3/d3) are helpful for graph visualization.
