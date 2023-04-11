@@ -23,6 +23,20 @@ Flashcards can be created from the definitions and example sentences, and either
 
 You can learn more via [a discussion on reddit](https://www.reddit.com/r/ChineseLanguage/comments/tcgps5/free_tool_to_learn_hanzi_get_example_sentences/) and [on hacking Chinese](https://challenges.hackingchinese.com/resources/stories/513-hanzigraph-visual-vocabulary-relationships).
 
+## Running the code
+Running the main branch code is intended to be extremely simple. There is no backend; the entire app runs in-browser. Setup is therefore as simple as:
+
+```bash
+git clone https://github.com/mreichhoff/HanziGraph.git
+cd HanziGraph
+# Assuming python is installed, though any basic web server would do; it's just viewing files.
+python3 -m http.server
+```
+
+after which you can use the app in your browser, e.g. at `localhost:8000`.
+
+Note that some of the larger data files are partitioned to avoid excessive memory use or network bandwidth (while also avoiding huge numbers of files).
+
 ## Project Status
 The webapp is still a prototype, but it is functional and can be installed as [a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Installing) or used on the web. Note that there is both [a firebase-hosted version](https://hanzigraph.com) and [a github pages site](https://mreichhoff.github.io/HanziGraph/). The latter does not allow cross-device syncing, but is otherwise equivalent (though note that sometimes one or the other is a few commits behind).
 
