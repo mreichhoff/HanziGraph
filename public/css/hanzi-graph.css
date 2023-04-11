@@ -28,7 +28,8 @@
     --right-button-margin: 10px 0 0 20px;
     --menu-button-margin: 18px 0 0 0;
     --primary-container-height: calc(100% - 42px);
-    --graph-height: calc(100% - 50px);
+    --legend-height: 14px;
+    --graph-height: calc(100% - var(--legend-height));
     --section-container-margin: 0 20px;
     --calendar-day-color: #eee;
     --bar-chart-separator-color: #121212;
@@ -39,10 +40,6 @@
     --control-container-height: 70px;
     --study-result-buttons-width: 50%;
     --legend-font-size: 14px;
-    --legend-height: 50px;
-    --legend-circle-height: 20px;
-    --legend-circle-margin: 0.5px 4px;
-    --level-marker-margin: 0px auto;
     --instructions-font-size: 16px;
     --secondary-input-container-width: 80%;
 }
@@ -334,9 +331,10 @@ ul {
 }
 
 .level-marker {
-    height: 5px;
-    width: 70%;
-    margin: var(--level-marker-margin);
+    height: 12px;
+    /* there's 6, so 100% / 6 (bad) */
+    width: 16%;
+    margin: 0;
 }
 
 #show-pinyin:checked~* .transcription {
@@ -508,32 +506,21 @@ ul {
 }
 
 /* Legend stuff, ugly but less critical */
-/* could do some vars, I guess */
-.circle {
-    width: 40px;
-    height: var(--legend-circle-height);
-    font-size: var(--legend-font-size);
-    text-align: center;
-    line-height: var(--legend-circle-height);
-    margin: var(--legend-circle-margin);
-}
 
 #legend {
     font-size: var(--legend-font-size);
-    text-align: center;
     margin: 0;
     height: var(--legend-height);
-}
-
-#legend p {
-    margin: 0;
-    padding: 0;
+    display: flex;
+    justify-content: center;
 }
 
 #level-container {
     display: flex;
     justify-content: center;
     align-items: center;
+    /* TODO: bad */
+    width: 36%;
 }
 
 /* TODO: do we need these to be different classes? */
@@ -911,17 +898,12 @@ main.auth-form {
         --right-button-margin: 6px 0 0 20px;
         --menu-button-margin: 16px 0 0 0;
         --primary-container-height: calc(100% - 35px);
-        --graph-height: calc(100% - 38px);
         --search-input-height: 26px;
         --search-font-size: 18px;
         --output-container-height: calc(100% - 66px);
         --control-container-height: 64px;
         --study-result-buttons-width: 80%;
-        --legend-font-size: 10px;
-        --legend-height: 38px;
-        --legend-circle-margin: 0 0.5px;
-        --legend-circle-height: 14px;
-        --level-marker-margin: 5px auto 0 auto;
+        --legend-font-size: 12px;
         --instructions-font-size: 14px;
         --secondary-control-font-size: 14px;
         --secondary-input-container-columns: 1fr 90px;

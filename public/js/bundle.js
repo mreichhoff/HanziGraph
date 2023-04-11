@@ -20558,7 +20558,6 @@
     let freqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
     let freqRanks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
 
-    let legendElements = document.querySelectorAll('.level-label');
     const graphOptions = {
         hsk: {
             display: 'HSK Wordlist',
@@ -20675,9 +20674,6 @@
             setTranscriptionLabel();
             updateWalkthrough();
             // TODO(refactor): have recommendations.js react to the character-set-changed event
-            legendElements.forEach((x, index) => {
-                x.innerText = activeGraph.legend[index];
-            });
             Promise.all(promises).then(() => {
                 document.dispatchEvent(new CustomEvent('character-set-changed', { detail: activeGraph }));
             });
