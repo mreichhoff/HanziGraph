@@ -20182,22 +20182,10 @@
             }
         }
     }
+    const colors$1 = ['#fc5c7d', '#ea6596', '#d56eaf', '#bb75c8', '#9b7ce1', '#6a82fb'];
     function levelColor(element) {
         let level = element.data('level');
-        switch (level) {
-            case 6:
-                return '#68aaee';
-            case 5:
-                return '#de68ee';
-            case 4:
-                return '#6de200';
-            case 3:
-                return '#fff249';
-            case 2:
-                return '#ff9b35';
-            case 1:
-                return '#ff635f';
-        }
+        return colors$1[level - 1];
     }
 
     function layout(numNodes) {
