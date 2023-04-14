@@ -1,5 +1,5 @@
 :root {
-    --background-color: #fff;
+    --background-color: #fcfcfc;
     --primary-font-color: rgba(0, 0, 0, 0.87);
     --primary-font: Roboto, Helvetica, Arial, sans-serif;
     --primary-font-weight: 300;
@@ -42,6 +42,10 @@
     --legend-font-size: 14px;
     --instructions-font-size: 16px;
     --secondary-input-container-width: 80%;
+    --accent-color: #fc5c7d;
+    --inactive-accent-color: #bb75c8;
+    --legend-gradient-start: #fc5c7d;
+    --legend-gradient-end: #6a82fb;
 }
 
 html {
@@ -216,12 +220,12 @@ ul {
 }
 
 .word-header.active .clickable {
-    border-left: 8px solid #ff635f;
+    border-left: 8px solid var(--accent-color);
     transition: border-left-width 0.35s, border-left-color 0.35s;
 }
 
 .word-header .clickable {
-    border-left: 2px solid #ff9b35;
+    border-left: 2px solid var(--inactive-accent-color);
     padding-left: 6px;
     transition: border-left-width 0.35s, border-left-color 0.35s;
 }
@@ -230,7 +234,7 @@ ul {
     width: 60px;
     height: 4px;
     display: block;
-    background: #ff635f;
+    background: var(--accent-color);
 }
 
 .explore-tab.active .separator {
@@ -324,13 +328,6 @@ ul {
     text-decoration: underline;
     color: var(--link-font-color);
     cursor: pointer;
-}
-
-.level-marker {
-    height: 12px;
-    /* there's 6, so 100% / 6 (bad) */
-    width: 16%;
-    margin: 0;
 }
 
 #show-pinyin:checked~* .transcription {
@@ -512,11 +509,10 @@ ul {
 }
 
 #level-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    /* TODO: bad */
+    display: inline-block;
+    background: linear-gradient(to right, var(--legend-gradient-start), var(--legend-gradient-end));
     width: 36%;
+    margin: 0 2px;
 }
 
 /* TODO: do we need these to be different classes? */
@@ -835,7 +831,6 @@ p.related-card {
         --output-container-height: calc(100% - 66px);
         --control-container-height: 64px;
         --study-result-buttons-width: 80%;
-        --legend-font-size: 12px;
         --instructions-font-size: 14px;
         --secondary-control-font-size: 14px;
         --secondary-input-container-columns: 1fr 90px;
