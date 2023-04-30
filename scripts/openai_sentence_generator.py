@@ -30,15 +30,6 @@ def generate_prompt(word):
     return f"As a Chinese language instructor, give your students 3 memorable example sentences, with pinyin and an English translation, for the word ${word}. The format should be the Chinese sentence, then a comma, then the pinyin, then a comma, then the English translation, with no numbers in front."
 
 
-def get_response(prompts):
-    return openai.Completion.create(
-        model="text-davinci-003",
-        prompt=prompts,
-        temperature=0.7,
-        max_tokens=500,
-    )
-
-
 BATCH_SIZE = 20
 
 
