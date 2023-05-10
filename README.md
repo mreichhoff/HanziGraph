@@ -4,7 +4,9 @@ HanziGraph is a Chinese/English dictionary and study tool for Chinese language l
 
 ### Demo
 
-https://user-images.githubusercontent.com/17800817/226909950-5448e64b-7d2c-42ef-9edc-6869b082ee7f.mov
+
+https://github.com/mreichhoff/HanziGraph/assets/17800817/82c4f84a-0524-421d-858a-195bacbeb82a
+
 
 ### Features
 
