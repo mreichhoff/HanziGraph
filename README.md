@@ -32,7 +32,7 @@ Flashcards can be created from the definitions and example sentences, and either
 
 You can learn more via [a discussion on reddit](https://www.reddit.com/r/ChineseLanguage/comments/tcgps5/free_tool_to_learn_hanzi_get_example_sentences/) and [on hacking Chinese](https://challenges.hackingchinese.com/resources/stories/513-hanzigraph-visual-vocabulary-relationships). 
 
-The tool was also [recommended on the You Can Learn Chinese podcast](https://thechinaproject.com/podcast/the-impact-of-comprehensible-input-on-language-learning-a-deep-dive/).
+The tool was also [recommended on the You Can Learn Chinese podcast](https://thechinaproject.com/podcast/the-impact-of-comprehensible-input-on-language-learning-a-deep-dive/). The Japanese version was [recommended by Tofugu](https://www.tofugu.com/japanese/japanese-learning-resources-summer-2022/) and [The Japan Foundation, Sydney](https://mailchi.mp/jpf/jlearner-apr-23).
 
 ## Running the code
 Running the main branch code is intended to be extremely simple. There is no backend; the entire app runs in-browser. Setup is therefore as simple as:
