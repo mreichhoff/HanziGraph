@@ -45,27 +45,27 @@ let runTextToSpeech = function (text, anchors) {
         activeUtterances.push(utterance);
         utterance.lang = voice.lang;
         utterance.voice = voice;
-        utterance.addEventListener('boundary', function (event) {
-            if (event.charIndex == null || event.charLength == null) {
-                return false;
-            }
-            anchors.forEach((character, index) => {
-                if (index >= event.charIndex && index < (event.charIndex + (event.charLength || 1))) {
-                    character.style.backgroundColor = '#6de200';
-                } else {
-                    character.removeAttribute('style');
-                }
-            });
-        });
-        utterance.addEventListener('end', function () {
-            anchors.forEach(character => {
-                character.removeAttribute('style');
-            });
-            // length check shouldn't be necessary, but just in case, I guess?
-            if (activeUtterances.length !== 0) {
-                activeUtterances.shift();
-            }
-        });
+        // utterance.addEventListener('boundary', function (event) {
+        //     if (event.charIndex == null || event.charLength == null) {
+        //         return false;
+        //     }
+        //     anchors.forEach((character, index) => {
+        //         if (index >= event.charIndex && index < (event.charIndex + (event.charLength || 1))) {
+        //             character.style.backgroundColor = '#6de200';
+        //         } else {
+        //             character.removeAttribute('style');
+        //         }
+        //     });
+        // });
+        // utterance.addEventListener('end', function () {
+        //     anchors.forEach(character => {
+        //         character.removeAttribute('style');
+        //     });
+        //     // length check shouldn't be necessary, but just in case, I guess?
+        //     if (activeUtterances.length !== 0) {
+        //         activeUtterances.shift();
+        //     }
+        // });
         speechSynthesis.speak(utterance);
     }
 };
