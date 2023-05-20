@@ -94,7 +94,12 @@ let setupDefinitions = function (definitionList, container) {
     for (let i = 0; i < definitionList.length; i++) {
         let definitionItem = document.createElement('li');
         definitionItem.classList.add('definition');
-        let definitionContent = definitionList[i].pinyin + ': ' + definitionList[i].en;
+        let definitionContent;
+        if (definitionList[i].pinyin) {
+            definitionContent = definitionList[i].pinyin + ': ' + definitionList[i].en;
+        } else {
+            definitionContent = definitionList[i].en;
+        }
         definitionItem.textContent = definitionContent;
         container.appendChild(definitionItem);
     }
@@ -108,7 +113,7 @@ let findExamples = function (word, sentences, max) {
     //can also reuse inner loop...consider inverting
     for (let i = 0; i < sentences.length; i++) {
         if (sentences[i].zh.includes(word) || (word.length === 1 && sentences[i].zh.join('').includes(word))) {
-            if (sentences[i].en && sentences[i].pinyin) {
+            if (sentences[i].en && (sentences[i].pinyin || sentences[i].fu)) {
                 examples.push(sentences[i]);
                 if (examples.length === max) {
                     break;
@@ -139,7 +144,7 @@ let setupExampleElements = function (examples, exampleList) {
         exampleHolder.classList.add('example');
         let zhHolder = document.createElement('p');
         let exampleText = examples[i].zh.join('');
-        let aList = makeSentenceNavigable(exampleText, zhHolder, true);
+        let aList = examples[i].fu ? makeSentenceNavigableWithTranscription(examples[i], zhHolder, true) : makeSentenceNavigable(exampleText, zhHolder, true);
         zhHolder.className = 'target';
         addTextToSpeech(zhHolder, exampleText, aList);
         exampleHolder.appendChild(zhHolder);
@@ -403,9 +408,8 @@ let setupExamples = function (words, type, skipState) {
 };
 
 let persistNavigationState = function (words) {
-    const activeGraph = getActiveGraph();
-    const newUrl = `/${activeGraph.prefix}/${words}`;
-    document.title = `${words} | ${activeGraph.display}`;
+    const newUrl = `/${words}`;
+    document.title = `${words} | JapaneseGraph`;
     history.pushState({
         word: words,
     }, '', newUrl);
@@ -417,7 +421,11 @@ let getCardFromDefinitions = function (text, definitionList) {
     let result = { zh: [text] };
     let answer = '';
     for (let i = 0; i < definitionList.length; i++) {
-        answer += definitionList[i].pinyin + ': ' + definitionList[i].en;
+        if (definitionList[i].pinyin) {
+            answer += definitionList[i].pinyin + ': ' + definitionList[i].en;
+        } else {
+            answer += definitionList[i].en;
+        }
         answer += i == definitionList.length - 1 ? '' : ', ';
     }
     result['en'] = answer;
@@ -457,6 +465,86 @@ let initialize = function () {
     });
     voice = getVoice();
     fetchStats();
+};
+
+function parseExample(example) {
+    let result = [];
+    let splitByTranscripts = example.fu.split('[');
+    for (let i = 0; i < splitByTranscripts.length; i++) {
+        if (splitByTranscripts[i].includes(']')) {
+            let splitByEndBracket = splitByTranscripts[i].split(']');
+            let splitByBar = splitByEndBracket[0].split('|');
+            let kanji = splitByBar[0];
+            for (let j = 0; j < kanji.length; j++) {
+                if (j + 1 < splitByBar.length) {
+                    result.push({
+                        text: kanji[j], transcription: splitByBar[j + 1]
+                    });
+                } else {
+                    result.push({ text: kanji[j] });
+                }
+            }
+            if (splitByEndBracket.length > 1) {
+                for (let j = 0; j < splitByEndBracket[1].length; j++) {
+                    result.push({
+                        text: splitByEndBracket[1][j]
+                    });
+                }
+            }
+        } else {
+            for (let j = 0; j < splitByTranscripts[i].length; j++) {
+                result.push({
+                    text: splitByTranscripts[i][j]
+                });
+            }
+        }
+    }
+    return result;
+}
+
+let makeSentenceNavigableWithTranscription = function (example, container, noExampleChange) {
+    let sentenceContainer = document.createElement('span');
+    sentenceContainer.className = "sentence-container";
+    let text = parseExample(example);
+    let anchorList = [];
+    for (let i = 0; i < text.length; i++) {
+        (function (character) {
+            let a = document.createElement('a');
+            if (character.transcription) {
+                let transcriptElement = document.createElement('ruby');
+                transcriptElement.textContent = character.text;
+                let openingRp = document.createElement('rp');
+                openingRp.textContent = '(';
+                transcriptElement.appendChild(openingRp);
+                let rt = document.createElement('rt');
+                rt.textContent = character.transcription;
+                transcriptElement.appendChild(rt);
+                let closingRp = document.createElement('rp');
+                closingRp.textContent = ')';
+                transcriptElement.appendChild(closingRp);
+                a.appendChild(transcriptElement);
+            } else {
+                a.textContent = character.text;
+            }
+            if (hanzi[character.text]) {
+                a.className = 'navigable';
+            }
+            a.addEventListener('click', function () {
+                if (hanzi[character.text]) {
+                    switchDiagramView(diagramKeys.main);
+                    document.dispatchEvent(new CustomEvent('graph-update', { detail: character.text }));
+                    //enable seamless switching, but don't update if we're already showing examples for character
+                    if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== character.text))) {
+                        setupExamples([character.text], 'japanese');
+                    }
+                }
+            });
+            anchorList.push(a);
+            sentenceContainer.appendChild(a);
+        }(text[i]));
+    }
+    container.appendChild(sentenceContainer);
+    return anchorList;
 };
 
 let makeSentenceNavigable = function (text, container, noExampleChange) {

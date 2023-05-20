@@ -2,10 +2,11 @@ import { graphChanged, preferencesChanged } from "./recommendations.js"
 import { readOptionState, writeOptionState } from "./data-layer.js"
 import { getWordLevelsFromGraph, getWordSetFromFrequency, buildGraphFromFrequencyList } from "./graph-functions.js";
 
-const graphSelector = document.getElementById('graph-selector');
+// const graphSelector = document.getElementById('graph-selector');
 const showPinyinCheckbox = document.getElementById('show-pinyin');
 const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
+const colorCodeSelector = document.getElementById('color-code-selector');
 
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
 let freqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
@@ -65,9 +66,25 @@ const graphOptions = {
         defaultHanzi: ["我", "哥", "路", "細"],
         transcriptionName: 'jyutping',
         type: 'frequency'
-    }
+    },
+    japanese: {
+        display: 'Japanese',
+        prefix: 'japanese',
+        legend: freqLegend,
+        ranks: freqRanks,
+        // augmentPath: 'data/japanese',
+        definitionsAugmentPath: 'data/japanese/definitions',
+        partitionCount: 100,
+        defaultHanzi: ["遠", "応", "援"],
+        locale: 'ja-JP',
+        ttsKey: 'ja-JP',
+        type: 'frequency',
+        hasCoverage: 'all',
+        collocationsPath: 'data/japanese/collocations',
+        transcriptionName: 'furigana',
+    },
 };
-let activeGraphKey = 'simplified';
+let activeGraphKey = 'japanese';
 
 function getPartition(word, numPartitions) {
     let total = 0;
@@ -126,7 +143,7 @@ function switchGraph() {
         );
         writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
         setTranscriptionLabel();
-        updateWalkthrough();
+        // updateWalkthrough();
         // TODO(refactor): have recommendations.js react to the character-set-changed event
         Promise.all(promises).then(() => {
             document.dispatchEvent(new CustomEvent('character-set-changed', { detail: activeGraph }));
@@ -141,12 +158,15 @@ function setTranscriptionLabel() {
         togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
     }
 }
-const walkthroughCharacterSet = document.getElementById('walkthrough-character-set');
-function updateWalkthrough() {
-    walkthroughCharacterSet.innerText = graphOptions[activeGraphKey].display;
-}
+// const walkthroughCharacterSet = document.getElementById('walkthrough-character-set');
+// function updateWalkthrough() {
+//     walkthroughCharacterSet.innerText = graphOptions[activeGraphKey].display;
+// }
 function initialize() {
-    graphSelector.addEventListener('change', switchGraph);
+    colorCodeSelector.addEventListener('change', function () {
+        document.dispatchEvent(new CustomEvent('color-key-update', { detail: colorCodeSelector.value }));
+    });
+    // graphSelector.addEventListener('change', switchGraph);
     showPinyinCheckbox.addEventListener('change', function () {
         setTranscriptionLabel();
         writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
@@ -163,7 +183,7 @@ function initialize() {
     let urlOptions = parseUrl(document.location.pathname);
     const selectedGraph = getSelectedGraph(pastOptions, urlOptions);
     if (selectedGraph) {
-        graphSelector.value = selectedGraph;
+        // graphSelector.value = selectedGraph;
         activeGraphKey = selectedGraph;
     }
     if (pastOptions) {
@@ -174,12 +194,12 @@ function initialize() {
     }
     if (graphOptions[activeGraphKey].type === 'frequency') {
         window.wordSet = getWordSetFromFrequency(window.freqs);
-        window.hanzi = buildGraphFromFrequencyList(window.freqs, graphOptions[activeGraphKey].ranks);
+        //window.hanzi = buildGraphFromFrequencyList(window.freqs, graphOptions[activeGraphKey].ranks);
     } else {
         window.wordSet = getWordLevelsFromGraph(window.hanzi);
     }
     setTranscriptionLabel();
-    updateWalkthrough();
+    // updateWalkthrough();
 }
 function getSelectedGraph(storedOpts, urlOpts) {
     if (urlOpts && urlOpts.graph) {
@@ -202,10 +222,11 @@ function parseUrl(path) {
             return { word: decodeURIComponent(segments[0]) };
         }
     } else if (segments.length === 2) {
-        return { graph: segments[0], word: decodeURIComponent(segments[1]) };
-    } else if (segments.length === 3) {
-        return { graph: segments[0], word: decodeURIComponent(segments[1]), mode: segments[2] };
+        return { word: decodeURIComponent(segments[0]), mode: segments[1] };
     }
+    // else if (segments.length === 3) {
+    //     return { graph: segments[0], word: decodeURIComponent(segments[1]), mode: segments[2] };
+    // }
     return {};
 }
 

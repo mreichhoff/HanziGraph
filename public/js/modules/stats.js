@@ -14,6 +14,7 @@ const visitedGraphDetail = document.getElementById('visited-graph-detail');
 
 let lastLevelUpdatePrefix = '';
 let shown = false;
+let levelProperty = 'word_level';
 
 function sameDay(d1, d2) {
     return d1.getUTCFullYear() == d2.getUTCFullYear() &&
@@ -199,7 +200,7 @@ let totalsByLevel = {};
 let updateTotalsByLevel = function () {
     totalsByLevel = {};
     Object.keys(hanzi).forEach(x => {
-        let level = hanzi[x].node.level;
+        let level = hanzi[x].node[levelProperty];
         if (!(level in totalsByLevel)) {
             totalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), characters: new Set() };
         }
@@ -216,7 +217,7 @@ let createCardGraphs = function (studyList, legend) {
     });
     studyListCharacters.forEach(x => {
         if (hanzi[x]) {
-            let level = hanzi[x].node.level;
+            let level = hanzi[x].node[levelProperty];
             totalsByLevel[level].seen.add(x);
         }
     });
@@ -339,7 +340,7 @@ let createVisitedGraphs = function (visitedCharacters, legend) {
     }
     Object.keys(visitedCharacters).forEach(x => {
         if (hanzi[x]) {
-            const level = hanzi[x].node.level;
+            const level = hanzi[x].node[levelProperty];
             totalsByLevel[level].visited.add(x);
         }
     });
@@ -511,6 +512,9 @@ let initialize = function () {
         visitedGraphDetail.innerText = '';
         studyCalendarDetail.innerText = '';
         hourlyGraphDetail.innerText = '';
+    });
+    document.addEventListener('color-key-update', function (event) {
+        levelProperty = event.detail;
     });
 };
 

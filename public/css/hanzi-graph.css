@@ -338,6 +338,15 @@ ul {
     display: block;
 }
 
+rt {
+    opacity: 0.5;
+    font-size: 12px;
+}
+
+#show-pinyin:not(:checked)~* rt {
+    display: none;
+}
+
 /* CSS icons */
 .menu-button {
     width: 20px;

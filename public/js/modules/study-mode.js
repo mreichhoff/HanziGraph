@@ -223,7 +223,7 @@ let initialize = function () {
         let encodedUri = encodeURI(content);
         let link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "hanzi-graph-export-" + Date.now() + ".txt");
+        link.setAttribute("download", "japanese-graph-export-" + Date.now() + ".txt");
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

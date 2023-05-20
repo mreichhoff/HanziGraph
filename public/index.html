@@ -2,10 +2,10 @@
 <html>
 
 <head>
-    <title>HanziGraph</title>
+    <title>JapaneseGraph</title>
     <meta charset="utf-8">
     <meta name="description"
-        content="Learn Chinese by exploring the relationships between characters alongside examples that illustrate their use.">
+        content="Learn Japanese by exploring the relationships between characters alongside examples that illustrate their use.">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script type="module">
         if ('serviceWorker' in navigator) {
@@ -25,7 +25,7 @@
         <div id="left-menu-button-container" class="left-menu-button-container">
             <i id="left-menu-button" class="menu-button"></i>
         </div>
-        <h1 id="main-header" class="main-header">HanziGraph</h1>
+        <h1 id="main-header" class="main-header">JapaneseGraph</h1>
         <div id="right-menu-button-container" class="right-menu-button-container">
             <i id="right-menu-button" class="study-button"></i>
         </div>
@@ -33,7 +33,7 @@
     <div id="main-app-container" class="primary-container">
         <div id="query-container" class="control-container">
             <form id="hanzi-choose">
-                <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word" type="search"
+                <input id="hanzi-box" aria-label="Pick a kanji or word" placeholder="Pick a kanji or word" type="search"
                     enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
                 <ul id="search-suggestions-container" class="search-suggestions" style="display:none"></ul>
                 <div id="query-options-container" class="secondary-input-container">
@@ -48,39 +48,26 @@
         <div id="data-container" class="output-container">
             <div id="text-container" class="primary-panel">
                 <div id="explore-container" class="section-container">
-                    <p style="display:none" id="not-found-message">That word was not found 😞. Please try another, or
-                        change the character set in the menu.</p>
+                    <p style="display:none" id="not-found-message">That word was not found 😞.</p>
                     <input id="show-pinyin" type="checkbox" style="display:none" />
                     <div id="walkthrough" class="walkthrough" style="display:none">
                         <!-- i18n :-( -->
                         <h4>
-                            Learn Chinese by exploring the relationships between characters alongside examples that
+                            Learn Japanese by exploring the relationships between characters alongside examples that
                             illustrate their use.
                         </h4>
                         <p>
-                            To get started, click any hanzi or word in the diagram. You can search for hanzi, Chinese
-                            words, or English words.
+                            To get started, click any kanji or word in the diagram. You can search for kanji or Japanese
+                            words.
                         </p>
                         <p>
-                            You're viewing <span id="walkthrough-character-set">Simplified</span> characters.
-                            You can choose from Simplified Chinese, Traditional Chinese, Cantonese, or the HSK wordlist
-                            in
-                            the menu in the upper left.
+                            <b>JapaneseGraph is free and open source.</b> Give a star ⭐, file a bug, or check out the
+                            code
+                            on <a class="active-link"
+                                href="https://github.com/mreichhoff/HanziGraph/tree/JapaneseGraph">GitHub.</a>
                         </p>
                         <p>
-                            You can zoom, drag, and re-arrange the diagram however you please.
-                        </p>
-                        <p>
-                            Interested in how words, not just characters, flow together? Try the Show Flow button.
-                        </p>
-                        <p>
-                            <b>HanziGraph is free and open source.</b> Give a star ⭐, file a bug, or check out the code
-                            on <a class="active-link" href="https://github.com/mreichhoff/HanziGraph">GitHub.</a>
-                        </p>
-                        <p>
-                            Note that many examples are AI-generated. <a
-                                href="https://github.com/mreichhoff/HanziGraph/issues/new/choose">File an issue on
-                                github if you see anything weird.</a>
+                            Looking for Chinese? Check out <a href="https://hanzigraph.com">HanziGraph</a>.
                         </p>
                         <p>
                             <a class="active-link" id="show-general-faq">See the FAQ for more information.</a>
@@ -143,17 +130,17 @@
         <h2 class="stats-header">Your Stats</h2>
         <section class="stats-category">
             <div id="visited-container" style="display:none">
-                <h3 class="stats-header">Hanzi Seen</h3>
+                <h3 class="stats-header">Kanji Seen</h3>
                 <p class="explanation">You've viewed examples for:</p>
                 <div id="visited-graph"></div>
-                <p id="visited-graph-detail" class="explanation">Percentages are hanzi seen, not words. Click a
+                <p id="visited-graph-detail" class="explanation">Percentages are kanji seen, not words. Click a
                     bar
                     in the chart for details.</p>
             </div>
             <div id="studied-container">
-                <h3 class="stats-header">Hanzi in Flashcards</h3>
+                <h3 class="stats-header">Kanji in Flashcards</h3>
                 <div id="studied-graph"></div>
-                <p id="studied-graph-detail" class="explanation">Percentages are hanzi seen, not words. Click a bar
+                <p id="studied-graph-detail" class="explanation">Percentages are kanji seen, not words. Click a bar
                     in
                     the chart for details.</p>
             </div>
@@ -192,16 +179,17 @@
             <p>This site is a prototype, but it&#39;s decently usable in its current state. Feel free to see the
                 (currently
                 at a
-                hackathon level of quality) <a href="https://github.com/mreichhoff/HanziGraph">code</a> or
+                hackathon level of quality) <a
+                    href="https://github.com/mreichhoff/HanziGraph/tree/JapaneseGraph">code</a> or
                 contact
                 <a href="https://github.com/mreichhoff">the author on github</a>.
             </p>
-            <p>The idea is to emphasize the word-forming connections among hanzi to help learners remember them.
+            <p>The idea is to emphasize the word-forming connections among kanji to help learners remember them.
                 I&#39;ve
                 found
                 this more fun and effective than other methods, like studying stroke order, learning radicals or
                 components,
-                writing each character out 100 times, or doing spaced repetition on cards mapping hanzi to
+                writing each character out 100 times, or doing spaced repetition on cards mapping kanji to
                 pinyin
                 and
                 English.
@@ -232,16 +220,6 @@
                 Accordingly,
                 some of the files in <code>data</code> should be considered released under that same
                 license.
-            </p>
-            <h3>Which characters are present in the graph?</h3>
-            <p>
-                That depends on which character set you choose. The simplified and traditional choices
-                should include everything present in <a href="https://cc-cedict.org/editor/editor.php">CEDICT</a>.
-                Cantonese should also include everything in the CC-Canto project.
-                The HSK set should have all the old HSK 2.0 words and characters.
-                <a href="https://github.com/mreichhoff/HanziGraph/issues/new/choose">Ping on
-                    github</a>
-                with any issues. More examples and definitions will be added in the future.
             </p>
         </section>
         <section id="faq-study-mode" style="display:none">
@@ -282,7 +260,7 @@
         </section>
         <section id="faq-context" style="display:none">
             <h3>What does "You've seen" mean?</h3>
-            <p>As you search, click, or tap hanzi or connections in the diagram, you are shown
+            <p>As you search, click, or tap kanji or connections in the diagram, you are shown
                 example
                 sentences. Then, when you add words to your study list, the examples are converted
                 to
@@ -300,11 +278,11 @@
             <p>
                 In most languages, there are some words that are used much more frequently than others. If you
                 learn those words first, you'll be able to understand more of what you hear and read than if you'd start
-                with less-common words. With Chinese, the same is true of characters: the most common ones are
+                with less-common words. With Japanese, the same is true of characters: the most common ones are
                 used an outsize proportion of the time, and they are the best ones to start with.
             </p>
             <p>
-                HanziGraph tries to help learners know how important a word is via color-coding in the diagrams
+                JapaneseGraph tries to help learners know how important a word is via color-coding in the diagrams
                 and by surfacing raw frequency stats alongside the definitions and examples. This way,
                 learners can concentrate on words that provide the biggest 'bang for your buck', so to speak.
             </p>
@@ -317,21 +295,12 @@
         <section id="faq-recommendations" style="display:none">
             <h3>How do recommendations work?</h3>
             <p>
-                Recommendations are based on what hanzi you&#39;ve already viewed examples for.
+                Recommendations are based on what kanji you&#39;ve already viewed examples for.
                 For instance, if you&#39;ve viewed examples for 下午 and 上午,
                 but you haven&#39;t yet visited 中, we might
                 recommend you visit 中, since 中午 is common, and you&#39;ve seen 午 in several
                 contexts,
                 which might make it easier to remember 中.
-            </p>
-            <h3>How can I stop seeing so many HSK1 recommendations?</h3>
-            <p>You can choose via the menu in the upper left. The choice of &#39;easy&#39; means
-                you&#39;ll not be shown anything harder than level 3 of your chosen wordlist. The
-                choice
-                of &#39;hard&#39; means
-                you&#39;ll only be shown level4-level6 hanzi. Levels are determined by word
-                frequency
-                (when viewing the top 10k words) or the HSK exam.
             </p>
         </section>
         <section id="faq-flow" style="display:none">
@@ -357,6 +326,13 @@
                 <a id="signout-button" class="active-link" style="display:none">Sign out</a>
             </div>
             <div class="menu-item">
+                <label class="menu-item-text" for="color-code-selector">Color code based on:</label>
+                <select id="color-code-selector">
+                    <option selected value="word_level">Word Frequency</option>
+                    <option value="char_level">JLPT Level</option>
+                </select>
+            </div>
+            <div class="menu-item">
                 <label id="toggle-pinyin-label" class="active-link" for="show-pinyin">
                     Turn on pinyin in examples
                 </label>
@@ -373,21 +349,15 @@
                         <option>easy</option>
                         <option>hard</option>
                     </select>
-                    hanzi</label>
+                    kanji</label>
             </div>
             <div class="menu-item">
-                <label for="graph-selector">Character set:</label>
-                <select id="graph-selector">
-                    <option selected value="simplified">Simplified</option>
-                    <option value="traditional">Traditional</option>
-                    <option value="cantonese">Cantonese</option>
-                    <option value="hsk">HSK Wordlist</option>
-                </select>
+                <a class="active-link" href="https://github.com/mreichhoff/HanziGraph/blob/JapaneseGraph/README.md">Give
+                    a star, file a bug, or check out the code on GitHub.</a>
             </div>
             <div class="menu-item">
-                <a class="active-link" href="https://github.com/mreichhoff/HanziGraph/blob/main/README.md">See
-                    acknowledgements and more
-                    info on github</a>
+                <a class="active-link"
+                    href="https://github.com/mreichhoff/HanziGraph/blob/JapaneseGraph/README.md#acknowledgements">Acknowledgements</a>
             </div>
             <div class="menu-item active-link" id="exportStudyListButton" style="display:none">Export study
                 list</div>

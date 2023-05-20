@@ -1,7 +1,7 @@
 import { hanziBox, notFoundElement } from "./dom";
 import { getActiveGraph, getPartition } from "./options";
 
-let jiebaCut = null;
+// let jiebaCut = null;
 let searchSuggestionsWorker = null;
 const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
 
@@ -58,18 +58,18 @@ function vetCandidate(candidate) {
 
 function segment(text, locale) {
     locale = locale || getActiveGraph().locale;
-    if (!jiebaCut && (!Intl || !Intl.Segmenter)) {
+    if (/*!jiebaCut && */(!Intl || !Intl.Segmenter)) {
         return [text];
     }
     text = text.replace(/[？。！，·【】；：、?,'!]/g, '');
     let candidates = [];
     let result = [];
-    if (jiebaCut) {
-        candidates = jiebaCut(text, true);
-    } else {
-        const segmenter = new Intl.Segmenter(locale, { granularity: "word" });
-        candidates = Array.from(segmenter.segment(text)).map(x => x.segment);
-    }
+    // if (jiebaCut) {
+    //     candidates = jiebaCut(text, true);
+    // } else {
+    const segmenter = new Intl.Segmenter(locale, { granularity: "word" });
+    candidates = Array.from(segmenter.segment(text)).map(x => x.segment);
+    // }
     for (const candidate of candidates) {
         result.push(...(vetCandidate(candidate)));
     }
@@ -192,11 +192,11 @@ async function initialize(term) {
     searchSuggestionsWorker.addEventListener('message', handleSuggestions);
     hanziBox.addEventListener('input', suggestSearches);
     hanziBox.addEventListener('blur', clearSuggestions);
-    const { default: init,
-        cut,
-    } = await import("/js/external/jieba_rs_wasm.js");
-    await init();
-    jiebaCut = cut;
+    // const { default: init,
+    //     cut,
+    // } = await import("/js/external/jieba_rs_wasm.js");
+    // await init();
+    // jiebaCut = cut;
     if (term) {
         search(term, getActiveGraph().locale);
     }

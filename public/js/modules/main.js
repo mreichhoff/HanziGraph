@@ -9,7 +9,7 @@ import { initialize as recommendationsInit } from "./recommendations.js";
 import { initialize as graphInit } from "./graph.js";
 import { initialize as optionsInit, getActiveGraph, parseUrl } from "./options.js";
 import { readExploreState } from "./data-layer.js";
-import { hanziBox, walkThrough, examplesList, writeSeoMetaTags } from "./dom.js";
+import { hanziBox, walkThrough, examplesList } from "./dom.js";
 import { initialize as flowDiagramInit } from "./flow-diagram.js";
 import { initialize as dataLayerInit } from "./data-layer.js";
 import { initialize as searchInit, search, looksLikeEnglish } from "./search.js";
@@ -34,36 +34,39 @@ window.onpopstate = (event) => {
 };
 
 let dataLoads;
-if (window.graphFetch) {
-    dataLoads = [
-        window.graphFetch
-            .then(response => response.json())
-            .then(data => {
-                window.hanzi = data;
-            }),
-        window.sentencesFetch
-            .then(response => response.json())
-            .then(data => window.sentences = data),
-        window.definitionsFetch
-            .then(response => response.json())
-            .then(data => window.definitions = data)
-    ]
-} else {
-    // assume freqs are used instead, and the graph is derived from that
-    dataLoads = [
-        window.freqsFetch
-            .then(response => response.json())
-            .then(data => {
-                window.freqs = data;
-            }),
-        window.sentencesFetch
-            .then(response => response.json())
-            .then(data => window.sentences = data),
-        window.definitionsFetch
-            .then(response => response.json())
-            .then(data => window.definitions = data)
-    ]
-}
+// if (window.graphFetch) {
+//     dataLoads = [
+//         window.graphFetch
+//             .then(response => response.json())
+//             .then(data => {
+//                 window.hanzi = data;
+//             }),
+//         window.sentencesFetch
+//             .then(response => response.json())
+//             .then(data => window.sentences = data),
+//         window.definitionsFetch
+//             .then(response => response.json())
+//             .then(data => window.definitions = data)
+//     ]
+// } else {
+// assume freqs are used instead, and the graph is derived from that
+dataLoads = [
+    window.freqsFetch
+        .then(response => response.json())
+        .then(data => {
+            window.freqs = data;
+        }),
+    window.sentencesFetch
+        .then(response => response.json())
+        .then(data => window.sentences = data),
+    window.definitionsFetch
+        .then(response => response.json())
+        .then(data => window.definitions = data),
+    window.graphFetch
+        .then(response => response.json())
+        .then(data => window.hanzi = data)
+]
+// }
 
 Promise.all(
     dataLoads
@@ -80,7 +83,11 @@ Promise.all(
     hanziSearchForm.addEventListener('submit', function (event) {
         event.preventDefault();
         search(hanziBox.value);
-        switchToState(stateKeys.main);
+        if (Array.from(hanziBox.value).find(x => x in hanzi)) {
+            switchToState(stateKeys.main);
+        } else {
+            switchDiagramView(diagramKeys.flow);
+        }
     });
     // TODO(refactor): this belongs in explore rather than main?
     let oldState = readExploreState();
@@ -88,13 +95,15 @@ Promise.all(
     // precedence goes to the direct URL entered first, then to anything hanging around in history, then localstorage.
     // if none are present, show the walkthrough.
     let needsTokenization = false;
-    writeSeoMetaTags(urlState, getActiveGraph().display);
     if (urlState && urlState.word) {
         hanziBox.value = urlState.word;
         if (urlState.word in wordSet || looksLikeEnglish(urlState.word)) {
             search(urlState.word);
         } else {
             needsTokenization = true;
+        }
+        if (!Array.from(hanziBox.value).find(x => x in hanzi)) {
+            switchDiagramView(diagramKeys.flow);
         }
     } else if (history.state && history.state.word) {
         search(history.state.word);
@@ -103,7 +112,7 @@ Promise.all(
     } else {
         // we set a graph, but no word. Set the title.
         if (urlState && urlState.graph) {
-            document.title = `${getActiveGraph().display} | HanziGraph`;
+            document.title = `${getActiveGraph().display} | JapaneseGraph`;
         }
         //add a default graph on page load to illustrate the concept
         walkThrough.removeAttribute('style');

@@ -12,7 +12,7 @@ let initialize = function () {
             signinButton.style.display = 'none';
             signoutButton.style.display = 'inline-block';
             welcomeMessageContainer.removeAttribute('style');
-            welcomeMessage.textContent = "你好" + user.email;
+            welcomeMessage.textContent = "こんにちは" + user.email;
         } else {
             welcomeMessageContainer.style.display = 'none';
             signoutButton.style.display = 'none';

@@ -1926,13 +1926,13 @@
     registerVersion(name$1, version$1, 'app');
 
     const firebaseConfig = {
-        apiKey: "AIzaSyAddUF68m2igTa-JmIblbZUjmx1CE3xwdQ",
-        authDomain: "hanzigraph.com",
-        projectId: "hanzigraph",
-        storageBucket: "hanzigraph.appspot.com",
-        messagingSenderId: "317168591112",
-        appId: "1:317168591112:web:5b4580943b370526888cbd",
-        databaseURL: "https://hanzigraph.firebaseio.com"
+        apiKey: "AIzaSyCSwqkjJjpr42k7-uwS-u17TU4QyUv_N8I",
+        authDomain: "japanesegraph.com",
+        databaseURL: "https://japanesegraph-default-rtdb.firebaseio.com",
+        projectId: "japanesegraph",
+        storageBucket: "japanesegraph.appspot.com",
+        messagingSenderId: "337410493736",
+        appId: "1:337410493736:web:d21b8cc57ed2058660541d"
     };
 
     let initialize$c = function () {
@@ -7381,7 +7381,7 @@
                 signinButton.style.display = 'none';
                 signoutButton.style.display = 'inline-block';
                 welcomeMessageContainer.removeAttribute('style');
-                welcomeMessage.textContent = "你好" + user.email;
+                welcomeMessage.textContent = "こんにちは" + user.email;
             } else {
                 welcomeMessageContainer.style.display = 'none';
                 signoutButton.style.display = 'none';
@@ -20100,7 +20100,9 @@
     let cy = null;
     let currentPath = [];
     // TODO(refactor): consolidate with options
-    let ranks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
+    let ranks = [1000, 2000, 4000, 7000, Number.MAX_SAFE_INTEGER];
+
+    let levelProperty$1 = 'word_level';
 
     function findRank(word) {
         if (!window.wordSet || !(word in wordSet)) {
@@ -20147,7 +20149,7 @@
         }
     }
     function dfs(start, elements, maxDepth, visited, maxEdges) {
-        if (maxDepth < 0) {
+        if (maxDepth < 0 || !(start in hanzi)) {
             return;
         }
         let curr = hanzi[start];
@@ -20165,7 +20167,7 @@
                         data: {
                             id: Array.from(start + key).sort().toString(),
                             source: start, target: key,
-                            level: value.level,
+                            level: value[levelProperty$1],
                             words: value.words,
                             // render examples for all words, but only display one
                             displayWord: value.words[0]
@@ -20175,14 +20177,14 @@
                 }
             }
         }
-        elements.nodes.push({ data: { id: start, level: curr.node.level } });
+        elements.nodes.push({ data: { id: start, level: curr.node[levelProperty$1] } });
         for (const key of usedEdges) {
             if (!visited[key]) {
                 dfs(key, elements, maxDepth - 1, visited, maxEdges);
             }
         }
     }
-    const colors$1 = ['#fc5c7d', '#ea6596', '#d56eaf', '#bb75c8', '#9b7ce1', '#6a82fb'];
+    const colors$1 = ['#fc5c7d', '#e5689c', '#c971bb', '#a47adb', '#6a82fb'];
     function levelColor(element) {
         let level = element.data('level');
         return colors$1[level - 1];
@@ -20314,6 +20316,11 @@
             dfs(character, result, maxDepth, {}, getMaxEdges(value));
         }
         addEdges(value, result);
+
+        if (result.nodes.length === 0 && result.edges.length === 0) {
+            graphContainer.innerHTML = 'No results found. Only kanji are shown in this view. Try the "Show Flow" button.';
+            return;
+        }
         if (showingGraph) {
             setupCytoscape(result, graphContainer);
         } else {
@@ -20329,6 +20336,9 @@
     function initialize$7() {
         document.addEventListener('graph-update', function (event) {
             buildGraph(event.detail);
+        });
+        document.addEventListener('color-key-update', function (event) {
+            levelProperty$1 = event.detail;
         });
         parent.addEventListener('hidden', function () {
             showingGraph = false;
@@ -20437,16 +20447,6 @@
             }
         };
     };
-    let graphChanged = function () {
-        if (!recommendationsWorker) {
-            // if this is called without the worker, NBD. Worst case we'll send it once we initialize.
-            return;
-        }
-        recommendationsWorker.postMessage({
-            type: 'graph',
-            payload: window.hanzi
-        });
-    };
     let preferencesChanged = function (val) {
         let minLevel = 1;
         let maxLevel = 6;
@@ -20489,58 +20489,12 @@
         }
         return ranks;
     }
-    // Attempting to mostly recreate the scripts/hanzi_graph.py on the client...
-    function buildGraphFromFrequencyList(freqs, ranks) {
-        const maxEdges = 8;
-        const maxWordsPerEdge = 2;
-        const maxIndexForMultipleWordsOnEdge = 10000;
-        let graph = {};
-        let currentLevel = 0;
-        let maxForCurrentLevel = ranks[currentLevel];
-        for (let i = 0; i < freqs.length; i++) {
-            if (i > maxForCurrentLevel) {
-                currentLevel++;
-                maxForCurrentLevel = ranks[currentLevel];
-            }
-            const word = freqs[i];
-            // first, ensure all the characters in this word are in the graph with the current level.
-            for (let j = 0; j < word.length; j++) {
-                const character = word[j];
-                if (!(character in graph)) {
-                    graph[character] = {
-                        node: {
-                            level: currentLevel + 1 //avoid zero index
-                        },
-                        edges: {}
-                    };
-                }
-            }
-            for (let j = 0; j < word.length; j++) {
-                const outerCharacter = word[j];
-                for (let k = 0; k < word.length; k++) {
-                    const character = word[k];
-                    if (j === k) {
-                        continue;
-                    }
-                    if (!(outerCharacter in graph[character].edges) && Object.keys(graph[character].edges).length < maxEdges) {
-                        graph[character].edges[outerCharacter] = { level: currentLevel + 1, words: [] };
-                    }
-                    if (graph[character].edges[outerCharacter] && graph[character].edges[outerCharacter].words.length < maxWordsPerEdge
-                        && !graph[character].edges[outerCharacter].words.includes(word)) {
-                        if (i < maxIndexForMultipleWordsOnEdge || graph[character].edges[outerCharacter].words.length === 0) {
-                            graph[character].edges[outerCharacter].words.push(word);
-                        }
-                    }
-                }
-            }
-        }
-        return graph;
-    }
 
-    const graphSelector = document.getElementById('graph-selector');
+    // const graphSelector = document.getElementById('graph-selector');
     const showPinyinCheckbox = document.getElementById('show-pinyin');
     const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
     const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
+    const colorCodeSelector = document.getElementById('color-code-selector');
 
     let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
     let freqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
@@ -20600,9 +20554,25 @@
             defaultHanzi: ["我", "哥", "路", "細"],
             transcriptionName: 'jyutping',
             type: 'frequency'
-        }
+        },
+        japanese: {
+            display: 'Japanese',
+            prefix: 'japanese',
+            legend: freqLegend,
+            ranks: freqRanks,
+            // augmentPath: 'data/japanese',
+            definitionsAugmentPath: 'data/japanese/definitions',
+            partitionCount: 100,
+            defaultHanzi: ["遠", "応", "援"],
+            locale: 'ja-JP',
+            ttsKey: 'ja-JP',
+            type: 'frequency',
+            hasCoverage: 'all',
+            collocationsPath: 'data/japanese/collocations',
+            transcriptionName: 'furigana',
+        },
     };
-    let activeGraphKey = 'simplified';
+    let activeGraphKey = 'japanese';
 
     function getPartition(word, numPartitions) {
         let total = 0;
@@ -20615,59 +20585,6 @@
         return graphOptions[activeGraphKey];
     }
 
-    function switchGraph() {
-        let value = graphSelector.value;
-        if (value !== activeGraphKey) {
-            activeGraphKey = value;
-            let activeGraph = graphOptions[activeGraphKey];
-            let prefix = activeGraph.prefix;
-            let promises = [];
-            // TODO(refactor): can we combine loading logic here and in main.js?
-            //fetch regardless...allow service worker and/or browser cache to optimize
-            if (activeGraph.type === 'frequency') {
-                promises.push(
-                    fetch(`/data/${prefix}/wordlist.json`)
-                        .then(response => response.json())
-                        .then(function (data) {
-                            window.wordSet = getWordSetFromFrequency(data);
-                            window.hanzi = buildGraphFromFrequencyList(data, activeGraph.ranks);
-                            graphChanged();
-                        }));
-            } else if (activeGraph.type === 'test') {
-                promises.push(
-                    fetch(`/data/${prefix}/graph.json`)
-                        .then(response => response.json())
-                        .then(function (data) {
-                            window.hanzi = data;
-                            window.wordSet = getWordLevelsFromGraph(hanzi);
-                            graphChanged();
-                        })
-                );
-            }
-            promises.push(
-                fetch(`/data/${prefix}/sentences.json`)
-                    .then(response => response.json())
-                    .then(function (data) {
-                        window.sentences = data;
-                    })
-            );
-            promises.push(
-                fetch(`/data/${prefix}/definitions.json`)
-                    .then(response => response.json())
-                    .then(function (data) {
-                        window.definitions = data;
-                    })
-            );
-            writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
-            setTranscriptionLabel();
-            updateWalkthrough();
-            // TODO(refactor): have recommendations.js react to the character-set-changed event
-            Promise.all(promises).then(() => {
-                document.dispatchEvent(new CustomEvent('character-set-changed', { detail: activeGraph }));
-            });
-        }
-    }
-
     function setTranscriptionLabel() {
         if (showPinyinCheckbox.checked) {
             togglePinyinLabel.innerText = `Turn off ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
@@ -20675,12 +20592,15 @@
             togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
         }
     }
-    const walkthroughCharacterSet = document.getElementById('walkthrough-character-set');
-    function updateWalkthrough() {
-        walkthroughCharacterSet.innerText = graphOptions[activeGraphKey].display;
-    }
+    // const walkthroughCharacterSet = document.getElementById('walkthrough-character-set');
+    // function updateWalkthrough() {
+    //     walkthroughCharacterSet.innerText = graphOptions[activeGraphKey].display;
+    // }
     function initialize$5() {
-        graphSelector.addEventListener('change', switchGraph);
+        colorCodeSelector.addEventListener('change', function () {
+            document.dispatchEvent(new CustomEvent('color-key-update', { detail: colorCodeSelector.value }));
+        });
+        // graphSelector.addEventListener('change', switchGraph);
         showPinyinCheckbox.addEventListener('change', function () {
             setTranscriptionLabel();
             writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
@@ -20697,7 +20617,7 @@
         let urlOptions = parseUrl(document.location.pathname);
         const selectedGraph = getSelectedGraph(pastOptions, urlOptions);
         if (selectedGraph) {
-            graphSelector.value = selectedGraph;
+            // graphSelector.value = selectedGraph;
             activeGraphKey = selectedGraph;
         }
         if (pastOptions) {
@@ -20708,12 +20628,12 @@
         }
         if (graphOptions[activeGraphKey].type === 'frequency') {
             window.wordSet = getWordSetFromFrequency(window.freqs);
-            window.hanzi = buildGraphFromFrequencyList(window.freqs, graphOptions[activeGraphKey].ranks);
+            //window.hanzi = buildGraphFromFrequencyList(window.freqs, graphOptions[activeGraphKey].ranks);
         } else {
             window.wordSet = getWordLevelsFromGraph(window.hanzi);
         }
         setTranscriptionLabel();
-        updateWalkthrough();
+        // updateWalkthrough();
     }
     function getSelectedGraph(storedOpts, urlOpts) {
         if (urlOpts && urlOpts.graph) {
@@ -20736,10 +20656,11 @@
                 return { word: decodeURIComponent(segments[0]) };
             }
         } else if (segments.length === 2) {
-            return { graph: segments[0], word: decodeURIComponent(segments[1]) };
-        } else if (segments.length === 3) {
-            return { graph: segments[0], word: decodeURIComponent(segments[1]), mode: segments[2] };
+            return { word: decodeURIComponent(segments[0]), mode: segments[1] };
         }
+        // else if (segments.length === 3) {
+        //     return { graph: segments[0], word: decodeURIComponent(segments[1]), mode: segments[2] };
+        // }
         return {};
     }
 
@@ -25154,7 +25075,12 @@
         for (let i = 0; i < definitionList.length; i++) {
             let definitionItem = document.createElement('li');
             definitionItem.classList.add('definition');
-            let definitionContent = definitionList[i].pinyin + ': ' + definitionList[i].en;
+            let definitionContent;
+            if (definitionList[i].pinyin) {
+                definitionContent = definitionList[i].pinyin + ': ' + definitionList[i].en;
+            } else {
+                definitionContent = definitionList[i].en;
+            }
             definitionItem.textContent = definitionContent;
             container.appendChild(definitionItem);
         }
@@ -25168,7 +25094,7 @@
         //can also reuse inner loop...consider inverting
         for (let i = 0; i < sentences.length; i++) {
             if (sentences[i].zh.includes(word) || (word.length === 1 && sentences[i].zh.join('').includes(word))) {
-                if (sentences[i].en && sentences[i].pinyin) {
+                if (sentences[i].en && (sentences[i].pinyin || sentences[i].fu)) {
                     examples.push(sentences[i]);
                     if (examples.length === max) {
                         break;
@@ -25199,7 +25125,7 @@
             exampleHolder.classList.add('example');
             let zhHolder = document.createElement('p');
             let exampleText = examples[i].zh.join('');
-            let aList = makeSentenceNavigable(exampleText, zhHolder, true);
+            let aList = examples[i].fu ? makeSentenceNavigableWithTranscription(examples[i], zhHolder, true) : makeSentenceNavigable(exampleText, zhHolder, true);
             zhHolder.className = 'target';
             addTextToSpeech(zhHolder, exampleText, aList);
             exampleHolder.appendChild(zhHolder);
@@ -25463,9 +25389,8 @@
     };
 
     let persistNavigationState = function (words) {
-        const activeGraph = getActiveGraph();
-        const newUrl = `/${activeGraph.prefix}/${words}`;
-        document.title = `${words} | ${activeGraph.display}`;
+        const newUrl = `/${words}`;
+        document.title = `${words} | JapaneseGraph`;
         history.pushState({
             word: words,
         }, '', newUrl);
@@ -25477,7 +25402,11 @@
         let result = { zh: [text] };
         let answer = '';
         for (let i = 0; i < definitionList.length; i++) {
-            answer += definitionList[i].pinyin + ': ' + definitionList[i].en;
+            if (definitionList[i].pinyin) {
+                answer += definitionList[i].pinyin + ': ' + definitionList[i].en;
+            } else {
+                answer += definitionList[i].en;
+            }
             answer += i == definitionList.length - 1 ? '' : ', ';
         }
         result['en'] = answer;
@@ -25517,6 +25446,86 @@
         });
         voice = getVoice();
         fetchStats();
+    };
+
+    function parseExample(example) {
+        let result = [];
+        let splitByTranscripts = example.fu.split('[');
+        for (let i = 0; i < splitByTranscripts.length; i++) {
+            if (splitByTranscripts[i].includes(']')) {
+                let splitByEndBracket = splitByTranscripts[i].split(']');
+                let splitByBar = splitByEndBracket[0].split('|');
+                let kanji = splitByBar[0];
+                for (let j = 0; j < kanji.length; j++) {
+                    if (j + 1 < splitByBar.length) {
+                        result.push({
+                            text: kanji[j], transcription: splitByBar[j + 1]
+                        });
+                    } else {
+                        result.push({ text: kanji[j] });
+                    }
+                }
+                if (splitByEndBracket.length > 1) {
+                    for (let j = 0; j < splitByEndBracket[1].length; j++) {
+                        result.push({
+                            text: splitByEndBracket[1][j]
+                        });
+                    }
+                }
+            } else {
+                for (let j = 0; j < splitByTranscripts[i].length; j++) {
+                    result.push({
+                        text: splitByTranscripts[i][j]
+                    });
+                }
+            }
+        }
+        return result;
+    }
+
+    let makeSentenceNavigableWithTranscription = function (example, container, noExampleChange) {
+        let sentenceContainer = document.createElement('span');
+        sentenceContainer.className = "sentence-container";
+        let text = parseExample(example);
+        let anchorList = [];
+        for (let i = 0; i < text.length; i++) {
+            (function (character) {
+                let a = document.createElement('a');
+                if (character.transcription) {
+                    let transcriptElement = document.createElement('ruby');
+                    transcriptElement.textContent = character.text;
+                    let openingRp = document.createElement('rp');
+                    openingRp.textContent = '(';
+                    transcriptElement.appendChild(openingRp);
+                    let rt = document.createElement('rt');
+                    rt.textContent = character.transcription;
+                    transcriptElement.appendChild(rt);
+                    let closingRp = document.createElement('rp');
+                    closingRp.textContent = ')';
+                    transcriptElement.appendChild(closingRp);
+                    a.appendChild(transcriptElement);
+                } else {
+                    a.textContent = character.text;
+                }
+                if (hanzi[character.text]) {
+                    a.className = 'navigable';
+                }
+                a.addEventListener('click', function () {
+                    if (hanzi[character.text]) {
+                        switchDiagramView(diagramKeys.main);
+                        document.dispatchEvent(new CustomEvent('graph-update', { detail: character.text }));
+                        //enable seamless switching, but don't update if we're already showing examples for character
+                        if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== character.text))) {
+                            setupExamples([character.text], 'japanese');
+                        }
+                    }
+                });
+                anchorList.push(a);
+                sentenceContainer.appendChild(a);
+            }(text[i]));
+        }
+        container.appendChild(sentenceContainer);
+        return anchorList;
     };
 
     let makeSentenceNavigable = function (text, container, noExampleChange) {
@@ -25814,6 +25823,7 @@
 
     let lastLevelUpdatePrefix = '';
     let shown = false;
+    let levelProperty = 'word_level';
 
     function sameDay(d1, d2) {
         return d1.getUTCFullYear() == d2.getUTCFullYear() &&
@@ -25999,7 +26009,7 @@
     let updateTotalsByLevel = function () {
         totalsByLevel = {};
         Object.keys(hanzi).forEach(x => {
-            let level = hanzi[x].node.level;
+            let level = hanzi[x].node[levelProperty];
             if (!(level in totalsByLevel)) {
                 totalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), characters: new Set() };
             }
@@ -26016,7 +26026,7 @@
         });
         studyListCharacters.forEach(x => {
             if (hanzi[x]) {
-                let level = hanzi[x].node.level;
+                let level = hanzi[x].node[levelProperty];
                 totalsByLevel[level].seen.add(x);
             }
         });
@@ -26139,7 +26149,7 @@
         }
         Object.keys(visitedCharacters).forEach(x => {
             if (hanzi[x]) {
-                const level = hanzi[x].node.level;
+                const level = hanzi[x].node[levelProperty];
                 totalsByLevel[level].visited.add(x);
             }
         });
@@ -26311,6 +26321,9 @@
             visitedGraphDetail.innerText = '';
             studyCalendarDetail.innerText = '';
             hourlyGraphDetail.innerText = '';
+        });
+        document.addEventListener('color-key-update', function (event) {
+            levelProperty = event.detail;
         });
     };
 
@@ -27365,7 +27378,7 @@
         return Object.assign(svg.node(), { scales: { color } });
     }
 
-    let jiebaCut = null;
+    // let jiebaCut = null;
     let searchSuggestionsWorker = null;
     const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
 
@@ -27422,18 +27435,18 @@
 
     function segment(text, locale) {
         locale = locale || getActiveGraph().locale;
-        if (!jiebaCut && (!Intl || !Intl.Segmenter)) {
+        if (/*!jiebaCut && */(!Intl || !Intl.Segmenter)) {
             return [text];
         }
         text = text.replace(/[？。！，·【】；：、?,'!]/g, '');
         let candidates = [];
         let result = [];
-        if (jiebaCut) {
-            candidates = jiebaCut(text, true);
-        } else {
-            const segmenter = new Intl.Segmenter(locale, { granularity: "word" });
-            candidates = Array.from(segmenter.segment(text)).map(x => x.segment);
-        }
+        // if (jiebaCut) {
+        //     candidates = jiebaCut(text, true);
+        // } else {
+        const segmenter = new Intl.Segmenter(locale, { granularity: "word" });
+        candidates = Array.from(segmenter.segment(text)).map(x => x.segment);
+        // }
         for (const candidate of candidates) {
             result.push(...(vetCandidate(candidate)));
         }
@@ -27556,11 +27569,11 @@
         searchSuggestionsWorker.addEventListener('message', handleSuggestions);
         hanziBox.addEventListener('input', suggestSearches);
         hanziBox.addEventListener('blur', clearSuggestions);
-        const { default: init,
-            cut,
-        } = await import('../../../../../../../js/external/jieba_rs_wasm.js');
-        await init();
-        jiebaCut = cut;
+        // const { default: init,
+        //     cut,
+        // } = await import("/js/external/jieba_rs_wasm.js");
+        // await init();
+        // jiebaCut = cut;
         if (term) {
             search(term, getActiveGraph().locale);
         }
@@ -27638,36 +27651,39 @@
     };
 
     let dataLoads;
-    if (window.graphFetch) {
-        dataLoads = [
-            window.graphFetch
-                .then(response => response.json())
-                .then(data => {
-                    window.hanzi = data;
-                }),
-            window.sentencesFetch
-                .then(response => response.json())
-                .then(data => window.sentences = data),
-            window.definitionsFetch
-                .then(response => response.json())
-                .then(data => window.definitions = data)
-        ];
-    } else {
-        // assume freqs are used instead, and the graph is derived from that
-        dataLoads = [
-            window.freqsFetch
-                .then(response => response.json())
-                .then(data => {
-                    window.freqs = data;
-                }),
-            window.sentencesFetch
-                .then(response => response.json())
-                .then(data => window.sentences = data),
-            window.definitionsFetch
-                .then(response => response.json())
-                .then(data => window.definitions = data)
-        ];
-    }
+    // if (window.graphFetch) {
+    //     dataLoads = [
+    //         window.graphFetch
+    //             .then(response => response.json())
+    //             .then(data => {
+    //                 window.hanzi = data;
+    //             }),
+    //         window.sentencesFetch
+    //             .then(response => response.json())
+    //             .then(data => window.sentences = data),
+    //         window.definitionsFetch
+    //             .then(response => response.json())
+    //             .then(data => window.definitions = data)
+    //     ]
+    // } else {
+    // assume freqs are used instead, and the graph is derived from that
+    dataLoads = [
+        window.freqsFetch
+            .then(response => response.json())
+            .then(data => {
+                window.freqs = data;
+            }),
+        window.sentencesFetch
+            .then(response => response.json())
+            .then(data => window.sentences = data),
+        window.definitionsFetch
+            .then(response => response.json())
+            .then(data => window.definitions = data),
+        window.graphFetch
+            .then(response => response.json())
+            .then(data => window.hanzi = data)
+    ];
+    // }
 
     Promise.all(
         dataLoads
@@ -27684,7 +27700,11 @@
         hanziSearchForm.addEventListener('submit', function (event) {
             event.preventDefault();
             search(hanziBox.value);
-            switchToState(stateKeys.main);
+            if (Array.from(hanziBox.value).find(x => x in hanzi)) {
+                switchToState(stateKeys.main);
+            } else {
+                switchDiagramView(diagramKeys.flow);
+            }
         });
         // TODO(refactor): this belongs in explore rather than main?
         let oldState = readExploreState();
@@ -27700,6 +27720,9 @@
             } else {
                 needsTokenization = true;
             }
+            if (!Array.from(hanziBox.value).find(x => x in hanzi)) {
+                switchDiagramView(diagramKeys.flow);
+            }
         } else if (history.state && history.state.word) {
             search(history.state.word);
         } else if (oldState && oldState.words && oldState.selectedCharacterSet === getActiveGraph().prefix) {
@@ -27707,7 +27730,7 @@
         } else {
             // we set a graph, but no word. Set the title.
             if (urlState && urlState.graph) {
-                document.title = `${getActiveGraph().display} | HanziGraph`;
+                document.title = `${getActiveGraph().display} | JapaneseGraph`;
             }
             //add a default graph on page load to illustrate the concept
             walkThrough.removeAttribute('style');

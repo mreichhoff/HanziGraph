@@ -5,7 +5,9 @@ const graphContainer = document.getElementById('graph');
 let cy = null;
 let currentPath = [];
 // TODO(refactor): consolidate with options
-let ranks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
+let ranks = [1000, 2000, 4000, 7000, Number.MAX_SAFE_INTEGER];
+
+let levelProperty = 'word_level';
 
 function findRank(word) {
     if (!window.wordSet || !(word in wordSet)) {
@@ -53,7 +55,7 @@ function addEdges(word, result) {
 };
 
 function dfs(start, elements, maxDepth, visited, maxEdges) {
-    if (maxDepth < 0) {
+    if (maxDepth < 0 || !(start in hanzi)) {
         return;
     }
     let curr = hanzi[start];
@@ -71,7 +73,7 @@ function dfs(start, elements, maxDepth, visited, maxEdges) {
                     data: {
                         id: Array.from(start + key).sort().toString(),
                         source: start, target: key,
-                        level: value.level,
+                        level: value[levelProperty],
                         words: value.words,
                         // render examples for all words, but only display one
                         displayWord: value.words[0]
@@ -81,14 +83,14 @@ function dfs(start, elements, maxDepth, visited, maxEdges) {
             }
         }
     }
-    elements.nodes.push({ data: { id: start, level: curr.node.level } });
+    elements.nodes.push({ data: { id: start, level: curr.node[levelProperty] } });
     for (const key of usedEdges) {
         if (!visited[key]) {
             dfs(key, elements, maxDepth - 1, visited, maxEdges);
         }
     }
 }
-const colors = ['#fc5c7d', '#ea6596', '#d56eaf', '#bb75c8', '#9b7ce1', '#6a82fb'];
+const colors = ['#fc5c7d', '#e5689c', '#c971bb', '#a47adb', '#6a82fb'];
 function levelColor(element) {
     let level = element.data('level');
     return colors[level - 1];
@@ -225,6 +227,11 @@ function buildGraph(value) {
         dfs(character, result, maxDepth, {}, getMaxEdges(value));
     }
     addEdges(value, result);
+
+    if (result.nodes.length === 0 && result.edges.length === 0) {
+        graphContainer.innerHTML = 'No results found. Only kanji are shown in this view. Try the "Show Flow" button.'
+        return;
+    }
     if (showingGraph) {
         setupCytoscape(result, graphContainer);
     } else {
@@ -240,6 +247,9 @@ let dirty = null;
 function initialize() {
     document.addEventListener('graph-update', function (event) {
         buildGraph(event.detail);
+    });
+    document.addEventListener('color-key-update', function (event) {
+        levelProperty = event.detail;
     });
     parent.addEventListener('hidden', function () {
         showingGraph = false;

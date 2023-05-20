@@ -1944,13 +1944,13 @@
     registerVersion(name$1, version$1, 'app');
 
     const firebaseConfig = {
-        apiKey: "AIzaSyAddUF68m2igTa-JmIblbZUjmx1CE3xwdQ",
-        authDomain: "hanzigraph.com",
-        projectId: "hanzigraph",
-        storageBucket: "hanzigraph.appspot.com",
-        messagingSenderId: "317168591112",
-        appId: "1:317168591112:web:5b4580943b370526888cbd",
-        databaseURL: "https://hanzigraph.firebaseio.com"
+        apiKey: "AIzaSyCSwqkjJjpr42k7-uwS-u17TU4QyUv_N8I",
+        authDomain: "japanesegraph.com",
+        databaseURL: "https://japanesegraph-default-rtdb.firebaseio.com",
+        projectId: "japanesegraph",
+        storageBucket: "japanesegraph.appspot.com",
+        messagingSenderId: "337410493736",
+        appId: "1:337410493736:web:d21b8cc57ed2058660541d"
     };
 
     let initialize = function () {
