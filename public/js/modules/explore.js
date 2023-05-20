@@ -4,6 +4,7 @@ import { hanziBox, notFoundElement, walkThrough, examplesList } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
 import { diagramKeys, switchDiagramView } from "./ui-orchestrator.js";
+import { hasKanji } from "./search.js";
 
 let coverageGraph = {};
 let charFreqs = {};
@@ -217,6 +218,11 @@ let renderWordHeader = function (word, container, active) {
         if (!wordHolder.classList.contains('active')) {
             document.querySelectorAll('.word-header').forEach(x => x.classList.remove('active'));
             wordHolder.classList.add('active');
+        }
+        if (hasKanji(word)) {
+            switchDiagramView(diagramKeys.main);
+        } else {
+            switchDiagramView(diagramKeys.flow);
         }
         document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
     });

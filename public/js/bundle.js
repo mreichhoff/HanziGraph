@@ -20064,36 +20064,6 @@
     const walkThrough = document.getElementById('walkthrough');
     const examplesList = document.getElementById('examples');
 
-    function writeSeoMetaTags(urlState, graphDisplay) {
-        let urlMeta = document.createElement('meta');
-        urlMeta.setAttribute('property', 'og:url');
-        urlMeta.setAttribute('content', document.location.href);
-        document.head.appendChild(urlMeta);
-
-        let typeMeta = document.createElement('meta');
-        typeMeta.setAttribute('property', 'og:type');
-        typeMeta.setAttribute('content', 'website');
-        document.head.appendChild(typeMeta);
-
-        let imageMeta = document.createElement('meta');
-        imageMeta.setAttribute('property', 'og:image');
-        imageMeta.setAttribute('content', `${document.location.origin}/images/hanzigraph-192x192.png`);
-        document.head.appendChild(imageMeta);
-
-        let titleMeta = document.createElement('meta');
-        titleMeta.setAttribute('property', 'og:title');
-        titleMeta.setAttribute('content', (urlState && urlState.word) ? `${urlState.word} | ${graphDisplay}` :
-            (urlState && urlState.graph) ? `${graphDisplay}` : `HanziGraph`);
-        document.head.appendChild(titleMeta);
-
-        if (urlState && urlState.graph && !urlState.word) {
-            let canonical = document.createElement('link');
-            canonical.setAttribute('rel', 'canonical');
-            canonical.setAttribute('href', document.location.href);
-            document.head.appendChild(canonical);
-        }
-    }
-
     const parent = document.getElementById('graph-container');
     const graphContainer = document.getElementById('graph');
 
@@ -24986,6 +24956,273 @@
         return svg.node();
     }
 
+    // let jiebaCut = null;
+    let searchSuggestionsWorker = null;
+    const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
+
+    function looksLikeEnglish(value) {
+        return /^[\x00-\xFF]*$/.test(value);
+    }
+
+    // lol
+    function vetCandidate(candidate) {
+        if (!(candidate in wordSet)) {
+            if (!isNaN(candidate)) {
+                // it's not not a number, so ignore it.
+                return [{ word: candidate, ignore: true }];
+            }
+            if (looksLikeEnglish(candidate)) {
+                // it's ascii, not Chinese, so ignore it
+                // TODO: just use ! in_chinese_char_range 
+                return [{ word: candidate, ignore: true }];
+            }
+            // For two character words not in the wordSet, just add individual characters.
+            if (candidate.length === 2) {
+                if (candidate[0] in wordSet && candidate[1] in wordSet) {
+                    return [candidate[0], candidate[1]];
+                }
+            } else if (candidate.length === 3) {
+                let first = candidate[0];
+                let last = candidate.substring(1);
+                if (first in wordSet && last in wordSet) {
+                    return [first, last];
+                }
+                first = candidate.substring(0, 2);
+                last = candidate.substring(2);
+                if (first in wordSet && last in wordSet) {
+                    return [first, last];
+                }
+                if (candidate[0] in wordSet && candidate[1] in wordSet && candidate[2] in wordSet) {
+                    return [candidate[0], candidate[1], candidate[2]];
+                }
+            } else if (candidate.length === 4) {
+                let first = candidate.substring(0, 2);
+                let last = candidate.substring(2);
+                if (first in wordSet && last in wordSet) {
+                    return [first, last]
+                }
+                if (candidate[0] in wordSet && candidate[1] in wordSet && candidate[2] in wordSet && candidate[3] in wordSet) {
+                    return [candidate[0], candidate[1], candidate[2], candidate[3]];
+                }
+            }
+            // it's not a number, it's not english or something, it's not trivially repaired...ignore
+            return [{ word: candidate, ignore: true }];
+        }
+        return [candidate];
+    }
+
+    function segment(text, locale) {
+        locale = locale || getActiveGraph().locale;
+        if (/*!jiebaCut && */(!Intl || !Intl.Segmenter)) {
+            return [text];
+        }
+        text = text.replace(/[？。！，·【】；：、?,'!]/g, '');
+        let candidates = [];
+        let result = [];
+        // if (jiebaCut) {
+        //     candidates = jiebaCut(text, true);
+        // } else {
+        const segmenter = new Intl.Segmenter(locale, { granularity: "word" });
+        candidates = Array.from(segmenter.segment(text)).map(x => x.segment);
+        // }
+        for (const candidate of candidates) {
+            result.push(...(vetCandidate(candidate)));
+        }
+        return result;
+    }
+    function suggestSearches() {
+        const partialSearch = hanziBox.value;
+        // For now, don't suggest english words.
+        if (!partialSearch || looksLikeEnglish(partialSearch)) {
+            clearSuggestions();
+        }
+        // if it's just a single character, handle it here.
+        // otherwise, pass it off to the worker and let it decide.
+        if (partialSearch.length === 1 && partialSearch in hanzi) {
+            const words = [partialSearch, ...extractWords(hanzi[partialSearch])];
+            let suggestions = {};
+            suggestions[partialSearch] = words;
+            suggestions['tokenized'] = [];
+            renderSearchSuggestions(partialSearch, suggestions, [partialSearch], searchSuggestionsContainer);
+            return;
+        }
+        let tokens = segment(partialSearch, getActiveGraph().locale);
+        searchSuggestionsWorker.postMessage({
+            type: 'query',
+            payload: { query: partialSearch, tokens: tokens }
+        });
+    }
+    function extractWords(node) {
+        if (!node.edges) {
+            return [];
+        }
+        let result = new Set();
+        for (const edge of Object.values(node.edges).sort((a, b) => a.level - b.level)) {
+            result.add(...edge.words);
+        }
+        return Array.from(result);
+    }
+    function handleSuggestions(message) {
+        if (!message.data || !message.data.query) {
+            return;
+        }
+        if (message.data.query !== hanziBox.value) {
+            return;
+        }
+        renderSearchSuggestions(message.data.query, message.data.suggestions, message.data.tokens, searchSuggestionsContainer);
+    }
+
+    function renderExplanationItem(text, container) {
+        let instructionsItem = document.createElement('li');
+        instructionsItem.classList.add('suggestions-explanation');
+        instructionsItem.innerText = text;
+        container.appendChild(instructionsItem);
+    }
+    function renderSuggestion(priorWordsForDisplay, suggestion, container) {
+        let prior = document.createElement('span');
+        prior.innerText = priorWordsForDisplay;
+        prior.classList.add('search-suggestion-stem');
+        let current = document.createElement('span');
+        current.innerText = suggestion;
+        current.classList.add('search-suggestion-current');
+        container.appendChild(prior);
+        container.appendChild(current);
+    }
+    function renderSearchSuggestions(query, suggestions, tokens, container) {
+        container.innerHTML = '';
+        const isMultiWord = tokens.length > 1;
+        if (!suggestions || (!suggestions[query].length && !suggestions['tokenized'].length)) {
+            renderExplanationItem(`No suggestions found for ${query}.`, container);
+            return;
+        }
+        let priorWordsForDisplay = '';
+        let allButLastToken = [];
+        if (isMultiWord) {
+            allButLastToken = tokens.slice(0, -1);
+            priorWordsForDisplay = allButLastToken.map(x => {
+                if (x.ignore) {
+                    return x.word;
+                }
+                return x;
+            }).join('');
+        }
+        for (const suggestion of suggestions[query]) {
+            let item = document.createElement('li');
+            item.classList.add('search-suggestion');
+            renderSuggestion('', suggestion, item);
+            container.appendChild(item);
+            item.addEventListener('mousedown', function () {
+                notFoundElement.style.display = 'none';
+                document.dispatchEvent(new CustomEvent('graph-update', { detail: suggestion }));
+                document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [suggestion] } }));
+                clearSuggestions();
+            });
+        }
+        for (const suggestion of suggestions['tokenized']) {
+            let item = document.createElement('li');
+            item.classList.add('search-suggestion');
+            renderSuggestion(priorWordsForDisplay, suggestion, item);
+            container.appendChild(item);
+            item.addEventListener('mousedown', function () {
+                multiWordSearch(priorWordsForDisplay + suggestion, allButLastToken.concat(suggestion));
+                clearSuggestions();
+            });
+        }
+        container.removeAttribute('style');
+    }
+    function clearSuggestions() {
+        searchSuggestionsContainer.style.display = 'none';
+    }
+
+    function sendWordSetToWorker() {
+        searchSuggestionsWorker.postMessage({
+            type: 'wordset',
+            payload: window.wordSet
+        });
+    }
+    async function initialize$4(term) {
+        searchSuggestionsWorker = new Worker('/js/modules/search-suggestions-worker.js');
+        sendWordSetToWorker();
+        document.addEventListener('character-set-changed', sendWordSetToWorker);
+        searchSuggestionsWorker.addEventListener('message', handleSuggestions);
+        hanziBox.addEventListener('input', suggestSearches);
+        hanziBox.addEventListener('blur', clearSuggestions);
+        // const { default: init,
+        //     cut,
+        // } = await import("/js/external/jieba_rs_wasm.js");
+        // await init();
+        // jiebaCut = cut;
+        if (term) {
+            search(term, getActiveGraph().locale);
+        }
+    }
+
+    function multiWordSearch(query, segments) {
+        let found = false;
+        let wordForGraph = '';
+        for (const segment of segments) {
+            if (!segment.ignore && segment in wordSet) {
+                wordForGraph = segment;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            notFoundElement.removeAttribute('style');
+        } else {
+            notFoundElement.style.display = 'none';
+            if (hasKanji(wordForGraph)) {
+                switchDiagramView(diagramKeys.main);
+            } else {
+                switchDiagramView(diagramKeys.flow);
+            }
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query } }));
+        }
+    }
+
+    function englishSearch(word, data) {
+        if (!data) {
+            notFoundElement.removeAttribute('style');
+        } else {
+            notFoundElement.style.display = 'none';
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: data[0] }));
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: data, display: word, type: 'english' } }));
+        }
+    }
+
+    function hasKanji(value) {
+        return Array.from(value).find(x => x in hanzi);
+    }
+
+    function search(value, locale) {
+        clearSuggestions();
+        if (value && (definitions[value] || (value in wordSet))) {
+            notFoundElement.style.display = 'none';
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
+            if (hasKanji(value)) {
+                switchDiagramView(diagramKeys.main);
+            } else {
+                switchDiagramView(diagramKeys.flow);
+            }
+            return;
+        }
+        if (value && looksLikeEnglish(value) && getActiveGraph().englishPath) {
+            value = value.toLowerCase();
+            fetch(`/${getActiveGraph().englishPath}/${getPartition(value, getActiveGraph().partitionCount)}.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    if (value !== hanziBox.value.toLowerCase()) {
+                        return false;
+                    }
+                    englishSearch(value, data[value]);
+                });
+            return;
+        }
+        multiWordSearch(value, segment(value, locale));
+    }
+
     let coverageGraph = {};
     let charFreqs = {};
 
@@ -25198,6 +25435,11 @@
             if (!wordHolder.classList.contains('active')) {
                 document.querySelectorAll('.word-header').forEach(x => x.classList.remove('active'));
                 wordHolder.classList.add('active');
+            }
+            if (hasKanji(word)) {
+                switchDiagramView(diagramKeys.main);
+            } else {
+                switchDiagramView(diagramKeys.flow);
             }
             document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
         });
@@ -25431,7 +25673,7 @@
             coverageGraph = null;
         }
     };
-    let initialize$4 = function () {
+    let initialize$3 = function () {
         // Note: github pages rewrites are only possible via a 404 hack,
         // so removing the history API integration on the main branch.
         //TODO(refactor): show study when it was the last state
@@ -25733,7 +25975,7 @@
         relatedCardsContainer.style.display = 'none';
     };
 
-    let initialize$3 = function () {
+    let initialize$2 = function () {
         showAnswerButton.addEventListener('click', function () {
             showAnswerButton.innerText = "Answer:";
             cardAnswerContainer.removeAttribute('style');
@@ -25782,7 +26024,7 @@
             let encodedUri = encodeURI(content);
             let link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "hanzi-graph-export-" + Date.now() + ".txt");
+            link.setAttribute("download", "japanese-graph-export-" + Date.now() + ".txt");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -26295,7 +26537,7 @@
         document.getElementById('hourly-container').removeAttribute('style');
     };
 
-    let initialize$2 = function () {
+    let initialize$1 = function () {
         lastLevelUpdatePrefix = getActiveGraph().prefix;
         updateTotalsByLevel();
         statsShow.addEventListener('click', function () {
@@ -27175,7 +27417,7 @@
             });
     }
     let pendingResizeTimeout = null;
-    function initialize$1() {
+    function initialize() {
         toggleShowButton();
         document.addEventListener('character-set-changed', toggleShowButton);
         // TODO: should we listen to explore-update in addition to (or instead of) graph-update?
@@ -27378,259 +27620,6 @@
         return Object.assign(svg.node(), { scales: { color } });
     }
 
-    // let jiebaCut = null;
-    let searchSuggestionsWorker = null;
-    const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
-
-    function looksLikeEnglish(value) {
-        return /^[\x00-\xFF]*$/.test(value);
-    }
-
-    // lol
-    function vetCandidate(candidate) {
-        if (!(candidate in wordSet)) {
-            if (!isNaN(candidate)) {
-                // it's not not a number, so ignore it.
-                return [{ word: candidate, ignore: true }];
-            }
-            if (looksLikeEnglish(candidate)) {
-                // it's ascii, not Chinese, so ignore it
-                // TODO: just use ! in_chinese_char_range 
-                return [{ word: candidate, ignore: true }];
-            }
-            // For two character words not in the wordSet, just add individual characters.
-            if (candidate.length === 2) {
-                if (candidate[0] in wordSet && candidate[1] in wordSet) {
-                    return [candidate[0], candidate[1]];
-                }
-            } else if (candidate.length === 3) {
-                let first = candidate[0];
-                let last = candidate.substring(1);
-                if (first in wordSet && last in wordSet) {
-                    return [first, last];
-                }
-                first = candidate.substring(0, 2);
-                last = candidate.substring(2);
-                if (first in wordSet && last in wordSet) {
-                    return [first, last];
-                }
-                if (candidate[0] in wordSet && candidate[1] in wordSet && candidate[2] in wordSet) {
-                    return [candidate[0], candidate[1], candidate[2]];
-                }
-            } else if (candidate.length === 4) {
-                let first = candidate.substring(0, 2);
-                let last = candidate.substring(2);
-                if (first in wordSet && last in wordSet) {
-                    return [first, last]
-                }
-                if (candidate[0] in wordSet && candidate[1] in wordSet && candidate[2] in wordSet && candidate[3] in wordSet) {
-                    return [candidate[0], candidate[1], candidate[2], candidate[3]];
-                }
-            }
-            // it's not a number, it's not english or something, it's not trivially repaired...ignore
-            return [{ word: candidate, ignore: true }];
-        }
-        return [candidate];
-    }
-
-    function segment(text, locale) {
-        locale = locale || getActiveGraph().locale;
-        if (/*!jiebaCut && */(!Intl || !Intl.Segmenter)) {
-            return [text];
-        }
-        text = text.replace(/[？。！，·【】；：、?,'!]/g, '');
-        let candidates = [];
-        let result = [];
-        // if (jiebaCut) {
-        //     candidates = jiebaCut(text, true);
-        // } else {
-        const segmenter = new Intl.Segmenter(locale, { granularity: "word" });
-        candidates = Array.from(segmenter.segment(text)).map(x => x.segment);
-        // }
-        for (const candidate of candidates) {
-            result.push(...(vetCandidate(candidate)));
-        }
-        return result;
-    }
-    function suggestSearches() {
-        const partialSearch = hanziBox.value;
-        // For now, don't suggest english words.
-        if (!partialSearch || looksLikeEnglish(partialSearch)) {
-            clearSuggestions();
-        }
-        // if it's just a single character, handle it here.
-        // otherwise, pass it off to the worker and let it decide.
-        if (partialSearch.length === 1 && partialSearch in hanzi) {
-            const words = [partialSearch, ...extractWords(hanzi[partialSearch])];
-            let suggestions = {};
-            suggestions[partialSearch] = words;
-            suggestions['tokenized'] = [];
-            renderSearchSuggestions(partialSearch, suggestions, [partialSearch], searchSuggestionsContainer);
-            return;
-        }
-        let tokens = segment(partialSearch, getActiveGraph().locale);
-        searchSuggestionsWorker.postMessage({
-            type: 'query',
-            payload: { query: partialSearch, tokens: tokens }
-        });
-    }
-    function extractWords(node) {
-        if (!node.edges) {
-            return [];
-        }
-        let result = new Set();
-        for (const edge of Object.values(node.edges).sort((a, b) => a.level - b.level)) {
-            result.add(...edge.words);
-        }
-        return Array.from(result);
-    }
-    function handleSuggestions(message) {
-        if (!message.data || !message.data.query) {
-            return;
-        }
-        if (message.data.query !== hanziBox.value) {
-            return;
-        }
-        renderSearchSuggestions(message.data.query, message.data.suggestions, message.data.tokens, searchSuggestionsContainer);
-    }
-
-    function renderExplanationItem(text, container) {
-        let instructionsItem = document.createElement('li');
-        instructionsItem.classList.add('suggestions-explanation');
-        instructionsItem.innerText = text;
-        container.appendChild(instructionsItem);
-    }
-    function renderSuggestion(priorWordsForDisplay, suggestion, container) {
-        let prior = document.createElement('span');
-        prior.innerText = priorWordsForDisplay;
-        prior.classList.add('search-suggestion-stem');
-        let current = document.createElement('span');
-        current.innerText = suggestion;
-        current.classList.add('search-suggestion-current');
-        container.appendChild(prior);
-        container.appendChild(current);
-    }
-    function renderSearchSuggestions(query, suggestions, tokens, container) {
-        container.innerHTML = '';
-        const isMultiWord = tokens.length > 1;
-        if (!suggestions || (!suggestions[query].length && !suggestions['tokenized'].length)) {
-            renderExplanationItem(`No suggestions found for ${query}.`, container);
-            return;
-        }
-        let priorWordsForDisplay = '';
-        let allButLastToken = [];
-        if (isMultiWord) {
-            allButLastToken = tokens.slice(0, -1);
-            priorWordsForDisplay = allButLastToken.map(x => {
-                if (x.ignore) {
-                    return x.word;
-                }
-                return x;
-            }).join('');
-        }
-        for (const suggestion of suggestions[query]) {
-            let item = document.createElement('li');
-            item.classList.add('search-suggestion');
-            renderSuggestion('', suggestion, item);
-            container.appendChild(item);
-            item.addEventListener('mousedown', function () {
-                notFoundElement.style.display = 'none';
-                document.dispatchEvent(new CustomEvent('graph-update', { detail: suggestion }));
-                document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [suggestion] } }));
-                clearSuggestions();
-            });
-        }
-        for (const suggestion of suggestions['tokenized']) {
-            let item = document.createElement('li');
-            item.classList.add('search-suggestion');
-            renderSuggestion(priorWordsForDisplay, suggestion, item);
-            container.appendChild(item);
-            item.addEventListener('mousedown', function () {
-                multiWordSearch(priorWordsForDisplay + suggestion, allButLastToken.concat(suggestion));
-                clearSuggestions();
-            });
-        }
-        container.removeAttribute('style');
-    }
-    function clearSuggestions() {
-        searchSuggestionsContainer.style.display = 'none';
-    }
-
-    function sendWordSetToWorker() {
-        searchSuggestionsWorker.postMessage({
-            type: 'wordset',
-            payload: window.wordSet
-        });
-    }
-    async function initialize(term) {
-        searchSuggestionsWorker = new Worker('/js/modules/search-suggestions-worker.js');
-        sendWordSetToWorker();
-        document.addEventListener('character-set-changed', sendWordSetToWorker);
-        searchSuggestionsWorker.addEventListener('message', handleSuggestions);
-        hanziBox.addEventListener('input', suggestSearches);
-        hanziBox.addEventListener('blur', clearSuggestions);
-        // const { default: init,
-        //     cut,
-        // } = await import("/js/external/jieba_rs_wasm.js");
-        // await init();
-        // jiebaCut = cut;
-        if (term) {
-            search(term, getActiveGraph().locale);
-        }
-    }
-
-    function multiWordSearch(query, segments) {
-        let found = false;
-        let wordForGraph = '';
-        for (const segment of segments) {
-            if (!segment.ignore && segment in wordSet) {
-                wordForGraph = segment;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            notFoundElement.removeAttribute('style');
-        } else {
-            notFoundElement.style.display = 'none';
-            document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
-            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query } }));
-        }
-    }
-
-    function englishSearch(word, data) {
-        if (!data) {
-            notFoundElement.removeAttribute('style');
-        } else {
-            notFoundElement.style.display = 'none';
-            document.dispatchEvent(new CustomEvent('graph-update', { detail: data[0] }));
-            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: data, display: word, type: 'english' } }));
-        }
-    }
-
-    function search(value, locale) {
-        clearSuggestions();
-        if (value && (definitions[value] || (value in wordSet))) {
-            notFoundElement.style.display = 'none';
-            document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
-            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
-            return;
-        }
-        if (value && looksLikeEnglish(value) && getActiveGraph().englishPath) {
-            value = value.toLowerCase();
-            fetch(`/${getActiveGraph().englishPath}/${getPartition(value, getActiveGraph().partitionCount)}.json`)
-                .then(response => response.json())
-                .then(function (data) {
-                    if (value !== hanziBox.value.toLowerCase()) {
-                        return false;
-                    }
-                    englishSearch(value, data[value]);
-                });
-            return;
-        }
-        multiWordSearch(value, segment(value, locale));
-    }
-
     const hanziSearchForm = document.getElementById('hanzi-choose');
 
     function loadState(state) {
@@ -27694,17 +27683,12 @@
         initialize$a();
         initialize$5();
         initialize$7();
+        initialize$2();
         initialize$3();
-        initialize$4();
-        initialize$1();
+        initialize();
         hanziSearchForm.addEventListener('submit', function (event) {
             event.preventDefault();
             search(hanziBox.value);
-            if (Array.from(hanziBox.value).find(x => x in hanzi)) {
-                switchToState(stateKeys.main);
-            } else {
-                switchDiagramView(diagramKeys.flow);
-            }
         });
         // TODO(refactor): this belongs in explore rather than main?
         let oldState = readExploreState();
@@ -27712,16 +27696,12 @@
         // precedence goes to the direct URL entered first, then to anything hanging around in history, then localstorage.
         // if none are present, show the walkthrough.
         let needsTokenization = false;
-        writeSeoMetaTags(urlState, getActiveGraph().display);
         if (urlState && urlState.word) {
             hanziBox.value = urlState.word;
             if (urlState.word in wordSet || looksLikeEnglish(urlState.word)) {
                 search(urlState.word);
             } else {
                 needsTokenization = true;
-            }
-            if (!Array.from(hanziBox.value).find(x => x in hanzi)) {
-                switchDiagramView(diagramKeys.flow);
             }
         } else if (history.state && history.state.word) {
             search(history.state.word);
@@ -27739,17 +27719,17 @@
                 { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
         }
         if (needsTokenization) {
-            initialize(urlState.word);
+            initialize$4(urlState.word);
         }
         if (urlState.mode === 'flow' && getActiveGraph().collocationsPath) {
             switchDiagramView(diagramKeys.flow);
         }
         // These happen last due to being secondary functionality
-        initialize$2();
+        initialize$1();
         initialize$9();
         initialize$6();
         if (!needsTokenization) {
-            initialize();
+            initialize$4();
         }
     });
 

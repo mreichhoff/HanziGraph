@@ -1,5 +1,6 @@
 import { hanziBox, notFoundElement } from "./dom";
 import { getActiveGraph, getPartition } from "./options";
+import { switchDiagramView, diagramKeys } from "./ui-orchestrator";
 
 // let jiebaCut = null;
 let searchSuggestionsWorker = null;
@@ -216,6 +217,11 @@ function multiWordSearch(query, segments) {
         notFoundElement.removeAttribute('style');
     } else {
         notFoundElement.style.display = 'none';
+        if (hasKanji(wordForGraph)) {
+            switchDiagramView(diagramKeys.main);
+        } else {
+            switchDiagramView(diagramKeys.flow);
+        }
         document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
         document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query } }));
     }
@@ -231,12 +237,21 @@ function englishSearch(word, data) {
     }
 }
 
+function hasKanji(value) {
+    return Array.from(value).find(x => x in hanzi);
+}
+
 function search(value, locale) {
     clearSuggestions();
     if (value && (definitions[value] || (value in wordSet))) {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
         document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
+        if (hasKanji(value)) {
+            switchDiagramView(diagramKeys.main);
+        } else {
+            switchDiagramView(diagramKeys.flow);
+        }
         return;
     }
     if (value && looksLikeEnglish(value) && getActiveGraph().englishPath) {
@@ -254,4 +269,4 @@ function search(value, locale) {
     multiWordSearch(value, segment(value, locale))
 }
 
-export { search, initialize, looksLikeEnglish }
+export { search, initialize, looksLikeEnglish, hasKanji }

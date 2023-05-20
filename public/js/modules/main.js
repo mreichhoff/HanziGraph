@@ -1,6 +1,6 @@
 import { initialize as firebaseInit } from './firebase-init.js';
 import { initialize as authStateInit } from './auth-state.js';
-import { diagramKeys, initialize as orchestratorInit, stateKeys, switchDiagramView, switchToState } from "./ui-orchestrator.js"
+import { diagramKeys, initialize as orchestratorInit, switchDiagramView } from "./ui-orchestrator.js"
 import { initialize as exploreInit } from "./explore.js";
 import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
@@ -83,11 +83,6 @@ Promise.all(
     hanziSearchForm.addEventListener('submit', function (event) {
         event.preventDefault();
         search(hanziBox.value);
-        if (Array.from(hanziBox.value).find(x => x in hanzi)) {
-            switchToState(stateKeys.main);
-        } else {
-            switchDiagramView(diagramKeys.flow);
-        }
     });
     // TODO(refactor): this belongs in explore rather than main?
     let oldState = readExploreState();
@@ -101,9 +96,6 @@ Promise.all(
             search(urlState.word);
         } else {
             needsTokenization = true;
-        }
-        if (!Array.from(hanziBox.value).find(x => x in hanzi)) {
-            switchDiagramView(diagramKeys.flow);
         }
     } else if (history.state && history.state.word) {
         search(history.state.word);
