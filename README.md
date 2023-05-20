@@ -7,7 +7,11 @@ This branch is for **Japanese**. The [main branch](https://github.com/mreichhoff
 ### Demo
 
 
-https://github.com/mreichhoff/HanziGraph/assets/17800817/82c4f84a-0524-421d-858a-195bacbeb82a
+
+
+https://github.com/mreichhoff/HanziGraph/assets/17800817/5b9fca4e-e4d0-49fb-a062-3cfd5f30955e
+
+
 
 
 ### Features
