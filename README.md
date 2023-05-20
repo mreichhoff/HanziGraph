@@ -2,6 +2,8 @@
 
 HanziGraph is a Chinese/English dictionary and study tool for Chinese language learners. It represents the Chinese language as [a graph](https://en.wikipedia.org/wiki/Graph_theory), in which individual characters are the [nodes](https://en.wikipedia.org/wiki/Vertex_(graph_theory)), and the [edges](https://en.wikipedia.org/wiki/Glossary_of_graph_theory#edge) are words. As a concrete example, `确` and `定` would each represent a node, and `确定` would be the edge that connects them.
 
+Looking for **Japanese**? See `/data/japanese` and the slightly modified web code on [the JapaneseGraph branch](https://github.com/mreichhoff/HanziGraph/tree/JapaneseGraph).
+
 ### Demo
 
 
@@ -51,7 +53,7 @@ Note that some of the larger data files are partitioned to avoid excessive memor
 ## Project Status
 The webapp is still a prototype, but it is functional and can be installed as [a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Installing) or used on the web. Note that there is both [a firebase-hosted version](https://hanzigraph.com) and [a github pages site](https://mreichhoff.github.io/HanziGraph/). The latter does not allow cross-device syncing, but is otherwise equivalent (though note that sometimes one or the other is a few commits behind).
 
-There's also a port to help learners [study Japanese kanji](https://github.com/mreichhoff/JapaneseGraph).
+Note that consolidation of the code for the various datasets (Mandarin, Cantonese, Japanese) is ongoing. Upcoming changes will also begin use of [lit](https://lit.dev) and pay down technical debt.
 
 ## Acknowledgements
 Sentence and definition data was pulled from:
@@ -59,6 +61,7 @@ Sentence and definition data was pulled from:
 * [CEDICT](https://cc-cedict.org/editor/editor.php), which releases data under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Because of sharealike, the definitions files should be considered released under that license as well.
 * [OPUS](https://opus.nlpl.eu/OpenSubtitles2018.php), specifically the [OpenSubtitles](http://www.opensubtitles.org/), [UN parallel](https://cms.unov.org/UNCorpus), and [WikiMatrix](https://arxiv.org/abs/1907.05791) corpuses.
 * OpenAI's `gpt-3.5-turbo` model generated example sentences for ~80,000 words and characters.
+* Japanese definitions were pulled from [JMDict](https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project); links to their license terms are available on that page.
 
 Cantonese frequency data was generated from [a spreadsheet](https://docs.google.com/spreadsheets/d/1ArxEFo46PTrDyDDhWyu3wB0epxqTyd8WBaprnwTEPm4/) found [on reddit](https://www.reddit.com/r/Cantonese/comments/62i3ud/most_common_cantonese_words_frequency_list/), [HKCanCor](https://github.com/fcbond/hkcancor) via [pycantonese](https://github.com/jacksonllee/pycantonese), and tatoeba.
 
