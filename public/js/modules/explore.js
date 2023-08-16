@@ -12,6 +12,13 @@ let maxExamples = 5;
 let currentExamples = {};
 let currentWords = [];
 
+const modes = {
+    explore: 'explore',
+    components: 'components'
+};
+let currentMode = modes.explore;
+let currentTabs = null;
+
 //TODO(refactor): move notion of activetab to orchestrator
 // TODO(refactor): consider removal of getActiveGraph...
 let getVoice = function () {
@@ -196,6 +203,26 @@ let renderDefinitions = function (word, definitionList, container) {
         augmentDefinitions(word, definitionsContainer);
     }
 }
+// TODO: combine with renderWordHeader
+let renderCharacterHeader = function (character, container, active) {
+    let characterHolder = document.createElement('h2');
+    characterHolder.classList.add('character-header');
+    let characterSpan = document.createElement('span');
+    characterSpan.textContent = character;
+    characterSpan.classList.add('clickable');
+    characterHolder.appendChild(characterSpan);
+    if (active) {
+        characterHolder.classList.add('active');
+    }
+    characterSpan.addEventListener('click', function () {
+        if (!characterHolder.classList.contains('active')) {
+            document.querySelectorAll('.character-header').forEach(x => x.classList.remove('active'));
+            characterHolder.classList.add('active');
+        }
+        document.dispatchEvent(new CustomEvent('components-update', { detail: character }));
+    });
+    container.appendChild(characterHolder);
+}
 let renderWordHeader = function (word, container, active) {
     let wordHolder = document.createElement('h2');
     wordHolder.classList.add('word-header');
@@ -326,6 +353,52 @@ let renderTabs = function (container, texts, panels, renderCallbacks, transition
             switchToTab(event.target.id, tabs);
         });
     }
+    return tabs;
+}
+
+function renderComponents(word, container) {
+    let first = true;
+    for (const character of word) {
+        if (!(character in components)) {
+            continue;
+        }
+        // TODO: is this right?
+        let item = document.createElement('div');
+        item.classList.add('character-data');
+        if (first) {
+            let instructions = document.createElement('p');
+            instructions.classList.add('explanation');
+            instructions.innerText = 'Click any character for more information.';
+            item.appendChild(instructions);
+        }
+        renderCharacterHeader(character, item, first);
+        first = false;
+        let componentsHeader = document.createElement('h3');
+        componentsHeader.innerText = 'Components';
+        item.appendChild(componentsHeader);
+        let componentsContainer = document.createElement('div');
+        const joinedComponents = components[character].components.join('');
+        if (joinedComponents) {
+            componentsContainer.className = 'target';
+            makeSentenceNavigable(joinedComponents, componentsContainer, true);
+        } else {
+            componentsContainer.innerText = "No components found. Maybe we can't break this down any more.";
+        }
+        item.appendChild(componentsContainer);
+        let componentsOfHeader = document.createElement('h3');
+        componentsOfHeader.innerText = 'Component of';
+        item.appendChild(componentsOfHeader);
+        let componentOfContainer = document.createElement('div');
+        const joinedComponentOf = components[character].componentOf.filter(x => x in hanzi).sort((a, b) => hanzi[a].node.level - hanzi[b].node.level).join('');
+        if (joinedComponentOf) {
+            componentOfContainer.className = 'target';
+            makeSentenceNavigable(joinedComponentOf, componentOfContainer, true);
+        } else {
+            componentOfContainer.innerText = 'This character is not a component of others.'
+        }
+        item.appendChild(componentOfContainer);
+        container.appendChild(item);
+    }
 }
 
 function renderExplore(word, container, definitionList, examples, maxExamples, active) {
@@ -335,14 +408,22 @@ function renderExplore(word, container, definitionList, examples, maxExamples, a
     container.appendChild(tabs);
     let meaningContainer = document.createElement('div');
     meaningContainer.classList.add('explore-subpane');
+    let componentsContainer = document.createElement('div');
+    componentsContainer.classList.add('explore-subpane');
+    componentsContainer.style.display = 'none';
     let statsContainer = document.createElement('div');
     statsContainer.classList.add('explore-subpane');
-    renderTabs(tabs, ['Meaning', 'Stats'], [meaningContainer, statsContainer], [() => { }, function () {
+    statsContainer.style.display = 'none';
+    currentTabs = renderTabs(tabs, ['Meaning', 'Components', 'Stats'], [meaningContainer, componentsContainer, statsContainer], [() => { }, () => {
+        document.dispatchEvent(new CustomEvent('components-update', { detail: word[0] }));
+    }, function () {
         statsContainer.innerHTML = '';
         renderStats(word, statsContainer)
-    }], ['slide-in', 'slide-in']);
+    }], ['slide-in', 'slide-in', 'slide-in']);
     container.appendChild(meaningContainer);
     renderMeaning(word, definitionList, examples, maxExamples, meaningContainer);
+    renderComponents(word, componentsContainer);
+    container.appendChild(componentsContainer);
     container.appendChild(statsContainer);
 }
 
@@ -447,9 +528,13 @@ let initialize = function () {
     // so removing the history API integration on the main branch.
     //TODO(refactor): show study when it was the last state
     document.addEventListener('explore-update', function (event) {
+        currentMode = ((event.detail.mode === modes.components) ? modes.components : modes.explore);
         hanziBox.value = event.detail.display || event.detail.words[0];
         setupExamples(event.detail.words, event.detail.type || 'chinese', event.detail.skipState);
         updateVisited(event.detail.words);
+        if (currentMode === modes.components) {
+            switchToTab('tab-components', currentTabs);
+        }
     });
     document.addEventListener('character-set-changed', function () {
         voice = getVoice();

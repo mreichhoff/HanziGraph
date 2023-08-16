@@ -29,7 +29,7 @@
     --menu-button-margin: 18px 0 0 0;
     --primary-container-height: calc(100% - 42px);
     --legend-height: 14px;
-    --graph-height: calc(100% - var(--legend-height));
+    --graph-height: calc(100% - var(--legend-height) - 4px);
     --section-container-margin: 0 20px;
     --calendar-day-color: #eee;
     --bar-chart-separator-color: #121212;
@@ -43,7 +43,9 @@
     --instructions-font-size: 16px;
     --secondary-input-container-width: 80%;
     --accent-color: #fc5c7d;
+    --secondary-accent-color: #d56eaf;
     --inactive-accent-color: #bb75c8;
+    --secondary-inactive-accent-color: #6a82fb;
     --legend-gradient-start: #fc5c7d;
     --legend-gradient-end: #6a82fb;
 }
@@ -204,7 +206,7 @@ ul {
 
 .explore-tabs {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     text-align: center;
     margin: 4px auto;
     border-bottom: var(--border);
@@ -223,8 +225,31 @@ ul {
     opacity: 1;
 }
 
+.character-header.active .clickable {
+    border-left: 6px solid var(--secondary-accent-color);
+    transition: border-left-width 0.35s, border-left-color 0.35s;
+}
+
+.character-data {
+    margin-bottom: 20px;
+}
+
+.character-data a.navigable {
+    margin-right: 12px;
+}
+
+.character-data h3 {
+    margin: 8px 0;
+}
+
 .word-header.active .clickable {
     border-left: 8px solid var(--accent-color);
+    transition: border-left-width 0.35s, border-left-color 0.35s;
+}
+
+.character-header .clickable {
+    border-left: 2px solid var(--secondary-inactive-accent-color);
+    padding-left: 6px;
     transition: border-left-width 0.35s, border-left-color 0.35s;
 }
 
@@ -506,7 +531,7 @@ ul {
 
 #legend {
     font-size: var(--legend-font-size);
-    margin: 0;
+    margin: 4px 0 0 0;
     height: var(--legend-height);
     display: flex;
     justify-content: center;
@@ -517,6 +542,7 @@ ul {
     background: linear-gradient(to right, var(--legend-gradient-start), var(--legend-gradient-end));
     width: 36%;
     margin: 0 2px;
+    border-radius: 6px;
 }
 
 /* TODO: do we need these to be different classes? */

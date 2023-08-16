@@ -185,7 +185,7 @@ function sendWordSetToWorker() {
         payload: window.wordSet
     });
 }
-async function initialize(term) {
+async function initialize(term, mode) {
     searchSuggestionsWorker = new Worker('/js/modules/search-suggestions-worker.js');
     sendWordSetToWorker();
     document.addEventListener('character-set-changed', sendWordSetToWorker);
@@ -198,11 +198,11 @@ async function initialize(term) {
     await init();
     jiebaCut = cut;
     if (term) {
-        search(term, getActiveGraph().locale);
+        search(term, getActiveGraph().locale, (mode || 'explore'));
     }
 }
 
-function multiWordSearch(query, segments) {
+function multiWordSearch(query, segments, mode) {
     let found = false;
     let wordForGraph = '';
     for (const segment of segments) {
@@ -217,7 +217,7 @@ function multiWordSearch(query, segments) {
     } else {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query } }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query, mode: (mode || 'explore') } }));
     }
 }
 
@@ -231,12 +231,12 @@ function englishSearch(word, data) {
     }
 }
 
-function search(value, locale) {
+function search(value, locale, mode) {
     clearSuggestions();
     if (value && (definitions[value] || (value in wordSet))) {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value], mode: (mode || 'explore') } }));
         return;
     }
     if (value && looksLikeEnglish(value) && getActiveGraph().englishPath) {
@@ -251,7 +251,7 @@ function search(value, locale) {
             });
         return;
     }
-    multiWordSearch(value, segment(value, locale))
+    multiWordSearch(value, segment(value, locale), mode)
 }
 
 export { search, initialize, looksLikeEnglish }

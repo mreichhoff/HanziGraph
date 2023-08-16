@@ -20102,6 +20102,11 @@
     // TODO(refactor): consolidate with options
     let ranks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
 
+    //TODO look up how to make this prettier
+    const modes$1 = { graph: 'graph', components: 'components' };
+    let mode = modes$1.graph;
+    let root$1 = null;
+
     function findRank(word) {
         if (!window.wordSet || !(word in wordSet)) {
             return ranks.length;
@@ -20146,6 +20151,35 @@
             addEdge(word[word.length - 1], word[0], word, result);
         }
     }
+    function componentsBfs(value) {
+        let elements = { 'nodes': [], 'edges': [] };
+        let queue = [{ word: value, path: [value] }];
+        while (queue.length > 0) {
+            //apparently shift isn't O(1) in js, but this is not many elements
+            let curr = queue.shift();
+            elements.nodes.push({
+                data: {
+                    id: curr.path.join(''),
+                    word: curr.word,
+                    depth: curr.path.length - 1,
+                    path: curr.path,
+                    level: (curr.word in hanzi ? hanzi[curr.word].node.level : 6)
+                }
+            });
+            for (const component of window.components[curr.word].components) {
+                elements.edges.push({
+                    data: {
+                        id: ('_edge' + curr.path.join('') + component),
+                        source: curr.path.join(''),
+                        target: (curr.path.join('') + component)
+                    }
+                });
+                queue.push({ word: component, path: [...curr.path, component] });
+            }
+        }
+        return elements;
+    }
+
     function dfs(start, elements, maxDepth, visited, maxEdges) {
         if (maxDepth < 0) {
             return;
@@ -20202,15 +20236,15 @@
             animate: false
         };
     }
-    function getStylesheet() {
+    function getStylesheet(isTree) {
         //TODO make this injectable
         let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        return [
+        let result = [
             {
                 selector: 'node',
                 style: {
                     'background-color': levelColor,
-                    'label': 'data(id)',
+                    'label': isTree ? 'data(word)' : 'data(id)',
                     'color': 'black',
                     'font-size': '16px',
                     'text-valign': 'center',
@@ -20220,10 +20254,10 @@
             {
                 selector: 'edge',
                 style: {
-                    'line-color': levelColor,
-                    'target-arrow-shape': 'none',
+                    'line-color': !isTree ? levelColor : prefersDark ? '#aaa' : '#121212',
+                    'target-arrow-shape': !isTree ? 'none' : 'triangle',
                     'curve-style': 'straight',
-                    'label': 'data(displayWord)',
+                    'label': !isTree ? 'data(displayWord)' : '',
                     'color': (_ => prefersDark ? '#eee' : '#000'),
                     'font-size': '10px',
                     'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
@@ -20233,6 +20267,12 @@
                 }
             }
         ];
+        if (isTree) {
+            result[1].style.width = '2px';
+            result[1].style['arrow-scale'] = '0.5';
+            result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
+        }
+        return result;
     }
     function nodeTapHandler(evt) {
         let id = evt.target.id();
@@ -20285,7 +20325,7 @@
         if (!cy) {
             return;
         }
-        cy.style(getStylesheet());
+        cy.style(getStylesheet(mode === modes$1.components));
     }
     function getMaxEdges(word) {
         let unique = new Set();
@@ -20303,10 +20343,38 @@
         }
         return 4;
     }
-
+    function bfsLayout(root) {
+        return {
+            name: 'breadthfirst',
+            roots: [root],
+            padding: 6,
+            spacingFactor: 0.85,
+            directed: true
+        };
+    }
+    function buildComponentTree(value) {
+        graphContainer.innerHTML = '';
+        graphContainer.className = '';
+        root$1 = value;
+        mode = modes$1.components;
+        cy = cytoscape({
+            container: graphContainer,
+            elements: componentsBfs(value),
+            layout: bfsLayout(value),
+            style: getStylesheet(true),
+            maxZoom: 10,
+            minZoom: 0.5
+        });
+        cy.on('tap', 'node', function (evt) {
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.data('word')] } }));
+            // notify the flow diagrams...sigh
+            document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('word') }));
+        });
+    }
     function buildGraph(value) {
         graphContainer.innerHTML = '';
         graphContainer.className = '';
+        mode = modes$1.graph;
         let result = { 'nodes': [], 'edges': [] };
         let maxDepth = 1;
         // TODO: this is kinda not DFS
@@ -20330,6 +20398,9 @@
         document.addEventListener('graph-update', function (event) {
             buildGraph(event.detail);
         });
+        document.addEventListener('components-update', function (event) {
+            buildComponentTree(event.detail);
+        });
         parent.addEventListener('hidden', function () {
             showingGraph = false;
         });
@@ -20345,7 +20416,7 @@
             pendingResizeTimeout$1 = setTimeout(() => {
                 // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
                 if (cy && showingGraph) {
-                    cy.layout(layout(cy.nodes().length)).run();
+                    cy.layout(mode === modes$1.graph ? layout(cy.nodes().length) : bfsLayout(root$1)).run();
                 }
             }, 1000);
         });
@@ -25072,6 +25143,13 @@
     let currentExamples = {};
     let currentWords = [];
 
+    const modes = {
+        explore: 'explore',
+        components: 'components'
+    };
+    let currentMode = modes.explore;
+    let currentTabs = null;
+
     //TODO(refactor): move notion of activetab to orchestrator
     // TODO(refactor): consider removal of getActiveGraph...
     let getVoice = function () {
@@ -25256,6 +25334,26 @@
             augmentDefinitions(word, definitionsContainer);
         }
     };
+    // TODO: combine with renderWordHeader
+    let renderCharacterHeader = function (character, container, active) {
+        let characterHolder = document.createElement('h2');
+        characterHolder.classList.add('character-header');
+        let characterSpan = document.createElement('span');
+        characterSpan.textContent = character;
+        characterSpan.classList.add('clickable');
+        characterHolder.appendChild(characterSpan);
+        if (active) {
+            characterHolder.classList.add('active');
+        }
+        characterSpan.addEventListener('click', function () {
+            if (!characterHolder.classList.contains('active')) {
+                document.querySelectorAll('.character-header').forEach(x => x.classList.remove('active'));
+                characterHolder.classList.add('active');
+            }
+            document.dispatchEvent(new CustomEvent('components-update', { detail: character }));
+        });
+        container.appendChild(characterHolder);
+    };
     let renderWordHeader = function (word, container, active) {
         let wordHolder = document.createElement('h2');
         wordHolder.classList.add('word-header');
@@ -25386,7 +25484,53 @@
                 switchToTab(event.target.id, tabs);
             });
         }
+        return tabs;
     };
+
+    function renderComponents(word, container) {
+        let first = true;
+        for (const character of word) {
+            if (!(character in components)) {
+                continue;
+            }
+            // TODO: is this right?
+            let item = document.createElement('div');
+            item.classList.add('character-data');
+            if (first) {
+                let instructions = document.createElement('p');
+                instructions.classList.add('explanation');
+                instructions.innerText = 'Click any character for more information.';
+                item.appendChild(instructions);
+            }
+            renderCharacterHeader(character, item, first);
+            first = false;
+            let componentsHeader = document.createElement('h3');
+            componentsHeader.innerText = 'Components';
+            item.appendChild(componentsHeader);
+            let componentsContainer = document.createElement('div');
+            const joinedComponents = components[character].components.join('');
+            if (joinedComponents) {
+                componentsContainer.className = 'target';
+                makeSentenceNavigable(joinedComponents, componentsContainer, true);
+            } else {
+                componentsContainer.innerText = "No components found. Maybe we can't break this down any more.";
+            }
+            item.appendChild(componentsContainer);
+            let componentsOfHeader = document.createElement('h3');
+            componentsOfHeader.innerText = 'Component of';
+            item.appendChild(componentsOfHeader);
+            let componentOfContainer = document.createElement('div');
+            const joinedComponentOf = components[character].componentOf.filter(x => x in hanzi).sort((a, b) => hanzi[a].node.level - hanzi[b].node.level).join('');
+            if (joinedComponentOf) {
+                componentOfContainer.className = 'target';
+                makeSentenceNavigable(joinedComponentOf, componentOfContainer, true);
+            } else {
+                componentOfContainer.innerText = 'This character is not a component of others.';
+            }
+            item.appendChild(componentOfContainer);
+            container.appendChild(item);
+        }
+    }
 
     function renderExplore(word, container, definitionList, examples, maxExamples, active) {
         let tabs = document.createElement('div');
@@ -25395,14 +25539,22 @@
         container.appendChild(tabs);
         let meaningContainer = document.createElement('div');
         meaningContainer.classList.add('explore-subpane');
+        let componentsContainer = document.createElement('div');
+        componentsContainer.classList.add('explore-subpane');
+        componentsContainer.style.display = 'none';
         let statsContainer = document.createElement('div');
         statsContainer.classList.add('explore-subpane');
-        renderTabs(tabs, ['Meaning', 'Stats'], [meaningContainer, statsContainer], [() => { }, function () {
+        statsContainer.style.display = 'none';
+        currentTabs = renderTabs(tabs, ['Meaning', 'Components', 'Stats'], [meaningContainer, componentsContainer, statsContainer], [() => { }, () => {
+            document.dispatchEvent(new CustomEvent('components-update', { detail: word[0] }));
+        }, function () {
             statsContainer.innerHTML = '';
             renderStats(word, statsContainer);
-        }], ['slide-in', 'slide-in']);
+        }], ['slide-in', 'slide-in', 'slide-in']);
         container.appendChild(meaningContainer);
         renderMeaning(word, definitionList, examples, maxExamples, meaningContainer);
+        renderComponents(word, componentsContainer);
+        container.appendChild(componentsContainer);
         container.appendChild(statsContainer);
     }
 
@@ -25507,9 +25659,13 @@
         // so removing the history API integration on the main branch.
         //TODO(refactor): show study when it was the last state
         document.addEventListener('explore-update', function (event) {
+            currentMode = ((event.detail.mode === modes.components) ? modes.components : modes.explore);
             hanziBox.value = event.detail.display || event.detail.words[0];
             setupExamples(event.detail.words, event.detail.type || 'chinese', event.detail.skipState);
             updateVisited(event.detail.words);
+            if (currentMode === modes.components) {
+                switchToTab('tab-components', currentTabs);
+            }
         });
         document.addEventListener('character-set-changed', function () {
             voice = getVoice();
@@ -27549,7 +27705,7 @@
             payload: window.wordSet
         });
     }
-    async function initialize(term) {
+    async function initialize(term, mode) {
         searchSuggestionsWorker = new Worker('/js/modules/search-suggestions-worker.js');
         sendWordSetToWorker();
         document.addEventListener('character-set-changed', sendWordSetToWorker);
@@ -27562,11 +27718,11 @@
         await init();
         jiebaCut = cut;
         if (term) {
-            search(term, getActiveGraph().locale);
+            search(term, getActiveGraph().locale, (mode || 'explore'));
         }
     }
 
-    function multiWordSearch(query, segments) {
+    function multiWordSearch(query, segments, mode) {
         let found = false;
         let wordForGraph = '';
         for (const segment of segments) {
@@ -27581,7 +27737,7 @@
         } else {
             notFoundElement.style.display = 'none';
             document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
-            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query } }));
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query, mode: (mode || 'explore') } }));
         }
     }
 
@@ -27595,12 +27751,12 @@
         }
     }
 
-    function search(value, locale) {
+    function search(value, locale, mode) {
         clearSuggestions();
         if (value && (definitions[value] || (value in wordSet))) {
             notFoundElement.style.display = 'none';
             document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
-            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value] } }));
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value], mode: (mode || 'explore') } }));
             return;
         }
         if (value && looksLikeEnglish(value) && getActiveGraph().englishPath) {
@@ -27615,7 +27771,7 @@
                 });
             return;
         }
-        multiWordSearch(value, segment(value, locale));
+        multiWordSearch(value, segment(value, locale), mode);
     }
 
     const hanziSearchForm = document.getElementById('hanzi-choose');
@@ -27650,7 +27806,10 @@
                 .then(data => window.sentences = data),
             window.definitionsFetch
                 .then(response => response.json())
-                .then(data => window.definitions = data)
+                .then(data => window.definitions = data),
+            window.componentsFetch
+                .then(response => response.json())
+                .then(data => window.components = data)
         ];
     } else {
         // assume freqs are used instead, and the graph is derived from that
@@ -27665,13 +27824,17 @@
                 .then(data => window.sentences = data),
             window.definitionsFetch
                 .then(response => response.json())
-                .then(data => window.definitions = data)
+                .then(data => window.definitions = data),
+            window.componentsFetch
+                .then(response => response.json())
+                .then(data => window.components = data)
         ];
     }
 
     Promise.all(
         dataLoads
     ).then(_ => {
+        let urlState = parseUrl(document.location.pathname);
         initialize$c();
         initialize$b();
         initialize$8();
@@ -27688,7 +27851,6 @@
         });
         // TODO(refactor): this belongs in explore rather than main?
         let oldState = readExploreState();
-        let urlState = parseUrl(document.location.pathname);
         // precedence goes to the direct URL entered first, then to anything hanging around in history, then localstorage.
         // if none are present, show the walkthrough.
         let needsTokenization = false;
@@ -27696,7 +27858,7 @@
         if (urlState && urlState.word) {
             hanziBox.value = urlState.word;
             if (urlState.word in wordSet || looksLikeEnglish(urlState.word)) {
-                search(urlState.word);
+                search(urlState.word, getActiveGraph().locale, urlState.mode);
             } else {
                 needsTokenization = true;
             }
@@ -27716,7 +27878,7 @@
                 { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
         }
         if (needsTokenization) {
-            initialize(urlState.word);
+            initialize(urlState.word, urlState.mode);
         }
         if (urlState.mode === 'flow' && getActiveGraph().collocationsPath) {
             switchDiagramView(diagramKeys.flow);

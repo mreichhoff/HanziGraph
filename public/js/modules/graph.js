@@ -7,6 +7,11 @@ let currentPath = [];
 // TODO(refactor): consolidate with options
 let ranks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
 
+//TODO look up how to make this prettier
+const modes = { graph: 'graph', components: 'components' };
+let mode = modes.graph;
+let root = null;
+
 function findRank(word) {
     if (!window.wordSet || !(word in wordSet)) {
         return ranks.length;
@@ -51,6 +56,35 @@ function addEdges(word, result) {
         addEdge(word[word.length - 1], word[0], word, result);
     }
 };
+
+function componentsBfs(value) {
+    let elements = { 'nodes': [], 'edges': [] };
+    let queue = [{ word: value, path: [value] }];
+    while (queue.length > 0) {
+        //apparently shift isn't O(1) in js, but this is not many elements
+        let curr = queue.shift();
+        elements.nodes.push({
+            data: {
+                id: curr.path.join(''),
+                word: curr.word,
+                depth: curr.path.length - 1,
+                path: curr.path,
+                level: (curr.word in hanzi ? hanzi[curr.word].node.level : 6)
+            }
+        });
+        for (const component of window.components[curr.word].components) {
+            elements.edges.push({
+                data: {
+                    id: ('_edge' + curr.path.join('') + component),
+                    source: curr.path.join(''),
+                    target: (curr.path.join('') + component)
+                }
+            });
+            queue.push({ word: component, path: [...curr.path, component] });
+        }
+    }
+    return elements;
+}
 
 function dfs(start, elements, maxDepth, visited, maxEdges) {
     if (maxDepth < 0) {
@@ -108,15 +142,15 @@ function layout(numNodes) {
         animate: false
     };
 }
-function getStylesheet() {
+function getStylesheet(isTree) {
     //TODO make this injectable
     let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return [
+    let result = [
         {
             selector: 'node',
             style: {
                 'background-color': levelColor,
-                'label': 'data(id)',
+                'label': isTree ? 'data(word)' : 'data(id)',
                 'color': 'black',
                 'font-size': '16px',
                 'text-valign': 'center',
@@ -126,10 +160,10 @@ function getStylesheet() {
         {
             selector: 'edge',
             style: {
-                'line-color': levelColor,
-                'target-arrow-shape': 'none',
+                'line-color': !isTree ? levelColor : prefersDark ? '#aaa' : '#121212',
+                'target-arrow-shape': !isTree ? 'none' : 'triangle',
                 'curve-style': 'straight',
-                'label': 'data(displayWord)',
+                'label': !isTree ? 'data(displayWord)' : '',
                 'color': (_ => prefersDark ? '#eee' : '#000'),
                 'font-size': '10px',
                 'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
@@ -139,6 +173,12 @@ function getStylesheet() {
             }
         }
     ];
+    if (isTree) {
+        result[1].style.width = '2px';
+        result[1].style['arrow-scale'] = '0.5';
+        result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
+    }
+    return result;
 }
 function nodeTapHandler(evt) {
     let id = evt.target.id();
@@ -191,7 +231,7 @@ function updateColorScheme() {
     if (!cy) {
         return;
     }
-    cy.style(getStylesheet());
+    cy.style(getStylesheet(mode === modes.components));
 }
 
 // TODO: reinstate this
@@ -214,10 +254,38 @@ function getMaxEdges(word) {
     }
     return 4;
 }
-
+function bfsLayout(root) {
+    return {
+        name: 'breadthfirst',
+        roots: [root],
+        padding: 6,
+        spacingFactor: 0.85,
+        directed: true
+    };
+}
+function buildComponentTree(value) {
+    graphContainer.innerHTML = '';
+    graphContainer.className = '';
+    root = value;
+    mode = modes.components;
+    cy = cytoscape({
+        container: graphContainer,
+        elements: componentsBfs(value),
+        layout: bfsLayout(value),
+        style: getStylesheet(true),
+        maxZoom: 10,
+        minZoom: 0.5
+    });
+    cy.on('tap', 'node', function (evt) {
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.data('word')] } }));
+        // notify the flow diagrams...sigh
+        document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('word') }));
+    });
+}
 function buildGraph(value) {
     graphContainer.innerHTML = '';
     graphContainer.className = '';
+    mode = modes.graph;
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
     // TODO: this is kinda not DFS
@@ -241,6 +309,9 @@ function initialize() {
     document.addEventListener('graph-update', function (event) {
         buildGraph(event.detail);
     });
+    document.addEventListener('components-update', function (event) {
+        buildComponentTree(event.detail);
+    })
     parent.addEventListener('hidden', function () {
         showingGraph = false;
     });
@@ -256,7 +327,7 @@ function initialize() {
         pendingResizeTimeout = setTimeout(() => {
             // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
             if (cy && showingGraph) {
-                cy.layout(layout(cy.nodes().length)).run();
+                cy.layout(mode === modes.graph ? layout(cy.nodes().length) : bfsLayout(root)).run();
             }
         }, 1000);
     });

@@ -46,7 +46,10 @@ if (window.graphFetch) {
             .then(data => window.sentences = data),
         window.definitionsFetch
             .then(response => response.json())
-            .then(data => window.definitions = data)
+            .then(data => window.definitions = data),
+        window.componentsFetch
+            .then(response => response.json())
+            .then(data => window.components = data)
     ]
 } else {
     // assume freqs are used instead, and the graph is derived from that
@@ -61,13 +64,17 @@ if (window.graphFetch) {
             .then(data => window.sentences = data),
         window.definitionsFetch
             .then(response => response.json())
-            .then(data => window.definitions = data)
+            .then(data => window.definitions = data),
+        window.componentsFetch
+            .then(response => response.json())
+            .then(data => window.components = data)
     ]
 }
 
 Promise.all(
     dataLoads
 ).then(_ => {
+    let urlState = parseUrl(document.location.pathname);
     firebaseInit();
     authStateInit();
     dataLayerInit();
@@ -84,7 +91,6 @@ Promise.all(
     });
     // TODO(refactor): this belongs in explore rather than main?
     let oldState = readExploreState();
-    let urlState = parseUrl(document.location.pathname);
     // precedence goes to the direct URL entered first, then to anything hanging around in history, then localstorage.
     // if none are present, show the walkthrough.
     let needsTokenization = false;
@@ -92,7 +98,7 @@ Promise.all(
     if (urlState && urlState.word) {
         hanziBox.value = urlState.word;
         if (urlState.word in wordSet || looksLikeEnglish(urlState.word)) {
-            search(urlState.word);
+            search(urlState.word, getActiveGraph().locale, urlState.mode);
         } else {
             needsTokenization = true;
         }
@@ -112,7 +118,7 @@ Promise.all(
             { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
     }
     if (needsTokenization) {
-        searchInit(urlState.word);
+        searchInit(urlState.word, urlState.mode);
     }
     if (urlState.mode === 'flow' && getActiveGraph().collocationsPath) {
         switchDiagramView(diagramKeys.flow);
