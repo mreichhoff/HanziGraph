@@ -2,15 +2,13 @@
 
 HanziGraph is a Chinese/English dictionary and study tool for Chinese language learners. It represents the Chinese language as [a graph](https://en.wikipedia.org/wiki/Graph_theory), in which individual characters are the [nodes](https://en.wikipedia.org/wiki/Vertex_(graph_theory)), and the [edges](https://en.wikipedia.org/wiki/Glossary_of_graph_theory#edge) are words. As a concrete example, `确` and `定` would each represent a node, and `确定` would be the edge that connects them.
 
+It is installable as a standalone [PWA](https://web.dev/progressive-web-apps/), or can be viewed on the web.
+
 Looking for **Japanese**? See `/data/japanese` and the slightly modified web code on [the JapaneseGraph branch](https://github.com/mreichhoff/HanziGraph/tree/JapaneseGraph).
 
-### Demo
-
-
-https://github.com/mreichhoff/HanziGraph/assets/17800817/82c4f84a-0524-421d-858a-195bacbeb82a
-
-
 ### Features
+
+#### Interactive Graph
 
 The nodes and edges (more than 100,000 in all) have data associated with them. Specifically, each node and edge has:
 * Usage frequency data, which takes the form of color coding (red: very frequent; blue: less frequent). Word frequency can also be substituted with color coding by HSK level.
@@ -18,9 +16,42 @@ The nodes and edges (more than 100,000 in all) have data associated with them. S
 * Human-generated example sentences, sorted by average word frequency, from [tatoeba](https://tatoeba.org/).
 * For words not present in tatoeba's corpus, AI generated examples are used instead.
 
+##### Graph Demo
+
+
+
+https://github.com/mreichhoff/HanziGraph/assets/17800817/3bf8b98a-0daf-499f-ada6-4b90b39e132d
+
+
+
+
+#### Component Breakdowns
+
+Each hanzi can also be diagrammed as a component tree, where each successive level of the tree is a further breakdown of its parent. Characters with a given hanzi or radical as a component are also listed. Each component in the diagram is color-coded by its frequency in everyday use, and clicking it will show definitions and example sentences, as well as other data.
+
+#### Components Demo
+
+
+
+https://github.com/mreichhoff/HanziGraph/assets/17800817/45e564b5-2b8f-4d20-a282-073fd5d4cc8b
+
+
+
+
 #### Word Relationships
 
 In addition to **character** relationships expressed through a graph structure, the tool uses [collocation](https://en.wikipedia.org/wiki/Collocation) data to show how **words** relate to one another. It expresses those relationships with [sankey diagrams](https://en.wikipedia.org/wiki/Sankey_diagram). These diagrams can also be thought of as a graph, where each node is a word and each edge is a collocation, with the edge weight representing frequency of use. One example would be `时候` commonly being preceded by `的`. In this case, `时候` and `的` are nodes, and the weight of their connecting edge represents the frequency of the collocation `的时候`.
+
+#### Sankey Demo
+
+
+
+
+https://github.com/mreichhoff/HanziGraph/assets/17800817/c6b75af8-7ca1-40df-accc-45875b05f6dc
+
+
+
+
 
 #### Recommending Characters
 
@@ -63,8 +94,11 @@ Sentence and definition data was pulled from:
 * OpenAI's `gpt-3.5-turbo` model generated example sentences for ~80,000 words and characters.
 * Japanese definitions were pulled from [JMDict](https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project); links to their license terms are available on that page.
 
+Character composition data was pulled from [cjkvi-ids](https://github.com/cjkvi/cjkvi-ids) (specifically, the portion derived from the [CHISE project](http://www.chise.org/), under their license) and [cjk-decomp](https://github.com/amake/cjk-decomp/blob/master/cjk-decomp.txt).
+
 Cantonese frequency data was generated from [a spreadsheet](https://docs.google.com/spreadsheets/d/1ArxEFo46PTrDyDDhWyu3wB0epxqTyd8WBaprnwTEPm4/) found [on reddit](https://www.reddit.com/r/Cantonese/comments/62i3ud/most_common_cantonese_words_frequency_list/), [HKCanCor](https://github.com/fcbond/hkcancor) via [pycantonese](https://github.com/jacksonllee/pycantonese), and tatoeba.
 
 [Jieba](https://github.com/wchan757/jieba) was used to tokenize sentences, including in [Cantonese](https://github.com/wchan757/Cantonese_Word_Segmentation). It is also used [in WASM form](https://github.com/fengkx/jieba-wasm) to tokenize sentences on the frontend.
 
-[CytoscapeJS](https://github.com/cytoscape/cytoscape.js) and [d3](https://github.com/d3/d3) are helpful for graph visualization.
+[CytoscapeJS](https://github.com/cytoscape/cytoscape.js) and [d3](https://github.com/d3/d3) are helpful for graph visualization. Some icons were based on [CSS icons](https://css.gg/).
+
