@@ -41,15 +41,15 @@ def build_ids_graph(breakdown_filename, allowlist):
                 continue
             if root not in result:
                 result[root] = {'type': 's' if is_simplified(
-                    root) else 't', 'components': set(), 'componentOf': set()}
+                    root) else 't', 'components': [], 'componentOf': set()}
             breakdown = strip_directionality(fields[2]).split('[')[0]
             for item in breakdown:
                 if item == root or has_no_glyph(item):
                     continue
-                result[root]['components'].add(item)
+                result[root]['components'].append(item)
                 if item not in result:
                     result[item] = {'type': 's' if is_simplified(
-                        item) else 't', 'components': set(), 'componentOf': set()}
+                        item) else 't', 'components': [], 'componentOf': set()}
                 result[item]['componentOf'].add(root)
     return result
 
@@ -63,15 +63,15 @@ def build_decomp_graph(breakdown_filename, allowlist, result):
                 continue
             if root not in result:
                 result[root] = {'type': 's' if is_simplified(
-                    root) else 't', 'components': set(), 'componentOf': set()}
+                    root) else 't', 'components': [], 'componentOf': set()}
             breakdown = data.rstrip(')').split('(')[1].split(',')
             for item in breakdown:
                 if item == root or has_no_glyph(item):
                     continue
-                result[root]['components'].add(item)
+                result[root]['components'].append(item)
                 if item not in result:
                     result[item] = {'type': 's' if is_simplified(
-                        item) else 't', 'components': set(), 'componentOf': set()}
+                        item) else 't', 'components': [], 'componentOf': set()}
                 result[item]['componentOf'].add(root)
 
 
