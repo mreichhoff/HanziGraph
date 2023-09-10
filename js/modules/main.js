@@ -26,7 +26,10 @@ if (window.graphFetch) {
             .then(data => window.sentences = data),
         window.definitionsFetch
             .then(response => response.json())
-            .then(data => window.definitions = data)
+            .then(data => window.definitions = data),
+        window.componentsFetch
+            .then(response => response.json())
+            .then(data => window.components = data)
     ]
 } else {
     // assume freqs are used instead, and the graph is derived from that
@@ -41,7 +44,10 @@ if (window.graphFetch) {
             .then(data => window.sentences = data),
         window.definitionsFetch
             .then(response => response.json())
-            .then(data => window.definitions = data)
+            .then(data => window.definitions = data),
+        window.componentsFetch
+            .then(response => response.json())
+            .then(data => window.components = data)
     ]
 }
 
