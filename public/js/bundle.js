@@ -20254,7 +20254,7 @@
             {
                 selector: 'edge',
                 style: {
-                    'line-color': !isTree ? levelColor : prefersDark ? '#aaa' : '#121212',
+                    'line-color': !isTree ? levelColor : prefersDark ? '#eee' : '#121212',
                     'target-arrow-shape': !isTree ? 'none' : 'triangle',
                     'curve-style': 'straight',
                     'label': !isTree ? 'data(displayWord)' : '',
@@ -20270,7 +20270,7 @@
         if (isTree) {
             result[1].style.width = '2px';
             result[1].style['arrow-scale'] = '0.5';
-            result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
+            result[1].style['target-arrow-color'] = prefersDark ? '#eee' : '#121212';
         }
         return result;
     }
@@ -20366,7 +20366,11 @@
             minZoom: 0.5
         });
         cy.on('tap', 'node', function (evt) {
-            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.data('word')] } }));
+            document.dispatchEvent(new CustomEvent('explore-update', {
+                detail: {
+                    words: [evt.target.data('word')]
+                }
+            }));
             // notify the flow diagrams...sigh
             document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('word') }));
         });
@@ -25406,6 +25410,10 @@
         }
     };
     let renderMeaning = function (word, definitionList, examples, maxExamples, container) {
+        if (!(word in wordSet)) {
+            container.innerText = "No definitions found. This may indicate a component without its own meaning.";
+            return;
+        }
         renderDefinitions(word, definitionList, container);
         renderExamples(word, examples, maxExamples, container);
     };

@@ -275,6 +275,10 @@ let renderExamples = function (word, examples, maxExamples, container) {
     }
 };
 let renderMeaning = function (word, definitionList, examples, maxExamples, container) {
+    if (!(word in wordSet)) {
+        container.innerText = "No definitions found. This may indicate a component without its own meaning.";
+        return;
+    }
     renderDefinitions(word, definitionList, container);
     renderExamples(word, examples, maxExamples, container);
 };
