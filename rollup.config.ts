@@ -1,11 +1,19 @@
 import json from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 
-export default {
+export default [{
     input: './js/modules/main.js',
     output: {
         file: 'js/bundle.js',
         format: 'iife'
     },
     plugins: [json(), nodeResolve()]
-};
+},
+{
+    input: './js/modules/components-demo.js',
+    output: {
+        file: 'js/components-bundle.js',
+        format: 'iife'
+    },
+    plugins: [json(), nodeResolve()]
+}];

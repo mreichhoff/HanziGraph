@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="../js/external/cytoscape.min.js"></script>
+    <link rel="icon" href="../images/favicon-32x32.png" type="image/x-icon">
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
+    <link rel="stylesheet" type="text/css" href="../css/hanzi-graph.css">
+    <style>
+        :root {
+            --tone-1-color: #ff635f;
+            --tone-2-color: #7aeb34;
+            --tone-3-color: #de68ee;
+            --tone-4-color: #68aaee;
+            --neutral-tone-color: #000;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --neutral-tone-color: #aaa;
+            }
+        }
+
+        .walkthrough p {
+            font-family: sans-serif;
+            font-weight: 300;
+            font-size: 18px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        ul {
+            margin: 4px;
+        }
+
+        .explanation {
+            font-weight: 400;
+        }
+
+        .character-data {
+            text-align: center;
+        }
+
+        .character-header {
+            text-align: center;
+        }
+
+        .character-header.active .clickable,
+        .character-header .clickable {
+            border: 0;
+        }
+
+        .character-header .clickable {
+            font-size: 50px;
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        .pronunciation {
+            font-weight: 400;
+            font-size: 26px;
+            text-align: center;
+        }
+
+        #legend {
+            padding: 2px;
+            border-bottom: var(--border);
+        }
+
+        #legend span {
+            font-size: 14px;
+            margin: 0 2px;
+            font-weight: bold;
+        }
+
+        .tone1 {
+            color: var(--tone-1-color)
+        }
+
+        .tone2 {
+            color: var(--tone-2-color)
+        }
+
+        .tone3 {
+            color: var(--tone-3-color)
+        }
+
+        .tone4 {
+            color: var(--tone-4-color)
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div id="left-menu-button-container" class="left-menu-button-container">
+            <!-- TODO: enable normal menu -->
+            <!-- <i id="left-menu-button" class="menu-button"></i> -->
+        </div>
+        <h1 id="main-header" class="main-header">HanziGraph</h1>
+        <div id="right-menu-button-container" class="right-menu-button-container">
+            <!-- <i id="right-menu-button" class="study-button"></i> -->
+        </div>
+    </header>
+    <div class="primary-container">
+        <div id="controls" class="control-container">
+            <!-- <fieldset id="language-control">
+                <legend>Language:</legend>
+                <div>
+                    <label>
+                        <input type="radio" id="syllables" name="mode" value="syllables" checked />
+                        Mandarin
+                    </label>
+                    <label>
+                        <input type="radio" id="characters" name="mode" value="characters" />
+                        Cantonese
+                    </label>
+                </div>
+            </fieldset> -->
+            <form id="search-form">
+                <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word" type="search"
+                    enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
+            </form>
+        </div>
+        <div id="data-container" class="output-container">
+            <div id="text-container" class="primary-panel">
+                <div id="explore-container" class="section-container">
+                    <p style="display:none" id="not-found-message">No data found 😞. Please try another.</p>
+                    <div id="walkthrough" class="walkthrough">
+                        <p>To get started, click the diagram, or search for any character.</p>
+                        <p>The diagram shows the components of each character, the components of its components, and so
+                            on.</p>
+                        <p>
+                            The diagram is color-coded by tone. When a component has similar pronunciation with its
+                            parent, a label with pinyin (minus the tone, which is already indicated by color) is shown.
+                        </p>
+                    </div>
+                    <div id="examples">
+                    </div>
+                </div>
+            </div>
+            <div id="graph-container" class="primary-panel">
+                <div id="legend">
+                    <span class="tone1">1st tone</span>
+                    <span class="tone2">2nd tone</span>
+                    <span class="tone3">3rd tone</span>
+                    <span class="tone4">4th tone</span>
+                    <span class="tone-neutral">Other</span>
+                </div>
+                <div id="graph" class="graph"></div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="../js/components-bundle.js"></script>
+</body>
+
+</html>
