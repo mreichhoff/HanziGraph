@@ -83,7 +83,7 @@ function toneColor(element) {
     } else if (tone === '4') {
         return '#68aaee';
     }
-    return prefersDark ? '#aaa' : '#000';
+    return prefersDark ? '#888' : '#000';
 }
 function rankColor(element) {
     const character = element.data('word');
@@ -146,7 +146,7 @@ function getStylesheet() {
         {
             selector: 'edge',
             style: {
-                'line-color': prefersDark ? '#aaa' : '#121212',
+                'line-color': prefersDark ? '#666' : '#121212',
                 'target-arrow-shape': 'triangle',
                 'curve-style': 'straight',
                 'color': (_ => prefersDark ? '#000' : '#fff'),
@@ -158,7 +158,7 @@ function getStylesheet() {
                 'text-events': 'yes',
                 'width': '3px',
                 'arrow-scale': '0.65',
-                'target-arrow-color': prefersDark ? '#fff' : '#121212',
+                'target-arrow-color': prefersDark ? '#aaa' : '#121212',
                 'label': edgeLabel
             }
         }
@@ -236,17 +236,15 @@ function renderDefinitions(character, container) {
     }
     let definitionElement = document.createElement('ul');
     const definitionList = definitions[character];
-    let pronunciations = new Set();
     for (let i = 0; i < definitionList.length; i++) {
         let definitionItem = document.createElement('li');
-        if (!pronunciations.has(definitionList[i].pinyin.toLowerCase())) {
+        if (i === 0 || (definitionList[i].pinyin.toLowerCase() !== definitionList[i - 1].pinyin.toLowerCase())) {
             definitionItem.classList.add('pronunciation');
             definitionItem.classList.add(`tone${definitionList[i].pinyin[definitionList[i].pinyin.length - 1]}`);
             definitionItem.textContent = definitionList[i].pinyin.toLowerCase();
             definitionElement.appendChild(definitionItem);
             // maybe make one li and divs inside?
             definitionItem = document.createElement('li');
-            pronunciations.add(definitionList[i].pinyin.toLowerCase());
         }
         definitionItem.classList.add('definition');
         definitionItem.innerText = definitionList[i].en;
