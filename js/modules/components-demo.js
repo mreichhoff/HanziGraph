@@ -10,6 +10,78 @@ let components = {};
 let simplifiedRanks = {};
 let traditionalRanks = {};
 
+// TODO: this is duplicated almost verbatim from ui-orchestrator.js...
+const leftButtonContainer = document.getElementById('left-menu-button-container');
+const leftButton = document.getElementById('left-menu-button');
+const mainAppContainer = document.getElementById('main-app-container');
+const menuContainer = document.getElementById('menu-container');
+const containers = [mainAppContainer, menuContainer];
+const states = {
+    main: {
+        leftButtonClass: 'menu-button',
+        activeContainer: mainAppContainer,
+        leftState: 'menu',
+        animation: 'slide-in'
+    },
+    menu: {
+        leftButtonClass: 'exit-button',
+        activeContainer: menuContainer,
+        statePreserving: true,
+        leftState: 'previous',
+        animation: 'slide-in'
+    }
+};
+const stateKeys = {
+    main: 'main',
+    menu: 'menu'
+};
+let prevState = null;
+let currentState = stateKeys.main;
+function switchToState(state) {
+    if (state === currentState) {
+        // no sense doing extra work...
+        return;
+    }
+    // if we don't have the new state, treat it as indicating we must go back
+    // for now we don't support chains of back/forward, it's just one
+    const stateConfig = states[state] || states[prevState];
+
+    for (const container of containers) {
+        if (container.id !== stateConfig.activeContainer.id) {
+            container.style.display = 'none';
+            container.dispatchEvent(new Event('hidden'));
+        }
+    }
+    stateConfig.activeContainer.removeAttribute('style');
+    stateConfig.activeContainer.dispatchEvent(new Event('shown'));
+    if (stateConfig.animation) {
+        stateConfig.activeContainer.classList.add(stateConfig.animation);
+        stateConfig.activeContainer.addEventListener('animationend', function () {
+            stateConfig.activeContainer.classList.remove(stateConfig.animation);
+        }, { once: true });
+    }
+
+    if (stateConfig.leftButtonClass) {
+        leftButton.className = stateConfig.leftButtonClass;
+        leftButton.removeAttribute('style');
+    } else {
+        leftButton.style.display = 'none';
+    }
+    // this 'previous' string thing is weird, but it might just work
+    // (until we need any notion of reentrancy)
+    let tmp = prevState;
+    if (stateConfig.statePreserving) {
+        prevState = currentState;
+    } else {
+        prevState = null;
+    }
+    if (state === 'previous') {
+        currentState = tmp;
+    } else {
+        currentState = state;
+    }
+}
+
 // TODO: this is duplicated almost verbatim from graph.js...
 function updateColorScheme() {
     if (!cy) {
@@ -160,6 +232,11 @@ const pinyinSpecialCases = {
     'xun': ['x', 'ün'],
 }
 function parsePinyin(pinyin) {
+    if (pinyin === 'xx') {
+        // This is a special CEDICT case for when pronunciation isn't known
+        // (or so it seems)
+        return [null, null];
+    }
     pinyin = pinyin.replace('u:', 'ü')
     let initial;
     let final;
@@ -428,4 +505,9 @@ Promise.all([
     });
     const starters = ['新', '镦', '貌', '诬', '客', '警', '嘴', '醒', '复', '惯', '醒', '倾', '翻', '擲', '齉', '嘟', '囔'];
     buildComponentTree(starters[Math.floor(Math.random() * starters.length)]);
+    leftButtonContainer.addEventListener('click', function () {
+        if (states[currentState].leftState) {
+            switchToState(states[currentState].leftState);
+        }
+    });
 });
