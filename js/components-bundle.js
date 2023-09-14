@@ -254,13 +254,20 @@
         for (const definition of sourceDefs.filter(x => x.pinyin)) {
             const srcPinyin = trimTone(definition.pinyin.toLowerCase());
             const [srcInitial, srcFinal] = parsePinyin(srcPinyin);
+            const targetDefsWithPinyin = targetDefs.filter(x => x.pinyin);
             // O(n^2), but there's never more than a few definitions.
-            for (const targetDef of targetDefs.filter(x => x.pinyin)) {
+            // first pass: check for exact matches (minus tone, already expressed through color)
+            for (const targetDef of targetDefsWithPinyin) {
                 const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
-                const [targetInitial, targetFinal] = parsePinyin(targetPinyin);
                 if (targetPinyin === srcPinyin) {
                     return targetPinyin;
                 }
+            }
+            // second pass: we didn't find an exact match, so see if there are any initials
+            // or finals that match.
+            for (const targetDef of targetDefsWithPinyin) {
+                const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
+                const [targetInitial, targetFinal] = parsePinyin(targetPinyin);
                 if (targetInitial && (targetInitial === srcInitial)) {
                     return `${targetInitial}-`;
                 }
@@ -489,7 +496,7 @@
             event.preventDefault();
             renderData([...hanziBox.value]);
         });
-        const starters = ['新', '镦', '貌', '诬', '客', '警', '嘴', '醒', '复', '惯', '醒', '倾', '翻', '擲', '齉', '嘟', '囔'];
+        const starters = ['停', '新', '镦', '貌', '诬', '客', '警', '嘴', '醒', '复', '惯', '醒', '倾', '翻', '擲', '齉', '嘟', '囔'];
         buildComponentTree(starters[Math.floor(Math.random() * starters.length)]);
         leftButtonContainer.addEventListener('click', function () {
             if (states[currentState].leftState) {
