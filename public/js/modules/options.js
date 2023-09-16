@@ -1,11 +1,9 @@
-import { graphChanged, preferencesChanged } from "./recommendations.js"
 import { readOptionState, writeOptionState } from "./data-layer.js"
 import { getWordLevelsFromGraph, getWordSetFromFrequency, buildGraphFromFrequencyList } from "./graph-functions.js";
 
 const graphSelector = document.getElementById('graph-selector');
 const showPinyinCheckbox = document.getElementById('show-pinyin');
 const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
-const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
 let freqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
@@ -97,7 +95,6 @@ function switchGraph() {
                     .then(function (data) {
                         window.wordSet = getWordSetFromFrequency(data);
                         window.hanzi = buildGraphFromFrequencyList(data, activeGraph.ranks);
-                        graphChanged();
                     }));
         } else if (activeGraph.type === 'test') {
             promises.push(
@@ -106,7 +103,6 @@ function switchGraph() {
                     .then(function (data) {
                         window.hanzi = data;
                         window.wordSet = getWordLevelsFromGraph(hanzi);
-                        graphChanged();
                     })
             );
         }
@@ -124,10 +120,9 @@ function switchGraph() {
                     window.definitions = data;
                 })
         );
-        writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
+        writeOptionState(showPinyinCheckbox.checked, activeGraphKey);
         setTranscriptionLabel();
         updateWalkthrough();
-        // TODO(refactor): have recommendations.js react to the character-set-changed event
         Promise.all(promises).then(() => {
             document.dispatchEvent(new CustomEvent('character-set-changed', { detail: activeGraph }));
         });
@@ -149,14 +144,7 @@ function initialize() {
     graphSelector.addEventListener('change', switchGraph);
     showPinyinCheckbox.addEventListener('change', function () {
         setTranscriptionLabel();
-        writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
-    });
-
-    recommendationsDifficultySelector.addEventListener('change', function () {
-        let val = recommendationsDifficultySelector.value;
-        // TODO(refactor): should this be another event type? Should recommendations just own this?
-        preferencesChanged(val);
-        writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
+        writeOptionState(showPinyinCheckbox.checked, activeGraphKey);
     });
 
     let pastOptions = readOptionState();
@@ -169,8 +157,6 @@ function initialize() {
     if (pastOptions) {
         showPinyinCheckbox.checked = pastOptions.transcriptions;
         showPinyinCheckbox.dispatchEvent(new Event('change'));
-        recommendationsDifficultySelector.value = pastOptions.recommendationsDifficulty;
-        recommendationsDifficultySelector.dispatchEvent(new Event('change'));
     }
     if (graphOptions[activeGraphKey].type === 'frequency') {
         window.wordSet = getWordSetFromFrequency(window.freqs);

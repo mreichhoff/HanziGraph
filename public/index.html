@@ -37,12 +37,15 @@
                     enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
                 <ul id="search-suggestions-container" class="search-suggestions" style="display:none"></ul>
                 <div id="query-options-container" class="secondary-input-container">
-                    <div id="recommendations-container" class="recommendations" style="visibility: hidden;"></div>
-                    <div id="graph-switch-container" class="secondary-input" style="display:none"><a class="active-link"
-                            id="graph-switch">Show Flow</a></div>
+                    <div id="graph-switch-container" class="secondary-input" style="display:none">
+                        <a class="secondary-button" id="graph-switch">Show Flow</a>
+                    </div>
+                    <div id="color-code-control" class="secondary-input">
+                        <a id="color-code-switch" class="secondary-button" style="display:none">
+                            Tone Colors
+                        </a>
+                    </div>
                 </div>
-                <!-- TODO: remove that recommendations hack... -->
-                <input id="submit-button" type="submit" value="Go!" style="display:none" />
             </form>
         </div>
         <div id="data-container" class="output-container">
@@ -321,26 +324,6 @@
                 since they tend to be more colloquial.
             </p>
         </section>
-        <section id="faq-recommendations" style="display:none">
-            <h3>How do recommendations work?</h3>
-            <p>
-                Recommendations are based on what hanzi you&#39;ve already viewed examples for.
-                For instance, if you&#39;ve viewed examples for 下午 and 上午,
-                but you haven&#39;t yet visited 中, we might
-                recommend you visit 中, since 中午 is common, and you&#39;ve seen 午 in several
-                contexts,
-                which might make it easier to remember 中.
-            </p>
-            <h3>How can I stop seeing so many HSK1 recommendations?</h3>
-            <p>You can choose via the menu in the upper left. The choice of &#39;easy&#39; means
-                you&#39;ll not be shown anything harder than level 3 of your chosen wordlist. The
-                choice
-                of &#39;hard&#39; means
-                you&#39;ll only be shown level4-level6 hanzi. Levels are determined by word
-                frequency
-                (when viewing the top 10k words) or the HSK exam.
-            </p>
-        </section>
         <section id="faq-flow" style="display:none">
             <h3>What is the flow diagram?</h3>
             <p>
@@ -370,17 +353,6 @@
             </div>
             <div class="menu-item">
                 <a id="stats-link" class="active-link">Check out your stats</a>
-            </div>
-            <div class="menu-item">
-                <span>Recommendations:</span>
-                <label for="recommendations-difficulty">
-                    show me
-                    <select id="recommendations-difficulty">
-                        <option selected>any</option>
-                        <option>easy</option>
-                        <option>hard</option>
-                    </select>
-                    hanzi</label>
             </div>
             <div class="menu-item">
                 <label for="graph-selector">Character set:</label>
