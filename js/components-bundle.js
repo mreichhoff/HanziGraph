@@ -496,7 +496,7 @@
             event.preventDefault();
             renderData([...hanziBox.value]);
         });
-        const starters = ['停', '新', '镦', '貌', '诬', '客', '警', '嘴', '醒', '复', '惯', '醒', '倾', '翻', '擲', '齉', '嘟', '囔'];
+        const starters = ['停', '新', '镦', '貌', '诬', '客', '警', '嘴', '醒', '惯', '倾', '翻', '嘟'];
         buildComponentTree(starters[Math.floor(Math.random() * starters.length)]);
         leftButtonContainer.addEventListener('click', function () {
             if (states[currentState].leftState) {
