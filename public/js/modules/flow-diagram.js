@@ -165,7 +165,8 @@ let rendered = false;
 
 function toggleShowButton() {
     if (!getActiveGraph().collocationsPath) {
-        switchButtonContainer.style.display = 'none';
+        // gotta use hidden or tone colors gets aligned weird
+        switchButtonContainer.style.visibility = 'hidden';
     } else {
         switchButtonContainer.removeAttribute('style');
     }
@@ -199,7 +200,7 @@ function initialize() {
         getCollocations(event.detail);
     });
     container.addEventListener('shown', function () {
-        switchButton.innerText = "Show Graph";
+        switchButton.innerText = "Flow";
         showingFlow = true;
         renderUsageDiagram(activeWord, activeCollocations, container);
     });
@@ -213,7 +214,7 @@ function initialize() {
     });
     container.addEventListener('hidden', function () {
         showingFlow = false;
-        switchButton.innerText = "Show Flow";
+        switchButton.innerText = "Graph";
     });
     switchButtonContainer.addEventListener('click', function () {
         if (!showingFlow) {

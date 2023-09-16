@@ -37,12 +37,12 @@
                     enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
                 <ul id="search-suggestions-container" class="search-suggestions" style="display:none"></ul>
                 <div id="query-options-container" class="secondary-input-container">
-                    <div id="graph-switch-container" class="secondary-input" style="display:none">
-                        <a class="secondary-button" id="graph-switch">Show Flow</a>
+                    <div id="graph-switch-container" class="secondary-input" style="visibility:hidden">
+                        <a class="secondary-button" id="graph-switch">Graph</a>
                     </div>
                     <div id="color-code-control" class="secondary-input">
                         <a id="color-code-switch" class="secondary-button" style="display:none">
-                            Tone Colors
+                            Tones
                         </a>
                     </div>
                 </div>
@@ -72,9 +72,6 @@
                         </p>
                         <p>
                             You can zoom, drag, and re-arrange the diagram however you please.
-                        </p>
-                        <p>
-                            Interested in how words, not just characters, flow together? Try the Show Flow button.
                         </p>
                         <p>
                             <b>This is free and open source software.</b> Check out the code
@@ -132,12 +129,12 @@
                 </div>
             </div>
             <div id="graph-container" class="primary-panel">
-                <div id="freq-legend" class="legend">
+                <div id="freq-legend" style="display:none" class="legend">
                     More common
                     <div id="level-container"></div>
                     Less Common
                 </div>
-                <div id="tone-legend" class="legend" style="display:none">
+                <div id="tone-legend" class="legend">
                     <span class="tone1">1st tone</span>
                     <span class="tone2">2nd tone</span>
                     <span class="tone3">3rd tone</span>
