@@ -20094,8 +20094,96 @@
         }
     }
 
+    function trimTone(pinyin) {
+        return pinyin.substring(0, pinyin.length - 1);
+    }
+    // These rules based on https://pinyin.info/rules/initials_finals.html
+    const pinyinInitials = ['b', 'p', 'm', 'f', 'd', 't', 'n', 'l', 'g', 'k', 'h', 'z', 'c',
+        's', 'zh', 'ch', 'sh', 'r', 'j', 'q', 'x'].sort((a, b) => {
+            // enable starts with comparisons in parsing via sorting by length descending
+            // I think that ensures we'd choose e.g., zh, ch, or sh if applicable, instead of z, s, or c.
+            return b.length - a.length;
+        });
+    const pinyinFinals = ['a', 'o', 'e', 'ai', 'ei', 'ao', 'ou', 'an', 'ang', 'en', 'eng', 'ong', 'u', 'ua', 'uo', 'uai', 'ui', 'uan', 'uang', 'un', 'ueng', 'i', 'ia', 'ie', 'iao', 'iu', 'ian', 'iang', 'in', 'ing', 'iong', 'ü', 'üe', 'üan', 'ün'].sort((a, b) => {
+        // similar to initials, enable ends-with comparisons in parsing via sorting by length descending
+        // I think that ensures we'd choose e.g., uan, iong, or iao if applicable, instead of an, ong, or ao.
+        return b.length - a.length;
+    });
+    // Per the above site, w and y initials actually aren't initials at all, but a spelling convention for certain
+    // standalone finals. The ü final with j, q, or x initials also loses its umlaut.
+    const pinyinSpecialCases = {
+        // w convention...
+        'wu': [null, 'u'],
+        'wa': [null, 'ua'],
+        'wo': [null, 'uo'],
+        'wai': [null, 'uai'],
+        'wei': [null, 'ui'],
+        'wan': [null, 'uan'],
+        'wang': [null, 'uang'],
+        'wen': [null, 'un'],
+        'weng': [null, 'ueng'],
+        // y convention...
+        'yi': [null, 'i'],
+        'ya': [null, 'ia'],
+        'ye': [null, 'ie'],
+        'yao': [null, 'iao'],
+        'you': [null, 'iu'],
+        'yan': [null, 'ian'],
+        'yang': [null, 'iang'],
+        'yin': [null, 'in'],
+        'ying': [null, 'ing'],
+        'yong': [null, 'iong'],
+        'yu': [null, 'ü'],
+        'yue': [null, 'üe'],
+        'yuan': [null, 'üan'],
+        'yun': [null, 'ün'],
+        // ü convention...
+        // TODO: could probably simplify rather than directly looking up
+        'ju': ['j', 'ü'],
+        'jue': ['j', 'üe'],
+        'juan': ['j', 'üan'],
+        'jun': ['j', 'ün'],
+        'qu': ['q', 'ü'],
+        'que': ['q', 'üe'],
+        'quan': ['q', 'üan'],
+        'qun': ['q', 'ün'],
+        'xu': ['x', 'ü'],
+        'xue': ['x', 'üe'],
+        'xuan': ['x', 'üan'],
+        'xun': ['x', 'ün'],
+    };
+    function parsePinyin(pinyin) {
+        if (pinyin === 'xx') {
+            // This is a special CEDICT case for when pronunciation isn't known
+            // (or so it seems)
+            return [null, null];
+        }
+        pinyin = pinyin.replace('u:', 'ü');
+        let initial;
+        let final;
+        if (pinyin in pinyinSpecialCases) {
+            return pinyinSpecialCases[pinyin];
+        }
+        for (const candidate of pinyinInitials) {
+            if (pinyin.startsWith(candidate)) {
+                initial = candidate;
+                break;
+            }
+        }
+        for (const candidate of pinyinFinals) {
+            if (pinyin.endsWith(candidate)) {
+                final = candidate;
+                break;
+            }
+        }
+        return [initial, final];
+    }
+
     const parent = document.getElementById('graph-container');
     const graphContainer = document.getElementById('graph');
+
+    const freqLegend$1 = document.getElementById('freq-legend');
+    const toneLegend = document.getElementById('tone-legend');
 
     let cy = null;
     let currentPath = [];
@@ -20221,6 +20309,36 @@
         let level = element.data('level');
         return colors$1[level - 1];
     }
+    function getTone$1(character) {
+        return (character in definitions && definitions[character].length) ? definitions[character][0].pinyin[definitions[character][0].pinyin.length - 1] : '5';
+    }
+    function toneColor(element) {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const character = element.data('word');
+        const tone = getTone$1(character);
+        if (tone === '1') {
+            return '#ff635f';
+        } else if (tone === '2') {
+            return '#7aeb34';
+        } else if (tone === '3') {
+            return '#de68ee';
+        } else if (tone === '4') {
+            return '#68aaee';
+        }
+        return prefersDark ? '#888' : '#000';
+    }
+    function makeLegible(element) {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const character = element.data('word');
+        const tone = getTone$1(character);
+        // if (tone === '1' || tone === '3' || tone === '4') {
+        //     return 'white'; //TODO
+        // }
+        if (tone === '5' && !prefersDark && getActiveGraph().transcriptionName !== 'jyutping') {
+            return 'white';
+        }
+        return 'black';
+    }
 
     function layout(numNodes) {
         //very scientifically chosen 95 (不 was slow to load)
@@ -20236,6 +20354,46 @@
             animate: false
         };
     }
+    function edgeLabel(element) {
+        if (getActiveGraph().transcriptionName === 'jyutping') {
+            // TODO: get this working for jyutping too
+            return '';
+        }
+        const sourceCharacter = element.data('source')[element.data('source').length - 1];
+        const targetCharacter = element.data('target')[element.data('source').length];
+        const sourceDefs = definitions[sourceCharacter];
+        const targetDefs = definitions[targetCharacter];
+        if (!sourceDefs || !targetDefs) {
+            return '';
+        }
+        for (const definition of sourceDefs.filter(x => x.pinyin)) {
+            const srcPinyin = trimTone(definition.pinyin.toLowerCase());
+            const [srcInitial, srcFinal] = parsePinyin(srcPinyin);
+            const targetDefsWithPinyin = targetDefs.filter(x => x.pinyin);
+            // O(n^2), but there's never more than a few definitions.
+            // first pass: check for exact matches (minus tone, already expressed through color)
+            for (const targetDef of targetDefsWithPinyin) {
+                const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
+                if (targetPinyin === srcPinyin) {
+                    return targetPinyin;
+                }
+            }
+            // second pass: we didn't find an exact match, so see if there are any initials
+            // or finals that match.
+            for (const targetDef of targetDefsWithPinyin) {
+                const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
+                const [targetInitial, targetFinal] = parsePinyin(targetPinyin);
+                if (targetInitial && (targetInitial === srcInitial)) {
+                    return `${targetInitial}-`;
+                }
+                if (targetFinal && (targetFinal === srcFinal)) {
+                    return `-${targetFinal}`;
+                }
+            }
+        }
+        return '';
+    }
+
     function getStylesheet(isTree) {
         //TODO make this injectable
         let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -20243,10 +20401,10 @@
             {
                 selector: 'node',
                 style: {
-                    'background-color': levelColor,
+                    'background-color': (isTree && (getActiveGraph().transcriptionName !== 'jyutping')) ? toneColor : levelColor,
                     'label': isTree ? 'data(word)' : 'data(id)',
-                    'color': 'black',
-                    'font-size': '16px',
+                    'color': isTree ? makeLegible : 'black',
+                    'font-size': isTree ? '20px' : '18px',
                     'text-valign': 'center',
                     'text-halign': 'center'
                 }
@@ -20254,12 +20412,12 @@
             {
                 selector: 'edge',
                 style: {
-                    'line-color': !isTree ? levelColor : prefersDark ? '#eee' : '#121212',
+                    'line-color': !isTree ? levelColor : prefersDark ? '#666' : '#121212',
                     'target-arrow-shape': !isTree ? 'none' : 'triangle',
                     'curve-style': 'straight',
-                    'label': !isTree ? 'data(displayWord)' : '',
+                    'label': !isTree ? 'data(displayWord)' : edgeLabel,
                     'color': (_ => prefersDark ? '#eee' : '#000'),
-                    'font-size': '10px',
+                    'font-size': isTree ? '12px' : '10px',
                     'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
                     'text-background-opacity': '1',
                     'text-background-shape': 'round-rectangle',
@@ -20268,9 +20426,13 @@
             }
         ];
         if (isTree) {
-            result[1].style.width = '2px';
-            result[1].style['arrow-scale'] = '0.5';
-            result[1].style['target-arrow-color'] = prefersDark ? '#eee' : '#121212';
+            result[1].style.width = '3px';
+            result[1].style['color'] = prefersDark ? '#000' : '#fff';
+            result[1].style['arrow-scale'] = '0.65';
+            result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
+            result[1].style['text-background-color'] = prefersDark ? '#fff' : '#000';
+            result[1].style['text-background-padding'] = '2px';
+            result[1].style['text-background-shape'] = 'rectangle';
         }
         return result;
     }
@@ -20353,6 +20515,10 @@
         };
     }
     function buildComponentTree(value) {
+        if (getActiveGraph().transcriptionName !== 'jyutping') {
+            toneLegend.removeAttribute('style');
+            freqLegend$1.style.display = 'none';
+        }
         graphContainer.innerHTML = '';
         graphContainer.className = '';
         root$1 = value;
@@ -20376,6 +20542,8 @@
         });
     }
     function buildGraph(value) {
+        freqLegend$1.removeAttribute('style');
+        toneLegend.style.display = 'none';
         graphContainer.innerHTML = '';
         graphContainer.className = '';
         mode = modes$1.graph;
@@ -25339,16 +25507,17 @@
         }
     };
     // TODO: combine with renderWordHeader
-    let renderCharacterHeader = function (character, container, active) {
+    let renderCharacterHeader = function (character, container) {
         let characterHolder = document.createElement('h2');
         characterHolder.classList.add('character-header');
         let characterSpan = document.createElement('span');
         characterSpan.textContent = character;
         characterSpan.classList.add('clickable');
-        characterHolder.appendChild(characterSpan);
-        if (active) {
-            characterHolder.classList.add('active');
+        // TODO: figure out canto here
+        if (getActiveGraph().transcriptionName !== 'jyutping') {
+            characterSpan.classList.add(`tone${getTone(character)}`);
         }
+        characterHolder.appendChild(characterSpan);
         characterSpan.addEventListener('click', function () {
             if (!characterHolder.classList.contains('active')) {
                 document.querySelectorAll('.character-header').forEach(x => x.classList.remove('active'));
@@ -25495,6 +25664,31 @@
         return tabs;
     };
 
+    function getTone(character) {
+        return (character in definitions && definitions[character].length) ? definitions[character][0].pinyin[definitions[character][0].pinyin.length - 1] : '5';
+    }
+
+    function renderPronunciations(character, container) {
+        if (!(character in definitions)) {
+            return;
+        }
+        let definitionElement = document.createElement('ul');
+        definitionElement.className = 'pronunciations';
+        const pinyinList = [...new Set(definitions[character].map(x => x.pinyin.toLowerCase()))];
+
+        for (let i = 0; i < pinyinList.length; i++) {
+            let definitionItem = document.createElement('li');
+            definitionItem.classList.add('pronunciation');
+            if (getActiveGraph().transcriptionName !== 'jyutping') {
+                // TODO: have get tone handle this...currently character level, but shouldn't be
+                definitionItem.classList.add(`tone${pinyinList[i][pinyinList[i].length - 1]}`);
+            }
+            definitionItem.textContent = pinyinList[i].toLowerCase();
+            definitionElement.appendChild(definitionItem);
+        }
+        container.appendChild(definitionElement);
+    }
+
     function renderComponents(word, container) {
         let first = true;
         for (const character of word) {
@@ -25507,10 +25701,11 @@
             if (first) {
                 let instructions = document.createElement('p');
                 instructions.classList.add('explanation');
-                instructions.innerText = 'Click any character for more information.';
+                instructions.innerText = 'Click any character to update the diagram.';
                 item.appendChild(instructions);
             }
-            renderCharacterHeader(character, item, first);
+            renderCharacterHeader(character, item);
+            renderPronunciations(character, item);
             first = false;
             let componentsHeader = document.createElement('h3');
             componentsHeader.innerText = 'Components';
@@ -25519,7 +25714,7 @@
             const joinedComponents = components[character].components.join('');
             if (joinedComponents) {
                 componentsContainer.className = 'target';
-                makeSentenceNavigable(joinedComponents, componentsContainer, true);
+                makeComponentsNavigable(joinedComponents, componentsContainer);
             } else {
                 componentsContainer.innerText = "No components found. Maybe we can't break this down any more.";
             }
@@ -25531,7 +25726,7 @@
             const joinedComponentOf = components[character].componentOf.filter(x => x in hanzi).sort((a, b) => hanzi[a].node.level - hanzi[b].node.level).join('');
             if (joinedComponentOf) {
                 componentOfContainer.className = 'target';
-                makeSentenceNavigable(joinedComponentOf, componentOfContainer, true);
+                makeComponentsNavigable(joinedComponentOf, componentOfContainer);
             } else {
                 componentOfContainer.innerText = 'This character is not a component of others.';
             }
@@ -25714,6 +25909,31 @@
         container.appendChild(sentenceContainer);
         return anchorList;
     };
+    // TODO: combine with makeSentenceNavigable, or just drop this, it's not that complicated
+    function makeComponentsNavigable(text, container) {
+        let sentenceContainer = document.createElement('span');
+        sentenceContainer.className = "sentence-container";
+
+        let anchorList = [];
+        for (let i = 0; i < text.length; i++) {
+            (function (character) {
+                let a = document.createElement('a');
+                a.textContent = character;
+                if (character in components) {
+                    a.className = 'navigable';
+                }
+                a.addEventListener('click', function () {
+                    if (character in components) {
+                        document.dispatchEvent(new CustomEvent('components-update', { detail: character }));
+                    }
+                });
+                anchorList.push(a);
+                sentenceContainer.appendChild(a);
+            }(text[i]));
+        }
+        container.appendChild(sentenceContainer);
+        return anchorList;
+    }
 
     const studyContainer = document.getElementById('study-container');
 

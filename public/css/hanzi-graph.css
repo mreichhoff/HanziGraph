@@ -48,6 +48,11 @@
     --secondary-inactive-accent-color: #6a82fb;
     --legend-gradient-start: #fc5c7d;
     --legend-gradient-end: #6a82fb;
+    --tone-1-color: #ff635f;
+    --tone-2-color: #7aeb34;
+    --tone-3-color: #de68ee;
+    --tone-4-color: #68aaee;
+    --neutral-tone-color: #000;
 }
 
 html {
@@ -225,13 +230,22 @@ ul {
     opacity: 1;
 }
 
-.character-header.active .clickable {
-    border-left: 6px solid var(--secondary-accent-color);
-    transition: border-left-width 0.35s, border-left-color 0.35s;
+.character-header {
+    font-size: 38px;
+    font-family: sans-serif;
+}
+
+.pronunciations {
+    margin: 0;
+}
+
+.pronunciation {
+    font-weight: 400;
+    font-size: 22px;
 }
 
 .character-data {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .character-data a.navigable {
@@ -242,14 +256,24 @@ ul {
     margin: 8px 0;
 }
 
-.word-header.active .clickable {
-    border-left: 8px solid var(--accent-color);
-    transition: border-left-width 0.35s, border-left-color 0.35s;
+.tone1 {
+    color: var(--tone-1-color)
 }
 
-.character-header .clickable {
-    border-left: 2px solid var(--secondary-inactive-accent-color);
-    padding-left: 6px;
+.tone2 {
+    color: var(--tone-2-color)
+}
+
+.tone3 {
+    color: var(--tone-3-color)
+}
+
+.tone4 {
+    color: var(--tone-4-color)
+}
+
+.word-header.active .clickable {
+    border-left: 8px solid var(--accent-color);
     transition: border-left-width 0.35s, border-left-color 0.35s;
 }
 
@@ -529,12 +553,18 @@ ul {
 
 /* Legend stuff, ugly but less critical */
 
-#legend {
+.legend {
     font-size: var(--legend-font-size);
     margin: 4px 0 0 0;
     height: var(--legend-height);
     display: flex;
     justify-content: center;
+}
+
+#tone-legend span {
+    font-size: 14px;
+    margin: 0 6px;
+    font-weight: bold;
 }
 
 #level-container {
@@ -898,6 +928,7 @@ main.auth-form {
         --input-background-color: rgba(74, 74, 74, 0.9);
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
+        --neutral-tone-color: #aaa;
     }
 }
 
