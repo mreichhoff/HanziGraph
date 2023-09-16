@@ -11,6 +11,10 @@
         ],
         "rewrites": [
             {
+                "source": "/components/**",
+                "destination": "/components/index.html"
+            },
+            {
                 "source": "**",
                 "destination": "/index.html"
             }
