@@ -541,6 +541,11 @@ Promise.all([
         event.preventDefault();
         renderData([...hanziBox.value], false);
     });
+    leftButtonContainer.addEventListener('click', function () {
+        if (states[currentState].leftState) {
+            switchToState(states[currentState].leftState);
+        }
+    });
     // deeplink?
     const urlTerm = parseUrl(document.location.pathname);
     if (urlTerm) {
@@ -550,9 +555,4 @@ Promise.all([
     // no deeplink, NBD. Show a starter.
     const starters = ['停', '新', '镦', '貌', '诬', '客', '警', '嘴', '醒', '惯', '倾', '翻', '嘟'];
     buildComponentTree(starters[Math.floor(Math.random() * starters.length)]);
-    leftButtonContainer.addEventListener('click', function () {
-        if (states[currentState].leftState) {
-            switchToState(states[currentState].leftState);
-        }
-    });
 });
