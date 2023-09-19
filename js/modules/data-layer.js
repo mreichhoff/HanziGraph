@@ -231,10 +231,9 @@ let recordEvent = function (result) {
 let readOptionState = function () {
     return JSON.parse(localStorage.getItem('options'));
 };
-let writeOptionState = function (showPinyin, recommendationsDifficulty, selectedCharacterSet) {
+let writeOptionState = function (showPinyin, selectedCharacterSet) {
     localStorage.setItem('options', JSON.stringify({
         transcriptions: showPinyin,
-        recommendationsDifficulty: recommendationsDifficulty,
         selectedCharacterSet: selectedCharacterSet
     }));
 };

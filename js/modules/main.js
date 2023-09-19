@@ -3,7 +3,6 @@ import { initialize as exploreInit } from "./explore.js";
 import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
 import { initialize as statsInit } from "./stats.js";
-import { initialize as recommendationsInit } from "./recommendations.js";
 import { initialize as graphInit } from "./graph.js";
 import { initialize as optionsInit, getActiveGraph } from "./options.js";
 import { readExploreState } from "./data-layer.js";
@@ -80,6 +79,5 @@ Promise.all(dataLoads).then(_ => {
     // These happen last due to being secondary functionality
     statsInit();
     faqInit();
-    recommendationsInit();
     searchInit();
 });

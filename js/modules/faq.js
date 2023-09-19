@@ -2,7 +2,6 @@ import { switchToState, stateKeys } from "./ui-orchestrator";
 
 const faqContainer = document.getElementById('faq-container');
 const faqStudyMode = document.getElementById('faq-study-mode');
-const faqRecommendations = document.getElementById('faq-recommendations');
 const faqFlow = document.getElementById('faq-flow');
 const faqContext = document.getElementById('faq-context');
 const faqGeneral = document.getElementById('faq-general');
@@ -14,14 +13,12 @@ const faqTypesToElement = {
     studyMode: faqStudyMode,
     context: faqContext,
     general: faqGeneral,
-    recommendations: faqRecommendations,
     flow: faqFlow
 };
 const faqTypes = {
     studyMode: 'studyMode',
     context: 'context',
     general: 'general',
-    recommendations: 'recommendations',
     flow: 'flow'
 };
 

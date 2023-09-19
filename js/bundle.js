@@ -172,7 +172,7 @@
         currentDiagramKey = diagramKey;
     }
 
-    function initialize$9() {
+    function initialize$8() {
         leftButtonContainer.addEventListener('click', function () {
             if (states[currentState].leftState) {
                 switchToState(states[currentState].leftState);
@@ -215,7 +215,7 @@
         faqTypesToElement[faqType].removeAttribute('style');
     };
 
-    let initialize$8 = function () {
+    let initialize$7 = function () {
         faqContainer.addEventListener('hidden', function () {
             Object.values(faqTypesToElement).forEach(x => {
                 x.style.display = 'none';
@@ -476,626 +476,6 @@
     const notFoundElement = document.getElementById('not-found-message');
     const walkThrough = document.getElementById('walkthrough');
 
-    function trimTone(pinyin) {
-        return pinyin.substring(0, pinyin.length - 1);
-    }
-    // These rules based on https://pinyin.info/rules/initials_finals.html
-    const pinyinInitials = ['b', 'p', 'm', 'f', 'd', 't', 'n', 'l', 'g', 'k', 'h', 'z', 'c',
-        's', 'zh', 'ch', 'sh', 'r', 'j', 'q', 'x'].sort((a, b) => {
-            // enable starts with comparisons in parsing via sorting by length descending
-            // I think that ensures we'd choose e.g., zh, ch, or sh if applicable, instead of z, s, or c.
-            return b.length - a.length;
-        });
-    const pinyinFinals = ['a', 'o', 'e', 'ai', 'ei', 'ao', 'ou', 'an', 'ang', 'en', 'eng', 'ong', 'u', 'ua', 'uo', 'uai', 'ui', 'uan', 'uang', 'un', 'ueng', 'i', 'ia', 'ie', 'iao', 'iu', 'ian', 'iang', 'in', 'ing', 'iong', 'ü', 'üe', 'üan', 'ün'].sort((a, b) => {
-        // similar to initials, enable ends-with comparisons in parsing via sorting by length descending
-        // I think that ensures we'd choose e.g., uan, iong, or iao if applicable, instead of an, ong, or ao.
-        return b.length - a.length;
-    });
-    // Per the above site, w and y initials actually aren't initials at all, but a spelling convention for certain
-    // standalone finals. The ü final with j, q, or x initials also loses its umlaut.
-    const pinyinSpecialCases = {
-        // w convention...
-        'wu': [null, 'u'],
-        'wa': [null, 'ua'],
-        'wo': [null, 'uo'],
-        'wai': [null, 'uai'],
-        'wei': [null, 'ui'],
-        'wan': [null, 'uan'],
-        'wang': [null, 'uang'],
-        'wen': [null, 'un'],
-        'weng': [null, 'ueng'],
-        // y convention...
-        'yi': [null, 'i'],
-        'ya': [null, 'ia'],
-        'ye': [null, 'ie'],
-        'yao': [null, 'iao'],
-        'you': [null, 'iu'],
-        'yan': [null, 'ian'],
-        'yang': [null, 'iang'],
-        'yin': [null, 'in'],
-        'ying': [null, 'ing'],
-        'yong': [null, 'iong'],
-        'yu': [null, 'ü'],
-        'yue': [null, 'üe'],
-        'yuan': [null, 'üan'],
-        'yun': [null, 'ün'],
-        // ü convention...
-        // TODO: could probably simplify rather than directly looking up
-        'ju': ['j', 'ü'],
-        'jue': ['j', 'üe'],
-        'juan': ['j', 'üan'],
-        'jun': ['j', 'ün'],
-        'qu': ['q', 'ü'],
-        'que': ['q', 'üe'],
-        'quan': ['q', 'üan'],
-        'qun': ['q', 'ün'],
-        'xu': ['x', 'ü'],
-        'xue': ['x', 'üe'],
-        'xuan': ['x', 'üan'],
-        'xun': ['x', 'ün'],
-    };
-    function parsePinyin(pinyin) {
-        if (pinyin === 'xx') {
-            // This is a special CEDICT case for when pronunciation isn't known
-            // (or so it seems)
-            return [null, null];
-        }
-        pinyin = pinyin.replace('u:', 'ü');
-        let initial;
-        let final;
-        if (pinyin in pinyinSpecialCases) {
-            return pinyinSpecialCases[pinyin];
-        }
-        for (const candidate of pinyinInitials) {
-            if (pinyin.startsWith(candidate)) {
-                initial = candidate;
-                break;
-            }
-        }
-        for (const candidate of pinyinFinals) {
-            if (pinyin.endsWith(candidate)) {
-                final = candidate;
-                break;
-            }
-        }
-        return [initial, final];
-    }
-
-    const parent = document.getElementById('graph-container');
-    const graphContainer = document.getElementById('graph');
-
-    const freqLegend$1 = document.getElementById('freq-legend');
-    const toneLegend = document.getElementById('tone-legend');
-
-    let cy = null;
-    let currentPath = [];
-    // TODO(refactor): consolidate with options
-    let ranks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
-
-    //TODO look up how to make this prettier
-    const modes$1 = { graph: 'graph', components: 'components' };
-    let mode = modes$1.graph;
-    let root$1 = null;
-
-    function findRank(word) {
-        if (!window.wordSet || !(word in wordSet)) {
-            return ranks.length;
-        }
-        let freq = wordSet[word];
-        for (let i = 0; i < ranks.length; i++) {
-            if (freq < ranks[i]) {
-                return i + 1;
-            }
-        }
-        return ranks.length;
-    }
-    function findEdge(base, target, result) {
-        for (const edge of result.edges) {
-            if (edge.data.source === base && edge.data.target === target) {
-                return true;
-            }
-        }
-        return false;
-    }
-    function addEdge(base, target, word, result) {
-        if (!hanzi[base] || !hanzi[target]) { return; }
-        if (base === target) { return; }
-        if (!findEdge(base, target, result)) {
-            result.edges.push({
-                data: {
-                    id: Array.from(base + target).sort().toString(),
-                    source: base, target: target,
-                    level: findRank(word),
-                    words: [word],
-                    displayWord: word
-                }
-            });
-        }
-    }
-    function addEdges(word, result) {
-        for (let i = 0; i < word.length - 1; i++) {
-            addEdge(word[i], word[i + 1], word, result);
-        }
-        if (word.length > 1) {
-            // also connect last to first
-            addEdge(word[word.length - 1], word[0], word, result);
-        }
-    }
-    function componentsBfs(value) {
-        let elements = { 'nodes': [], 'edges': [] };
-        let queue = [{ word: value, path: [value] }];
-        while (queue.length > 0) {
-            //apparently shift isn't O(1) in js, but this is not many elements
-            let curr = queue.shift();
-            elements.nodes.push({
-                data: {
-                    id: curr.path.join(''),
-                    word: curr.word,
-                    depth: curr.path.length - 1,
-                    path: curr.path,
-                    level: (curr.word in hanzi ? hanzi[curr.word].node.level : 6)
-                }
-            });
-            for (const component of window.components[curr.word].components) {
-                elements.edges.push({
-                    data: {
-                        id: ('_edge' + curr.path.join('') + component),
-                        source: curr.path.join(''),
-                        target: (curr.path.join('') + component)
-                    }
-                });
-                queue.push({ word: component, path: [...curr.path, component] });
-            }
-        }
-        return elements;
-    }
-
-    function dfs(start, elements, maxDepth, visited, maxEdges) {
-        if (maxDepth < 0) {
-            return;
-        }
-        let curr = hanzi[start];
-        //todo does javascript have a set?
-        visited[start] = true;
-        let usedEdges = [];
-        for (const [key, value] of Object.entries(curr.edges)) {
-            if (usedEdges.length == maxEdges) {
-                break;
-            }
-            //don't add outgoing edges when we won't process the next layer
-            if (maxDepth > 0) {
-                if (!visited[key]) {
-                    elements.edges.push({
-                        data: {
-                            id: Array.from(start + key).sort().toString(),
-                            source: start, target: key,
-                            level: value.level,
-                            words: value.words,
-                            // render examples for all words, but only display one
-                            displayWord: value.words[0]
-                        }
-                    });
-                    usedEdges.push(key);
-                }
-            }
-        }
-        elements.nodes.push({ data: { id: start, level: curr.node.level } });
-        for (const key of usedEdges) {
-            if (!visited[key]) {
-                dfs(key, elements, maxDepth - 1, visited, maxEdges);
-            }
-        }
-    }
-    const colors$1 = ['#fc5c7d', '#ea6596', '#d56eaf', '#bb75c8', '#9b7ce1', '#6a82fb'];
-    function levelColor(element) {
-        let level = element.data('level');
-        return colors$1[level - 1];
-    }
-
-    function getTone$1(character) {
-        return (character in definitions && definitions[character].length) ? definitions[character][0].pinyin[definitions[character][0].pinyin.length - 1] : '5';
-    }
-    function toneColor(element) {
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const character = (mode === modes$1.components) ? element.data('word') : element.data('id');
-        const tone = getTone$1(character);
-        if (tone === '1') {
-            return '#ff635f';
-        } else if (tone === '2') {
-            return '#7aeb34';
-        } else if (tone === '3') {
-            return '#de68ee';
-        } else if (tone === '4') {
-            return '#68aaee';
-        }
-        return prefersDark ? '#888' : '#000';
-    }
-    function makeLegible(element) {
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const character = (mode === modes$1.components) ? element.data('word') : element.data('id');
-        const tone = getTone$1(character);
-        // if (tone === '1' || tone === '3' || tone === '4') {
-        //     return 'white'; //TODO
-        // }
-        if (tone === '5' && !prefersDark && getActiveGraph().transcriptionName !== 'jyutping') {
-            return 'white';
-        }
-        return 'black';
-    }
-
-    function layout(numNodes) {
-        //very scientifically chosen 95 (不 was slow to load)
-        //the grid layout appears to be far faster than cose
-        //keeping root around in case we want to switch back to bfs
-        if (numNodes > 95) {
-            return {
-                name: 'grid'
-            };
-        }
-        return {
-            name: 'cose',
-            animate: false
-        };
-    }
-
-    function edgeLabel(element) {
-        if (getActiveGraph().transcriptionName === 'jyutping') {
-            // TODO: get this working for jyutping too
-            return '';
-        }
-        const sourceCharacter = element.data('source')[element.data('source').length - 1];
-        const targetCharacter = element.data('target')[element.data('source').length];
-        const sourceDefs = definitions[sourceCharacter];
-        const targetDefs = definitions[targetCharacter];
-        if (!sourceDefs || !targetDefs) {
-            return '';
-        }
-        for (const definition of sourceDefs.filter(x => x.pinyin)) {
-            const srcPinyin = trimTone(definition.pinyin.toLowerCase());
-            const [srcInitial, srcFinal] = parsePinyin(srcPinyin);
-            const targetDefsWithPinyin = targetDefs.filter(x => x.pinyin);
-            // O(n^2), but there's never more than a few definitions.
-            // first pass: check for exact matches (minus tone, already expressed through color)
-            for (const targetDef of targetDefsWithPinyin) {
-                const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
-                if (targetPinyin === srcPinyin) {
-                    return targetPinyin;
-                }
-            }
-            // second pass: we didn't find an exact match, so see if there are any initials
-            // or finals that match.
-            for (const targetDef of targetDefsWithPinyin) {
-                const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
-                const [targetInitial, targetFinal] = parsePinyin(targetPinyin);
-                if (targetInitial && (targetInitial === srcInitial)) {
-                    return `${targetInitial}-`;
-                }
-                if (targetFinal && (targetFinal === srcFinal)) {
-                    return `-${targetFinal}`;
-                }
-            }
-        }
-        return '';
-    }
-
-    function getStylesheet(isTree) {
-        //TODO make this injectable
-        let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        let result = [
-            {
-                selector: 'node',
-                style: {
-                    'background-color': (isTree && (getActiveGraph().transcriptionName !== 'jyutping')) ? toneColor : levelColor,
-                    'label': isTree ? 'data(word)' : 'data(id)',
-                    'color': isTree ? makeLegible : 'black',
-                    'font-size': isTree ? '20px' : '18px',
-                    'text-valign': 'center',
-                    'text-halign': 'center'
-                }
-            },
-            {
-                selector: 'edge',
-                style: {
-                    'line-color': !isTree ? levelColor : prefersDark ? '#666' : '#121212',
-                    'target-arrow-shape': !isTree ? 'none' : 'triangle',
-                    'curve-style': 'straight',
-                    'label': !isTree ? 'data(displayWord)' : edgeLabel,
-                    'color': (_ => prefersDark ? '#eee' : '#000'),
-                    'font-size': isTree ? '12px' : '10px',
-                    'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
-                    'text-background-opacity': '1',
-                    'text-background-shape': 'round-rectangle',
-                    'text-events': 'yes'
-                }
-            }
-        ];
-        if (isTree) {
-            result[1].style.width = '3px';
-            result[1].style['color'] = prefersDark ? '#000' : '#fff';
-            result[1].style['arrow-scale'] = '0.65';
-            result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
-            result[1].style['text-background-color'] = prefersDark ? '#fff' : '#000';
-            result[1].style['text-background-padding'] = '2px';
-            result[1].style['text-background-shape'] = 'rectangle';
-        }
-        return result;
-    }
-    function nodeTapHandler(evt) {
-        let id = evt.target.id();
-        //not needed if currentHanzi contains id, which would mean the nodes have already been added
-        //includes O(N) but currentHanzi almost always < 10 elements
-        if (currentPath && !currentPath.includes(id)) {
-            addToGraph(id);
-        }
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.id()] } }));
-        // notify the flow diagrams...sigh
-        document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.id() }));
-        switchToState(stateKeys.main);
-    }
-    function edgeTapHandler(evt) {
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: evt.target.data('words') } }));
-        // notify the flow diagrams...sigh
-        document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('words')[0] }));
-        switchToState(stateKeys.main);
-    }
-    function setupCytoscape(elements, graphContainer) {
-        cy = cytoscape({
-            container: graphContainer,
-            elements: elements,
-            layout: layout(elements.nodes.length),
-            style: getStylesheet(),
-            maxZoom: 10,
-            minZoom: 0.5
-        });
-        cy.on('tap', 'node', nodeTapHandler);
-        cy.on('tap', 'edge', edgeTapHandler);
-    }
-    function addToGraph(character) {
-        let result = { 'nodes': [], 'edges': [] };
-        let maxDepth = 1;
-        let maxEdges = 8;
-        dfs(character, result, maxDepth, {}, maxEdges);
-        let preNodeCount = cy.nodes().length;
-        let preEdgeCount = cy.edges().length;
-        cy.add(result);
-        if (cy.nodes().length !== preNodeCount || cy.edges().length !== preEdgeCount) {
-            //if we've actually added to the graph, re-render it; else just let it be
-            cy.layout(layout(cy.nodes().length)).run();
-        }
-        currentPath.push(character);
-    }
-    function isInGraph(node) {
-        return cy && cy.getElementById(node).length;
-    }
-    function updateColorScheme() {
-        if (!cy) {
-            return;
-        }
-        cy.style(getStylesheet(mode === modes$1.components));
-    }
-    function getMaxEdges(word) {
-        let unique = new Set();
-        for (const character of word) {
-            unique.add(character);
-        }
-        if (unique.size < 3) {
-            return 8;
-        }
-        if (unique.size < 4) {
-            return 6;
-        }
-        if (unique.size < 5) {
-            return 5;
-        }
-        return 4;
-    }
-    function bfsLayout(root) {
-        return {
-            name: 'breadthfirst',
-            roots: [root],
-            padding: 6,
-            spacingFactor: 0.85,
-            directed: true
-        };
-    }
-    function buildComponentTree(value) {
-        if (getActiveGraph().transcriptionName !== 'jyutping') {
-            toneLegend.removeAttribute('style');
-            freqLegend$1.style.display = 'none';
-        }
-        graphContainer.innerHTML = '';
-        graphContainer.className = '';
-        root$1 = value;
-        mode = modes$1.components;
-        cy = cytoscape({
-            container: graphContainer,
-            elements: componentsBfs(value),
-            layout: bfsLayout(value),
-            style: getStylesheet(true),
-            maxZoom: 10,
-            minZoom: 0.5
-        });
-        cy.on('tap', 'node', function (evt) {
-            document.dispatchEvent(new CustomEvent('explore-update', {
-                detail: {
-                    words: [evt.target.data('word')]
-                }
-            }));
-            // notify the flow diagrams...sigh
-            document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('word') }));
-        });
-    }
-    function buildGraph(value) {
-        freqLegend$1.removeAttribute('style');
-        toneLegend.style.display = 'none';
-        graphContainer.innerHTML = '';
-        graphContainer.className = '';
-        mode = modes$1.graph;
-        let result = { 'nodes': [], 'edges': [] };
-        let maxDepth = 1;
-        // TODO: this is kinda not DFS
-        for (const character of value) {
-            dfs(character, result, maxDepth, {}, getMaxEdges(value));
-        }
-        addEdges(value, result);
-        if (showingGraph) {
-            setupCytoscape(result, graphContainer);
-        } else {
-            dirty = result;
-        }
-        currentPath = [...value];
-    }
-
-    let showingGraph = true;
-    let pendingResizeTimeout$1 = null;
-    let dirty = null;
-
-    function initialize$7() {
-        document.addEventListener('graph-update', function (event) {
-            buildGraph(event.detail);
-        });
-        document.addEventListener('components-update', function (event) {
-            buildComponentTree(event.detail);
-        });
-        parent.addEventListener('hidden', function () {
-            showingGraph = false;
-        });
-        parent.addEventListener('shown-animationend', function () {
-            showingGraph = true;
-            if (dirty) {
-                setupCytoscape(dirty, graphContainer);
-                dirty = null;
-            }
-        });
-        window.addEventListener('resize', function () {
-            clearTimeout(pendingResizeTimeout$1);
-            pendingResizeTimeout$1 = setTimeout(() => {
-                // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
-                if (cy && showingGraph) {
-                    cy.layout(mode === modes$1.graph ? layout(cy.nodes().length) : bfsLayout(root$1)).run();
-                }
-            }, 1000);
-        });
-        matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
-        document.addEventListener('character-set-changed', function (event) {
-            if (event.detail.ranks) {
-                ranks = event.detail.ranks;
-            }
-        });
-    }
-
-    //TODO: like in other files, remove dups from dom.js if possible
-    const recommendationsContainer = document.getElementById('recommendations-container');
-    let recommendationsWorker = null;
-    let levelPreferences = 'any';
-
-
-    let initialize$6 = function () {
-        recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
-        recommendationsWorker.postMessage({
-            type: 'graph',
-            payload: window.hanzi
-        });
-        recommendationsWorker.postMessage({
-            type: 'visited',
-            payload: getVisited()
-        });
-        // it's possible we remember state from a prior page load, and the variable can be set before initialization.
-        if (levelPreferences !== 'any') {
-            preferencesChanged(levelPreferences);
-        }
-        registerCallback(dataTypes.visited, function (visited) {
-            recommendationsWorker.postMessage({
-                type: 'visited',
-                payload: visited
-            });
-        });
-        recommendationsWorker.onmessage = function (e) {
-            //this whole function could really use a refactor
-            if (e.data.recommendations && e.data.recommendations.length) {
-                recommendationsContainer.innerHTML = '';
-                let recommendationMessage = document.createElement('span');
-                recommendationMessage.style.display = 'none';
-                recommendationMessage.innerText = "Recommended:";
-                recommendationMessage.className = "recommendation-message";
-                recommendationsContainer.appendChild(recommendationMessage);
-                recommendationsContainer.removeAttribute('style');
-                let usedRecommendation = false;
-                for (let i = 0; i < e.data.recommendations.length; i++) {
-                    //don't bother recommending items already being shown in the graph
-                    if (isInGraph(e.data.recommendations[i])) {
-                        continue;
-                    }
-                    recommendationMessage.removeAttribute('style');
-                    let curr = document.createElement('a');
-                    curr.innerText = e.data.recommendations[i];
-                    curr.className = 'recommendation';
-                    curr.addEventListener('click', function (event) {
-                        //can I do this?
-                        hanziBox.value = event.target.innerText;
-                        document.querySelector('#hanzi-choose input[type=submit]').click();
-                        event.target.style.display = 'none';
-                        let otherRecs = document.querySelectorAll('.recommendation');
-                        let stillShown = false;
-                        for (let i = 0; i < otherRecs.length; i++) {
-                            if (!otherRecs[i].style.display || otherRecs[i].style.display !== 'none') {
-                                stillShown = true;
-                                break;
-                            }
-                        }
-                        if (!stillShown) {
-                            recommendationsContainer.style.visibility = 'hidden';
-                        }
-                    });
-                    recommendationsContainer.appendChild(curr);
-                    usedRecommendation = true;
-                }
-                let recommendationsFaqLink = document.createElement('a');
-                recommendationsFaqLink.className = 'active-link';
-                recommendationsFaqLink.innerText = "Why?";
-                recommendationsFaqLink.addEventListener('click', function () {
-                    showFaq(faqTypes.recommendations);
-                });
-                if (usedRecommendation) {
-                    recommendationsContainer.appendChild(recommendationsFaqLink);
-                }
-            } else {
-                recommendationsContainer.style.visibility = 'hidden';
-            }
-        };
-    };
-    let graphChanged = function () {
-        if (!recommendationsWorker) {
-            // if this is called without the worker, NBD. Worst case we'll send it once we initialize.
-            return;
-        }
-        recommendationsWorker.postMessage({
-            type: 'graph',
-            payload: window.hanzi
-        });
-    };
-    let preferencesChanged = function (val) {
-        let minLevel = 1;
-        let maxLevel = 6;
-        if (val === 'easy') {
-            maxLevel = 3;
-        } else if (val === 'hard') {
-            minLevel = 4;
-        }
-        levelPreferences = val;
-        if (!recommendationsWorker) {
-            // if this is called without the worker, NBD. Worst case we'll send it once we initialize.
-            return;
-        }
-        recommendationsWorker.postMessage({
-            type: 'levelPreferences',
-            payload: {
-                minLevel: minLevel,
-                maxLevel: maxLevel
-            }
-        });
-    };
-
     function getWordLevelsFromGraph(graph) {
         let ranks = {};
         Object.keys(graph).forEach(x => {
@@ -1167,10 +547,9 @@
     const graphSelector = document.getElementById('graph-selector');
     const showPinyinCheckbox = document.getElementById('show-pinyin');
     const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
-    const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
     let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
-    let freqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
+    let freqLegend$1 = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
     let freqRanks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
 
     const graphOptions = {
@@ -1187,7 +566,7 @@
         simplified: {
             display: 'Simplified',
             prefix: 'simplified',
-            legend: freqLegend,
+            legend: freqLegend$1,
             ranks: freqRanks,
             augmentPath: 'data/simplified',
             definitionsAugmentPath: 'data/simplified/definitions',
@@ -1202,7 +581,7 @@
         traditional: {
             display: 'Traditional',
             prefix: 'traditional',
-            legend: freqLegend,
+            legend: freqLegend$1,
             ranks: freqRanks,
             augmentPath: 'data/traditional',
             definitionsAugmentPath: 'data/traditional/definitions',
@@ -1217,7 +596,7 @@
         cantonese: {
             display: 'Cantonese',
             prefix: 'cantonese',
-            legend: freqLegend,
+            legend: freqLegend$1,
             ranks: freqRanks,
             definitionsAugmentPath: 'data/cantonese/definitions',
             partitionCount: 100,
@@ -1258,7 +637,6 @@
                         .then(function (data) {
                             window.wordSet = getWordSetFromFrequency(data);
                             window.hanzi = buildGraphFromFrequencyList(data, activeGraph.ranks);
-                            graphChanged();
                         }));
             } else if (activeGraph.type === 'test') {
                 promises.push(
@@ -1267,7 +645,6 @@
                         .then(function (data) {
                             window.hanzi = data;
                             window.wordSet = getWordLevelsFromGraph(hanzi);
-                            graphChanged();
                         })
                 );
             }
@@ -1285,9 +662,8 @@
                         window.definitions = data;
                     })
             );
-            writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
+            writeOptionState(showPinyinCheckbox.checked, activeGraphKey);
             setTranscriptionLabel();
-            // TODO(refactor): have recommendations.js react to the character-set-changed event
             Promise.all(promises).then(() => {
                 document.dispatchEvent(new CustomEvent('character-set-changed', { detail: activeGraph }));
             });
@@ -1301,18 +677,11 @@
             togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
         }
     }
-    function initialize$5() {
+    function initialize$6() {
         graphSelector.addEventListener('change', switchGraph);
         showPinyinCheckbox.addEventListener('change', function () {
             setTranscriptionLabel();
-            writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
-        });
-
-        recommendationsDifficultySelector.addEventListener('change', function () {
-            let val = recommendationsDifficultySelector.value;
-            // TODO(refactor): should this be another event type? Should recommendations just own this?
-            preferencesChanged(val);
-            writeOptionState(showPinyinCheckbox.checked, recommendationsDifficultySelector.value, activeGraphKey);
+            writeOptionState(showPinyinCheckbox.checked, activeGraphKey);
         });
 
         let pastOptions = readOptionState();
@@ -1321,8 +690,6 @@
             activeGraphKey = pastOptions.selectedCharacterSet;
             showPinyinCheckbox.checked = pastOptions.transcriptions;
             showPinyinCheckbox.dispatchEvent(new Event('change'));
-            recommendationsDifficultySelector.value = pastOptions.recommendationsDifficulty;
-            recommendationsDifficultySelector.dispatchEvent(new Event('change'));
         }
         if (graphOptions[activeGraphKey].type === 'frequency') {
             window.wordSet = getWordSetFromFrequency(window.freqs);
@@ -2722,7 +2089,7 @@
       }
     }
 
-    var root = [null];
+    var root$1 = [null];
 
     function Selection$1(groups, parents) {
       this._groups = groups;
@@ -2730,7 +2097,7 @@
     }
 
     function selection() {
-      return new Selection$1([[document.documentElement]], root);
+      return new Selection$1([[document.documentElement]], root$1);
     }
 
     function selection_selection() {
@@ -2779,7 +2146,7 @@
     function select(selector) {
       return typeof selector === "string"
           ? new Selection$1([[document.querySelector(selector)]], [document.documentElement])
-          : new Selection$1([[selector]], root);
+          : new Selection$1([[selector]], root$1);
     }
 
     function create$1(name) {
@@ -5314,13 +4681,13 @@
       return initInterpolator.apply(scale, arguments);
     }
 
-    function colors(specifier) {
+    function colors$1(specifier) {
       var n = specifier.length / 6 | 0, colors = new Array(n), i = 0;
       while (i < n) colors[i] = "#" + specifier.slice(i * 6, ++i * 6);
       return colors;
     }
 
-    var schemeTableau10 = colors("4e79a7f28e2ce1575976b7b259a14fedc949af7aa1ff9da79c755fbab0ab");
+    var schemeTableau10 = colors$1("4e79a7f28e2ce1575976b7b259a14fedc949af7aa1ff9da79c755fbab0ab");
 
     function constant$2(x) {
       return function constant() {
@@ -5661,11 +5028,11 @@
     let currentExamples = {};
     let currentWords = [];
 
-    const modes = {
+    const modes$1 = {
         explore: 'explore',
         components: 'components'
     };
-    let currentMode = modes.explore;
+    let currentMode = modes$1.explore;
     let currentTabs = null;
 
     //TODO(refactor): move notion of activetab to orchestrator
@@ -5865,7 +5232,7 @@
         characterSpan.classList.add('clickable');
         // TODO: figure out canto here
         if (getActiveGraph().transcriptionName !== 'jyutping') {
-            characterSpan.classList.add(`tone${getTone(character)}`);
+            characterSpan.classList.add(`tone${getTone$1(character)}`);
         }
         characterHolder.appendChild(characterSpan);
         characterSpan.addEventListener('click', function () {
@@ -6014,7 +5381,7 @@
         return tabs;
     };
 
-    function getTone(character) {
+    function getTone$1(character) {
         return (character in definitions && definitions[character].length) ? definitions[character][0].pinyin[definitions[character][0].pinyin.length - 1] : '5';
     }
 
@@ -6194,16 +5561,16 @@
             coverageGraph = null;
         }
     };
-    let initialize$4 = function () {
+    let initialize$5 = function () {
         // Note: github pages rewrites are only possible via a 404 hack,
         // so removing the history API integration on the main branch.
         //TODO(refactor): show study when it was the last state
         document.addEventListener('explore-update', function (event) {
-            currentMode = ((event.detail.mode === modes.components) ? modes.components : modes.explore);
+            currentMode = ((event.detail.mode === modes$1.components) ? modes$1.components : modes$1.explore);
             hanziBox.value = event.detail.display || event.detail.words[0];
             setupExamples(event.detail.words, event.detail.type || 'chinese');
             updateVisited(event.detail.words);
-            if (currentMode === modes.components) {
+            if (currentMode === modes$1.components) {
                 switchToTab('tab-components', currentTabs);
             }
         });
@@ -6446,7 +5813,7 @@
         relatedCardsContainer.style.display = 'none';
     };
 
-    let initialize$3 = function () {
+    let initialize$4 = function () {
         showAnswerButton.addEventListener('click', function () {
             showAnswerButton.innerText = "Answer:";
             cardAnswerContainer.removeAttribute('style');
@@ -7007,7 +6374,7 @@
         document.getElementById('hourly-container').removeAttribute('style');
     };
 
-    let initialize$2 = function () {
+    let initialize$3 = function () {
         lastLevelUpdatePrefix = getActiveGraph().prefix;
         updateTotalsByLevel();
         statsShow.addEventListener('click', function () {
@@ -7035,6 +6402,511 @@
             hourlyGraphDetail.innerText = '';
         });
     };
+
+    function trimTone(pinyin) {
+        return pinyin.substring(0, pinyin.length - 1);
+    }
+    // These rules based on https://pinyin.info/rules/initials_finals.html
+    const pinyinInitials = ['b', 'p', 'm', 'f', 'd', 't', 'n', 'l', 'g', 'k', 'h', 'z', 'c',
+        's', 'zh', 'ch', 'sh', 'r', 'j', 'q', 'x'].sort((a, b) => {
+            // enable starts with comparisons in parsing via sorting by length descending
+            // I think that ensures we'd choose e.g., zh, ch, or sh if applicable, instead of z, s, or c.
+            return b.length - a.length;
+        });
+    const pinyinFinals = ['a', 'o', 'e', 'ai', 'ei', 'ao', 'ou', 'an', 'ang', 'en', 'eng', 'ong', 'u', 'ua', 'uo', 'uai', 'ui', 'uan', 'uang', 'un', 'ueng', 'i', 'ia', 'ie', 'iao', 'iu', 'ian', 'iang', 'in', 'ing', 'iong', 'ü', 'üe', 'üan', 'ün'].sort((a, b) => {
+        // similar to initials, enable ends-with comparisons in parsing via sorting by length descending
+        // I think that ensures we'd choose e.g., uan, iong, or iao if applicable, instead of an, ong, or ao.
+        return b.length - a.length;
+    });
+    // Per the above site, w and y initials actually aren't initials at all, but a spelling convention for certain
+    // standalone finals. The ü final with j, q, or x initials also loses its umlaut.
+    const pinyinSpecialCases = {
+        // w convention...
+        'wu': [null, 'u'],
+        'wa': [null, 'ua'],
+        'wo': [null, 'uo'],
+        'wai': [null, 'uai'],
+        'wei': [null, 'ui'],
+        'wan': [null, 'uan'],
+        'wang': [null, 'uang'],
+        'wen': [null, 'un'],
+        'weng': [null, 'ueng'],
+        // y convention...
+        'yi': [null, 'i'],
+        'ya': [null, 'ia'],
+        'ye': [null, 'ie'],
+        'yao': [null, 'iao'],
+        'you': [null, 'iu'],
+        'yan': [null, 'ian'],
+        'yang': [null, 'iang'],
+        'yin': [null, 'in'],
+        'ying': [null, 'ing'],
+        'yong': [null, 'iong'],
+        'yu': [null, 'ü'],
+        'yue': [null, 'üe'],
+        'yuan': [null, 'üan'],
+        'yun': [null, 'ün'],
+        // ü convention...
+        // TODO: could probably simplify rather than directly looking up
+        'ju': ['j', 'ü'],
+        'jue': ['j', 'üe'],
+        'juan': ['j', 'üan'],
+        'jun': ['j', 'ün'],
+        'qu': ['q', 'ü'],
+        'que': ['q', 'üe'],
+        'quan': ['q', 'üan'],
+        'qun': ['q', 'ün'],
+        'xu': ['x', 'ü'],
+        'xue': ['x', 'üe'],
+        'xuan': ['x', 'üan'],
+        'xun': ['x', 'ün'],
+    };
+    function parsePinyin(pinyin) {
+        if (pinyin === 'xx') {
+            // This is a special CEDICT case for when pronunciation isn't known
+            // (or so it seems)
+            return [null, null];
+        }
+        pinyin = pinyin.replace('u:', 'ü');
+        let initial;
+        let final;
+        if (pinyin in pinyinSpecialCases) {
+            return pinyinSpecialCases[pinyin];
+        }
+        for (const candidate of pinyinInitials) {
+            if (pinyin.startsWith(candidate)) {
+                initial = candidate;
+                break;
+            }
+        }
+        for (const candidate of pinyinFinals) {
+            if (pinyin.endsWith(candidate)) {
+                final = candidate;
+                break;
+            }
+        }
+        return [initial, final];
+    }
+
+    const parent = document.getElementById('graph-container');
+    const graphContainer = document.getElementById('graph');
+
+    const freqLegend = document.getElementById('freq-legend');
+    const toneLegend = document.getElementById('tone-legend');
+
+    let cy = null;
+    let currentPath = [];
+    // TODO(refactor): consolidate with options
+    let ranks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
+
+    //TODO look up how to make this prettier
+    const modes = { graph: 'graph', components: 'components' };
+    let mode = modes.graph;
+    let root = null;
+
+    function findRank(word) {
+        if (!window.wordSet || !(word in wordSet)) {
+            return ranks.length;
+        }
+        let freq = wordSet[word];
+        for (let i = 0; i < ranks.length; i++) {
+            if (freq < ranks[i]) {
+                return i + 1;
+            }
+        }
+        return ranks.length;
+    }
+    function findEdge(base, target, result) {
+        for (const edge of result.edges) {
+            if (edge.data.source === base && edge.data.target === target) {
+                return true;
+            }
+        }
+        return false;
+    }
+    function addEdge(base, target, word, result) {
+        if (!hanzi[base] || !hanzi[target]) { return; }
+        if (base === target) { return; }
+        if (!findEdge(base, target, result)) {
+            result.edges.push({
+                data: {
+                    id: Array.from(base + target).sort().toString(),
+                    source: base, target: target,
+                    level: findRank(word),
+                    words: [word],
+                    displayWord: word
+                }
+            });
+        }
+    }
+    function addEdges(word, result) {
+        for (let i = 0; i < word.length - 1; i++) {
+            addEdge(word[i], word[i + 1], word, result);
+        }
+        if (word.length > 1) {
+            // also connect last to first
+            addEdge(word[word.length - 1], word[0], word, result);
+        }
+    }
+    function componentsBfs(value) {
+        let elements = { 'nodes': [], 'edges': [] };
+        let queue = [{ word: value, path: [value] }];
+        while (queue.length > 0) {
+            //apparently shift isn't O(1) in js, but this is not many elements
+            let curr = queue.shift();
+            elements.nodes.push({
+                data: {
+                    id: curr.path.join(''),
+                    word: curr.word,
+                    depth: curr.path.length - 1,
+                    path: curr.path,
+                    level: (curr.word in hanzi ? hanzi[curr.word].node.level : 6)
+                }
+            });
+            for (const component of window.components[curr.word].components) {
+                elements.edges.push({
+                    data: {
+                        id: ('_edge' + curr.path.join('') + component),
+                        source: curr.path.join(''),
+                        target: (curr.path.join('') + component)
+                    }
+                });
+                queue.push({ word: component, path: [...curr.path, component] });
+            }
+        }
+        return elements;
+    }
+
+    function dfs(start, elements, maxDepth, visited, maxEdges) {
+        if (maxDepth < 0) {
+            return;
+        }
+        let curr = hanzi[start];
+        //todo does javascript have a set?
+        visited[start] = true;
+        let usedEdges = [];
+        for (const [key, value] of Object.entries(curr.edges)) {
+            if (usedEdges.length == maxEdges) {
+                break;
+            }
+            //don't add outgoing edges when we won't process the next layer
+            if (maxDepth > 0) {
+                if (!visited[key]) {
+                    elements.edges.push({
+                        data: {
+                            id: Array.from(start + key).sort().toString(),
+                            source: start, target: key,
+                            level: value.level,
+                            words: value.words,
+                            // render examples for all words, but only display one
+                            displayWord: value.words[0]
+                        }
+                    });
+                    usedEdges.push(key);
+                }
+            }
+        }
+        elements.nodes.push({ data: { id: start, level: curr.node.level } });
+        for (const key of usedEdges) {
+            if (!visited[key]) {
+                dfs(key, elements, maxDepth - 1, visited, maxEdges);
+            }
+        }
+    }
+    const colors = ['#fc5c7d', '#ea6596', '#d56eaf', '#bb75c8', '#9b7ce1', '#6a82fb'];
+    function levelColor(element) {
+        let level = element.data('level');
+        return colors[level - 1];
+    }
+
+    function getTone(character) {
+        return (character in definitions && definitions[character].length) ? definitions[character][0].pinyin[definitions[character][0].pinyin.length - 1] : '5';
+    }
+    function toneColor(element) {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const character = (mode === modes.components) ? element.data('word') : element.data('id');
+        const tone = getTone(character);
+        if (tone === '1') {
+            return '#ff635f';
+        } else if (tone === '2') {
+            return '#7aeb34';
+        } else if (tone === '3') {
+            return '#de68ee';
+        } else if (tone === '4') {
+            return '#68aaee';
+        }
+        return prefersDark ? '#888' : '#000';
+    }
+    function makeLegible(element) {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const character = (mode === modes.components) ? element.data('word') : element.data('id');
+        const tone = getTone(character);
+        // if (tone === '1' || tone === '3' || tone === '4') {
+        //     return 'white'; //TODO
+        // }
+        if (tone === '5' && !prefersDark && getActiveGraph().transcriptionName !== 'jyutping') {
+            return 'white';
+        }
+        return 'black';
+    }
+
+    function layout(numNodes) {
+        //very scientifically chosen 95 (不 was slow to load)
+        //the grid layout appears to be far faster than cose
+        //keeping root around in case we want to switch back to bfs
+        if (numNodes > 95) {
+            return {
+                name: 'grid'
+            };
+        }
+        return {
+            name: 'cose',
+            animate: false
+        };
+    }
+
+    function edgeLabel(element) {
+        if (getActiveGraph().transcriptionName === 'jyutping') {
+            // TODO: get this working for jyutping too
+            return '';
+        }
+        const sourceCharacter = element.data('source')[element.data('source').length - 1];
+        const targetCharacter = element.data('target')[element.data('source').length];
+        const sourceDefs = definitions[sourceCharacter];
+        const targetDefs = definitions[targetCharacter];
+        if (!sourceDefs || !targetDefs) {
+            return '';
+        }
+        for (const definition of sourceDefs.filter(x => x.pinyin)) {
+            const srcPinyin = trimTone(definition.pinyin.toLowerCase());
+            const [srcInitial, srcFinal] = parsePinyin(srcPinyin);
+            const targetDefsWithPinyin = targetDefs.filter(x => x.pinyin);
+            // O(n^2), but there's never more than a few definitions.
+            // first pass: check for exact matches (minus tone, already expressed through color)
+            for (const targetDef of targetDefsWithPinyin) {
+                const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
+                if (targetPinyin === srcPinyin) {
+                    return targetPinyin;
+                }
+            }
+            // second pass: we didn't find an exact match, so see if there are any initials
+            // or finals that match.
+            for (const targetDef of targetDefsWithPinyin) {
+                const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
+                const [targetInitial, targetFinal] = parsePinyin(targetPinyin);
+                if (targetInitial && (targetInitial === srcInitial)) {
+                    return `${targetInitial}-`;
+                }
+                if (targetFinal && (targetFinal === srcFinal)) {
+                    return `-${targetFinal}`;
+                }
+            }
+        }
+        return '';
+    }
+
+    function getStylesheet(isTree) {
+        //TODO make this injectable
+        let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        let result = [
+            {
+                selector: 'node',
+                style: {
+                    'background-color': (isTree && (getActiveGraph().transcriptionName !== 'jyutping')) ? toneColor : levelColor,
+                    'label': isTree ? 'data(word)' : 'data(id)',
+                    'color': isTree ? makeLegible : 'black',
+                    'font-size': isTree ? '20px' : '18px',
+                    'text-valign': 'center',
+                    'text-halign': 'center'
+                }
+            },
+            {
+                selector: 'edge',
+                style: {
+                    'line-color': !isTree ? levelColor : prefersDark ? '#666' : '#121212',
+                    'target-arrow-shape': !isTree ? 'none' : 'triangle',
+                    'curve-style': 'straight',
+                    'label': !isTree ? 'data(displayWord)' : edgeLabel,
+                    'color': (_ => prefersDark ? '#eee' : '#000'),
+                    'font-size': isTree ? '12px' : '10px',
+                    'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
+                    'text-background-opacity': '1',
+                    'text-background-shape': 'round-rectangle',
+                    'text-events': 'yes'
+                }
+            }
+        ];
+        if (isTree) {
+            result[1].style.width = '3px';
+            result[1].style['color'] = prefersDark ? '#000' : '#fff';
+            result[1].style['arrow-scale'] = '0.65';
+            result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
+            result[1].style['text-background-color'] = prefersDark ? '#fff' : '#000';
+            result[1].style['text-background-padding'] = '2px';
+            result[1].style['text-background-shape'] = 'rectangle';
+        }
+        return result;
+    }
+    function nodeTapHandler(evt) {
+        let id = evt.target.id();
+        //not needed if currentHanzi contains id, which would mean the nodes have already been added
+        //includes O(N) but currentHanzi almost always < 10 elements
+        if (currentPath && !currentPath.includes(id)) {
+            addToGraph(id);
+        }
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.id()] } }));
+        // notify the flow diagrams...sigh
+        document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.id() }));
+        switchToState(stateKeys.main);
+    }
+    function edgeTapHandler(evt) {
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: evt.target.data('words') } }));
+        // notify the flow diagrams...sigh
+        document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('words')[0] }));
+        switchToState(stateKeys.main);
+    }
+    function setupCytoscape(elements, graphContainer) {
+        cy = cytoscape({
+            container: graphContainer,
+            elements: elements,
+            layout: layout(elements.nodes.length),
+            style: getStylesheet(),
+            maxZoom: 10,
+            minZoom: 0.5
+        });
+        cy.on('tap', 'node', nodeTapHandler);
+        cy.on('tap', 'edge', edgeTapHandler);
+    }
+    function addToGraph(character) {
+        let result = { 'nodes': [], 'edges': [] };
+        let maxDepth = 1;
+        let maxEdges = 8;
+        dfs(character, result, maxDepth, {}, maxEdges);
+        let preNodeCount = cy.nodes().length;
+        let preEdgeCount = cy.edges().length;
+        cy.add(result);
+        if (cy.nodes().length !== preNodeCount || cy.edges().length !== preEdgeCount) {
+            //if we've actually added to the graph, re-render it; else just let it be
+            cy.layout(layout(cy.nodes().length)).run();
+        }
+        currentPath.push(character);
+    }
+    function updateColorScheme() {
+        if (!cy) {
+            return;
+        }
+        cy.style(getStylesheet(mode === modes.components));
+    }
+    function getMaxEdges(word) {
+        let unique = new Set();
+        for (const character of word) {
+            unique.add(character);
+        }
+        if (unique.size < 3) {
+            return 8;
+        }
+        if (unique.size < 4) {
+            return 6;
+        }
+        if (unique.size < 5) {
+            return 5;
+        }
+        return 4;
+    }
+    function bfsLayout(root) {
+        return {
+            name: 'breadthfirst',
+            roots: [root],
+            padding: 6,
+            spacingFactor: 0.85,
+            directed: true
+        };
+    }
+    function buildComponentTree(value) {
+        if (getActiveGraph().transcriptionName !== 'jyutping') {
+            toneLegend.removeAttribute('style');
+            freqLegend.style.display = 'none';
+        }
+        graphContainer.innerHTML = '';
+        graphContainer.className = '';
+        root = value;
+        mode = modes.components;
+        cy = cytoscape({
+            container: graphContainer,
+            elements: componentsBfs(value),
+            layout: bfsLayout(value),
+            style: getStylesheet(true),
+            maxZoom: 10,
+            minZoom: 0.5
+        });
+        cy.on('tap', 'node', function (evt) {
+            document.dispatchEvent(new CustomEvent('explore-update', {
+                detail: {
+                    words: [evt.target.data('word')]
+                }
+            }));
+            // notify the flow diagrams...sigh
+            document.dispatchEvent(new CustomEvent('graph-interaction', { detail: evt.target.data('word') }));
+        });
+    }
+    function buildGraph(value) {
+        freqLegend.removeAttribute('style');
+        toneLegend.style.display = 'none';
+        graphContainer.innerHTML = '';
+        graphContainer.className = '';
+        mode = modes.graph;
+        let result = { 'nodes': [], 'edges': [] };
+        let maxDepth = 1;
+        // TODO: this is kinda not DFS
+        for (const character of value) {
+            dfs(character, result, maxDepth, {}, getMaxEdges(value));
+        }
+        addEdges(value, result);
+        if (showingGraph) {
+            setupCytoscape(result, graphContainer);
+        } else {
+            dirty = result;
+        }
+        currentPath = [...value];
+    }
+
+    let showingGraph = true;
+    let pendingResizeTimeout$1 = null;
+    let dirty = null;
+
+    function initialize$2() {
+        document.addEventListener('graph-update', function (event) {
+            buildGraph(event.detail);
+        });
+        document.addEventListener('components-update', function (event) {
+            buildComponentTree(event.detail);
+        });
+        parent.addEventListener('hidden', function () {
+            showingGraph = false;
+        });
+        parent.addEventListener('shown-animationend', function () {
+            showingGraph = true;
+            if (dirty) {
+                setupCytoscape(dirty, graphContainer);
+                dirty = null;
+            }
+        });
+        window.addEventListener('resize', function () {
+            clearTimeout(pendingResizeTimeout$1);
+            pendingResizeTimeout$1 = setTimeout(() => {
+                // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
+                if (cy && showingGraph) {
+                    cy.layout(mode === modes.graph ? layout(cy.nodes().length) : bfsLayout(root)).run();
+                }
+            }, 1000);
+        });
+        matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
+        document.addEventListener('character-set-changed', function (event) {
+            if (event.detail.ranks) {
+                ranks = event.detail.ranks;
+            }
+        });
+    }
 
     function max(values, valueof) {
       let max;
@@ -8376,11 +8248,11 @@
     }
 
     Promise.all(dataLoads).then(_ => {
-        initialize$9();
-        initialize$5();
-        initialize$7();
-        initialize$3();
+        initialize$8();
+        initialize$6();
+        initialize$2();
         initialize$4();
+        initialize$5();
         initialize$1();
         hanziSearchForm.addEventListener('submit', function (event) {
             event.preventDefault();
@@ -8402,9 +8274,8 @@
                 { detail: defaultHanzi[Math.floor(Math.random() * defaultHanzi.length)] }));
         }
         // These happen last due to being secondary functionality
-        initialize$2();
-        initialize$8();
-        initialize$6();
+        initialize$3();
+        initialize$7();
         initialize();
     });
 

@@ -7,8 +7,8 @@
     --primary-header-font-size: 30px;
     --secondary-header-font-size: 28px;
     --tertiary-header-font-size: 24px;
-    --secondary-control-font-size: 16px;
-    --secondary-input-container-columns: 1fr 160px;
+    --secondary-control-font-size: 14px;
+    --secondary-input-container-columns: 1fr 1fr;
     --header-font-family: Times, serif;
     --border: 1px solid #3333;
     --search-font-size: 20px;
@@ -53,6 +53,7 @@
     --tone-3-color: #de68ee;
     --tone-4-color: #68aaee;
     --neutral-tone-color: #000;
+    --button-border-bottom: 3px solid black;
 }
 
 html {
@@ -139,12 +140,29 @@ ul {
     grid-template-columns: var(--secondary-input-container-columns);
     width: var(--secondary-input-container-width);
     margin: 0 auto;
+    height: 22px;
 }
 
 .secondary-input {
     font-size: var(--secondary-control-font-size);
-    margin: 10px 4px 0 0;
+    margin: 4px 4px 0 4px;
     text-align: right;
+}
+
+.secondary-input:nth-of-type(odd) {
+    text-align: left;
+}
+
+.secondary-input:nth-of-type(even) {
+    text-align: right;
+}
+
+.secondary-button {
+    padding: 1px 4px;
+    font-weight: bold;
+    margin: 0px 14px;
+    border-bottom: var(--button-border-bottom);
+    user-select: none;
 }
 
 .primary-container {
@@ -211,6 +229,7 @@ ul {
     text-align: center;
     margin: 4px auto;
     border-bottom: var(--border);
+    user-select: none;
 }
 
 .explore-tab {
@@ -360,17 +379,6 @@ ul {
 .context,
 .context-line {
     margin: 4px 0 0 0;
-}
-
-.recommendations {
-    margin: 0 0 0 6px;
-    font-size: var(--secondary-control-font-size);
-    text-align: left;
-}
-
-.recommendation {
-    margin: 0 10px;
-    font-size: var(--target-language-secondary-font-size);
 }
 
 .active-link {
@@ -861,6 +869,7 @@ p.related-card {
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
         --neutral-tone-color: #aaa;
+        --button-border-bottom: 3px solid #333;
     }
 }
 
@@ -889,8 +898,6 @@ p.related-card {
         --control-container-height: 64px;
         --study-result-buttons-width: 80%;
         --instructions-font-size: 14px;
-        --secondary-control-font-size: 14px;
-        --secondary-input-container-columns: 1fr 90px;
         --target-language-font-size: 22px;
     }
 
