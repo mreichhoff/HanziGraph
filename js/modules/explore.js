@@ -208,16 +208,17 @@ let renderDefinitions = function (word, definitionList, container) {
     }
 }
 // TODO: combine with renderWordHeader
-let renderCharacterHeader = function (character, container, active) {
+let renderCharacterHeader = function (character, container) {
     let characterHolder = document.createElement('h2');
     characterHolder.classList.add('character-header');
     let characterSpan = document.createElement('span');
     characterSpan.textContent = character;
     characterSpan.classList.add('clickable');
-    characterHolder.appendChild(characterSpan);
-    if (active) {
-        characterHolder.classList.add('active');
+    // TODO: figure out canto here
+    if (getActiveGraph().transcriptionName !== 'jyutping') {
+        characterSpan.classList.add(`tone${getTone(character)}`);
     }
+    characterHolder.appendChild(characterSpan);
     characterSpan.addEventListener('click', function () {
         if (!characterHolder.classList.contains('active')) {
             document.querySelectorAll('.character-header').forEach(x => x.classList.remove('active'));
@@ -364,6 +365,31 @@ let renderTabs = function (container, texts, panels, renderCallbacks, transition
     return tabs;
 }
 
+function getTone(character) {
+    return (character in definitions && definitions[character].length) ? definitions[character][0].pinyin[definitions[character][0].pinyin.length - 1] : '5';
+}
+
+function renderPronunciations(character, container) {
+    if (!(character in definitions)) {
+        return;
+    }
+    let definitionElement = document.createElement('ul');
+    definitionElement.className = 'pronunciations';
+    const pinyinList = [...new Set(definitions[character].map(x => x.pinyin.toLowerCase()))];
+
+    for (let i = 0; i < pinyinList.length; i++) {
+        let definitionItem = document.createElement('li');
+        definitionItem.classList.add('pronunciation');
+        if (getActiveGraph().transcriptionName !== 'jyutping') {
+            // TODO: have get tone handle this...currently character level, but shouldn't be
+            definitionItem.classList.add(`tone${pinyinList[i][pinyinList[i].length - 1]}`);
+        }
+        definitionItem.textContent = pinyinList[i].toLowerCase();
+        definitionElement.appendChild(definitionItem);
+    }
+    container.appendChild(definitionElement);
+}
+
 function renderComponents(word, container) {
     let first = true;
     for (const character of word) {
@@ -376,10 +402,11 @@ function renderComponents(word, container) {
         if (first) {
             let instructions = document.createElement('p');
             instructions.classList.add('explanation');
-            instructions.innerText = 'Click any character for more information.';
+            instructions.innerText = 'Click any character to update the diagram.';
             item.appendChild(instructions);
         }
-        renderCharacterHeader(character, item, first);
+        renderCharacterHeader(character, item);
+        renderPronunciations(character, item);
         first = false;
         let componentsHeader = document.createElement('h3');
         componentsHeader.innerText = 'Components';
@@ -388,7 +415,7 @@ function renderComponents(word, container) {
         const joinedComponents = components[character].components.join('');
         if (joinedComponents) {
             componentsContainer.className = 'target';
-            makeSentenceNavigable(joinedComponents, componentsContainer, true);
+            makeComponentsNavigable(joinedComponents, componentsContainer);
         } else {
             componentsContainer.innerText = "No components found. Maybe we can't break this down any more.";
         }
@@ -400,7 +427,7 @@ function renderComponents(word, container) {
         const joinedComponentOf = components[character].componentOf.filter(x => x in hanzi).sort((a, b) => hanzi[a].node.level - hanzi[b].node.level).join('');
         if (joinedComponentOf) {
             componentOfContainer.className = 'target';
-            makeSentenceNavigable(joinedComponentOf, componentOfContainer, true);
+            makeComponentsNavigable(joinedComponentOf, componentOfContainer);
         } else {
             componentOfContainer.innerText = 'This character is not a component of others.'
         }
@@ -408,6 +435,7 @@ function renderComponents(word, container) {
         container.appendChild(item);
     }
 }
+
 function renderExplore(word, container, definitionList, examples, maxExamples, active) {
     let tabs = document.createElement('div');
     renderWordHeader(word, container, active);
@@ -569,5 +597,31 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
     container.appendChild(sentenceContainer);
     return anchorList;
 };
+
+// TODO: combine with makeSentenceNavigable, or just drop this, it's not that complicated
+function makeComponentsNavigable(text, container) {
+    let sentenceContainer = document.createElement('span');
+    sentenceContainer.className = "sentence-container";
+
+    let anchorList = [];
+    for (let i = 0; i < text.length; i++) {
+        (function (character) {
+            let a = document.createElement('a');
+            a.textContent = character;
+            if (character in components) {
+                a.className = 'navigable';
+            }
+            a.addEventListener('click', function () {
+                if (character in components) {
+                    document.dispatchEvent(new CustomEvent('components-update', { detail: character }));
+                }
+            });
+            anchorList.push(a);
+            sentenceContainer.appendChild(a);
+        }(text[i]));
+    }
+    container.appendChild(sentenceContainer);
+    return anchorList;
+}
 
 export { initialize, makeSentenceNavigable, addTextToSpeech };

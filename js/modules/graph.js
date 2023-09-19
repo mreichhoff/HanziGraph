@@ -1,6 +1,12 @@
 import { switchToState, stateKeys } from "./ui-orchestrator";
+import { getActiveGraph } from "./options";
+import { parsePinyin, trimTone } from "./pronunciation-parser";
+
 const parent = document.getElementById('graph-container');
 const graphContainer = document.getElementById('graph');
+
+const freqLegend = document.getElementById('freq-legend');
+const toneLegend = document.getElementById('tone-legend');
 
 let cy = null;
 let currentPath = [];
@@ -128,6 +134,37 @@ function levelColor(element) {
     return colors[level - 1];
 }
 
+function getTone(character) {
+    return (character in definitions && definitions[character].length) ? definitions[character][0].pinyin[definitions[character][0].pinyin.length - 1] : '5';
+}
+function toneColor(element) {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const character = (mode === modes.components) ? element.data('word') : element.data('id');
+    const tone = getTone(character);
+    if (tone === '1') {
+        return '#ff635f';
+    } else if (tone === '2') {
+        return '#7aeb34';
+    } else if (tone === '3') {
+        return '#de68ee';
+    } else if (tone === '4') {
+        return '#68aaee';
+    }
+    return prefersDark ? '#888' : '#000';
+}
+function makeLegible(element) {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const character = (mode === modes.components) ? element.data('word') : element.data('id');
+    const tone = getTone(character);
+    // if (tone === '1' || tone === '3' || tone === '4') {
+    //     return 'white'; //TODO
+    // }
+    if (tone === '5' && !prefersDark && getActiveGraph().transcriptionName !== 'jyutping') {
+        return 'white';
+    }
+    return 'black';
+}
+
 function layout(numNodes) {
     //very scientifically chosen 95 (不 was slow to load)
     //the grid layout appears to be far faster than cose
@@ -142,6 +179,47 @@ function layout(numNodes) {
         animate: false
     };
 }
+
+function edgeLabel(element) {
+    if (getActiveGraph().transcriptionName === 'jyutping') {
+        // TODO: get this working for jyutping too
+        return '';
+    }
+    const sourceCharacter = element.data('source')[element.data('source').length - 1];
+    const targetCharacter = element.data('target')[element.data('source').length];
+    const sourceDefs = definitions[sourceCharacter];
+    const targetDefs = definitions[targetCharacter];
+    if (!sourceDefs || !targetDefs) {
+        return '';
+    }
+    for (const definition of sourceDefs.filter(x => x.pinyin)) {
+        const srcPinyin = trimTone(definition.pinyin.toLowerCase());
+        const [srcInitial, srcFinal] = parsePinyin(srcPinyin);
+        const targetDefsWithPinyin = targetDefs.filter(x => x.pinyin);
+        // O(n^2), but there's never more than a few definitions.
+        // first pass: check for exact matches (minus tone, already expressed through color)
+        for (const targetDef of targetDefsWithPinyin) {
+            const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
+            if (targetPinyin === srcPinyin) {
+                return targetPinyin;
+            }
+        }
+        // second pass: we didn't find an exact match, so see if there are any initials
+        // or finals that match.
+        for (const targetDef of targetDefsWithPinyin) {
+            const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
+            const [targetInitial, targetFinal] = parsePinyin(targetPinyin);
+            if (targetInitial && (targetInitial === srcInitial)) {
+                return `${targetInitial}-`;
+            }
+            if (targetFinal && (targetFinal === srcFinal)) {
+                return `-${targetFinal}`;
+            }
+        }
+    }
+    return '';
+}
+
 function getStylesheet(isTree) {
     //TODO make this injectable
     let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -149,10 +227,10 @@ function getStylesheet(isTree) {
         {
             selector: 'node',
             style: {
-                'background-color': levelColor,
+                'background-color': (isTree && (getActiveGraph().transcriptionName !== 'jyutping')) ? toneColor : levelColor,
                 'label': isTree ? 'data(word)' : 'data(id)',
-                'color': 'black',
-                'font-size': '16px',
+                'color': isTree ? makeLegible : 'black',
+                'font-size': isTree ? '20px' : '18px',
                 'text-valign': 'center',
                 'text-halign': 'center'
             }
@@ -160,12 +238,12 @@ function getStylesheet(isTree) {
         {
             selector: 'edge',
             style: {
-                'line-color': !isTree ? levelColor : prefersDark ? '#eee' : '#121212',
+                'line-color': !isTree ? levelColor : prefersDark ? '#666' : '#121212',
                 'target-arrow-shape': !isTree ? 'none' : 'triangle',
                 'curve-style': 'straight',
-                'label': !isTree ? 'data(displayWord)' : '',
+                'label': !isTree ? 'data(displayWord)' : edgeLabel,
                 'color': (_ => prefersDark ? '#eee' : '#000'),
-                'font-size': '10px',
+                'font-size': isTree ? '12px' : '10px',
                 'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
                 'text-background-opacity': '1',
                 'text-background-shape': 'round-rectangle',
@@ -174,9 +252,13 @@ function getStylesheet(isTree) {
         }
     ];
     if (isTree) {
-        result[1].style.width = '2px';
-        result[1].style['arrow-scale'] = '0.5';
-        result[1].style['target-arrow-color'] = prefersDark ? '#eee' : '#121212';
+        result[1].style.width = '3px';
+        result[1].style['color'] = prefersDark ? '#000' : '#fff';
+        result[1].style['arrow-scale'] = '0.65';
+        result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
+        result[1].style['text-background-color'] = prefersDark ? '#fff' : '#000';
+        result[1].style['text-background-padding'] = '2px';
+        result[1].style['text-background-shape'] = 'rectangle';
     }
     return result;
 }
@@ -264,6 +346,10 @@ function bfsLayout(root) {
     };
 }
 function buildComponentTree(value) {
+    if (getActiveGraph().transcriptionName !== 'jyutping') {
+        toneLegend.removeAttribute('style');
+        freqLegend.style.display = 'none';
+    }
     graphContainer.innerHTML = '';
     graphContainer.className = '';
     root = value;
@@ -287,6 +373,8 @@ function buildComponentTree(value) {
     });
 }
 function buildGraph(value) {
+    freqLegend.removeAttribute('style');
+    toneLegend.style.display = 'none';
     graphContainer.innerHTML = '';
     graphContainer.className = '';
     mode = modes.graph;
