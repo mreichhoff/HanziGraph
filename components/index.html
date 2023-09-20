@@ -4,6 +4,9 @@
 <head>
     <!-- This file separate from index.html to allow a direct link on github pages,
         which doesn't seem to allow URL rewrites -->
+    <title>Components | HanziGraph</title>
+    <meta name="description"
+        content="Learn how Chinese characters are composed, and how this composition influences their pronunciation.">
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="../js/external/cytoscape.min.js"></script>
     <link rel="icon" href="../images/favicon-32x32.png" type="image/x-icon">
@@ -74,12 +77,6 @@
             text-align: center;
         }
 
-        #legend span {
-            font-size: 14px;
-            margin: 0 6px;
-            font-weight: bold;
-        }
-
         .tone1 {
             color: var(--tone-1-color)
         }
@@ -142,7 +139,7 @@
                 </div>
             </div>
             <div id="graph-container" class="primary-panel">
-                <div id="legend">
+                <div id="tone-legend" class="legend">
                     <span class="tone1">1st tone</span>
                     <span class="tone2">2nd tone</span>
                     <span class="tone3">3rd tone</span>
