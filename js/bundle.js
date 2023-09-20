@@ -187,7 +187,6 @@
 
     const faqContainer = document.getElementById('faq-container');
     const faqStudyMode = document.getElementById('faq-study-mode');
-    const faqRecommendations = document.getElementById('faq-recommendations');
     const faqFlow = document.getElementById('faq-flow');
     const faqContext = document.getElementById('faq-context');
     const faqGeneral = document.getElementById('faq-general');
@@ -199,14 +198,12 @@
         studyMode: faqStudyMode,
         context: faqContext,
         general: faqGeneral,
-        recommendations: faqRecommendations,
         flow: faqFlow
     };
     const faqTypes = {
         studyMode: 'studyMode',
         context: 'context',
         general: 'general',
-        recommendations: 'recommendations',
         flow: 'flow'
     };
 
@@ -454,10 +451,9 @@
     let readOptionState = function () {
         return JSON.parse(localStorage.getItem('options'));
     };
-    let writeOptionState = function (showPinyin, recommendationsDifficulty, selectedCharacterSet) {
+    let writeOptionState = function (showPinyin, selectedCharacterSet) {
         localStorage.setItem('options', JSON.stringify({
             transcriptions: showPinyin,
-            recommendationsDifficulty: recommendationsDifficulty,
             selectedCharacterSet: selectedCharacterSet
         }));
     };
@@ -6490,6 +6486,7 @@
 
     const parent = document.getElementById('graph-container');
     const graphContainer = document.getElementById('graph');
+    const colorCodeSwitch = document.getElementById('color-code-switch');
 
     const freqLegend = document.getElementById('freq-legend');
     const toneLegend = document.getElementById('tone-legend');
@@ -6503,6 +6500,9 @@
     const modes = { graph: 'graph', components: 'components' };
     let mode = modes.graph;
     let root = null;
+
+    const colorCodeModes = { frequency: 'frequency', tones: 'tones' };
+    let colorCodeMode = colorCodeModes.tones;
 
     function findRank(word) {
         if (!window.wordSet || !(word in wordSet)) {
@@ -6705,16 +6705,18 @@
         return '';
     }
 
-    function getStylesheet(isTree) {
+    function getStylesheet() {
+        const isTree = (mode === modes.components);
+        const isTones = (colorCodeMode === colorCodeModes.tones);
         //TODO make this injectable
         let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         let result = [
             {
                 selector: 'node',
                 style: {
-                    'background-color': (isTree && (getActiveGraph().transcriptionName !== 'jyutping')) ? toneColor : levelColor,
+                    'background-color': (isTones && (getActiveGraph().transcriptionName !== 'jyutping')) ? toneColor : levelColor,
                     'label': isTree ? 'data(word)' : 'data(id)',
-                    'color': isTree ? makeLegible : 'black',
+                    'color': isTones ? makeLegible : 'black',
                     'font-size': isTree ? '20px' : '18px',
                     'text-valign': 'center',
                     'text-halign': 'center'
@@ -6723,7 +6725,7 @@
             {
                 selector: 'edge',
                 style: {
-                    'line-color': !isTree ? levelColor : prefersDark ? '#666' : '#121212',
+                    'line-color': (!isTones && !isTree) ? levelColor : prefersDark ? '#666' : '#121212',
                     'target-arrow-shape': !isTree ? 'none' : 'triangle',
                     'curve-style': 'straight',
                     'label': !isTree ? 'data(displayWord)' : edgeLabel,
@@ -6736,14 +6738,17 @@
                 }
             }
         ];
+        if (isTree || isTones) {
+            result[1].style['color'] = '#fff';
+            result[1].style['text-background-color'] = '#000';
+            result[1].style['text-background-padding'] = '1px';
+            result[1].style['text-background-shape'] = 'rectangle';
+        }
         if (isTree) {
             result[1].style.width = '3px';
-            result[1].style['color'] = prefersDark ? '#000' : '#fff';
+            result[1].style['text-background-padding'] = '2px';
             result[1].style['arrow-scale'] = '0.65';
             result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
-            result[1].style['text-background-color'] = prefersDark ? '#fff' : '#000';
-            result[1].style['text-background-padding'] = '2px';
-            result[1].style['text-background-shape'] = 'rectangle';
         }
         return result;
     }
@@ -6795,7 +6800,7 @@
         if (!cy) {
             return;
         }
-        cy.style(getStylesheet(mode === modes.components));
+        cy.style(getStylesheet());
     }
     function getMaxEdges(word) {
         let unique = new Set();
@@ -6823,10 +6828,6 @@
         };
     }
     function buildComponentTree(value) {
-        if (getActiveGraph().transcriptionName !== 'jyutping') {
-            toneLegend.removeAttribute('style');
-            freqLegend.style.display = 'none';
-        }
         graphContainer.innerHTML = '';
         graphContainer.className = '';
         root = value;
@@ -6835,7 +6836,7 @@
             container: graphContainer,
             elements: componentsBfs(value),
             layout: bfsLayout(value),
-            style: getStylesheet(true),
+            style: getStylesheet(),
             maxZoom: 10,
             minZoom: 0.5
         });
@@ -6850,8 +6851,6 @@
         });
     }
     function buildGraph(value) {
-        freqLegend.removeAttribute('style');
-        toneLegend.style.display = 'none';
         graphContainer.innerHTML = '';
         graphContainer.className = '';
         mode = modes.graph;
@@ -6874,7 +6873,33 @@
     let pendingResizeTimeout$1 = null;
     let dirty = null;
 
+    function toggleColorCodeVisibility() {
+        if (getActiveGraph().transcriptionName !== 'jyutping') {
+            colorCodeSwitch.removeAttribute('style');
+        } else {
+            colorCodeMode = colorCodeModes.frequency;
+            freqLegend.removeAttribute('style');
+            toneLegend.style.display = 'none';
+            colorCodeSwitch.style.display = 'none';
+        }
+    }
+
     function initialize$2() {
+        toggleColorCodeVisibility();
+        colorCodeSwitch.addEventListener('click', function () {
+            if (colorCodeMode === colorCodeModes.frequency) {
+                colorCodeSwitch.innerText = "Tones";
+                colorCodeMode = colorCodeModes.tones;
+                toneLegend.removeAttribute('style');
+                freqLegend.style.display = 'none';
+            } else {
+                colorCodeSwitch.innerText = "Frequency";
+                colorCodeMode = colorCodeModes.frequency;
+                freqLegend.removeAttribute('style');
+                toneLegend.style.display = 'none';
+            }
+            updateColorScheme();
+        });
         document.addEventListener('graph-update', function (event) {
             buildGraph(event.detail);
         });
@@ -6905,6 +6930,7 @@
             if (event.detail.ranks) {
                 ranks = event.detail.ranks;
             }
+            toggleColorCodeVisibility();
         });
     }
 
@@ -7735,7 +7761,8 @@
 
     function toggleShowButton() {
         if (!getActiveGraph().collocationsPath) {
-            switchButtonContainer.style.display = 'none';
+            // gotta use hidden or tone colors gets aligned weird
+            switchButtonContainer.style.visibility = 'hidden';
         } else {
             switchButtonContainer.removeAttribute('style');
         }
@@ -7769,7 +7796,7 @@
             getCollocations(event.detail);
         });
         container.addEventListener('shown', function () {
-            switchButton.innerText = "Show Graph";
+            switchButton.innerText = "Flow";
             showingFlow = true;
             renderUsageDiagram(activeWord, activeCollocations, container);
         });
@@ -7783,7 +7810,7 @@
         });
         container.addEventListener('hidden', function () {
             showingFlow = false;
-            switchButton.innerText = "Show Flow";
+            switchButton.innerText = "Graph";
         });
         switchButtonContainer.addEventListener('click', function () {
             if (!showingFlow) {

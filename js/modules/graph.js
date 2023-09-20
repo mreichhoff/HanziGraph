@@ -4,6 +4,7 @@ import { parsePinyin, trimTone } from "./pronunciation-parser";
 
 const parent = document.getElementById('graph-container');
 const graphContainer = document.getElementById('graph');
+const colorCodeSwitch = document.getElementById('color-code-switch');
 
 const freqLegend = document.getElementById('freq-legend');
 const toneLegend = document.getElementById('tone-legend');
@@ -17,6 +18,9 @@ let ranks = [1000, 2000, 4000, 7000, 10000, Number.MAX_SAFE_INTEGER];
 const modes = { graph: 'graph', components: 'components' };
 let mode = modes.graph;
 let root = null;
+
+const colorCodeModes = { frequency: 'frequency', tones: 'tones' };
+let colorCodeMode = colorCodeModes.tones;
 
 function findRank(word) {
     if (!window.wordSet || !(word in wordSet)) {
@@ -220,16 +224,18 @@ function edgeLabel(element) {
     return '';
 }
 
-function getStylesheet(isTree) {
+function getStylesheet() {
+    const isTree = (mode === modes.components);
+    const isTones = (colorCodeMode === colorCodeModes.tones);
     //TODO make this injectable
     let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     let result = [
         {
             selector: 'node',
             style: {
-                'background-color': (isTree && (getActiveGraph().transcriptionName !== 'jyutping')) ? toneColor : levelColor,
+                'background-color': (isTones && (getActiveGraph().transcriptionName !== 'jyutping')) ? toneColor : levelColor,
                 'label': isTree ? 'data(word)' : 'data(id)',
-                'color': isTree ? makeLegible : 'black',
+                'color': isTones ? makeLegible : 'black',
                 'font-size': isTree ? '20px' : '18px',
                 'text-valign': 'center',
                 'text-halign': 'center'
@@ -238,7 +244,7 @@ function getStylesheet(isTree) {
         {
             selector: 'edge',
             style: {
-                'line-color': !isTree ? levelColor : prefersDark ? '#666' : '#121212',
+                'line-color': (!isTones && !isTree) ? levelColor : prefersDark ? '#666' : '#121212',
                 'target-arrow-shape': !isTree ? 'none' : 'triangle',
                 'curve-style': 'straight',
                 'label': !isTree ? 'data(displayWord)' : edgeLabel,
@@ -251,14 +257,17 @@ function getStylesheet(isTree) {
             }
         }
     ];
+    if (isTree || isTones) {
+        result[1].style['color'] = '#fff';
+        result[1].style['text-background-color'] = '#000';
+        result[1].style['text-background-padding'] = '1px';
+        result[1].style['text-background-shape'] = 'rectangle';
+    }
     if (isTree) {
         result[1].style.width = '3px';
-        result[1].style['color'] = prefersDark ? '#000' : '#fff';
+        result[1].style['text-background-padding'] = '2px';
         result[1].style['arrow-scale'] = '0.65';
         result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
-        result[1].style['text-background-color'] = prefersDark ? '#fff' : '#000';
-        result[1].style['text-background-padding'] = '2px';
-        result[1].style['text-background-shape'] = 'rectangle';
     }
     return result;
 }
@@ -313,7 +322,7 @@ function updateColorScheme() {
     if (!cy) {
         return;
     }
-    cy.style(getStylesheet(mode === modes.components));
+    cy.style(getStylesheet());
 }
 
 // TODO: reinstate this
@@ -346,10 +355,6 @@ function bfsLayout(root) {
     };
 }
 function buildComponentTree(value) {
-    if (getActiveGraph().transcriptionName !== 'jyutping') {
-        toneLegend.removeAttribute('style');
-        freqLegend.style.display = 'none';
-    }
     graphContainer.innerHTML = '';
     graphContainer.className = '';
     root = value;
@@ -373,8 +378,6 @@ function buildComponentTree(value) {
     });
 }
 function buildGraph(value) {
-    freqLegend.removeAttribute('style');
-    toneLegend.style.display = 'none';
     graphContainer.innerHTML = '';
     graphContainer.className = '';
     mode = modes.graph;
@@ -397,7 +400,33 @@ let showingGraph = true;
 let pendingResizeTimeout = null;
 let dirty = null;
 
+function toggleColorCodeVisibility() {
+    if (getActiveGraph().transcriptionName !== 'jyutping') {
+        colorCodeSwitch.removeAttribute('style');
+    } else {
+        colorCodeMode = colorCodeModes.frequency;
+        freqLegend.removeAttribute('style');
+        toneLegend.style.display = 'none';
+        colorCodeSwitch.style.display = 'none';
+    }
+}
+
 function initialize() {
+    toggleColorCodeVisibility();
+    colorCodeSwitch.addEventListener('click', function () {
+        if (colorCodeMode === colorCodeModes.frequency) {
+            colorCodeSwitch.innerText = "Tones";
+            colorCodeMode = colorCodeModes.tones;
+            toneLegend.removeAttribute('style');
+            freqLegend.style.display = 'none';
+        } else {
+            colorCodeSwitch.innerText = "Frequency";
+            colorCodeMode = colorCodeModes.frequency;
+            freqLegend.removeAttribute('style');
+            toneLegend.style.display = 'none';
+        }
+        updateColorScheme();
+    });
     document.addEventListener('graph-update', function (event) {
         buildGraph(event.detail);
     });
@@ -428,6 +457,7 @@ function initialize() {
         if (event.detail.ranks) {
             ranks = event.detail.ranks;
         }
+        toggleColorCodeVisibility();
     });
 }
 
