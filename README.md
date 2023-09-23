@@ -10,8 +10,9 @@ Looking for **Japanese**? See `/data/japanese` and the slightly modified web cod
 
 #### Interactive Graph
 
-The nodes and edges (more than 100,000 in all) have data associated with them. Specifically, each node and edge has:
-* Usage frequency data, which takes the form of color coding (red: very frequent; blue: less frequent). Word frequency can also be substituted with color coding by HSK level.
+The nodes and edges (more than 100,000 in all) have data associated with them.
+* For hanzi (nodes), color coding based on tone.
+* For words (edges) and hanzi (nodes), usage frequency data, which can take the form of color coding (red: very frequent; blue: less frequent). Word frequency can also be substituted with color coding by HSK level.
 * Definitions, from [CEDICT](https://cc-cedict.org/editor/editor.php) (and in the case of Cantonese, [CC-CANTO](https://cantonese.org/)).
 * Human-generated example sentences, sorted by average word frequency, from [tatoeba](https://tatoeba.org/).
 * For words not present in tatoeba's corpus, AI generated examples are used instead.
@@ -20,20 +21,28 @@ The nodes and edges (more than 100,000 in all) have data associated with them. S
 
 
 
-https://github.com/mreichhoff/HanziGraph/assets/17800817/3bf8b98a-0daf-499f-ada6-4b90b39e132d
+
+https://github.com/mreichhoff/HanziGraph/assets/17800817/03812ce4-d0b0-48a8-935a-5f9ac156c8e6
+
 
 
 
 
 #### Component Breakdowns
 
-Each hanzi can also be diagrammed as a component tree, where each successive level of the tree is a further breakdown of its parent. Characters with a given hanzi or radical as a component are also listed. Each component in the diagram is color-coded by its frequency in everyday use, and clicking it will show definitions and example sentences, as well as other data.
+Each hanzi can also be diagrammed as a component tree, where each successive level of the tree is a further breakdown of its parent. Compounds using a character as a component are also listed. Colors indicate tones, and when pronunciation (pinyin initial, final, or both) is shared, the shared portion is shown on each connecting edge.
 
 #### Components Demo
 
 
 
-https://github.com/mreichhoff/HanziGraph/assets/17800817/45e564b5-2b8f-4d20-a282-073fd5d4cc8b
+https://github.com/mreichhoff/HanziGraph/assets/17800817/25dfde16-77f6-4516-9984-cae240bb3582
+
+
+Note that this functionality is also has its own standalone mode.
+
+
+https://github.com/mreichhoff/HanziGraph/assets/17800817/e131345e-33c2-466d-a91f-a91aa9c60a82
 
 
 
@@ -53,13 +62,19 @@ https://github.com/mreichhoff/HanziGraph/assets/17800817/c6b75af8-7ca1-40df-accc
 
 
 
-#### Recommending Characters
+#### Cumulative Frequency Stats
 
-Based on which nodes and edges a user visits, the tool is able to recommend related characters. It bases these recommendations on the user having seen connected characters, with more-common characters prioritized. For example, if a user has viewed `决`, `释`, and `理`, `解` might be recommended, since it is connected to what the learner has already seen (via `解决`, `解释`, and `理解`) and is very common.
+Curious how much bang-for-your-buck you're getting by learning a given word? The frequency coloring and coverage graphs can help. The coverage graphs indicate what percentage of the language you'd understand if you learned each word in order of frequency up to your search term, where very frequent words make up a disproportionate amount of the spoken language.
+
+
+
+https://github.com/mreichhoff/HanziGraph/assets/17800817/9a573a0d-4aa1-439b-b829-937f24ed7d06
+
 
 #### Flashcards
 
 Flashcards can be created from the definitions and example sentences, and either studied in the tool or exported to Anki. The flashcards test both recognition (translating from Chinese to English) and recall (translating from English to Chinese); cloze cards (fill in the blank) are also made. When a new word is being studied, it should often be studied in several contexts, so up to 10 cards are made for a single word or character.
+
 
 ## As seen on...
 
