@@ -36,7 +36,11 @@ Each hanzi can also be diagrammed as a component tree, where each successive lev
 
 
 
-https://github.com/mreichhoff/HanziGraph/assets/17800817/25dfde16-77f6-4516-9984-cae240bb3582
+
+https://github.com/mreichhoff/HanziGraph/assets/17800817/b4c6abdc-caea-49a1-bd6b-a5b566b692a5
+
+
+
 
 
 Note that this functionality is also has its own standalone mode.
