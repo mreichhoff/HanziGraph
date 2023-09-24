@@ -25085,7 +25085,7 @@
             }
             item.appendChild(componentsContainer);
             let componentsOfHeader = document.createElement('h3');
-            componentsOfHeader.innerText = 'Component of';
+            componentsOfHeader.innerText = 'Compounds';
             item.appendChild(componentsOfHeader);
             let componentOfContainer = document.createElement('div');
             const joinedComponentOf = components[character].componentOf.filter(x => x in hanzi).sort((a, b) => hanzi[a].node.level - hanzi[b].node.level).join('');
