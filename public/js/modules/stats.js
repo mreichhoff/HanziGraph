@@ -1,4 +1,4 @@
-import { getVisited, getStudyResults, getStudyList } from "./data-layer.js";
+import { getStudyResults, getStudyList } from "./data-layer.js";
 import { getActiveGraph } from "./options.js";
 import { switchToState, stateKeys } from "./ui-orchestrator.js";
 
@@ -10,7 +10,6 @@ const hourlyGraphDetail = document.getElementById('hourly-graph-detail');
 const addedCalendarDetail = document.getElementById('added-calendar-detail');
 const studyCalendarDetail = document.getElementById('study-calendar-detail');
 const studyGraphDetail = document.getElementById('studied-graph-detail');
-const visitedGraphDetail = document.getElementById('visited-graph-detail');
 
 let lastLevelUpdatePrefix = '';
 let shown = false;
@@ -201,7 +200,7 @@ let updateTotalsByLevel = function () {
     Object.keys(hanzi).forEach(x => {
         let level = hanzi[x].node.level;
         if (!(level in totalsByLevel)) {
-            totalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), characters: new Set() };
+            totalsByLevel[level] = { seen: new Set(), total: 0, characters: new Set() };
         }
         totalsByLevel[level].total++;
         totalsByLevel[level].characters.add(x);
@@ -333,43 +332,6 @@ let createCardGraphs = function (studyList, legend) {
         left: document.getElementById('added-calendar-today').offsetLeft
     });
 }
-let createVisitedGraphs = function (visitedCharacters, legend) {
-    if (!visitedCharacters) {
-        return;
-    }
-    Object.keys(visitedCharacters).forEach(x => {
-        if (hanzi[x]) {
-            const level = hanzi[x].node.level;
-            totalsByLevel[level].visited.add(x);
-        }
-    });
-    let levelData = [];
-    //safe since we don't add keys in the read of /decks/
-    Object.keys(totalsByLevel).sort().forEach(x => {
-        levelData.push({
-            count: totalsByLevel[x].visited.size || 0,
-            total: totalsByLevel[x].total
-        });
-    });
-    const visitedGraph = document.getElementById('visited-graph');
-    visitedGraph.innerHTML = '';
-    visitedGraph.appendChild(
-        BarChart(levelData, {
-            labelText: (i) => legend[i],
-            color: () => "#68aaee",
-            clickHandler: function (i) {
-                BarChartClickHandler(
-                    visitedGraphDetail,
-                    totalsByLevel,
-                    'visited',
-                    i,
-                    `In ${legend[i]}, you haven't yet visited:<br>`
-                );
-            }
-        })
-    );
-    document.getElementById('visited-container').removeAttribute('style');
-};
 
 let createStudyResultGraphs = function (results) {
     let hourlyData = [];
@@ -496,7 +458,6 @@ let initialize = function () {
         }
         switchToState(stateKeys.stats);
         shown = true;
-        createVisitedGraphs(getVisited(), activeGraph.legend);
         createCardGraphs(getStudyList(), activeGraph.legend);
         createStudyResultGraphs(getStudyResults(), activeGraph.legend);
     });
@@ -508,10 +469,9 @@ let initialize = function () {
         }
         studyGraphDetail.innerText = '';
         addedCalendarDetail.innerText = '';
-        visitedGraphDetail.innerText = '';
         studyCalendarDetail.innerText = '';
         hourlyGraphDetail.innerText = '';
     });
 };
 
-export { createCardGraphs, createVisitedGraphs, createStudyResultGraphs, updateTotalsByLevel, initialize };
+export { createCardGraphs, createStudyResultGraphs, updateTotalsByLevel, initialize };

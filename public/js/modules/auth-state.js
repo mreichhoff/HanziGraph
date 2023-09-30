@@ -27,8 +27,6 @@ let initialize = function () {
             localStorage.removeItem('studyListDirty');
             localStorage.removeItem('dailyDirty');
             localStorage.removeItem('hourlyDirty');
-            localStorage.removeItem('visited');
-            localStorage.removeItem('visitedDirty');
             localStorage.removeItem('studyResults');
             localStorage.removeItem('state');
             localStorage.removeItem('options');

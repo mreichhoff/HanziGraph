@@ -2,12 +2,10 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, onSnapshot, collection, writeBatch, increment } from "firebase/firestore";
 
 const dataTypes = {
-    visited: 'visited',
     studyList: 'studyList',
     studyResults: 'studyResults'
 };
 let callbacks = {
-    visited: [],
     studyList: [],
     studyResults: []
 };
@@ -26,10 +24,8 @@ const MAX_BATCH_SIZE = 500;
 
 let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
 let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
-let visited = JSON.parse(localStorage.getItem('visited') || '{}');
 
 let firstStudyListLoad = true;
-let firstVisitedLoad = true;
 let firstDailyResultsLoad = true;
 let firstHourlyResultsLoad = true;
 
@@ -37,36 +33,6 @@ let authenticatedUser = null;
 
 let getStudyResults = function () {
     return studyResults;
-};
-let getVisited = function () {
-    return visited;
-};
-//note: nodes will be marked visited when the user searches for or taps a node in the graph
-//for now, avoiding marking nodes visited via clicking a hanzi in an example or card
-//because in those cases no examples are shown
-let updateVisited = function (nodes) {
-    for (let i = 0; i < nodes.length; i++) {
-        if (!visited[nodes[i]]) {
-            visited[nodes[i]] = 0;
-        }
-        visited[nodes[i]]++;
-    }
-    if (authenticatedUser) {
-        const db = getFirestore();
-        const batch = writeBatch(db);
-        for (let i = 0; i < nodes.length; i++) {
-            batch.set(doc(db, `users/${authenticatedUser.uid}/visited/${sanitizeKey(nodes[i])}`), { count: increment(1) }, { merge: true });
-        }
-        batch.commit().then(() => {
-            localStorage.setItem('visitedDirty', false);
-        }).catch((error) => {
-            localStorage.setItem('visitedDirty', true);
-        });
-    } else {
-        localStorage.setItem('visitedDirty', true);
-    }
-    localStorage.setItem('visited', JSON.stringify(visited));
-    callbacks[dataTypes.visited].forEach(x => x(visited));
 };
 
 let registerCallback = function (dataType, callback) {
@@ -310,30 +276,6 @@ let recordEvent = function (result) {
 let sanitizeKey = function (key) {
     return key.replaceAll('.', '。').replaceAll('#', '').replaceAll('$', 'USD').replaceAll('/', '').replaceAll('[', '').replaceAll(']', '');
 };
-// todo combine
-let overwriteVisitedKeys = function (keys) {
-    const db = getFirestore();
-    let batch = writeBatch(db);
-    let count = 0;
-    for (let i = 0; i < keys.length; i++) {
-        count++;
-        batch.set(doc(db, `users/${authenticatedUser.uid}/visited/${sanitizeKey(keys[i])}`), { count: visited[keys[i]] }, { merge: true });
-        if (count == MAX_BATCH_SIZE) {
-            batch.commit().then(() => {
-                localStorage.setItem('visitedDirty', false);
-            }).catch((error) => {
-                localStorage.setItem('visitedDirty', true);
-            });
-            count = 0;
-            batch = writeBatch(db);
-        }
-    }
-    batch.commit().then(() => {
-        localStorage.setItem('visitedDirty', false);
-    }).catch((error) => {
-        localStorage.setItem('visitedDirty', true);
-    });
-};
 let overwriteHourlyResultKeys = function (keys) {
     const db = getFirestore();
     const batch = writeBatch(db);
@@ -462,58 +404,6 @@ let initialize = function () {
                     }
                 }
             });
-            onSnapshot(collection(db, `users/${authenticatedUser.uid}/visited`), (doc) => {
-                // if hasPendingWrites is true, we're getting a notification for our own write; ignore
-                let visitedDirty = JSON.parse(localStorage.getItem('visitedDirty') || "false");
-                if (!doc.metadata.hasPendingWrites) {
-                    let wasFirstLoad = false;
-                    if (firstVisitedLoad) {
-                        firstVisitedLoad = false;
-                        wasFirstLoad = true;
-                    }
-                    let serverVisited = {};
-                    for (const item of doc.docChanges()) {
-                        // no support for deleting visited nodes, currently
-                        if (item.type === 'added' || item.type === 'modified') {
-                            serverVisited[item.doc.id] = item.doc.data().count;
-                        }
-                    }
-                    if (visitedDirty) {
-                        // we made updates that weren't written to the server
-                        // (which can happen due to being signed out, etc.)
-                        // if it's the first load, then we need to figure out which ones the server doesn't have
-                        // if it's not the first load, just take the larger of local and server and save if necessary
-                        let updatedKeys = [];
-                        if (wasFirstLoad) {
-                            // TODO maybe just do this if server doesn't have it
-                            // that simplifies things...server wins, but if it has no record, then write it
-                            for (const [key, value] of Object.entries(visited)) {
-                                if (!serverVisited[key] || serverVisited[key] < value) {
-                                    // we have something the server doesn't know about
-                                    updatedKeys.push(key);
-                                }
-                            }
-                        }
-                        // whether first load or not, take the server's value if we can
-                        // or overwrite if local is larger
-                        for (const [key, value] of Object.entries(serverVisited)) {
-                            if (!visited[key] || visited[key] <= value) {
-                                visited[key] = value;
-                            } else {
-                                //key is in visited, and its value is strictly greater than the server sent
-                                updatedKeys.push(key);
-                            }
-                        }
-                        overwriteVisitedKeys(updatedKeys);
-                    } else {
-                        // we have no updates; server wins
-                        for (const [key, value] of Object.entries(serverVisited)) {
-                            visited[key] = value;
-                        }
-                    }
-                    callbacks[dataTypes.visited].forEach(x => x(visited));
-                }
-            });
             // TODO: combine hourly and daily
             onSnapshot(collection(db, `users/${authenticatedUser.uid}/hourly`), (doc) => {
                 if (!doc.metadata.hasPendingWrites) {
@@ -630,4 +520,4 @@ let writeExploreState = function (words) {
     }));
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, getVisited, updateVisited, registerCallback, saveStudyList, addCards, inStudyList, getCardPerformance, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCards, inStudyList, getCardPerformance, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }

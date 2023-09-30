@@ -7396,8 +7396,6 @@
                 localStorage.removeItem('studyListDirty');
                 localStorage.removeItem('dailyDirty');
                 localStorage.removeItem('hourlyDirty');
-                localStorage.removeItem('visited');
-                localStorage.removeItem('visitedDirty');
                 localStorage.removeItem('studyResults');
                 localStorage.removeItem('state');
                 localStorage.removeItem('options');
@@ -19426,12 +19424,10 @@
     }();
 
     const dataTypes = {
-        visited: 'visited',
         studyList: 'studyList',
         studyResults: 'studyResults'
     };
     let callbacks = {
-        visited: [],
         studyList: [],
         studyResults: []
     };
@@ -19450,10 +19446,8 @@
 
     let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
     let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
-    let visited = JSON.parse(localStorage.getItem('visited') || '{}');
 
     let firstStudyListLoad = true;
-    let firstVisitedLoad = true;
     let firstDailyResultsLoad = true;
     let firstHourlyResultsLoad = true;
 
@@ -19461,36 +19455,6 @@
 
     let getStudyResults = function () {
         return studyResults;
-    };
-    let getVisited = function () {
-        return visited;
-    };
-    //note: nodes will be marked visited when the user searches for or taps a node in the graph
-    //for now, avoiding marking nodes visited via clicking a hanzi in an example or card
-    //because in those cases no examples are shown
-    let updateVisited = function (nodes) {
-        for (let i = 0; i < nodes.length; i++) {
-            if (!visited[nodes[i]]) {
-                visited[nodes[i]] = 0;
-            }
-            visited[nodes[i]]++;
-        }
-        if (authenticatedUser) {
-            const db = Lc();
-            const batch = Nh(db);
-            for (let i = 0; i < nodes.length; i++) {
-                batch.set(Dc(db, `users/${authenticatedUser.uid}/visited/${sanitizeKey(nodes[i])}`), { count: Ch(1) }, { merge: true });
-            }
-            batch.commit().then(() => {
-                localStorage.setItem('visitedDirty', false);
-            }).catch((error) => {
-                localStorage.setItem('visitedDirty', true);
-            });
-        } else {
-            localStorage.setItem('visitedDirty', true);
-        }
-        localStorage.setItem('visited', JSON.stringify(visited));
-        callbacks[dataTypes.visited].forEach(x => x(visited));
     };
 
     let registerCallback = function (dataType, callback) {
@@ -19734,30 +19698,6 @@
     let sanitizeKey = function (key) {
         return key.replaceAll('.', '。').replaceAll('#', '').replaceAll('$', 'USD').replaceAll('/', '').replaceAll('[', '').replaceAll(']', '');
     };
-    // todo combine
-    let overwriteVisitedKeys = function (keys) {
-        const db = Lc();
-        let batch = Nh(db);
-        let count = 0;
-        for (let i = 0; i < keys.length; i++) {
-            count++;
-            batch.set(Dc(db, `users/${authenticatedUser.uid}/visited/${sanitizeKey(keys[i])}`), { count: visited[keys[i]] }, { merge: true });
-            if (count == MAX_BATCH_SIZE) {
-                batch.commit().then(() => {
-                    localStorage.setItem('visitedDirty', false);
-                }).catch((error) => {
-                    localStorage.setItem('visitedDirty', true);
-                });
-                count = 0;
-                batch = Nh(db);
-            }
-        }
-        batch.commit().then(() => {
-            localStorage.setItem('visitedDirty', false);
-        }).catch((error) => {
-            localStorage.setItem('visitedDirty', true);
-        });
-    };
     let overwriteHourlyResultKeys = function (keys) {
         const db = Lc();
         const batch = Nh(db);
@@ -19884,58 +19824,6 @@
                         if (madeUpdates) {
                             callbacks[dataTypes.studyList].forEach(x => x(studyList));
                         }
-                    }
-                });
-                Eh(Vc(db, `users/${authenticatedUser.uid}/visited`), (doc) => {
-                    // if hasPendingWrites is true, we're getting a notification for our own write; ignore
-                    let visitedDirty = JSON.parse(localStorage.getItem('visitedDirty') || "false");
-                    if (!doc.metadata.hasPendingWrites) {
-                        let wasFirstLoad = false;
-                        if (firstVisitedLoad) {
-                            firstVisitedLoad = false;
-                            wasFirstLoad = true;
-                        }
-                        let serverVisited = {};
-                        for (const item of doc.docChanges()) {
-                            // no support for deleting visited nodes, currently
-                            if (item.type === 'added' || item.type === 'modified') {
-                                serverVisited[item.doc.id] = item.doc.data().count;
-                            }
-                        }
-                        if (visitedDirty) {
-                            // we made updates that weren't written to the server
-                            // (which can happen due to being signed out, etc.)
-                            // if it's the first load, then we need to figure out which ones the server doesn't have
-                            // if it's not the first load, just take the larger of local and server and save if necessary
-                            let updatedKeys = [];
-                            if (wasFirstLoad) {
-                                // TODO maybe just do this if server doesn't have it
-                                // that simplifies things...server wins, but if it has no record, then write it
-                                for (const [key, value] of Object.entries(visited)) {
-                                    if (!serverVisited[key] || serverVisited[key] < value) {
-                                        // we have something the server doesn't know about
-                                        updatedKeys.push(key);
-                                    }
-                                }
-                            }
-                            // whether first load or not, take the server's value if we can
-                            // or overwrite if local is larger
-                            for (const [key, value] of Object.entries(serverVisited)) {
-                                if (!visited[key] || visited[key] <= value) {
-                                    visited[key] = value;
-                                } else {
-                                    //key is in visited, and its value is strictly greater than the server sent
-                                    updatedKeys.push(key);
-                                }
-                            }
-                            overwriteVisitedKeys(updatedKeys);
-                        } else {
-                            // we have no updates; server wins
-                            for (const [key, value] of Object.entries(serverVisited)) {
-                                visited[key] = value;
-                            }
-                        }
-                        callbacks[dataTypes.visited].forEach(x => x(visited));
                     }
                 });
                 // TODO: combine hourly and daily
@@ -24919,7 +24807,7 @@
         contextHolder.className = 'context';
         [...word].forEach(x => {
             let cardData = getCardPerformance(x);
-            contextHolder.innerText += `You've seen ${x} ${getVisited()[x] || 0} times. It's in ${cardData.count} flash cards (${cardData.performance}% correct). `;
+            contextHolder.innerText += `${x} is in ${cardData.count} flash cards (${cardData.performance}% correct). `;
         });
         let contextFaqLink = document.createElement('a');
         contextFaqLink.className = 'active-link';
@@ -25230,7 +25118,6 @@
             currentMode = ((event.detail.mode === modes$1.components) ? modes$1.components : modes$1.explore);
             hanziBox.value = event.detail.display || event.detail.words[0];
             setupExamples(event.detail.words, event.detail.type || 'chinese', event.detail.skipState);
-            updateVisited(event.detail.words);
             if (currentMode === modes$1.components) {
                 switchToTab('tab-components', currentTabs);
             }
@@ -25559,7 +25446,6 @@
     const addedCalendarDetail = document.getElementById('added-calendar-detail');
     const studyCalendarDetail = document.getElementById('study-calendar-detail');
     const studyGraphDetail = document.getElementById('studied-graph-detail');
-    const visitedGraphDetail = document.getElementById('visited-graph-detail');
 
     let lastLevelUpdatePrefix = '';
     let shown = false;
@@ -25750,7 +25636,7 @@
         Object.keys(hanzi).forEach(x => {
             let level = hanzi[x].node.level;
             if (!(level in totalsByLevel)) {
-                totalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), characters: new Set() };
+                totalsByLevel[level] = { seen: new Set(), total: 0, characters: new Set() };
             }
             totalsByLevel[level].total++;
             totalsByLevel[level].characters.add(x);
@@ -25882,43 +25768,6 @@
             left: document.getElementById('added-calendar-today').offsetLeft
         });
     };
-    let createVisitedGraphs = function (visitedCharacters, legend) {
-        if (!visitedCharacters) {
-            return;
-        }
-        Object.keys(visitedCharacters).forEach(x => {
-            if (hanzi[x]) {
-                const level = hanzi[x].node.level;
-                totalsByLevel[level].visited.add(x);
-            }
-        });
-        let levelData = [];
-        //safe since we don't add keys in the read of /decks/
-        Object.keys(totalsByLevel).sort().forEach(x => {
-            levelData.push({
-                count: totalsByLevel[x].visited.size || 0,
-                total: totalsByLevel[x].total
-            });
-        });
-        const visitedGraph = document.getElementById('visited-graph');
-        visitedGraph.innerHTML = '';
-        visitedGraph.appendChild(
-            BarChart(levelData, {
-                labelText: (i) => legend[i],
-                color: () => "#68aaee",
-                clickHandler: function (i) {
-                    BarChartClickHandler(
-                        visitedGraphDetail,
-                        totalsByLevel,
-                        'visited',
-                        i,
-                        `In ${legend[i]}, you haven't yet visited:<br>`
-                    );
-                }
-            })
-        );
-        document.getElementById('visited-container').removeAttribute('style');
-    };
 
     let createStudyResultGraphs = function (results) {
         let hourlyData = [];
@@ -26045,7 +25894,6 @@
             }
             switchToState(stateKeys.stats);
             shown = true;
-            createVisitedGraphs(getVisited(), activeGraph.legend);
             createCardGraphs(getStudyList(), activeGraph.legend);
             createStudyResultGraphs(getStudyResults(), activeGraph.legend);
         });
@@ -26057,7 +25905,6 @@
             }
             studyGraphDetail.innerText = '';
             addedCalendarDetail.innerText = '';
-            visitedGraphDetail.innerText = '';
             studyCalendarDetail.innerText = '';
             hourlyGraphDetail.innerText = '';
         });
