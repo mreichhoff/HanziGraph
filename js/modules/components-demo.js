@@ -419,6 +419,7 @@ function renderDefinitions(character, container) {
 function renderComponents(word, container) {
     container.innerHTML = '';
     walkthrough.style.display = 'none';
+    notFoundElement.style.display = 'none';
     let first = true;
     for (const character of word) {
         let item = document.createElement('div');
@@ -469,7 +470,6 @@ function renderData(characters) {
         notFoundElement.removeAttribute('style');
         return;
     }
-    notFoundElement.style.display = 'none';
     renderComponents(eligibleCharacters, container);
     buildComponentTree(eligibleCharacters[0]);
 }

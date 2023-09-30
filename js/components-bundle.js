@@ -405,6 +405,7 @@
     function renderComponents(word, container) {
         container.innerHTML = '';
         walkthrough.style.display = 'none';
+        notFoundElement.style.display = 'none';
         let first = true;
         for (const character of word) {
             let item = document.createElement('div');
@@ -455,7 +456,6 @@
             notFoundElement.removeAttribute('style');
             return;
         }
-        notFoundElement.style.display = 'none';
         renderComponents(eligibleCharacters, container);
         buildComponentTree(eligibleCharacters[0]);
     }
