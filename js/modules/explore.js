@@ -1,5 +1,5 @@
 import { faqTypes, showFaq } from "./faq.js";
-import { updateVisited, writeExploreState, getVisited, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
+import { writeExploreState, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
@@ -255,7 +255,7 @@ let renderContext = function (word, container) {
     contextHolder.className = 'context';
     [...word].forEach(x => {
         let cardData = getCardPerformance(x);
-        contextHolder.innerText += `You've seen ${x} ${getVisited()[x] || 0} times. It's in ${cardData.count} flash cards (${cardData.performance}% correct). `;
+        contextHolder.innerText += `${x} is in ${cardData.count} flash cards (${cardData.performance}% correct). `;
     });
     let contextFaqLink = document.createElement('a');
     contextFaqLink.className = 'active-link';
@@ -553,7 +553,6 @@ let initialize = function () {
         currentMode = ((event.detail.mode === modes.components) ? modes.components : modes.explore);
         hanziBox.value = event.detail.display || event.detail.words[0];
         setupExamples(event.detail.words, event.detail.type || 'chinese');
-        updateVisited(event.detail.words);
         if (currentMode === modes.components) {
             switchToTab('tab-components', currentTabs);
         }

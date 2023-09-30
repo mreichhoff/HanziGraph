@@ -227,12 +227,10 @@
     };
 
     const dataTypes = {
-        visited: 'visited',
         studyList: 'studyList',
         studyResults: 'studyResults'
     };
     let callbacks = {
-        visited: [],
         studyList: [],
         studyResults: []
     };
@@ -250,28 +248,9 @@
 
     let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
     let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
-    let visited = JSON.parse(localStorage.getItem('visited') || '{}');
 
     let getStudyResults = function () {
         return studyResults;
-    };
-    let getVisited = function () {
-        return visited;
-    };
-    //note: nodes will be marked visited when the user searches for or taps a node in the graph
-    //for now, avoiding marking nodes visited via clicking a hanzi in an example or card
-    //because in those cases no examples are shown
-    let updateVisited = function (nodes) {
-        for (let i = 0; i < nodes.length; i++) {
-            for (let j = 0; j < nodes[i].length; j++) {
-                if (!visited[nodes[i][j]]) {
-                    visited[nodes[i][j]] = 0;
-                }
-                visited[nodes[i][j]]++;
-            }
-        }
-        localStorage.setItem('visited', JSON.stringify(visited));
-        callbacks[dataTypes.visited].forEach(x => x(visited));
     };
 
     let registerCallback = function (dataType, callback) {
@@ -5267,7 +5246,7 @@
         contextHolder.className = 'context';
         [...word].forEach(x => {
             let cardData = getCardPerformance(x);
-            contextHolder.innerText += `You've seen ${x} ${getVisited()[x] || 0} times. It's in ${cardData.count} flash cards (${cardData.performance}% correct). `;
+            contextHolder.innerText += `${x} is in ${cardData.count} flash cards (${cardData.performance}% correct). `;
         });
         let contextFaqLink = document.createElement('a');
         contextFaqLink.className = 'active-link';
@@ -5565,7 +5544,6 @@
             currentMode = ((event.detail.mode === modes$1.components) ? modes$1.components : modes$1.explore);
             hanziBox.value = event.detail.display || event.detail.words[0];
             setupExamples(event.detail.words, event.detail.type || 'chinese');
-            updateVisited(event.detail.words);
             if (currentMode === modes$1.components) {
                 switchToTab('tab-components', currentTabs);
             }
@@ -5895,7 +5873,6 @@
     const addedCalendarDetail = document.getElementById('added-calendar-detail');
     const studyCalendarDetail = document.getElementById('study-calendar-detail');
     const studyGraphDetail = document.getElementById('studied-graph-detail');
-    const visitedGraphDetail = document.getElementById('visited-graph-detail');
 
     let lastLevelUpdatePrefix = '';
     let shown = false;
@@ -6086,7 +6063,7 @@
         Object.keys(hanzi).forEach(x => {
             let level = hanzi[x].node.level;
             if (!(level in totalsByLevel)) {
-                totalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), characters: new Set() };
+                totalsByLevel[level] = { seen: new Set(), total: 0, characters: new Set() };
             }
             totalsByLevel[level].total++;
             totalsByLevel[level].characters.add(x);
@@ -6218,43 +6195,6 @@
             left: document.getElementById('added-calendar-today').offsetLeft
         });
     };
-    let createVisitedGraphs = function (visitedCharacters, legend) {
-        if (!visitedCharacters) {
-            return;
-        }
-        Object.keys(visitedCharacters).forEach(x => {
-            if (hanzi[x]) {
-                const level = hanzi[x].node.level;
-                totalsByLevel[level].visited.add(x);
-            }
-        });
-        let levelData = [];
-        //safe since we don't add keys in the read of /decks/
-        Object.keys(totalsByLevel).sort().forEach(x => {
-            levelData.push({
-                count: totalsByLevel[x].visited.size || 0,
-                total: totalsByLevel[x].total
-            });
-        });
-        const visitedGraph = document.getElementById('visited-graph');
-        visitedGraph.innerHTML = '';
-        visitedGraph.appendChild(
-            BarChart(levelData, {
-                labelText: (i) => legend[i],
-                color: () => "#68aaee",
-                clickHandler: function (i) {
-                    BarChartClickHandler(
-                        visitedGraphDetail,
-                        totalsByLevel,
-                        'visited',
-                        i,
-                        `In ${legend[i]}, you haven't yet visited:<br>`
-                    );
-                }
-            })
-        );
-        document.getElementById('visited-container').removeAttribute('style');
-    };
 
     let createStudyResultGraphs = function (results) {
         let hourlyData = [];
@@ -6381,7 +6321,6 @@
             }
             switchToState(stateKeys.stats);
             shown = true;
-            createVisitedGraphs(getVisited(), activeGraph.legend);
             createCardGraphs(getStudyList(), activeGraph.legend);
             createStudyResultGraphs(getStudyResults(), activeGraph.legend);
         });
@@ -6393,7 +6332,6 @@
             }
             studyGraphDetail.innerText = '';
             addedCalendarDetail.innerText = '';
-            visitedGraphDetail.innerText = '';
             studyCalendarDetail.innerText = '';
             hourlyGraphDetail.innerText = '';
         });

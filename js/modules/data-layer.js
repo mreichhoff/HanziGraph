@@ -1,10 +1,8 @@
 const dataTypes = {
-    visited: 'visited',
     studyList: 'studyList',
     studyResults: 'studyResults'
 };
 let callbacks = {
-    visited: [],
     studyList: [],
     studyResults: []
 };
@@ -23,10 +21,8 @@ const MAX_BATCH_SIZE = 500;
 
 let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
 let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
-let visited = JSON.parse(localStorage.getItem('visited') || '{}');
 
 let firstStudyListLoad = true;
-let firstVisitedLoad = true;
 let firstDailyResultsLoad = true;
 let firstHourlyResultsLoad = true;
 
@@ -34,24 +30,6 @@ let authenticatedUser = null;
 
 let getStudyResults = function () {
     return studyResults;
-};
-let getVisited = function () {
-    return visited;
-};
-//note: nodes will be marked visited when the user searches for or taps a node in the graph
-//for now, avoiding marking nodes visited via clicking a hanzi in an example or card
-//because in those cases no examples are shown
-let updateVisited = function (nodes) {
-    for (let i = 0; i < nodes.length; i++) {
-        for (let j = 0; j < nodes[i].length; j++) {
-            if (!visited[nodes[i][j]]) {
-                visited[nodes[i][j]] = 0;
-            }
-            visited[nodes[i][j]]++;
-        }
-    }
-    localStorage.setItem('visited', JSON.stringify(visited));
-    callbacks[dataTypes.visited].forEach(x => x(visited));
 };
 
 let registerCallback = function (dataType, callback) {
@@ -249,4 +227,4 @@ let writeExploreState = function (words) {
 
 let initialize = function () { };
 
-export { readExploreState, writeExploreState, readOptionState, writeOptionState, getVisited, updateVisited, registerCallback, saveStudyList, addCards, inStudyList, getCardPerformance, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }
+export { readExploreState, writeExploreState, readOptionState, writeOptionState, registerCallback, saveStudyList, addCards, inStudyList, getCardPerformance, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }
