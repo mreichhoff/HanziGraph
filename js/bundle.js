@@ -185,47 +185,6 @@
         });
     }
 
-    const faqContainer = document.getElementById('faq-container');
-    const faqStudyMode = document.getElementById('faq-study-mode');
-    const faqFlow = document.getElementById('faq-flow');
-    const faqContext = document.getElementById('faq-context');
-    const faqGeneral = document.getElementById('faq-general');
-    const showStudyFaq = document.getElementById('show-study-faq');
-    const showGeneralFaq = document.getElementById('show-general-faq');
-
-    //TODO should combine with faqTypes
-    const faqTypesToElement = {
-        studyMode: faqStudyMode,
-        context: faqContext,
-        general: faqGeneral,
-        flow: faqFlow
-    };
-    const faqTypes = {
-        studyMode: 'studyMode',
-        context: 'context',
-        general: 'general',
-        flow: 'flow'
-    };
-
-    let showFaq = function (faqType) {
-        switchToState(stateKeys.faq);
-        faqTypesToElement[faqType].removeAttribute('style');
-    };
-
-    let initialize$7 = function () {
-        faqContainer.addEventListener('hidden', function () {
-            Object.values(faqTypesToElement).forEach(x => {
-                x.style.display = 'none';
-            });
-        });
-        showStudyFaq.addEventListener('click', function () {
-            showFaq(faqTypes.studyMode);
-        });
-        showGeneralFaq.addEventListener('click', function () {
-            showFaq(faqTypes.general);
-        });
-    };
-
     const dataTypes = {
         studyList: 'studyList',
         studyResults: 'studyResults'
@@ -351,22 +310,6 @@
 
     let inStudyList = function (text) {
         return studyList[text];
-    };
-
-    let getCardPerformance = function (character) {
-        let count = 0;
-        let correct = 0;
-        let incorrect = 0;
-        //TODO: if performance becomes an issue, we can pre-compute this
-        //as-is, it performs fine even with larger flashcard decks
-        Object.keys(studyList || {}).forEach(x => {
-            if (x.indexOf(character) >= 0) {
-                count++;
-                correct += studyList[x].rightCount;
-                incorrect += studyList[x].wrongCount;
-            }
-        });
-        return { count: count, performance: Math.round(100 * correct / ((correct + incorrect) || 1)) };
     };
 
     let getStudyList = function () {
@@ -652,7 +595,7 @@
             togglePinyinLabel.innerText = `Turn on ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
         }
     }
-    function initialize$6() {
+    function initialize$7() {
         graphSelector.addEventListener('change', switchGraph);
         showPinyinCheckbox.addEventListener('change', function () {
             setTranscriptionLabel();
@@ -5240,26 +5183,7 @@
         });
         container.appendChild(wordHolder);
     };
-    let renderContext = function (word, container) {
-        let contextHolder = document.createElement('p');
-        //TODO not so thrilled with 'context' as the name here
-        contextHolder.className = 'context';
-        [...word].forEach(x => {
-            let cardData = getCardPerformance(x);
-            contextHolder.innerText += `${x} is in ${cardData.count} flash cards (${cardData.performance}% correct). `;
-        });
-        let contextFaqLink = document.createElement('a');
-        contextFaqLink.className = 'active-link';
-        contextFaqLink.textContent = "Learn more.";
-        contextFaqLink.addEventListener('click', function () {
-            showFaq(faqTypes.context);
-        });
-        let contextFaqContainer = document.createElement('p');
-        contextFaqContainer.classList.add('context-line');
-        contextFaqContainer.appendChild(contextFaqLink);
-        contextHolder.appendChild(contextFaqContainer);
-        container.appendChild(contextHolder);
-    };
+
     let renderExamples = function (word, examples, maxExamples, container) {
         let exampleList = document.createElement('ul');
         exampleList.classList.add('examples');
@@ -5279,7 +5203,6 @@
         renderExamples(word, examples, maxExamples, container);
     };
     let renderStats = function (word, container) {
-        renderContext(word, container);
         let wordFreqHeader = document.createElement('h3');
         wordFreqHeader.classList.add('explore-stat-header');
         wordFreqHeader.innerText = 'Word Frequency Stats';
@@ -5536,7 +5459,7 @@
             coverageGraph = null;
         }
     };
-    let initialize$5 = function () {
+    let initialize$6 = function () {
         // Note: github pages rewrites are only possible via a 404 hack,
         // so removing the history API integration on the main branch.
         //TODO(refactor): show study when it was the last state
@@ -5613,6 +5536,47 @@
         container.appendChild(sentenceContainer);
         return anchorList;
     }
+
+    const faqContainer = document.getElementById('faq-container');
+    const faqStudyMode = document.getElementById('faq-study-mode');
+    const faqFlow = document.getElementById('faq-flow');
+    const faqContext = document.getElementById('faq-context');
+    const faqGeneral = document.getElementById('faq-general');
+    const showStudyFaq = document.getElementById('show-study-faq');
+    const showGeneralFaq = document.getElementById('show-general-faq');
+
+    //TODO should combine with faqTypes
+    const faqTypesToElement = {
+        studyMode: faqStudyMode,
+        context: faqContext,
+        general: faqGeneral,
+        flow: faqFlow
+    };
+    const faqTypes = {
+        studyMode: 'studyMode',
+        context: 'context',
+        general: 'general',
+        flow: 'flow'
+    };
+
+    let showFaq = function (faqType) {
+        switchToState(stateKeys.faq);
+        faqTypesToElement[faqType].removeAttribute('style');
+    };
+
+    let initialize$5 = function () {
+        faqContainer.addEventListener('hidden', function () {
+            Object.values(faqTypesToElement).forEach(x => {
+                x.style.display = 'none';
+            });
+        });
+        showStudyFaq.addEventListener('click', function () {
+            showFaq(faqTypes.studyMode);
+        });
+        showGeneralFaq.addEventListener('click', function () {
+            showFaq(faqTypes.general);
+        });
+    };
 
     const studyContainer = document.getElementById('study-container');
 
@@ -8214,10 +8178,10 @@
 
     Promise.all(dataLoads).then(_ => {
         initialize$8();
-        initialize$6();
+        initialize$7();
         initialize$2();
         initialize$4();
-        initialize$5();
+        initialize$6();
         initialize$1();
         hanziSearchForm.addEventListener('submit', function (event) {
             event.preventDefault();
@@ -8240,7 +8204,7 @@
         }
         // These happen last due to being secondary functionality
         initialize$3();
-        initialize$7();
+        initialize$5();
         initialize();
     });
 

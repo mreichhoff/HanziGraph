@@ -132,22 +132,6 @@ let inStudyList = function (text) {
     return studyList[text];
 };
 
-let getCardPerformance = function (character) {
-    let count = 0;
-    let correct = 0;
-    let incorrect = 0;
-    //TODO: if performance becomes an issue, we can pre-compute this
-    //as-is, it performs fine even with larger flashcard decks
-    Object.keys(studyList || {}).forEach(x => {
-        if (x.indexOf(character) >= 0) {
-            count++;
-            correct += studyList[x].rightCount;
-            incorrect += studyList[x].wrongCount;
-        }
-    });
-    return { count: count, performance: Math.round(100 * correct / ((correct + incorrect) || 1)) };
-};
-
 let getStudyList = function () {
     return studyList;
 }
@@ -227,4 +211,4 @@ let writeExploreState = function (words) {
 
 let initialize = function () { };
 
-export { readExploreState, writeExploreState, readOptionState, writeOptionState, registerCallback, saveStudyList, addCards, inStudyList, getCardPerformance, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }
+export { readExploreState, writeExploreState, readOptionState, writeOptionState, registerCallback, saveStudyList, addCards, inStudyList, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }

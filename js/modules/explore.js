@@ -1,5 +1,4 @@
-import { faqTypes, showFaq } from "./faq.js";
-import { writeExploreState, addCards, inStudyList, getCardPerformance } from "./data-layer.js";
+import { writeExploreState, addCards, inStudyList } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
@@ -249,26 +248,7 @@ let renderWordHeader = function (word, container, active) {
     });
     container.appendChild(wordHolder);
 };
-let renderContext = function (word, container) {
-    let contextHolder = document.createElement('p');
-    //TODO not so thrilled with 'context' as the name here
-    contextHolder.className = 'context';
-    [...word].forEach(x => {
-        let cardData = getCardPerformance(x);
-        contextHolder.innerText += `${x} is in ${cardData.count} flash cards (${cardData.performance}% correct). `;
-    });
-    let contextFaqLink = document.createElement('a');
-    contextFaqLink.className = 'active-link';
-    contextFaqLink.textContent = "Learn more.";
-    contextFaqLink.addEventListener('click', function () {
-        showFaq(faqTypes.context);
-    });
-    let contextFaqContainer = document.createElement('p');
-    contextFaqContainer.classList.add('context-line');
-    contextFaqContainer.appendChild(contextFaqLink);
-    contextHolder.appendChild(contextFaqContainer);
-    container.appendChild(contextHolder);
-};
+
 let renderExamples = function (word, examples, maxExamples, container) {
     let exampleList = document.createElement('ul');
     exampleList.classList.add('examples');
@@ -288,7 +268,6 @@ let renderMeaning = function (word, definitionList, examples, maxExamples, conta
     renderExamples(word, examples, maxExamples, container);
 };
 let renderStats = function (word, container) {
-    renderContext(word, container);
     let wordFreqHeader = document.createElement('h3');
     wordFreqHeader.classList.add('explore-stat-header');
     wordFreqHeader.innerText = 'Word Frequency Stats';
