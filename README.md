@@ -22,7 +22,10 @@ The nodes and edges (more than 100,000 in all) have data associated with them.
 
 
 
-https://github.com/mreichhoff/HanziGraph/assets/17800817/03812ce4-d0b0-48a8-935a-5f9ac156c8e6
+
+https://github.com/mreichhoff/HanziGraph/assets/17800817/98f27939-9f11-48b6-9723-930e02d01d7c
+
+
 
 
 
