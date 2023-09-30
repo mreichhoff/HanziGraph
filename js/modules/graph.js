@@ -253,20 +253,18 @@ function getStylesheet() {
                 'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
                 'text-background-opacity': '1',
                 'text-background-shape': 'round-rectangle',
+                'text-background-padding': '1px',
                 'text-events': 'yes'
             }
         }
     ];
-    if (isTree || isTones) {
-        result[1].style['color'] = '#fff';
-        result[1].style['text-background-color'] = '#000';
-        result[1].style['text-background-padding'] = '1px';
-        result[1].style['text-background-shape'] = 'rectangle';
-    }
     if (isTree) {
         result[1].style.width = '3px';
+        result[1].style['color'] = '#fff';
+        result[1].style['text-background-color'] = '#000';
         result[1].style['text-background-padding'] = '2px';
         result[1].style['arrow-scale'] = '0.65';
+        result[1].style['text-background-shape'] = 'rectangle';
         result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
     }
     return result;
