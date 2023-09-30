@@ -405,6 +405,7 @@
     function renderComponents(word, container, skipState) {
         container.innerHTML = '';
         walkthrough.style.display = 'none';
+        notFoundElement.style.display = 'none';
         let first = true;
         if (!skipState) {
             const joinedWord = word.join('');
@@ -464,7 +465,6 @@
             notFoundElement.removeAttribute('style');
             return;
         }
-        notFoundElement.style.display = 'none';
         renderComponents(eligibleCharacters, container, skipState);
         buildComponentTree(eligibleCharacters[0]);
     }
