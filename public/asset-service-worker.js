@@ -1,4 +1,4 @@
-const cacheName = 'hanzigraph-7073a1e632f65bc4d85e816455c4ddd7b2a86c03';
+const cacheName = 'hanzigraph-490745242f296da77c21c5080edd7f8bc3e5aed3';
 self.addEventListener('fetch', (e) => {
     if (e.request.method === 'GET' && !e.request.url.includes('firestore')) {
         e.respondWith((async () => {
