@@ -1,4 +1,4 @@
-const maxRecommendations = 6;
+const maxRecommendations = 12;
 let trie = {
     children: {},
     words: []
