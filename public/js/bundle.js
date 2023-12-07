@@ -19992,6 +19992,8 @@
     const graphSelector = document.getElementById('graph-selector');
     const showPinyinCheckbox = document.getElementById('show-pinyin');
     const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
+    const offlineItem = document.getElementById('offline-item');
+    const offlineButton = document.getElementById('offline-button');
 
     let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
     let freqLegend$1 = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
@@ -20072,47 +20074,11 @@
             activeGraphKey = value;
             let activeGraph = graphOptions[activeGraphKey];
             let prefix = activeGraph.prefix;
-            let promises = [];
-            // TODO(refactor): can we combine loading logic here and in main.js?
-            //fetch regardless...allow service worker and/or browser cache to optimize
-            if (activeGraph.type === 'frequency') {
-                promises.push(
-                    fetch(`/data/${prefix}/wordlist.json`)
-                        .then(response => response.json())
-                        .then(function (data) {
-                            window.wordSet = getWordSetFromFrequency(data);
-                            window.hanzi = buildGraphFromFrequencyList(data, activeGraph.ranks);
-                        }));
-            } else if (activeGraph.type === 'test') {
-                promises.push(
-                    fetch(`/data/${prefix}/graph.json`)
-                        .then(response => response.json())
-                        .then(function (data) {
-                            window.hanzi = data;
-                            window.wordSet = getWordLevelsFromGraph(hanzi);
-                        })
-                );
-            }
-            promises.push(
-                fetch(`/data/${prefix}/sentences.json`)
-                    .then(response => response.json())
-                    .then(function (data) {
-                        window.sentences = data;
-                    })
-            );
-            promises.push(
-                fetch(`/data/${prefix}/definitions.json`)
-                    .then(response => response.json())
-                    .then(function (data) {
-                        window.definitions = data;
-                    })
-            );
-            writeOptionState(showPinyinCheckbox.checked, activeGraphKey);
-            setTranscriptionLabel();
-            updateWalkthrough();
-            Promise.all(promises).then(() => {
-                document.dispatchEvent(new CustomEvent('character-set-changed', { detail: activeGraph }));
-            });
+            // just redirect instead of trying to modify data in place.
+            // this also ensures the change is clear to the user (to the extent the initial page is clear)
+            // unfortunately, it also may make offline use slightly worse
+            // TODO: make offline behavior better
+            document.location.href = `/${prefix}`;
         }
     }
 
@@ -20153,6 +20119,88 @@
         }
         setTranscriptionLabel();
         updateWalkthrough();
+        setupMakeOfflineButton();
+    }
+    let loadingIndicatorInterval = null;
+    let iterations = 0;
+
+    function addOfflineEventHandler(offlineButton, registration) {
+        offlineButton.addEventListener('click', function () {
+            offlineButton.innerText = "Loading...";
+            iterations = 0;
+            loadingIndicatorInterval = setInterval(() => {
+                offlineButton.innerText += '.';
+                if (iterations > 100) {
+                    // RIP
+                    // TODO: abortsignal in cache addall to enforce timeout?
+                    clearInterval(loadingIndicatorInterval);
+                }
+            }, 1000);
+            registration.active.postMessage({
+                type: 'getPaths',
+                paths: getPathsForOfflineUse()
+            });
+        }, { once: true });
+    }
+    // TODO: find a better home for this, and make the checks more robust
+    // (e.g., including online check, options for what to cache, quota/space check, etc.)
+    async function setupMakeOfflineButton() {
+        if (!('serviceWorker' in navigator)) {
+            offlineItem.style.display = 'none';
+            return;
+        }
+        // not partitioned, so no need.
+        if (!graphOptions[activeGraphKey].partitionCount) {
+            offlineItem.style.display = 'none';
+            return;
+        }
+        // oh no
+        navigator.serviceWorker.ready.then((registration) => {
+            navigator.serviceWorker.addEventListener('message', (message) => {
+                if (message.data.type === 'checkHasPathsResponse') {
+                    // either tell the user the data is available, or give them the option to download it.
+                    offlineItem.removeAttribute('style');
+                    if (!message.data.result) {
+                        addOfflineEventHandler(offlineButton, registration);
+                    } else {
+                        offlineButton.innerText = "✅ Dictionary cached";
+                    }
+                    return;
+                }
+                if (message.data.type === 'getPathsResponse') {
+                    clearInterval(loadingIndicatorInterval);
+                    if (message.data.result) {
+                        offlineButton.innerText = "✅ Dictionary cached";
+                    } else {
+                        offlineButton.innerText = "Sorry, there was an error. Click to retry.";
+                        addOfflineEventHandler(offlineButton, registration);
+                    }
+                    return;
+                }
+            });
+            registration.active.postMessage({
+                type: 'checkHasPaths',
+                paths: getPathsForOfflineUse()
+            });
+        });
+    }
+    function getPathsForOfflineUse() {
+        const activeGraph = getActiveGraph();
+
+        let paths = [];
+        paths.push(`/data/${activeGraph.prefix}/sentences.json`);
+        paths.push(`/data/${activeGraph.prefix}/definitions.json`);
+        paths.push('/data/components/components.json');
+        paths.push(`/data/${activeGraph.prefix}/wordlist.json`);
+        if (activeGraph.hasCoverage === 'all') {
+            paths.push(`/data/${activeGraph.prefix}/coverage_stats.json`);
+            paths.push(`/data/${activeGraph.prefix}/character_freq_list.json`);
+        }
+        for (let i = 0; i < activeGraph.partitionCount; i++) {
+            paths.push(`/${activeGraph.definitionsAugmentPath}/${i}.json`);
+            paths.push(`/${activeGraph.englishPath}/${i}.json`);
+        }
+        return paths;
     }
     function getSelectedGraph(storedOpts, urlOpts) {
         if (urlOpts && urlOpts.graph) {

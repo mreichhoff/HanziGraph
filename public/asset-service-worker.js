@@ -27,3 +27,66 @@ self.addEventListener("activate", (event) => {
         )
     );
 });
+
+// add code assets to the cache. The user can also indicate they want to make data available offline via postMessage handlers
+self.addEventListener("install", (event) => {
+    event.waitUntil(caches.open(cacheName).then((cache) =>
+        cache.addAll([
+            "/",
+            "/index.html",
+            "/css/hanzi-graph.css",
+            // TODO: inline this
+            "/js/data-load.js",
+            // TODO: add to bundle
+            "/js/external/cytoscape.min.js",
+            "/manifest.json",
+            "/js/bundle.js",
+            "/js/modules/search-suggestions-worker.js",
+        ]),
+    ),
+    );
+});
+
+async function checkHasPaths(event) {
+    const cache = await caches.open(cacheName);
+    const paths = event.data.paths;
+    // returns array length 0 on multiple browsers, even when cached?!
+    // const matches = await cache.matchAll(paths);
+    let result = true;
+    for (const path of paths) {
+        const whyDoesntMatchAllWork = await cache.match(path);
+        if (!whyDoesntMatchAllWork) {
+            result = false;
+            break;
+        }
+    }
+    event.source.postMessage({
+        type: 'checkHasPathsResponse',
+        result
+    });
+}
+async function getPaths(event) {
+    const cache = await caches.open(cacheName);
+    const paths = event.data.paths;
+    let result = true;
+    try {
+        await cache.addAll(paths);
+    } catch (e) {
+        result = false;
+    }
+    event.source.postMessage({
+        type: 'getPathsResponse',
+        result
+    });
+}
+
+self.addEventListener("message", (event) => {
+    if (event.data.type === 'checkHasPaths') {
+        checkHasPaths(event);
+        return;
+    }
+    if (event.data.type === 'getPaths') {
+        getPaths(event);
+        return;
+    }
+});
