@@ -27589,31 +27589,12 @@
         if (!partialSearch || looksLikeEnglish(partialSearch)) {
             clearSuggestions();
         }
-        // if it's just a single character, handle it here.
-        // otherwise, pass it off to the worker and let it decide.
-        if (partialSearch.length === 1 && partialSearch in hanzi) {
-            const words = [partialSearch, ...extractWords(hanzi[partialSearch])];
-            let suggestions = {};
-            suggestions[partialSearch] = words;
-            suggestions['tokenized'] = [];
-            renderSearchSuggestions(partialSearch, suggestions, [partialSearch], searchSuggestionsContainer);
-            return;
-        }
+        // pass it off to the worker and let it decide.
         let tokens = segment(partialSearch, getActiveGraph().locale);
         searchSuggestionsWorker.postMessage({
             type: 'query',
             payload: { query: partialSearch, tokens: tokens }
         });
-    }
-    function extractWords(node) {
-        if (!node.edges) {
-            return [];
-        }
-        let result = new Set();
-        for (const edge of Object.values(node.edges).sort((a, b) => a.level - b.level)) {
-            result.add(...edge.words);
-        }
-        return Array.from(result);
     }
     function handleSuggestions(message) {
         if (!message.data || !message.data.query) {
