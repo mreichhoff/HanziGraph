@@ -277,19 +277,23 @@ ul {
 }
 
 .tone1 {
-    color: var(--tone-1-color)
+    color: var(--tone-1-color);
 }
 
 .tone2 {
-    color: var(--tone-2-color)
+    color: var(--tone-2-color);
 }
 
 .tone3 {
-    color: var(--tone-3-color)
+    color: var(--tone-3-color);
 }
 
 .tone4 {
-    color: var(--tone-4-color)
+    color: var(--tone-4-color);
+}
+
+.tone5 {
+    color: var(--neutral-tone-color);
 }
 
 .word-header.active .clickable {
@@ -564,6 +568,7 @@ ul {
 
 .legend {
     font-size: var(--legend-font-size);
+    font-weight: bold;
     margin: 4px 0 0 0;
     height: var(--legend-height);
     display: flex;
@@ -573,7 +578,6 @@ ul {
 #tone-legend span {
     font-size: 14px;
     margin: 0 6px;
-    font-weight: bold;
 }
 
 #level-container {
