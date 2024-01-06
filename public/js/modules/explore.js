@@ -507,7 +507,7 @@ let setupExamples = function (words, type, skipState) {
         }
         let instructions = document.createElement('p');
         instructions.classList.add('explanation');
-        instructions.innerText = 'There are multiple words. Click one to update the diagram.';
+        instructions.innerText = 'There are multiple words.';
         examplesList.appendChild(instructions);
     }
     let rendered = false;
