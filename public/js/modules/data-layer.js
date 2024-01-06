@@ -161,8 +161,9 @@ let addCards = function (currentExamples, text, languageKey) {
             };
         }
     }
-    addRecallCards(newCards, text, newKeys, languageKey);
-    addClozeCards(newCards, text, newKeys, languageKey);
+    // TODO: just not finding these useful. Make user prefs for them? Or just get rid of them...
+    // addRecallCards(newCards, text, newKeys, languageKey);
+    // addClozeCards(newCards, text, newKeys, languageKey);
     //TODO: remove these keys from /deleted/ to allow re-add
     //update it whenever it changes
     saveStudyList(newKeys, null, true);

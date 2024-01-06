@@ -19399,8 +19399,6 @@
         RECALL: 'recall',
         CLOZE: 'cloze'
     };
-    const MAX_RECALL = 2;
-    const MAX_CLOZE = 2;
     const MAX_BATCH_SIZE = 500;
 
     let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
@@ -19472,56 +19470,6 @@
         }
         saveStudyList([key]);
     };
-    let addRecallCards = function (newCards, text, newKeys, languageKey) {
-        let total = Math.min(MAX_RECALL, newCards.length);
-        for (let i = 0; i < total; i++) {
-            let key = newCards[i].zh.join('') + cardTypes.RECALL;
-            if (!studyList[key] && newCards[i].en) {
-                newKeys.push(key);
-                studyList[key] = {
-                    en: newCards[i].en,
-                    due: Date.now() + newCards.length + i,
-                    zh: newCards[i].zh,
-                    wrongCount: 0,
-                    rightCount: 0,
-                    type: cardTypes.RECALL,
-                    vocabOrigin: text,
-                    language: languageKey || 'zh-CN',
-                    added: Date.now()
-                };
-            }
-        }
-    };
-    // TODO: may be better combined with addRecallCards...
-    let addClozeCards = function (newCards, text, newKeys, languageKey) {
-        let added = 0;
-        for (let i = 0; i < newCards.length; i++) {
-            if (added == MAX_CLOZE) {
-                return;
-            }
-            // don't make cloze cards with the exact text
-            if (newCards[i].zh.join('').length <= text.length) {
-                continue;
-            }
-            let key = newCards[i].zh.join('') + cardTypes.CLOZE;
-            if (!studyList[key] && newCards[i].en) {
-                added++;
-                newKeys.push(key);
-                studyList[key] = {
-                    en: newCards[i].en,
-                    // due after the recognition cards, for some reason
-                    due: Date.now() + newCards.length + i,
-                    zh: newCards[i].zh,
-                    wrongCount: 0,
-                    rightCount: 0,
-                    type: cardTypes.CLOZE,
-                    vocabOrigin: text,
-                    language: languageKey || 'zh-CN',
-                    added: Date.now()
-                };
-            }
-        }
-    };
     let addCards = function (currentExamples, text, languageKey) {
         let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
         let newKeys = [];
@@ -19542,8 +19490,9 @@
                 };
             }
         }
-        addRecallCards(newCards, text, newKeys, languageKey);
-        addClozeCards(newCards, text, newKeys, languageKey);
+        // TODO: just not finding these useful. Make user prefs for them? Or just get rid of them...
+        // addRecallCards(newCards, text, newKeys, languageKey);
+        // addClozeCards(newCards, text, newKeys, languageKey);
         //TODO: remove these keys from /deleted/ to allow re-add
         //update it whenever it changes
         saveStudyList(newKeys, null);

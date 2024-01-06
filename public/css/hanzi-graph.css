@@ -203,11 +203,15 @@ ul {
 
 .add-button {
     color: var(--positive-button-color);
+    /* TODO: skipping variable for now, since this is in one spot only and isn't a broader pattern */
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.word-header .add-button {
     cursor: pointer;
     float: right;
     margin-right: 20px;
-    /* TODO: skipping variable for now, since this is in one spot only and isn't a broader pattern */
-    font-size: 30px;
 }
 
 #graph,
@@ -609,6 +613,10 @@ h2.word-header {
 }
 
 /* TODO(refactor): consolidate these explanation classes */
+#study-explain-container {
+    margin-top: 16px;
+}
+
 .explanation {
     text-align: center;
     margin: 0;
