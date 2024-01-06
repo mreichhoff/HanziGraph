@@ -10,6 +10,14 @@ export default [{
     plugins: [json(), nodeResolve()]
 },
 {
+    input: './public/js/modules/auth.js',
+    output: {
+        file: 'public/js/auth-bundle.js',
+        format: 'iife'
+    },
+    plugins: [json(), nodeResolve()]
+},
+{
     input: 'public/js/modules/components-demo.js',
     output: {
         file: 'public/js/components-bundle.js',
