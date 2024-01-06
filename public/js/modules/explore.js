@@ -102,7 +102,7 @@ let renderPinyinForDefinition = function (pinyin, container) {
     }
 }
 function modifyHeaderTones(definitionList, word) {
-    if (!definitionList) {
+    if (!definitionList || definitionList.length <= 0) {
         return;
     }
     // TODO just send the pinyin on the word set....
