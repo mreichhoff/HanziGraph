@@ -1,4 +1,4 @@
-import { switchToState, stateKeys } from "./ui-orchestrator";
+import { switchToState, stateKeys, diagramKeys, switchDiagramView } from "./ui-orchestrator";
 import { getActiveGraph } from "./options";
 import { parsePinyin, trimTone } from "./pronunciation-parser";
 
@@ -432,6 +432,11 @@ function initialize() {
         buildGraph(event.detail);
     });
     document.addEventListener('components-update', function (event) {
+        // Anytime the components are being rendered, ensure the main diagram is shown.
+        // TODO: could also call this when `components-update` is dispatched. Note that
+        // doing a similar switch on receipt of `graph-update` would not be appropriate
+        // since it doesn't always require a switch.
+        switchDiagramView(diagramKeys.main);
         buildComponentTree(event.detail);
     })
     parent.addEventListener('hidden', function () {

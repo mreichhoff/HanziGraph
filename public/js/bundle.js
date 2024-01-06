@@ -24789,6 +24789,7 @@
                 document.querySelectorAll('.word-header').forEach(x => x.classList.remove('active'));
                 wordHolder.classList.add('active');
             }
+            switchDiagramView(diagramKeys.main);
             document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
         });
         container.appendChild(wordHolder);
@@ -26428,6 +26429,11 @@
             buildGraph(event.detail);
         });
         document.addEventListener('components-update', function (event) {
+            // Anytime the components are being rendered, ensure the main diagram is shown.
+            // TODO: could also call this when `components-update` is dispatched. Note that
+            // doing a similar switch on receipt of `graph-update` would not be appropriate
+            // since it doesn't always require a switch.
+            switchDiagramView(diagramKeys.main);
             buildComponentTree(event.detail);
         });
         parent.addEventListener('hidden', function () {

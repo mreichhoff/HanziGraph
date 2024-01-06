@@ -240,6 +240,7 @@ let renderWordHeader = function (word, container, active) {
             document.querySelectorAll('.word-header').forEach(x => x.classList.remove('active'));
             wordHolder.classList.add('active');
         }
+        switchDiagramView(diagramKeys.main);
         document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
     });
     container.appendChild(wordHolder);
