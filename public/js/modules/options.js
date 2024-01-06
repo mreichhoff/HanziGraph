@@ -143,6 +143,7 @@ function addOfflineEventHandler(offlineButton, registration) {
         iterations = 0;
         loadingIndicatorInterval = setInterval(() => {
             offlineButton.innerText += '.';
+            iterations++;
             if (iterations > 100) {
                 // RIP
                 // TODO: abortsignal in cache addall to enforce timeout?
