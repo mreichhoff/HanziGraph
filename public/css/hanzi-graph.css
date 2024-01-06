@@ -5,7 +5,7 @@
     --primary-font-weight: 300;
     --primary-header-height: 40px;
     --primary-header-font-size: 30px;
-    --secondary-header-font-size: 28px;
+    --secondary-header-font-size: 30px;
     --tertiary-header-font-size: 24px;
     --secondary-control-font-size: 14px;
     --secondary-control-margin: 4px 4px 0 4px;
@@ -45,12 +45,12 @@
     --secondary-input-container-width: 80%;
     --accent-color: black;
     --secondary-accent-color: #d56eaf;
-    --inactive-accent-color: #bb75c8;
+    --inactive-accent-color: #777;
     --secondary-inactive-accent-color: #6a82fb;
     --legend-gradient-start: #fc5c7d;
     --legend-gradient-end: #6a82fb;
     --tone-1-color: #ff635f;
-    --tone-2-color: #7aeb34;
+    --tone-2-color: #66c42b;
     --tone-3-color: #de68ee;
     --tone-4-color: #68aaee;
     --neutral-tone-color: #000;
@@ -296,6 +296,10 @@ ul {
     color: var(--neutral-tone-color);
 }
 
+h2.word-header {
+    font-family: var(--primary-font);
+}
+
 .word-header.active .clickable {
     border-left: 8px solid var(--accent-color);
     transition: border-left-width 0.35s, border-left-color 0.35s;
@@ -304,6 +308,7 @@ ul {
 .word-header .clickable {
     border-left: 2px solid var(--inactive-accent-color);
     padding-left: 6px;
+    padding-top: 4px;
     transition: border-left-width 0.35s, border-left-color 0.35s;
 }
 
@@ -338,6 +343,14 @@ ul {
 
 .definition {
     margin: 6px 0;
+}
+
+.definition .tone1,
+.definition .tone2,
+.definition .tone3,
+.definition .tone4,
+.definition .tone5 {
+    font-weight: bold;
 }
 
 .example {
@@ -941,6 +954,7 @@ main.auth-form {
         --input-background-color: rgba(74, 74, 74, 0.9);
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
+        --tone-2-color: #7aeb34;
         --neutral-tone-color: #aaa;
         --accent-color: #ccc;
     }
@@ -959,7 +973,6 @@ main.auth-form {
 @media (max-width:664px) {
     :root {
         --primary-header-font-size: 26px;
-        --secondary-header-font-size: 24px;
         --secondary-control-margin: 2px 4px 0 4px;
         --tertiary-header-font-size: 22px;
         --primary-header-height: 34px;

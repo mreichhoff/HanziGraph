@@ -24641,7 +24641,31 @@
         });
         container.appendChild(saveToListButton);
     };
-
+    let renderPinyinForDefinition = function (pinyin, container) {
+        const syllables = pinyin.split(' ');
+        for (const syllable of syllables) {
+            let syllableElement = document.createElement('span');
+            syllableElement.classList.add(`tone${syllable[syllable.length - 1]}`);
+            syllableElement.innerText = syllable;
+            container.appendChild(syllableElement);
+        }
+    };
+    function modifyHeaderTones(definitionList, word) {
+        if (!definitionList) {
+            return;
+        }
+        // TODO just send the pinyin on the word set....
+        const wordHolder = document.getElementById(`${word}-header`);
+        const syllables = definitionList[0].pinyin.split(' ');
+        const elementsToModify = wordHolder.querySelectorAll('.word-header-character');
+        if (syllables.length !== elementsToModify.length) {
+            return;
+        }
+        for (let i = 0; i < elementsToModify.length; i++) {
+            const syllable = syllables[i];
+            elementsToModify[i].classList.add(`tone${syllable[syllable.length - 1]}`);
+        }
+    }
     let setupDefinitions = function (definitionList, container) {
         if (!definitionList) {
             return;
@@ -24649,8 +24673,10 @@
         for (let i = 0; i < definitionList.length; i++) {
             let definitionItem = document.createElement('li');
             definitionItem.classList.add('definition');
-            let definitionContent = definitionList[i].pinyin + ': ' + definitionList[i].en;
-            definitionItem.textContent = definitionContent;
+            renderPinyinForDefinition(definitionList[i].pinyin, definitionItem);
+            let englishSpan = document.createElement('span');
+            englishSpan.innerText = `: ${definitionList[i].en}`;
+            definitionItem.appendChild(englishSpan);
             container.appendChild(definitionItem);
         }
     };
@@ -24737,6 +24763,8 @@
                 }
                 let definitionList = data[word] || [];
                 setupDefinitions(definitionList, container);
+                // now that we know the tones of the word/character, modify the header to be color-coded, too.
+                modifyHeaderTones(definitionList, word);
                 // TODO(refactor): should this be moved to setupDefinitions (and same with setupExamples/augmentExamples)?
                 currentExamples[word].push(getCardFromDefinitions(word, definitionList));
             });
@@ -24772,11 +24800,36 @@
         });
         container.appendChild(characterHolder);
     };
+    let renderWordHeaderByCharacter = function (word, container) {
+        const definitionList = definitions[word];
+        let syllables = null;
+        if (definitionList && definitionList[0].pinyin) {
+            syllables = definitionList[0].pinyin.split(' ');
+            if(syllables.length !== word.length) {
+                syllables = null;
+            }
+        }
+        for (let i = 0; i < word.length; i++) {
+            const character = word[i];
+            const charSpan = document.createElement('span');
+            charSpan.innerText = character;
+            // TODO total hack to allow async eval of color coding,
+            // needed since most definitions aren't loaded up front.
+            // could get around this by including pinyin on the word set...
+            charSpan.classList.add('word-header-character');
+            if (syllables) {
+                const syllable = syllables[i];
+                charSpan.classList.add(`tone${syllable[syllable.length - 1]}`);
+            }
+            container.appendChild(charSpan);
+        }
+    };
     let renderWordHeader = function (word, container, active) {
         let wordHolder = document.createElement('h2');
         wordHolder.classList.add('word-header');
         let wordSpan = document.createElement('span');
-        wordSpan.textContent = word;
+        renderWordHeaderByCharacter(word, wordSpan);
+        wordSpan.id = `${word}-header`;
         wordSpan.classList.add('clickable');
         wordHolder.appendChild(wordSpan);
         addTextToSpeech(wordHolder, word, []);
