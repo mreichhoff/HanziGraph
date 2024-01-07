@@ -64,7 +64,8 @@ const graphOptions = {
         locale: 'zh-HK',
         defaultHanzi: ["我", "哥", "路", "細"],
         transcriptionName: 'jyutping',
-        type: 'frequency'
+        type: 'frequency',
+        disableToneColors: true
     }
 };
 let activeGraphKey = 'simplified';

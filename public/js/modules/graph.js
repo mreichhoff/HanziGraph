@@ -162,7 +162,7 @@ function makeLegible(element) {
     // if (tone === '1' || tone === '3' || tone === '4') {
     //     return 'white'; //TODO
     // }
-    if (tone === '5' && !prefersDark && getActiveGraph().transcriptionName !== 'jyutping') {
+    if (tone === '5' && !prefersDark && !getActiveGraph().disableToneColors) {
         return 'white';
     }
     return 'black';
@@ -231,7 +231,7 @@ function getStylesheet() {
         {
             selector: 'node',
             style: {
-                'background-color': (isTones && (getActiveGraph().transcriptionName !== 'jyutping')) ? toneColor : levelColor,
+                'background-color': (isTones) ? toneColor : levelColor,
                 'label': isTree ? 'data(word)' : 'data(id)',
                 'color': isTones ? makeLegible : 'black',
                 'font-size': isTree ? '20px' : '18px',
@@ -403,7 +403,7 @@ let pendingResizeTimeout = null;
 let dirty = null;
 
 function toggleColorCodeVisibility() {
-    if (getActiveGraph().transcriptionName !== 'jyutping') {
+    if (!getActiveGraph().disableToneColors) {
         colorCodeSwitch.removeAttribute('style');
     } else {
         colorCodeMode = colorCodeModes.frequency;

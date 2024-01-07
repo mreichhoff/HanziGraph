@@ -96,13 +96,16 @@ let renderPinyinForDefinition = function (pinyin, container) {
     const syllables = pinyin.split(' ');
     for (const syllable of syllables) {
         let syllableElement = document.createElement('span');
-        syllableElement.classList.add(`tone${syllable[syllable.length - 1]}`);
+        // TODO: could just do this with CSS (.tonewhatever under .canto: no color coding)
+        if (!getActiveGraph().disableToneColors) {
+            syllableElement.classList.add(`tone${syllable[syllable.length - 1]}`);
+        }
         syllableElement.innerText = syllable;
         container.appendChild(syllableElement);
     }
 }
 function modifyHeaderTones(definitionList, word) {
-    if (!definitionList || definitionList.length <= 0) {
+    if (!definitionList || definitionList.length <= 0 || getActiveGraph().disableToneColors) {
         return;
     }
     // TODO just send the pinyin on the word set....
@@ -238,7 +241,7 @@ let renderCharacterHeader = function (character, container) {
     characterSpan.textContent = character;
     characterSpan.classList.add('clickable');
     // TODO: figure out canto here
-    if (getActiveGraph().transcriptionName !== 'jyutping') {
+    if (!getActiveGraph().disableToneColors) {
         characterSpan.classList.add(`tone${getTone(character)}`);
     }
     characterHolder.appendChild(characterSpan);
@@ -256,7 +259,7 @@ let renderWordHeaderByCharacter = function (word, container) {
     let syllables = null;
     if (definitionList && definitionList[0].pinyin) {
         syllables = definitionList[0].pinyin.split(' ');
-        if(syllables.length !== word.length) {
+        if (syllables.length !== word.length) {
             syllables = null;
         }
     }
@@ -268,7 +271,7 @@ let renderWordHeaderByCharacter = function (word, container) {
         // needed since most definitions aren't loaded up front.
         // could get around this by including pinyin on the word set...
         charSpan.classList.add('word-header-character');
-        if (syllables) {
+        if (syllables && !getActiveGraph().disableToneColors) {
             const syllable = syllables[i];
             charSpan.classList.add(`tone${syllable[syllable.length - 1]}`);
         }
@@ -408,7 +411,7 @@ function renderPronunciations(character, container) {
     for (let i = 0; i < pinyinList.length; i++) {
         let definitionItem = document.createElement('li');
         definitionItem.classList.add('pronunciation');
-        if (getActiveGraph().transcriptionName !== 'jyutping') {
+        if (!getActiveGraph().disableToneColors) {
             // TODO: have get tone handle this...currently character level, but shouldn't be
             definitionItem.classList.add(`tone${pinyinList[i][pinyinList[i].length - 1]}`);
         }
