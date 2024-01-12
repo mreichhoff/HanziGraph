@@ -13,6 +13,9 @@ import { initialize as flowDiagramInit } from "./flow-diagram.js";
 import { initialize as dataLayerInit } from "./data-layer.js";
 import { initialize as searchInit, search, looksLikeEnglish } from "./search.js";
 
+// Set to false to enable running more simply, e.g. via running `python3 -m http.server` in public/.
+const USE_FIREBASE = true;
+
 const hanziSearchForm = document.getElementById('hanzi-choose');
 
 function loadState(state) {
@@ -74,9 +77,14 @@ Promise.all(
     dataLoads
 ).then(_ => {
     let urlState = parseUrl(document.location.pathname);
-    firebaseInit();
-    authStateInit();
-    dataLayerInit();
+    // TODO: have firebaseInit return a boolean, skip if false
+    // then just have a no-firebase-config.js that can be substituted
+    // for the prod-like firebase-init.js
+    if (USE_FIREBASE) {
+        firebaseInit();
+        authStateInit();
+        dataLayerInit();
+    }
     orchestratorInit();
     optionsInit();
     graphInit();
