@@ -1,3 +1,4 @@
 node_modules
 raw
 __pycache__
+*debug.log
