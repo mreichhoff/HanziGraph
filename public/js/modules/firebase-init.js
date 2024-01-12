@@ -1,5 +1,8 @@
 import { initializeApp } from "firebase/app";
 
+// This is not sensitive data, but should be
+// moved to environment variables.
+// See https://stackoverflow.com/a/37484053.
 const firebaseConfig = {
     apiKey: "AIzaSyAddUF68m2igTa-JmIblbZUjmx1CE3xwdQ",
     authDomain: "hanzigraph.com",
