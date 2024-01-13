@@ -1,0 +1,19 @@
+name: Deploy to Preview Channel
+
+on:
+  pull_request:
+    paths:
+      - "public/**"
+
+jobs:
+  build_and_preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm ci && npm run build
+      - uses: FirebaseExtended/action-hosting-deploy@v0.7.1
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_HANZIGRAPH }}"
+          expires: 1d
+          projectId: hanzigraph
