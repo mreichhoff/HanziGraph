@@ -3,3 +3,4 @@ raw
 __pycache__
 *debug.log
 .firebaserc
+*bundle.js
