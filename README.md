@@ -4,7 +4,7 @@ HanziGraph is a Chinese/English dictionary and study tool for Chinese language l
 
 It is installable as a standalone [PWA](https://web.dev/progressive-web-apps/), or can be viewed on the web.
 
-Looking for **Japanese**? See `/data/japanese` and the slightly modified web code on [the JapaneseGraph branch](https://github.com/mreichhoff/HanziGraph/tree/JapaneseGraph).
+Looking for **Japanese**? See [the JapaneseGraph branch](https://github.com/mreichhoff/HanziGraph/tree/JapaneseGraph).
 
 ### Features
 
@@ -45,13 +45,7 @@ https://github.com/mreichhoff/HanziGraph/assets/17800817/b4c6abdc-caea-49a1-bd6b
 
 
 
-
-Note that this functionality is also has its own standalone mode.
-
-
-https://github.com/mreichhoff/HanziGraph/assets/17800817/e131345e-33c2-466d-a91f-a91aa9c60a82
-
-
+This mode is also available as [a standalone tool](https://hanzigraph.com/components).
 
 
 #### Word Relationships
@@ -90,23 +84,27 @@ You can learn more via [a discussion on reddit](https://www.reddit.com/r/Chinese
 The tool was also [recommended on the You Can Learn Chinese podcast](https://thechinaproject.com/podcast/the-impact-of-comprehensible-input-on-language-learning-a-deep-dive/). The Japanese version was [recommended by Tofugu](https://www.tofugu.com/japanese/japanese-learning-resources-summer-2022/) and [The Japan Foundation, Sydney](https://mailchi.mp/jpf/jlearner-apr-23).
 
 ## Running the code
-Running the main branch code is intended to be extremely simple. There is no backend; the entire app runs in-browser. Setup is therefore as simple as:
+HanziGraph is a static site hosted on firebase. By default, there's no backend whatsoever, though users can sign in and
+sync their flashcards across devices (via client-side firestore integration).
 
-```bash
-git clone https://github.com/mreichhoff/HanziGraph.git
-cd HanziGraph
-# Assuming python is installed, though any basic web server would do; it's just viewing files.
+To run the static site with no firebase dependencies, one can switch `USE_FIREBASE` to `false` in main.js, then:
+
+```
+npm install && npm run build
+cd public
 python3 -m http.server
 ```
 
-after which you can use the app in your browser, e.g. at `localhost:8000`.
+To run the firebase version locally, one could set up one's own Firebase project via [their quickstart guide](https://firebase.google.com/docs/hosting/quickstart), replace the firebase initialization code, and then use `firebase emulators:start`.
+
+Better build automation is coming soon, which will allow simpler firebase disablement and easier config substitution.
 
 Note that some of the larger data files are partitioned to avoid excessive memory use or network bandwidth (while also avoiding huge numbers of files).
 
 ## Project Status
-The webapp is still a prototype, but it is functional and can be installed as [a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Installing) or used on the web. Note that there is both [a firebase-hosted version](https://hanzigraph.com) and [a github pages site](https://mreichhoff.github.io/HanziGraph/). The latter does not allow cross-device syncing, but is otherwise equivalent (though note that sometimes one or the other is a few commits behind).
+The webapp is still a prototype, but it is functional and can be installed as [a PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Installing) or used on the web.
 
-Note that consolidation of the code for the various datasets (Mandarin, Cantonese, Japanese) is ongoing. Upcoming changes will also begin use of [lit](https://lit.dev) and pay down technical debt.
+Note that consolidation of the code for the various datasets (Mandarin, Cantonese, Japanese) is ongoing. Upcoming changes will also begin use of [lit](https://lit.dev) and pay down technical debt (there's uh...there's *a lot* of technical debt).
 
 ## Acknowledgements
 Sentence and definition data was pulled from:
