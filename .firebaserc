@@ -1,7 +1,0 @@
-{
-  "projects": {
-    "default": "hanzigraph-prototype",
-    "prod": "hanzigraph"
-  },
-  "targets": {}
-}
