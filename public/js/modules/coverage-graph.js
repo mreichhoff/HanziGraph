@@ -1,4 +1,5 @@
 import { map, curveLinear, range, axisBottom, axisLeft, extent, line as d3line, max, create, scaleLinear, scaleSequential } from "d3";
+import { getActiveGraph } from "./options";
 
 function findCoverage(percentages, rank) {
     let min = 0;
@@ -30,13 +31,12 @@ function renderCoverageGraph(percentages, term, rank, type, container) {
     let chart = LineChart(transformedPercentages, {
         x: d => d.x,
         y: d => d.y,
-        yLabel: `Percentage of ${type}s recognized`,
-        xLabel: `Number of ${type}s learned`,
+        yLabel: `% ${type}s recognized`,
+        xLabel: `# ${type}s learned`,
         xDomain: [0, rank],
         yDomain: [0, 1],
         width: container.offsetWidth,
-        // maintain the default aspect ratio 
-        height: (container.offsetWidth / 1.6),
+        height: (container.offsetWidth / 2),
         color: '#68aaee',
         strokeWidth: 2.5,
         yFormat: '%',
@@ -55,15 +55,27 @@ function getOrderingSuffix(number) {
     number = number % 10;
     return number === 1 ? 'st' : number === 2 ? 'nd' : number === 3 ? 'rd' : 'th';
 }
+function getFrequencyLevel(rank, ranks) {
+    for (let i = 0; i < ranks.length; i++) {
+        if (rank < ranks[i]) {
+            return i + 1;
+        }
+    }
+    return ranks.length;
+}
 function renderExplanation(term, coverage, type, rank, container) {
     let rankContainer = document.createElement('p');
     rankContainer.classList.add('coverage-explanation');
-    rankContainer.innerText = `${term} is the ${rank}${getOrderingSuffix(rank)} most common ${type}.`;
+    // TODO: ensure ranks is actually present, and possibly remove it as a concept of the datasets
+    const ranks = getActiveGraph().ranks;
+    const frequencyClass = ranks ? `freq${getFrequencyLevel(rank, ranks)}` : '';
+    // `innerHTML` should be safe since `term` is known to be in `wordSet` and is therefore allowlisted, and the other variables are similarly in our control.
+    rankContainer.innerHTML = `<span class="emphasized-target">${term}</span> is the <span class="emphasized ${frequencyClass}">${rank}${getOrderingSuffix(rank)}</span> most common ${type}.`;
     container.appendChild(rankContainer);
     let explanationContainer = document.createElement('p');
     // TODO(refactor): explanatory text like this should just have a single class
     explanationContainer.classList.add('coverage-explanation');
-    explanationContainer.innerText = `If you learned each ${type} in order of frequency up to "${term}", you'd know approximately ${(coverage * 100).toFixed(1)}% of all ${type}s encountered in speech.`;
+    explanationContainer.innerHTML = `If you learned each ${type} in order of frequency up to <span class="emphasized">${term}</span>, you'd know approximately <span class="emphasized">${(coverage * 100).toFixed(1)}%</span> of all ${type}s encountered in speech.`;
     container.appendChild(explanationContainer);
 }
 
@@ -138,6 +150,8 @@ function LineChart(data, {
             .attr("y", 28)
             .attr("fill", "currentColor")
             .attr("text-anchor", "start")
+            .attr('font-size', '14px')
+            .attr('font-weight', 'bold')
             .text(xLabel));
 
     svg.append("g")
@@ -152,6 +166,8 @@ function LineChart(data, {
             .attr("y", 10)
             .attr("fill", "currentColor")
             .attr("text-anchor", "start")
+            .attr('font-size', '14px')
+            .attr('font-weight', 'bold')
             .text(yLabel));
 
     svg.append("path")
