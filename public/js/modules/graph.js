@@ -132,6 +132,7 @@ function dfs(start, elements, maxDepth, visited, maxEdges) {
         }
     }
 }
+// TODO: keep in sync with frequency classes in css...should move to cytoscape css instead of using this
 const colors = ['#fc5c7d', '#ea6596', '#d56eaf', '#bb75c8', '#9b7ce1', '#6a82fb'];
 function levelColor(element) {
     let level = element.data('level');

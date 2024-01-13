@@ -300,6 +300,40 @@ ul {
     color: var(--neutral-tone-color);
 }
 
+.freq1 {
+    color: #fc5c7d;
+}
+
+.freq2 {
+    color: #ea6596;
+}
+
+.freq3 {
+    color: #d56eaf;
+}
+
+.freq4 {
+    color: #bb75c8;
+}
+
+.freq5 {
+    color: #9b7ce1;
+}
+
+.freq6 {
+    color: #6a82fb;
+}
+
+.emphasized {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.emphasized-target {
+    font-size: 24px;
+    font-weight: bold;
+}
+
 h2.word-header {
     font-family: var(--primary-font);
 }
@@ -368,6 +402,14 @@ h2.word-header {
 
 .coverage-explanation {
     margin: 0 0 6px 0;
+}
+
+.coverage-explanation + svg {
+    margin-top: 6px;
+}
+
+svg + .explore-stat-header {
+    margin-top: 6px;
 }
 
 .suggestions-explanation {
