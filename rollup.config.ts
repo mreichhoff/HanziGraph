@@ -1,5 +1,6 @@
 import json from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import terser from '@rollup/plugin-terser';
 
 export default [{
     input: './public/js/modules/main.js',
@@ -7,7 +8,7 @@ export default [{
         file: 'public/js/bundle.js',
         format: 'iife'
     },
-    plugins: [json(), nodeResolve()]
+    plugins: [json(), nodeResolve(), terser()]
 },
 {
     input: './public/js/modules/auth.js',
@@ -15,7 +16,7 @@ export default [{
         file: 'public/js/auth-bundle.js',
         format: 'iife'
     },
-    plugins: [json(), nodeResolve()]
+    plugins: [json(), nodeResolve(), terser()]
 },
 {
     input: 'public/js/modules/components-demo.js',
@@ -23,5 +24,5 @@ export default [{
         file: 'public/js/components-bundle.js',
         format: 'iife'
     },
-    plugins: [json(), nodeResolve()]
+    plugins: [json(), nodeResolve(), terser()]
 }];
