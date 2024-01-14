@@ -4,6 +4,7 @@ import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
 import { diagramKeys, switchDiagramView } from "./ui-orchestrator.js";
 import { findPinyinRelationships } from "./pronunciation-parser.js"
+import { renderUsageDiagram } from "./flow-diagram.js";
 
 let coverageGraph = {};
 let charFreqs = {};
@@ -504,17 +505,25 @@ function renderExplore(word, container, definitionList, examples, maxExamples, a
     let statsContainer = document.createElement('div');
     statsContainer.classList.add('explore-subpane');
     statsContainer.style.display = 'none';
-    currentTabs = renderTabs(tabs, ['Meaning', 'Components', 'Stats'], [meaningContainer, componentsContainer, statsContainer], [() => { }, () => {
+    let flowContainer = document.createElement('div');
+    flowContainer.classList.add('explore-subpane');
+    flowContainer.style.display = 'none';
+    // TODO: make this smarter
+    currentTabs = renderTabs(tabs, ['Meaning', 'Components', 'Stats', 'Flow'], [meaningContainer, componentsContainer, statsContainer, flowContainer], [() => { }, () => {
         document.dispatchEvent(new CustomEvent('components-update', { detail: word[0] }));
     }, function () {
         statsContainer.innerHTML = '';
         renderStats(word, statsContainer)
-    }], ['slide-in', 'slide-in', 'slide-in']);
+    }, function () {
+        flowContainer.innerHTML = '';
+        renderUsageDiagram(word, flowContainer);
+    }], ['slide-in', 'slide-in', 'slide-in', 'slide-in']);
     container.appendChild(meaningContainer);
     renderMeaning(word, definitionList, examples, maxExamples, meaningContainer);
     renderComponents(word, componentsContainer);
     container.appendChild(componentsContainer);
     container.appendChild(statsContainer);
+    container.appendChild(flowContainer);
 }
 
 let setupExamples = function (words, type, skipState) {
