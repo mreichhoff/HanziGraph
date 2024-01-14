@@ -1,12 +1,7 @@
 import { sankey, sankeyLinkHorizontal, sankeyCenter, sankeyJustify, sankeyRight, sankeyLeft } from "d3-sankey";
 import { map, schemeTableau10, union, scaleOrdinal, format as d3format, create } from "d3";
 import { getPartition, getActiveGraph } from "./options";
-import { diagramKeys, switchDiagramView } from "./ui-orchestrator";
 import { faqTypes, showFaq } from "./faq";
-
-const container = document.getElementById('flow-diagram-container');
-const switchButtonContainer = document.getElementById('graph-switch-container');
-const switchButton = document.getElementById('graph-switch');
 
 function addToTrie(trie, collocation, count, term, maxDepth) {
     let words = collocation.split(' ');
@@ -108,17 +103,75 @@ function getHeight(containerHeight) {
     return Math.min(500, containerHeight - 40);
 }
 
-function renderUsageDiagram(term, collocations, container) {
+let cachedCollocations = {};
+
+// TODO: combine with explore.js
+function getFrequencyLevel(rank, ranks) {
+    for (let i = 0; i < ranks.length; i++) {
+        if (rank < ranks[i]) {
+            return i + 1;
+        }
+    }
+    return ranks.length;
+}
+
+function renderCollocationData(term, collocations, nextSibling, container) {
+    let sorted = Object.entries(collocations).map(x => {
+        return [x[0].split(' '), x[1]];
+    }).sort((a, b) => {
+        if (a[0].length !== b[0].length) {
+            return b[0].length - a[0].length;
+        }
+        return b[1] - a[1];
+    }).slice(0, 3);
+    if (sorted.length <= 0) {
+        // Nothing to see here, move along
+        return;
+    }
+    let description = document.createElement('p');
+    description.className = 'collocations-detail';
+    // TODO: assumption of ranks being present ok for now, but should be switched (well, a couple refactors would be good there)
+    description.innerHTML = `When you see <span class="emphasized freq${getFrequencyLevel(wordSet[term], getActiveGraph().ranks)}">${term}</span>, it's often used with:`;
+    for (const collocation of sorted) {
+        let collocationsContainer = document.createElement('p');
+        collocationsContainer.classList.add('collocation');
+        for (const word of collocation[0]) {
+            let wordHolder = document.createElement('a');
+            wordHolder.classList.add('emphasized', 'navigable', `freq${getFrequencyLevel(wordSet[word], getActiveGraph().ranks)}`);
+            wordHolder.innerText = word;
+            wordHolder.addEventListener('click', function () {
+                document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
+            })
+            collocationsContainer.appendChild(wordHolder);
+        }
+        // collocationsContainer.innerHTML += '...';
+        description.appendChild(collocationsContainer);
+    }
+    container.insertBefore(description, nextSibling);
+}
+
+async function renderUsageDiagram(term, container) {
     container.innerHTML = '';
     let explanation = document.createElement('p');
     // TODO(refactor): consolidate explanation classes
     explanation.classList.add('flow-explanation');
     container.appendChild(explanation);
+    explanation.innerText = 'Loading...';
+    let count = 0;
+    let loadingIndicator = setInterval(function () {
+        count++;
+        if (count < 20) {
+            explanation.innerText += '.';
+        }
+    }, 500);
+    const collocations = await getCollocations(term);
+    clearInterval(loadingIndicator);
     if (!collocations) {
         explanation.innerText = `Sorry, we found no data for ${term}`;
         return;
     }
-    explanation.innerText = 'Click any word for examples. ';
+    renderCollocationData(term, collocations, explanation, container);
+    explanation.innerText = 'Click any word to update the diagram. ';
     let faqLink = document.createElement('a');
     faqLink.className = 'active-link';
     faqLink.textContent = "Learn more.";
@@ -143,87 +196,51 @@ function renderUsageDiagram(term, collocations, container) {
         // TODO: not sure this can be done via CSS breakpoints given svg viewport, etc.?
         // should probably also have main be responsible for this instead of reading window directly
         width: Math.min(container.offsetWidth, 1000),
-        height: getHeight(container.offsetHeight),
+        height: Math.min(container.offsetWidth / 1.4, 400),
         nodeLabel: d => elements.labels[d.id],
         nodeAlign: 'center',
         linkTitle: d => `${elements.labels[d.source.id]} ${elements.labels[d.target.id]}: ${d.value}`,
         linkClickHandler: (d, i) => {
             getCollocations(elements.labels[i.id]);
-            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [elements.labels[i.id]] } }));
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: elements.labels[i.id] }));
         },
         fontColor: 'currentColor',
         fontSize: getFontSize(container.offsetWidth),
         nodeStroke: null
     });
-    rendered = true;
     container.appendChild(chart);
 }
-let activeWord = null;
-let activeCollocations = null;
-let showingFlow = false;
-let rendered = false;
 
-function toggleShowButton() {
-    if (!getActiveGraph().collocationsPath) {
-        // gotta use hidden or tone colors gets aligned weird
-        switchButtonContainer.style.visibility = 'hidden';
-    } else {
-        switchButtonContainer.removeAttribute('style');
+async function getCollocations(word) {
+    if (word in cachedCollocations) {
+        return cachedCollocations[word];
+    }
+    const activeGraph = getActiveGraph();
+    try {
+        const response = await fetch(`/${activeGraph.collocationsPath}/${getPartition(word, activeGraph.partitionCount)}.json`);
+        let data = await response.json();
+        if (word in data) {
+            // could cache every collocation in `data`, but will allow service worker cache instead of growing memory that way.
+            cachedCollocations[word] = data[word];
+            return data[word];
+        } else {
+            cachedCollocations[word] = null;
+            return null;
+        }
+    } catch {
+        // Treat errors no differently than missing data.
+        return null;
     }
 }
-function getCollocations(word) {
-    activeWord = word;
-    const activeGraph = getActiveGraph();
-    fetch(`/${activeGraph.collocationsPath}/${getPartition(word, activeGraph.partitionCount)}.json`)
-        .then(response => response.json())
-        .then(data => {
-            if (word != activeWord) {
-                return;
-            }
-            activeCollocations = data[word];
-            if (showingFlow) {
-                renderUsageDiagram(activeWord, activeCollocations, container);
-            }
-        });
-}
-let pendingResizeTimeout = null;
+
 function initialize() {
-    toggleShowButton();
-    document.addEventListener('character-set-changed', toggleShowButton)
     // TODO: should we listen to explore-update in addition to (or instead of) graph-update?
     // not thrilled about the separate listeners, but explore only means hanzi clicks get ignored,
     // and graph only means graph clicks get ignored, and both means duplicate concurrent events
-    document.addEventListener('graph-update', function (event) {
-        getCollocations(event.detail);
-    });
-    document.addEventListener('graph-interaction', function (event) {
-        getCollocations(event.detail);
-    });
-    container.addEventListener('shown', function () {
-        switchButton.innerText = "Flow";
-        showingFlow = true;
-        renderUsageDiagram(activeWord, activeCollocations, container);
-    });
-    window.addEventListener('resize', function () {
-        clearTimeout(pendingResizeTimeout);
-        pendingResizeTimeout = setTimeout(() => {
-            if (showingFlow) {
-                renderUsageDiagram(activeWord, activeCollocations, container);
-            }
-        }, 1000);
-    });
-    container.addEventListener('hidden', function () {
-        showingFlow = false;
-        switchButton.innerText = "Graph";
-    });
-    switchButtonContainer.addEventListener('click', function () {
-        if (!showingFlow) {
-            if (!activeWord) {
-                getCollocations('中文');
-            }
-            switchDiagramView(diagramKeys.flow);
-        } else {
-            switchDiagramView(diagramKeys.main);
+    // The idea here is to pre-fetch the collocations and rely on service worker caching when available.
+    document.addEventListener('explore-update', function (event) {
+        for (const word of event.detail.words) {
+            getCollocations(word);
         }
     });
 }
@@ -390,4 +407,4 @@ function SankeyChart({
     return Object.assign(svg.node(), { scales: { color } });
 }
 
-export { initialize }
+export { initialize, renderUsageDiagram }

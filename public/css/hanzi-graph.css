@@ -233,7 +233,7 @@ ul {
 
 .explore-tabs {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     text-align: center;
     margin: 4px auto;
     border-bottom: var(--border);
@@ -274,6 +274,29 @@ ul {
 
 .character-data a.navigable {
     margin-right: 20px;
+}
+
+.collocations-detail {
+    text-align: center;
+    margin: 6px 0 0 0;
+}
+
+.collocation a:first-of-type::before,
+.collocation a:last-of-type::after {
+    content: '...'
+}
+
+.collocation {
+    margin: 8px 0;
+}
+
+.collocation a {
+    cursor: pointer;
+    margin: 0 6px;
+}
+
+.collocation-root {
+    text-decoration: underline;
 }
 
 .character-data h3 {
@@ -419,11 +442,11 @@ h2.word-header {
     margin: 0 0 6px 0;
 }
 
-.coverage-explanation + svg {
+.coverage-explanation+svg {
     margin-top: 6px;
 }
 
-svg + .explore-stat-header {
+svg+.explore-stat-header {
     margin-top: 6px;
 }
 
