@@ -323,23 +323,30 @@ let renderStats = function (word, container) {
     let wordFreqHeader = document.createElement('h3');
     wordFreqHeader.classList.add('explore-stat-header');
     wordFreqHeader.innerText = 'Word Frequency Stats';
+    let renderedWordFreq = false;
     if (coverageGraph && ('words' in coverageGraph) && (word in wordSet)) {
         container.appendChild(wordFreqHeader);
         renderCoverageGraph(coverageGraph['words'], word, wordSet[word], 'word', container);
+        renderedWordFreq = true;
     }
     let charFreqHeader = document.createElement('h3');
     charFreqHeader.classList.add('explore-stat-header');
     charFreqHeader.innerText = 'Character Frequency Stats';
     container.appendChild(charFreqHeader);
-    let rendered = false;
+    let renderedCharacterFreq = false;
     for (const character of word) {
         if (charFreqs && (character in charFreqs) && coverageGraph && ('chars' in coverageGraph)) {
             renderCoverageGraph(coverageGraph['chars'], character, charFreqs[character], 'character', container);
-            rendered = true;
+            renderedCharacterFreq = true;
         }
     }
-    if (!rendered) {
+    if (!renderedCharacterFreq) {
         charFreqHeader.style.display = 'none';
+    }
+    if (!renderedWordFreq && !renderedCharacterFreq) {
+        let unavailableMessage = document.createElement('p');
+        unavailableMessage.innerText = 'Sorry, no stats found.';
+        container.appendChild(unavailableMessage);
     }
     //TODO(refactor): render the coverage stats, if available
     // if not available, still render the "word ranks X, characters rank Y"
