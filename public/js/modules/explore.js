@@ -3,6 +3,7 @@ import { hanziBox, notFoundElement, walkThrough, examplesList } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
 import { diagramKeys, switchDiagramView } from "./ui-orchestrator.js";
+import { findPinyinRelationships } from "./pronunciation-parser.js"
 
 let coverageGraph = {};
 let charFreqs = {};
@@ -428,6 +429,33 @@ function renderPronunciations(character, container) {
     container.appendChild(definitionElement);
 }
 
+function renderRelatedCharacters(character, relatedCharacters, type, container) {
+    if (relatedCharacters.length === 0) {
+        container.innerText = type === 'compounds' ? 'This character is not a component of others.' : "No components found. Maybe we can't break this down any more.";
+    } else {
+        container.classList.add('related-characters');
+    }
+    for (const relatedCharacter of relatedCharacters) {
+        // TODO: why does order of src and target matter?
+        const pinyinRelationship = type === 'compounds' ? findPinyinRelationships(relatedCharacter, character) : findPinyinRelationships(character, relatedCharacter);
+        const relatedAnchor = document.createElement('a');
+        if (pinyinRelationship) {
+            relatedAnchor.classList.add('nowrap');
+            relatedAnchor.innerHTML = `${relatedCharacter} <span class="pinyin-relationship">(${pinyinRelationship})</span>`;
+        } else {
+            relatedAnchor.innerText = relatedCharacter;
+        }
+        relatedAnchor.classList.add(`tone${getTone(relatedCharacter)}`);
+        if (relatedCharacter in components) {
+            relatedAnchor.classList.add('navigable');
+            relatedAnchor.addEventListener('click', function () {
+                document.dispatchEvent(new CustomEvent('components-update', { detail: relatedCharacter }));
+            });
+        }
+        container.appendChild(relatedAnchor);
+    }
+}
+
 function renderComponents(word, container) {
     let first = true;
     for (const character of word) {
@@ -450,25 +478,14 @@ function renderComponents(word, container) {
         componentsHeader.innerText = 'Components';
         item.appendChild(componentsHeader);
         let componentsContainer = document.createElement('div');
-        const joinedComponents = components[character].components.join('');
-        if (joinedComponents) {
-            componentsContainer.className = 'target';
-            makeComponentsNavigable(joinedComponents, componentsContainer);
-        } else {
-            componentsContainer.innerText = "No components found. Maybe we can't break this down any more.";
-        }
+        renderRelatedCharacters(character, components[character].components, 'components', componentsContainer);
         item.appendChild(componentsContainer);
         let componentsOfHeader = document.createElement('h3');
         componentsOfHeader.innerText = 'Compounds';
         item.appendChild(componentsOfHeader);
         let componentOfContainer = document.createElement('div');
-        const joinedComponentOf = components[character].componentOf.filter(x => x in hanzi).sort((a, b) => hanzi[a].node.level - hanzi[b].node.level).join('');
-        if (joinedComponentOf) {
-            componentOfContainer.className = 'target';
-            makeComponentsNavigable(joinedComponentOf, componentOfContainer);
-        } else {
-            componentOfContainer.innerText = 'This character is not a component of others.'
-        }
+        const compounds = components[character].componentOf.filter(x => x in hanzi).sort((a, b) => hanzi[a].node.level - hanzi[b].node.level);
+        renderRelatedCharacters(character, compounds, 'compounds', componentOfContainer);
         item.appendChild(componentOfContainer);
         container.appendChild(item);
     }
@@ -647,30 +664,5 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
     container.appendChild(sentenceContainer);
     return anchorList;
 };
-// TODO: combine with makeSentenceNavigable, or just drop this, it's not that complicated
-function makeComponentsNavigable(text, container) {
-    let sentenceContainer = document.createElement('span');
-    sentenceContainer.className = "sentence-container";
-
-    let anchorList = [];
-    for (let i = 0; i < text.length; i++) {
-        (function (character) {
-            let a = document.createElement('a');
-            a.textContent = character;
-            if (character in components) {
-                a.className = 'navigable';
-            }
-            a.addEventListener('click', function () {
-                if (character in components) {
-                    document.dispatchEvent(new CustomEvent('components-update', { detail: character }));
-                }
-            });
-            anchorList.push(a);
-            sentenceContainer.appendChild(a);
-        }(text[i]));
-    }
-    container.appendChild(sentenceContainer);
-    return anchorList;
-}
 
 export { initialize, makeSentenceNavigable, addTextToSpeech };

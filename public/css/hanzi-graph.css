@@ -273,11 +273,26 @@ ul {
 }
 
 .character-data a.navigable {
-    margin-right: 12px;
+    margin-right: 20px;
 }
 
 .character-data h3 {
     margin: 8px 0;
+}
+
+.pinyin-relationship {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--primary-font-color);
+}
+
+.related-characters {
+    font-size: 30px;
+    font-weight: var(--target-language-font-weight);
+}
+
+.nowrap {
+    white-space: nowrap;
 }
 
 .tone1 {

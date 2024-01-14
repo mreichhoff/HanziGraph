@@ -1,6 +1,6 @@
 import { switchToState, stateKeys, diagramKeys, switchDiagramView } from "./ui-orchestrator";
 import { getActiveGraph } from "./options";
-import { parsePinyin, trimTone } from "./pronunciation-parser";
+import { parsePinyin, trimTone, findPinyinRelationships } from "./pronunciation-parser";
 
 const parent = document.getElementById('graph-container');
 const graphContainer = document.getElementById('graph');
@@ -190,37 +190,7 @@ function edgeLabel(element) {
     }
     const sourceCharacter = element.data('source')[element.data('source').length - 1];
     const targetCharacter = element.data('target')[element.data('source').length];
-    const sourceDefs = definitions[sourceCharacter];
-    const targetDefs = definitions[targetCharacter];
-    if (!sourceDefs || !targetDefs) {
-        return '';
-    }
-    for (const definition of sourceDefs.filter(x => x.pinyin)) {
-        const srcPinyin = trimTone(definition.pinyin.toLowerCase());
-        const [srcInitial, srcFinal] = parsePinyin(srcPinyin);
-        const targetDefsWithPinyin = targetDefs.filter(x => x.pinyin);
-        // O(n^2), but there's never more than a few definitions.
-        // first pass: check for exact matches (minus tone, already expressed through color)
-        for (const targetDef of targetDefsWithPinyin) {
-            const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
-            if (targetPinyin === srcPinyin) {
-                return targetPinyin;
-            }
-        }
-        // second pass: we didn't find an exact match, so see if there are any initials
-        // or finals that match.
-        for (const targetDef of targetDefsWithPinyin) {
-            const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
-            const [targetInitial, targetFinal] = parsePinyin(targetPinyin);
-            if (targetInitial && (targetInitial === srcInitial)) {
-                return `${targetInitial}-`;
-            }
-            if (targetFinal && (targetFinal === srcFinal)) {
-                return `-${targetFinal}`;
-            }
-        }
-    }
-    return '';
+    return findPinyinRelationships(sourceCharacter, targetCharacter);
 }
 
 function getStylesheet() {

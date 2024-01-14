@@ -83,4 +83,38 @@ function parsePinyin(pinyin) {
     return [initial, final];
 }
 
-export { parsePinyin, trimTone }
+function findPinyinRelationships(sourceCharacter, targetCharacter) {
+    const sourceDefs = definitions[sourceCharacter];
+    const targetDefs = definitions[targetCharacter];
+    if (!sourceDefs || !targetDefs) {
+        return '';
+    }
+    for (const definition of sourceDefs.filter(x => x.pinyin)) {
+        const srcPinyin = trimTone(definition.pinyin.toLowerCase());
+        const [srcInitial, srcFinal] = parsePinyin(srcPinyin);
+        const targetDefsWithPinyin = targetDefs.filter(x => x.pinyin);
+        // O(n^2), but there's never more than a few definitions.
+        // first pass: check for exact matches (minus tone, already expressed through color)
+        for (const targetDef of targetDefsWithPinyin) {
+            const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
+            if (targetPinyin === srcPinyin) {
+                return targetPinyin;
+            }
+        }
+        // second pass: we didn't find an exact match, so see if there are any initials
+        // or finals that match.
+        for (const targetDef of targetDefsWithPinyin) {
+            const targetPinyin = trimTone(targetDef.pinyin.toLowerCase());
+            const [targetInitial, targetFinal] = parsePinyin(targetPinyin);
+            if (targetInitial && (targetInitial === srcInitial)) {
+                return `${targetInitial}-`;
+            }
+            if (targetFinal && (targetFinal === srcFinal)) {
+                return `-${targetFinal}`;
+            }
+        }
+    }
+    return '';
+}
+
+export { parsePinyin, trimTone, findPinyinRelationships }
