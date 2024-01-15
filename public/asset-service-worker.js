@@ -1,5 +1,5 @@
 // TODO: separate caches for code vs data?
-const cacheName = 'hanzigraph-f016177cb660846e54ae7e4f72a1c478d9390b7a';
+const cacheName = 'hanzigraph-8f7c0b12b3139935a95a94f7a037fa6bec9c01a0';
 self.addEventListener('fetch', (e) => {
     if (e.request.method === 'GET' && !e.request.url.includes('firestore')) {
         e.respondWith((async () => {
