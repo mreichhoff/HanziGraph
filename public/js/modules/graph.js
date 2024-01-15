@@ -4,7 +4,8 @@ import { parsePinyin, trimTone, findPinyinRelationships } from "./pronunciation-
 
 const parent = document.getElementById('graph-container');
 const graphContainer = document.getElementById('graph');
-const colorCodeSwitch = document.getElementById('color-code-switch');
+const switchToFreq = document.getElementById('switch-to-freq-legend');
+const switchToTones = document.getElementById('switch-to-tone-legend');
 
 const freqLegend = document.getElementById('freq-legend');
 const toneLegend = document.getElementById('tone-legend');
@@ -374,29 +375,25 @@ let pendingResizeTimeout = null;
 let dirty = null;
 
 function toggleColorCodeVisibility() {
-    if (!getActiveGraph().disableToneColors) {
-        colorCodeSwitch.removeAttribute('style');
-    } else {
+    if (getActiveGraph().disableToneColors) {
         colorCodeMode = colorCodeModes.frequency;
         freqLegend.removeAttribute('style');
         toneLegend.style.display = 'none';
-        colorCodeSwitch.style.display = 'none';
+        switchToTones.style.display = 'none';
     }
 }
 function initialize() {
     toggleColorCodeVisibility();
-    colorCodeSwitch.addEventListener('click', function () {
-        if (colorCodeMode === colorCodeModes.frequency) {
-            colorCodeSwitch.innerText = "Tones";
-            colorCodeMode = colorCodeModes.tones;
-            toneLegend.removeAttribute('style');
-            freqLegend.style.display = 'none';
-        } else {
-            colorCodeSwitch.innerText = "Frequency";
-            colorCodeMode = colorCodeModes.frequency;
-            freqLegend.removeAttribute('style');
-            toneLegend.style.display = 'none';
-        }
+    switchToTones.addEventListener('click', function () {
+        colorCodeMode = colorCodeModes.tones;
+        toneLegend.removeAttribute('style');
+        freqLegend.style.display = 'none';
+        updateColorScheme();
+    });
+    switchToFreq.addEventListener('click', function () {
+        colorCodeMode = colorCodeModes.frequency;
+        freqLegend.removeAttribute('style');
+        toneLegend.style.display = 'none';
         updateColorScheme();
     });
     document.addEventListener('graph-update', function (event) {
