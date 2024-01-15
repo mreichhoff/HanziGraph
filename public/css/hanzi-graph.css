@@ -648,12 +648,6 @@ svg+.explore-stat-header {
     box-shadow: var(--legend-switch-box-shadow);
     vertical-align: top;
     font-size: 16px;
-}
-
-.legend-switch-button.arrow-left {
-    margin-right: 20px;
-}
-.legend-switch-button.arrow-right {
     margin-left: 20px;
 }
 
