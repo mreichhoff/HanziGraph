@@ -644,16 +644,30 @@ svg+.explore-stat-header {
 
 .legend-switch-button {
     border: var(--legend-switch-button-border);
-    padding: 0 4px;
+    padding: 0 6px 0 2px;
     box-shadow: var(--legend-switch-box-shadow);
     vertical-align: top;
     font-size: 16px;
     margin-left: 20px;
 }
 
+.right-arrow {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-top: 3px solid;
+    border-right: 3px solid;
+    transform: rotate(45deg);
+    box-sizing: border-box;
+}
+
 #tone-legend span {
     font-size: 14px;
     margin: 0 6px;
+}
+
+#tone-legend span.right-arrow {
+    margin: 0;
 }
 
 #level-container {
