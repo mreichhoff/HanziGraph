@@ -36,16 +36,6 @@
                 <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word" type="search"
                     enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
                 <ul id="search-suggestions-container" class="search-suggestions" style="display:none"></ul>
-                <div id="query-options-container" class="secondary-input-container">
-                    <div id="graph-switch-container" class="secondary-input" style="visibility:hidden">
-                        <a class="secondary-button" id="graph-switch">Graph</a>
-                    </div>
-                    <div id="color-code-control" class="secondary-input">
-                        <a id="color-code-switch" class="secondary-button" style="display:none">
-                            Tones
-                        </a>
-                    </div>
-                </div>
             </form>
         </div>
         <div id="data-container" class="output-container">
@@ -131,17 +121,20 @@
             </div>
             <div id="graph-container" class="primary-panel">
                 <div id="freq-legend" style="display:none" class="legend">
+                    <a class="legend-switch-button arrow-left" id="switch-to-tone-legend">&lt;</a>
                     Common
                     <div id="level-container"></div>
                     Uncommon
                 </div>
                 <div id="tone-legend" class="legend">
-                    Tone:
-                    <span class="tone1">1st</span>
-                    <span class="tone2">2nd</span>
-                    <span class="tone3">3rd</span>
-                    <span class="tone4">4th</span>
-                    <span class="tone5">Neutral</span>
+                    <div>Tone:
+                        <span class="tone1">1st</span>
+                        <span class="tone2">2nd</span>
+                        <span class="tone3">3rd</span>
+                        <span class="tone4">4th</span>
+                        <span class="tone5">Neutral</span>
+                        <a class="legend-switch-button arrow-right" id="switch-to-freq-legend">&gt;</a>
+                    </div>
                 </div>
                 <div id="graph" class="graph"></div>
             </div>
