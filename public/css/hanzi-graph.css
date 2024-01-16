@@ -666,7 +666,7 @@ svg+.explore-stat-header {
     border: var(--legend-switch-button-border);
     padding: 0 4px;
     box-shadow: var(--legend-switch-box-shadow);
-    margin: 2px 0 0 6px;
+    margin: 0 0 0 6px;
     cursor: pointer;
     display: none;
 }
