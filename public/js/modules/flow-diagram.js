@@ -1,3 +1,4 @@
+import { diagramKeys, switchDiagramView } from "./ui-orchestrator";
 import { sankey, sankeyLinkHorizontal, sankeyCenter, sankeyJustify, sankeyRight, sankeyLeft } from "d3-sankey";
 import { map, schemeTableau10, union, scaleOrdinal, format as d3format, create } from "d3";
 import { getPartition, getActiveGraph } from "./options";
@@ -140,6 +141,7 @@ function renderCollocationData(term, collocations, nextSibling, container) {
             wordHolder.classList.add('emphasized', 'navigable', `freq${getFrequencyLevel(wordSet[word], getActiveGraph().ranks)}`);
             wordHolder.innerText = word;
             wordHolder.addEventListener('click', function () {
+                switchDiagramView(diagramKeys.main);
                 document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
             })
             collocationsContainer.appendChild(wordHolder);
@@ -202,6 +204,7 @@ async function renderUsageDiagram(term, container) {
         linkTitle: d => `${elements.labels[d.source.id]} ${elements.labels[d.target.id]}: ${d.value}`,
         linkClickHandler: (d, i) => {
             getCollocations(elements.labels[i.id]);
+            switchDiagramView(diagramKeys.main);
             document.dispatchEvent(new CustomEvent('graph-update', { detail: elements.labels[i.id] }));
         },
         fontColor: 'currentColor',
