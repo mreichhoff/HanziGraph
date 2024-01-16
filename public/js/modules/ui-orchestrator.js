@@ -8,6 +8,10 @@ const statsContainer = document.getElementById('stats-container');
 const faqContainer = document.getElementById('faq-container');
 const menuContainer = document.getElementById('menu-container');
 
+const textContainer = document.getElementById('text-container');
+const graphContainer = document.getElementById('graph-container');
+const graphExpander = document.getElementById('graph-expander');
+
 const explorePane = document.getElementById('explore-container');
 const studyPane = document.getElementById('study-container');
 
@@ -135,35 +139,46 @@ function switchToState(state) {
     }
 }
 
-const diagrams = {
-    main: {
-        element: document.getElementById('graph-container'),
-        animation: 'slide-from-right'
-    },
-    flow: {
-        element: document.getElementById('flow-diagram-container'),
-        animation: 'slide-from-right'
-    }
-};
-const diagramKeys = { main: 'main', flow: 'flow' };
+const diagramKeys = { main: 'main', none: 'none' };
 let currentDiagramKey = diagramKeys.main;
 
 function switchDiagramView(diagramKey) {
     if (diagramKey === currentDiagramKey) {
         return;
     }
-    for (const [key, diagram] of Object.entries(diagrams)) {
-        if (key !== diagramKey) {
-            diagram.element.style.display = 'none';
-            diagram.element.dispatchEvent(new Event('hidden'));
-        } else {
-            diagram.element.removeAttribute('style');
-            diagram.element.classList.add(diagram.animation);
-            diagram.element.addEventListener('animationend', function () {
-                diagram.element.dispatchEvent(new Event('shown-animationend'));
-                diagram.element.classList.remove(diagram.animation);
+    if (diagramKey === diagramKeys.none) {
+        textContainer.addEventListener('animationend', function () {
+            graphContainer.dispatchEvent(new Event('hidden'));
+            graphContainer.style.display = 'none';
+            textContainer.style.height = '100%';
+            mainAppContainer.classList.remove('primary-container');
+            textContainer.classList.remove('expand-panel');
+            setTimeout(function () {
+                graphExpander.removeAttribute('style');
+            }, 250);
+            graphExpander.addEventListener('click', function () {
+                switchDiagramView(diagramKeys.main);
             }, { once: true });
-            diagram.element.dispatchEvent(new Event('shown'));
+        }, { once: true });
+        textContainer.classList.add('expand-panel');
+    } else {
+        if (window.innerWidth <= 664) {
+            textContainer.addEventListener('animationend', function () {
+                graphContainer.dispatchEvent(new Event('shown-animationend'));
+                textContainer.classList.remove('collapse-panel');
+            }, { once: true });
+        }
+        graphExpander.style.display = 'none';
+        graphContainer.dispatchEvent(new Event('shown'));
+        textContainer.removeAttribute('style');
+        mainAppContainer.classList.add('primary-container');
+        graphContainer.removeAttribute('style');
+        // Else here reachable if the user re-sizes from small to a larger window
+        // in that case, the animation isn't run, so reset to the wide view.
+        if (window.innerWidth > 664) {
+            graphContainer.dispatchEvent(new Event('shown-animationend'));
+        } else {
+            textContainer.classList.add('collapse-panel');
         }
     }
     currentDiagramKey = diagramKey;

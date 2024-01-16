@@ -88,7 +88,7 @@
                         <p id="hide-study-explanation"><a class="active-link">Hide this message</a></p>
                     </div>
                     <p id="cards-due" class="explanation">
-                        Cards due: <span id="card-due-count"></span>
+                        Cards due: <span id="card-due-count" class="emphasized"></span>
                     </p>
                     <p id="study-call-to-action" class="study-call-to-action">
                         <span id="task-description">What does the text below mean?</span>
@@ -118,22 +118,29 @@
                         </div>
                     </div>
                 </div>
+                <div id="graph-expander" class="graph-expander" style="display: none;">
+                    <span class="big-up-arrow"></span>
+                </div>
             </div>
             <div id="graph-container" class="primary-panel">
-                <div id="freq-legend" style="display:none" class="legend">
-                    Common
-                    <div id="level-container"></div>
-                    Uncommon
-                    <a class="legend-switch-button" id="switch-to-tone-legend"><span class="right-arrow"></span></a>
-                </div>
-                <div id="tone-legend" class="legend">
-                    <div>Tone:
-                        <span class="tone1">1st</span>
-                        <span class="tone2">2nd</span>
-                        <span class="tone3">3rd</span>
-                        <span class="tone4">4th</span>
-                        <span class="tone5">Neutral</span>
-                        <a class="legend-switch-button" id="switch-to-freq-legend"><span class="right-arrow"></span></a>
+                <div class="legend-container">
+                    <div id="collapse-graph"><span class="down-arrow"></span></div>
+                    <div id="freq-legend" style="display:none" class="legend">
+                        Common
+                        <div id="level-container"></div>
+                        Uncommon
+                        <a class="legend-switch-button" id="switch-to-tone-legend"><span class="right-arrow"></span></a>
+                    </div>
+                    <div id="tone-legend" class="legend">
+                        <div>Tone:
+                            <span class="tone1">1st</span>
+                            <span class="tone2">2nd</span>
+                            <span class="tone3">3rd</span>
+                            <span class="tone4">4th</span>
+                            <span class="tone5">Neutral</span>
+                            <a class="legend-switch-button" id="switch-to-freq-legend"><span
+                                    class="right-arrow"></span></a>
+                        </div>
                     </div>
                 </div>
                 <div id="graph" class="graph"></div>

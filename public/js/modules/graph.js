@@ -382,6 +382,32 @@ function toggleColorCodeVisibility() {
         switchToTones.style.display = 'none';
     }
 }
+/*
+graph substitute text:
+position: fixed;
+bottom: 20px;
+right:20px;
+*/
+/*
+go away:
+document.getElementById('text-container').addEventListener('animationend', function(){
+    document.getElementById('graph-container').style.display = 'none';    
+    document.getElementById('text-container').style.height = '100%';
+    document.getElementById('main-app-container').classList.remove('primary-container');
+    document.getElementById('text-container').classList.remove('expand-panel');
+}, {once:true});
+document.getElementById('text-container').classList.add('expand-panel');
+*/
+/*
+come back:
+document.getElementById('text-container').addEventListener('animationend', function(){
+    document.getElementById('text-container').classList.remove('collapse-panel');
+}, {once:true});
+document.getElementById('text-container').removeAttribute('style');
+document.getElementById('main-app-container').classList.add('primary-container');
+document.getElementById('graph-container').removeAttribute('style');
+document.getElementById('text-container').classList.add('collapse-panel');
+*/
 function initialize() {
     toggleColorCodeVisibility();
     switchToTones.addEventListener('click', function () {
@@ -398,6 +424,9 @@ function initialize() {
     });
     document.addEventListener('graph-update', function (event) {
         buildGraph(event.detail);
+    });
+    document.getElementById('collapse-graph').addEventListener('click', function () {
+        switchDiagramView(diagramKeys.none);
     });
     document.addEventListener('components-update', function (event) {
         // Anytime the components are being rendered, ensure the main diagram is shown.
@@ -420,6 +449,11 @@ function initialize() {
     window.addEventListener('resize', function () {
         clearTimeout(pendingResizeTimeout);
         pendingResizeTimeout = setTimeout(() => {
+            // if the window resizes with the graph collapsed, re-expand it
+            // note that switchDiagramView no-ops if we're going main-->main
+            if(window.innerWidth > 664) {
+                switchDiagramView(diagramKeys.main);
+            }
             // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
             if (cy && showingGraph) {
                 cy.layout(mode === modes.graph ? layout(cy.nodes().length) : bfsLayout(root)).run();

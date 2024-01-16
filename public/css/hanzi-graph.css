@@ -54,6 +54,7 @@
     --legend-switch-button-border: 1px solid #000;
     --button-border-bottom: 3px solid var(--accent-color);
     --legend-switch-box-shadow: 1px 1px #444;
+    --graph-expand-button-box-shadow: 2px 2px #444;
 }
 
 html {
@@ -661,6 +662,41 @@ svg+.explore-stat-header {
     box-sizing: border-box;
 }
 
+#collapse-graph {
+    border: var(--legend-switch-button-border);
+    padding: 0 4px;
+    box-shadow: var(--legend-switch-box-shadow);
+    margin: 2px 0 0 6px;
+    cursor: pointer;
+    display: none;
+}
+
+.graph-expander {
+    display: none;
+}
+
+.down-arrow {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-top: 3px solid;
+    border-right: 3px solid;
+    transform: rotate(135deg);
+    box-sizing: border-box;
+    margin-bottom: 1px;
+}
+
+.big-up-arrow {
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    border-top: 6px solid;
+    border-right: 6px solid;
+    transform: rotate(315deg);
+    box-sizing: border-box;
+    margin: 10px 0 0 5px;
+}
+
 #tone-legend span {
     font-size: 14px;
     margin: 0 6px;
@@ -1041,6 +1077,7 @@ main.auth-form {
         --accent-color: #ccc;
         --legend-switch-button-border: 1px solid #ccc;
         --legend-switch-box-shadow: 0;
+        --graph-expand-button-box-shadow: 0;
     }
 }
 
@@ -1089,5 +1126,59 @@ main.auth-form {
     #flow-diagram-container {
         height: 55%;
         border-top: var(--border);
+    }
+
+    /* should be unreachable other than when this media query is reached... */
+    @keyframes expand-panel {
+        0% {
+            height: 45%;
+        }
+
+        100% {
+            height: 100%;
+        }
+    }
+
+    .expand-panel {
+        animation: expand-panel 0.5s;
+    }
+
+    @keyframes collapse-panel {
+        0% {
+            height: 100%;
+        }
+
+        100% {
+            height: 45%;
+        }
+    }
+
+    .collapse-panel {
+        animation: collapse-panel 0.5s;
+    }
+
+    /* probably an anti-pattern, but it's the first thing that popped into my head */
+    #collapse-graph {
+        display: block;
+    }
+
+    .legend-container {
+        display: grid;
+        grid-template-columns: 26px 1fr;
+        height: var(--legend-height);
+    }
+
+    .graph-expander {
+        display: block;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        border: 3px solid;
+        padding: 2px;
+        box-shadow: var(--graph-expand-button-box-shadow);
+        background: var(--background-color);
+        cursor: pointer;
+        height: 36px;
+        width: 36px;
     }
 }
