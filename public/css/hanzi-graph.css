@@ -27,7 +27,7 @@
     --right-button-margin: 10px 0 0 20px;
     --menu-button-margin: 18px 0 0 0;
     --primary-container-height: calc(100% - 42px);
-    --legend-height: 14px;
+    --legend-height: 16px;
     --graph-height: calc(100% - var(--legend-height) - 4px);
     --section-container-margin: 0 20px;
     --calendar-day-color: #eee;
