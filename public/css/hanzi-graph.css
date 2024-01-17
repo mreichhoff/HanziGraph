@@ -27,7 +27,7 @@
     --right-button-margin: 10px 0 0 20px;
     --menu-button-margin: 18px 0 0 0;
     --primary-container-height: calc(100% - 42px);
-    --legend-height: 16px;
+    --legend-height: 20px;
     --graph-height: calc(100% - var(--legend-height) - 4px);
     --section-container-margin: 0 20px;
     --calendar-day-color: #eee;
@@ -53,7 +53,6 @@
     --neutral-tone-color: #000;
     --legend-switch-button-border: 1px solid #000;
     --button-border-bottom: 3px solid var(--accent-color);
-    --legend-switch-box-shadow: 1px 1px #444;
     --graph-expand-button-box-shadow: 2px 2px #444;
 }
 
@@ -637,38 +636,48 @@ svg+.explore-stat-header {
 .legend {
     font-size: var(--legend-font-size);
     font-weight: bold;
-    margin: 4px 0 0 0;
+    margin: 2px 0;
     height: var(--legend-height);
     text-align: center;
     line-height: var(--legend-height);
 }
 
+.legend-container {
+    display: grid;
+    grid-template-columns: 1fr 30px;
+    height: var(--legend-height);
+    max-width: 450px;
+}
+
 .legend-switch-button {
-    border: var(--legend-switch-button-border);
-    padding: 0 6px 0 2px;
-    box-shadow: var(--legend-switch-box-shadow);
-    vertical-align: top;
-    font-size: 16px;
-    margin-left: 20px;
+    margin-top: 3px;
+}
+
+.legend-switch-button:hover {
+    opacity: 0.75;
+    transition: opacity 0.5s;
 }
 
 .right-arrow {
     display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-top: 3px solid;
-    border-right: 3px solid;
+    width: 16px;
+    height: 16px;
+    border-top: 5px solid;
+    border-right: 5px solid;
     transform: rotate(45deg);
     box-sizing: border-box;
 }
 
 #collapse-graph {
-    border: var(--legend-switch-button-border);
     padding: 0 4px;
-    box-shadow: var(--legend-switch-box-shadow);
     margin: 0 0 0 6px;
     cursor: pointer;
     display: none;
+}
+
+#collapse-graph:hover {
+    opacity: 0.75;
+    transition: opacity 0.5s;
 }
 
 .graph-expander {
@@ -677,10 +686,10 @@ svg+.explore-stat-header {
 
 .down-arrow {
     display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-top: 3px solid;
-    border-right: 3px solid;
+    width: 16px;
+    height: 16px;
+    border-top: 5px solid;
+    border-right: 5px solid;
     transform: rotate(135deg);
     box-sizing: border-box;
     margin-bottom: 1px;
@@ -688,8 +697,8 @@ svg+.explore-stat-header {
 
 .big-up-arrow {
     display: inline-block;
-    width: 26px;
-    height: 26px;
+    width: 20px;
+    height: 20px;
     border-top: 6px solid;
     border-right: 6px solid;
     transform: rotate(315deg);
@@ -698,21 +707,16 @@ svg+.explore-stat-header {
 }
 
 #tone-legend span {
-    font-size: 14px;
     margin: 0 6px;
-}
-
-#tone-legend span.right-arrow {
-    margin: 0;
 }
 
 #level-container {
     display: inline-block;
     background: linear-gradient(to right, var(--legend-gradient-start), var(--legend-gradient-end));
-    width: 36%;
+    width: 40%;
     margin: 0 2px;
     border-radius: 6px;
-    height: var(--legend-height);
+    height: calc(var(--legend-height) - 4px);
 }
 
 /* TODO: do we need these to be different classes? */
@@ -1076,7 +1080,6 @@ main.auth-form {
         --neutral-tone-color: #aaa;
         --accent-color: #ccc;
         --legend-switch-button-border: 1px solid #ccc;
-        --legend-switch-box-shadow: 0;
         --graph-expand-button-box-shadow: 0;
     }
 }
@@ -1163,9 +1166,8 @@ main.auth-form {
     }
 
     .legend-container {
-        display: grid;
-        grid-template-columns: 26px 1fr;
-        height: var(--legend-height);
+        max-width: 664px;
+        grid-template-columns: 30px 1fr 30px;
     }
 
     .graph-expander {
@@ -1178,7 +1180,21 @@ main.auth-form {
         box-shadow: var(--graph-expand-button-box-shadow);
         background: var(--background-color);
         cursor: pointer;
-        height: 36px;
-        width: 36px;
+        height: 30px;
+        width: 30px;
+    }
+    @keyframes upward-for-some-reason {
+        0% {
+            transform: rotate(315deg);
+        }
+        50% {
+            transform: translateY(-4px) rotate(315deg);
+        }
+        100% {
+            transform: rotate(315deg);
+        }
+    }
+    .graph-expander:hover .big-up-arrow {
+        animation: upward-for-some-reason 0.75s 2;
     }
 }

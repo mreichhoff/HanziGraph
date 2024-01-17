@@ -4,8 +4,7 @@ import { parsePinyin, trimTone, findPinyinRelationships } from "./pronunciation-
 
 const parent = document.getElementById('graph-container');
 const graphContainer = document.getElementById('graph');
-const switchToFreq = document.getElementById('switch-to-freq-legend');
-const switchToTones = document.getElementById('switch-to-tone-legend');
+const switchLegend = document.getElementById('switch-legend');
 
 const freqLegend = document.getElementById('freq-legend');
 const toneLegend = document.getElementById('tone-legend');
@@ -323,10 +322,6 @@ function bfsLayout(root) {
     };
 }
 function buildComponentTree(value) {
-    // if (getActiveGraph().transcriptionName !== 'jyutping') {
-    //     toneLegend.removeAttribute('style');
-    //     freqLegend.style.display = 'none';
-    // }
     graphContainer.innerHTML = '';
     graphContainer.className = '';
     root = value;
@@ -350,8 +345,6 @@ function buildComponentTree(value) {
     });
 }
 function buildGraph(value) {
-    // freqLegend.removeAttribute('style');
-    // toneLegend.style.display = 'none';
     graphContainer.innerHTML = '';
     graphContainer.className = '';
     mode = modes.graph;
@@ -379,47 +372,26 @@ function toggleColorCodeVisibility() {
         colorCodeMode = colorCodeModes.frequency;
         freqLegend.removeAttribute('style');
         toneLegend.style.display = 'none';
-        switchToTones.style.display = 'none';
+        switchLegend.style.display = 'none';
     }
 }
-/*
-graph substitute text:
-position: fixed;
-bottom: 20px;
-right:20px;
-*/
-/*
-go away:
-document.getElementById('text-container').addEventListener('animationend', function(){
-    document.getElementById('graph-container').style.display = 'none';    
-    document.getElementById('text-container').style.height = '100%';
-    document.getElementById('main-app-container').classList.remove('primary-container');
-    document.getElementById('text-container').classList.remove('expand-panel');
-}, {once:true});
-document.getElementById('text-container').classList.add('expand-panel');
-*/
-/*
-come back:
-document.getElementById('text-container').addEventListener('animationend', function(){
-    document.getElementById('text-container').classList.remove('collapse-panel');
-}, {once:true});
-document.getElementById('text-container').removeAttribute('style');
-document.getElementById('main-app-container').classList.add('primary-container');
-document.getElementById('graph-container').removeAttribute('style');
-document.getElementById('text-container').classList.add('collapse-panel');
-*/
+
 function initialize() {
     toggleColorCodeVisibility();
-    switchToTones.addEventListener('click', function () {
-        colorCodeMode = colorCodeModes.tones;
-        toneLegend.removeAttribute('style');
-        freqLegend.style.display = 'none';
-        updateColorScheme();
-    });
-    switchToFreq.addEventListener('click', function () {
-        colorCodeMode = colorCodeModes.frequency;
-        freqLegend.removeAttribute('style');
-        toneLegend.style.display = 'none';
+    switchLegend.addEventListener('click', function() {
+        if(colorCodeMode === colorCodeModes.tones) {
+            colorCodeMode = colorCodeModes.frequency;
+            freqLegend.removeAttribute('style');
+            freqLegend.classList.add('slide-in');
+            toneLegend.style.display = 'none';
+            toneLegend.classList.remove('slide-in');
+        } else {
+            colorCodeMode = colorCodeModes.tones;
+            toneLegend.removeAttribute('style');
+            toneLegend.classList.add('slide-in');
+            freqLegend.style.display = 'none';
+            freqLegend.classList.remove('slide-in');
+        }
         updateColorScheme();
     });
     document.addEventListener('graph-update', function (event) {
