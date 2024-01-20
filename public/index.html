@@ -105,15 +105,16 @@
                         </ul>
                         <p id="delete-card-button" class="active-link">Delete this card</p>
                         <div id="past-performance-container" class="card-detail">
-                            <p id="card-new-message" style="display:none">This is a new card!</p>
+                            <p id="card-new-message" style="display:none">This is a <span class="emphasized">new</span> card!</p>
                             <div id="card-old-message" style="display: none;">
-                                <p>Previous attempts: <span id="card-percentage"></span>% correct.</p>
-                                <p>Right <span id="card-right-count"></span>; Wrong <span id="card-wrong-count"></span>.
+                                <p>Previous attempts: <span id="card-percentage" class="emphasized"></span> correct.</p>
+                                <p>Right <span id="card-right-count" class="emphasized-but-not-that-emphasized"></span>; Wrong <span id="card-wrong-count" class="emphasized-but-not-that-emphasized"></span>.
                                 </p>
+                                <p id="card-added-time-container">Card added: <span class="emphasized-but-not-that-emphasized" id="card-added-time"></span></p>
                             </div>
                         </div>
                         <div id="related-cards-container" class="card-detail" style="display:none">
-                            Other cards with <span id="related-card-query"></span>:
+                            Other cards with <span class="emphasized-target" id="related-card-query"></span>:
                             <div id="related-cards" class="related-cards"></div>
                         </div>
                     </div>
@@ -275,7 +276,8 @@
                 system, like Anki.
             </p>
             <h3>Where are the flashcards stored?</h3>
-            <p>All data for the site is stored in <a
+            <p>If you are signed in, the data is stored on our servers, and synced across any other device where you sign in.
+                If you are not signed in, all data for the site is stored in <a
                     href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage">localStorage</a>.
                 It
                 does not leave your browser, and clearing your browser data will clear it.

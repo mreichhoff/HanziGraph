@@ -338,6 +338,12 @@ ul {
     font-weight: bold;
 }
 
+/* TODO: font-size: larger, etc.? */
+.emphasized-but-not-that-emphasized {
+    font-size: 16px;
+    font-weight: bold;
+}
+
 .emphasized-target {
     font-size: 24px;
     font-weight: bold;
@@ -941,6 +947,8 @@ svg+.explore-stat-header {
     margin: 10px auto;
     text-align: center;
     width: 80%;
+    /* extra height for emphasized elements + padding */
+    line-height: 24px;
 }
 
 .card-detail p {
@@ -953,10 +961,28 @@ svg+.explore-stat-header {
 
 p.related-card {
     margin: 6px auto;
+    font-weight: 400;
 }
 
 .related-card-performance {
     font-size: 16px;
+}
+
+.bad-performance,
+.ok-performance,
+.good-performance {
+    color: black;
+    padding: 1px 2px;
+}
+
+.bad-performance {
+    background-color: #ff635f;
+}
+.ok-performance {
+    background-color:  #ffc300;
+}
+.good-performance {
+    background-color: var(--positive-button-color);
 }
 
 #delete-card-button {
