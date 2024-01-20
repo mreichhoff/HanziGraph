@@ -184,6 +184,15 @@ function switchDiagramView(diagramKey) {
     currentDiagramKey = diagramKey;
 }
 
+function showNotification() {
+    rightButton.className = 'check';
+    // Note that this de-duplicates notifications...could cancel the
+    // pending timeout to stack them, but kinda prefer less frequent UI churn
+    setTimeout(() => {
+        rightButton.className = states[currentState].rightButtonClass;
+    }, 2000);
+}
+
 function initialize() {
     leftButtonContainer.addEventListener('click', function () {
         if (states[currentState].leftState) {
@@ -197,4 +206,4 @@ function initialize() {
     })
 }
 
-export { initialize, switchToState, switchDiagramView, stateKeys, diagramKeys }
+export { initialize, switchToState, switchDiagramView, showNotification, stateKeys, diagramKeys }
