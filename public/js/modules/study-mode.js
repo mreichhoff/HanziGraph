@@ -15,6 +15,8 @@ const cardAnswerElement = document.getElementById('card-answer');
 const wrongButton = document.getElementById('wrong-button');
 const rightButton = document.getElementById('right-button');
 const deleteCardButton = document.getElementById('delete-card-button');
+const cardAddedTime = document.getElementById('card-added-time');
+const cardAddedTimeContainer = document.getElementById('card-added-time-container');
 
 const relatedCardsContainer = document.getElementById('related-cards-container');
 const relatedCardsElement = document.getElementById('related-cards');
@@ -120,13 +122,30 @@ let displayRelatedCards = function (anchor) {
         let item = document.createElement('p');
         item.className = 'related-card';
         item.innerText = related[i];
-        let relatedPerf = document.createElement('p');
-        relatedPerf.className = 'related-card-performance';
-        relatedPerf.innerText = `(right ${studyList[related[i]].rightCount || 0}, wrong ${studyList[related[i]].wrongCount || 0})`;
-        item.appendChild(relatedPerf);
+        let relatedPerfContainer = document.createElement('p');
+        relatedPerfContainer.classList.add('related-card-performance');
+        let relatedPerf = document.createElement('span');
+        relatedPerf.classList.add('emphasized');
+        const percentage = Math.round(100 * studyList[related[i]].rightCount / ((studyList[related[i]].rightCount + studyList[related[i]].wrongCount) || 1))
+        setPerformanceClass(percentage, relatedPerf);
+        relatedPerfContainer.appendChild(relatedPerf);
+        relatedPerfContainer.innerHTML += ' correct.';
+        item.appendChild(relatedPerfContainer);
         relatedCardsElement.appendChild(item);
     }
     relatedCardsContainer.removeAttribute('style');
+}
+
+function setPerformanceClass(correctPercentage, container) {
+    container.classList.remove('good-performance', 'ok-performance', 'bad-performance')
+    container.textContent = `${correctPercentage}%`;
+    if (correctPercentage >= 80) {
+        container.classList.add('good-performance');
+    } else if (correctPercentage < 80 && correctPercentage >= 60) {
+        container.classList.add('ok-performance');
+    } else {
+        container.classList.add('bad-performance')
+    }
 }
 
 let setupStudyMode = function () {
@@ -164,9 +183,22 @@ let setupStudyMode = function () {
     if (currentCard.wrongCount + currentCard.rightCount != 0) {
         cardOldMessageElement.removeAttribute('style');
         cardNewMessageElement.style.display = 'none';
-        cardPercentageElement.textContent = Math.round(100 * currentCard.rightCount / ((currentCard.rightCount + currentCard.wrongCount) || 1));
+        const correctPercentage = Math.round(100 * currentCard.rightCount / ((currentCard.rightCount + currentCard.wrongCount) || 1));
+        setPerformanceClass(correctPercentage, cardPercentageElement);
         cardRightCountElement.textContent = `${currentCard.rightCount || 0} time${currentCard.rightCount != 1 ? 's' : ''}`;
         cardWrongCountElement.textContent = `${currentCard.wrongCount || 0} time${currentCard.wrongCount != 1 ? 's' : ''}`;
+        if (currentCard.added) {
+            cardAddedTimeContainer.removeAttribute('style');
+            cardAddedTime.innerText = new Date(Number(currentCard.added)).toLocaleDateString('en-US',
+                {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric"
+                })
+        } else {
+            cardAddedTimeContainer.style.display = 'none';
+        }
     } else {
         cardNewMessageElement.removeAttribute('style');
         cardOldMessageElement.style.display = 'none';
