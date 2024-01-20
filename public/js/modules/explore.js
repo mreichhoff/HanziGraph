@@ -122,17 +122,53 @@ function modifyHeaderTones(definitionList, word) {
         elementsToModify[i].classList.add(`tone${syllable[syllable.length - 1]}`);
     }
 }
+function parseDefinitions(definitionList) {
+    let parsedDefinitions = {};
+    for (const item of definitionList) {
+        const key = item.pinyin + (item.measure ? item.measure.join() : '');
+        if (!(key in parsedDefinitions)) {
+            parsedDefinitions[key] = [item];
+        } else {
+            parsedDefinitions[key].push(item);
+        }
+    }
+    return parsedDefinitions;
+}
 let setupDefinitions = function (definitionList, container) {
     if (!definitionList) {
         return;
     }
-    for (let i = 0; i < definitionList.length; i++) {
+    let parsedDefinitions = parseDefinitions(definitionList);
+    for (const lineItem of Object.values(parsedDefinitions)) {
         let definitionItem = document.createElement('li');
         definitionItem.classList.add('definition');
-        renderPinyinForDefinition(definitionList[i].pinyin, definitionItem);
-        let englishSpan = document.createElement('span');
-        englishSpan.innerText = `: ${definitionList[i].en}`;
-        definitionItem.appendChild(englishSpan);
+        let pinyinAndEnglishHolder = document.createElement('div');
+        // each item in `parsedDefinitions` is guaranteed to be at least length 1.
+        renderPinyinForDefinition(lineItem[0].pinyin, pinyinAndEnglishHolder);
+        for (let i = 0; i < lineItem.length; i++) {
+            let englishSpan = document.createElement('span');
+            englishSpan.classList.add('definition-part');
+            englishSpan.innerHTML = `<span class="definition-number">${i + 1}:</span> ${lineItem[i].en}`;
+            pinyinAndEnglishHolder.appendChild(englishSpan);
+        }
+        definitionItem.appendChild(pinyinAndEnglishHolder);
+        let tagHolder = document.createElement('div');
+        tagHolder.classList.add('tags');
+        for (const definition of lineItem.filter(x => !!(x.measure))) {
+            for (const measureWord of definition.measure) {
+                let measureSpan = document.createElement('span');
+                measureSpan.classList.add('tag', 'nowrap');
+                measureSpan.innerHTML = `<span class="deemphasized">Measure:</span> ${measureWord}`;
+                measureSpan.addEventListener('click', function () {
+                    switchDiagramView(diagramKeys.main);
+                    // TODO: implement search command concept, such that queries like `measure:measureWord`
+                    // return a list of the most common words that use that measure word.
+                    document.dispatchEvent(new CustomEvent('graph-update', { detail: measureWord }));
+                });
+                tagHolder.appendChild(measureSpan);
+            }
+        }
+        definitionItem.appendChild(tagHolder);
         container.appendChild(definitionItem);
     }
 };
@@ -591,15 +627,15 @@ let persistNavigationState = function (words) {
     }, '', newUrl);
 };
 
-//TODO can this be combined with the definition rendering part?
+// TODO can this be combined with the definition rendering part?
+// TODO: enable adding specific definition cards rather than all at once
 let getCardFromDefinitions = function (text, definitionList) {
+    let parsedDefinitions = parseDefinitions(definitionList);
     //this assumes definitionList non null
     let result = { zh: [text] };
-    let answer = '';
-    for (let i = 0; i < definitionList.length; i++) {
-        answer += definitionList[i].pinyin + ': ' + definitionList[i].en;
-        answer += i == definitionList.length - 1 ? '' : ', ';
-    }
+    let answer = Object.values(parsedDefinitions).map(item=>{
+        return `${item[0].pinyin}: ${item.map(x => x.en).join(', ')}`;
+    }).join('; ');
     result['en'] = answer;
     return result;
 };

@@ -17,6 +17,8 @@
         "rollup": "^2.79.1"
     },
     "scripts": {
-        "build": "rollup --config"
+        "build": "rollup --config",
+        "watch": "rollup -c -w",
+        "serve": "firebase emulators:start"
     }
 }
