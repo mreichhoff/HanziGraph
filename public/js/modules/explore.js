@@ -2,7 +2,7 @@ import { writeExploreState, addCards, inStudyList } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough, examplesList } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
-import { diagramKeys, switchDiagramView } from "./ui-orchestrator.js";
+import { diagramKeys, switchDiagramView, showNotification } from "./ui-orchestrator.js";
 import { findPinyinRelationships } from "./pronunciation-parser.js"
 import { renderUsageDiagram } from "./flow-diagram.js";
 
@@ -84,13 +84,12 @@ let addTextToSpeech = function (container, text, aList) {
     container.appendChild(textToSpeechButton);
 };
 let addSaveToListButton = function (container, text) {
-    let buttonTexts = ['✔️', '+'];
     let saveToListButton = document.createElement('span');
-    saveToListButton.className = 'add-button';
-    saveToListButton.textContent = inStudyList(text) ? buttonTexts[0] : buttonTexts[1];
+    saveToListButton.className = (inStudyList(text) ? 'check' : 'add-button');
     saveToListButton.addEventListener('click', function () {
         addCards(currentExamples, text);
-        saveToListButton.textContent = buttonTexts[0];
+        saveToListButton.className = 'check';
+        showNotification();
     });
     container.appendChild(saveToListButton);
 };

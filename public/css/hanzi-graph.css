@@ -172,17 +172,12 @@ ul {
     cursor: pointer;
 }
 
-.add-button {
-    color: var(--positive-button-color);
-    /* TODO: skipping variable for now, since this is in one spot only and isn't a broader pattern */
-    font-size: 30px;
-    font-weight: bold;
-}
-
-.word-header .add-button {
+.word-header .add-button,
+.word-header .check  {
     cursor: pointer;
     float: right;
     margin-right: 20px;
+    margin-top: 10px;
 }
 
 #graph,
@@ -612,6 +607,72 @@ svg+.explore-stat-header {
     top: 14px
 }
 
+.check {
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border: 2px solid;
+    border-radius: 100px;
+    margin: var(--right-button-margin);
+}
+
+.check::after {
+    content: "";
+    display: block;
+    box-sizing: border-box;
+    position: absolute;
+    left: 3px;
+    top: -1px;
+    width: 6px;
+    height: 10px;
+    border-color: currentColor;
+    border-width: 0 2px 2px 0;
+    border-style: solid;
+    transform-origin: bottom left;
+    transform: rotate(45deg)
+}
+
+.right-menu-button-container .check {
+    border: 2px solid var(--legend-gradient-start);
+}
+.right-menu-button-container .check::after {
+    border-color: var(--legend-gradient-start);
+}
+
+.add-button {
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border: 2px solid;
+    transform: scale(var(--ggs, 1));
+    border-radius: 22px
+}
+
+.add-button::after,
+.add-button::before {
+    content: "";
+    display: block;
+    box-sizing: border-box;
+    position: absolute;
+    width: 10px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 5px;
+    top: 8px;
+    left: 4px
+}
+
+.add-button::after {
+    width: 2px;
+    height: 10px;
+    top: 4px;
+    left: 8px
+}
+
 .speak-button {
     box-sizing: border-box;
     position: relative;
@@ -978,9 +1039,11 @@ p.related-card {
 .bad-performance {
     background-color: #ff635f;
 }
+
 .ok-performance {
-    background-color:  #ffc300;
+    background-color: #ffc300;
 }
+
 .good-performance {
     background-color: var(--positive-button-color);
 }
