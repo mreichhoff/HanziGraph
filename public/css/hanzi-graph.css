@@ -54,6 +54,7 @@
     --legend-switch-button-border: 1px solid #000;
     --button-border-bottom: 3px solid var(--accent-color);
     --graph-expand-button-box-shadow: 2px 2px #444;
+    --tag-border: 2px solid #333;
 }
 
 html {
@@ -342,6 +343,11 @@ ul {
     font-weight: bold;
 }
 
+.deemphasized {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
 h2.word-header {
     font-family: var(--primary-font);
 }
@@ -389,6 +395,7 @@ h2.word-header {
 
 .definition {
     margin: 6px 0;
+    line-height: 18px;
 }
 
 .definition .tone1,
@@ -397,6 +404,28 @@ h2.word-header {
 .definition .tone4,
 .definition .tone5 {
     font-weight: bold;
+    font-size: 18px;
+}
+
+.definition-part {
+    margin: 0 2px 0 6px;
+}
+
+.definition-number {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.tags {
+    margin-top: 8px;
+}
+
+.tag {
+    padding: 2px;
+    border-radius: 4px;
+    border: var(--tag-border);
+    cursor: pointer;
+    margin-right: 4px;
 }
 
 .example {
@@ -1081,6 +1110,7 @@ main.auth-form {
         --accent-color: #ccc;
         --legend-switch-button-border: 1px solid #ccc;
         --graph-expand-button-box-shadow: 0;
+        --tag-border: 2px solid #aaaa;
     }
 }
 
@@ -1183,17 +1213,21 @@ main.auth-form {
         height: 30px;
         width: 30px;
     }
+
     @keyframes upward-for-some-reason {
         0% {
             transform: rotate(315deg);
         }
+
         50% {
             transform: translateY(-4px) rotate(315deg);
         }
+
         100% {
             transform: rotate(315deg);
         }
     }
+
     .graph-expander:hover .big-up-arrow {
         animation: upward-for-some-reason 0.75s 2;
     }
