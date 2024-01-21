@@ -433,12 +433,6 @@ function initialize() {
         }, 1000);
     });
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
-    document.addEventListener('character-set-changed', function (event) {
-        if (event.detail.ranks) {
-            ranks = event.detail.ranks;
-        }
-        toggleColorCodeVisibility();
-    });
 }
 
 export { initialize, isInGraph }

@@ -3,6 +3,7 @@ import { getActiveGraph, getPartition } from "./options";
 
 let jiebaCut = null;
 let searchSuggestionsWorker = null;
+let pinyinMap = {};
 const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
 
 function looksLikeEnglish(value) {
@@ -75,24 +76,32 @@ function segment(text, locale) {
     }
     return result;
 }
-function suggestSearches() {
-    const partialSearch = hanziBox.value;
-    // For now, don't suggest english words.
-    if (!partialSearch || looksLikeEnglish(partialSearch)) {
-        clearSuggestions();
-    }
-    // pass it off to the worker and let it decide.
-    let tokens = segment(partialSearch, getActiveGraph().locale);
-    searchSuggestionsWorker.postMessage({
-        type: 'query',
-        payload: { query: partialSearch, tokens: tokens }
-    })
-}
-function handleSuggestions(message) {
-    if (!message.data || !message.data.query) {
+function suggestSearches(event) {
+    if (event.isComposing) {
+        // no need for suggestions if the user is currently composing, e.g. via pinyin IME.
         return;
     }
-    if (message.data.query !== hanziBox.value) {
+    const partialSearch = hanziBox.value;
+    if (!partialSearch) {
+        clearSuggestions();
+    }
+    // For now, don't suggest based on english words, but do suggest for pinyin.
+    // Either way, send it off to the worker.
+    const tokens = segment(partialSearch, getActiveGraph().locale);
+    searchSuggestionsWorker.postMessage({
+        type: 'query',
+        payload: { query: partialSearch.trim(), tokens: tokens }
+    });
+}
+function handleWorkerMessage(message) {
+    if (!message.data) {
+        return;
+    }
+    if (message.data.pinyinMap) {
+        pinyinMap = message.data.pinyinMap;
+        return;
+    }
+    if (!message.data.query || message.data.query !== hanziBox.value) {
         return;
     }
     renderSearchSuggestions(message.data.query, message.data.suggestions, message.data.tokens, searchSuggestionsContainer);
@@ -160,25 +169,30 @@ function clearSuggestions() {
     searchSuggestionsContainer.style.display = 'none';
 }
 
-function sendWordSetToWorker() {
+function sendDataToWorker() {
     searchSuggestionsWorker.postMessage({
-        type: 'wordset',
-        payload: window.wordSet
+        type: 'data',
+        payload: { wordSet: window.wordSet, definitions: window.definitions }
     });
 }
+
 async function initialize(term, mode) {
     searchSuggestionsWorker = new Worker('/js/modules/search-suggestions-worker.js');
-    sendWordSetToWorker();
-    document.addEventListener('character-set-changed', sendWordSetToWorker);
-    searchSuggestionsWorker.addEventListener('message', handleSuggestions);
+    sendDataToWorker();
+    searchSuggestionsWorker.addEventListener('message', handleWorkerMessage);
+    // the worker is sent data and responds once ready. If there's a search term, we may need the data
+    // it sends, so allow waiting.
+    const ensureLoaded = new Promise(ready => searchSuggestionsWorker.addEventListener("message", ready, { once: true }));
     hanziBox.addEventListener('input', suggestSearches);
     hanziBox.addEventListener('blur', clearSuggestions);
+    // TODO: get all jieba use off the main thread
     const { default: init,
         cut,
     } = await import("/js/external/jieba_rs_wasm.js");
     await init();
     jiebaCut = cut;
     if (term) {
+        await ensureLoaded;
         search(term, getActiveGraph().locale, (mode || 'explore'));
     }
 }
@@ -214,13 +228,24 @@ function englishSearch(word, data) {
 
 function search(value, locale, mode) {
     clearSuggestions();
-    if (value && (definitions[value] || (value in wordSet))) {
+    if (!value) {
+        return;
+    }
+    if (definitions[value] || (value in wordSet)) {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
         document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value], mode: (mode || 'explore') } }));
         return;
     }
-    if (value && looksLikeEnglish(value) && getActiveGraph().englishPath) {
+    if (value in pinyinMap) {
+        // per mdn, iterating a set is done in insertion order, so should be sorted by frequency rank
+        const results = Array.from(pinyinMap[value]);
+        notFoundElement.style.display = 'none';
+        document.dispatchEvent(new CustomEvent('graph-update', { detail: results[0] }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: results, display: value, mode: (mode || 'explore') } }));
+        return;
+    }
+    if (looksLikeEnglish(value) && getActiveGraph().englishPath) {
         value = value.toLowerCase();
         fetch(`/${getActiveGraph().englishPath}/${getPartition(value, getActiveGraph().partitionCount)}.json`)
             .then(response => response.json())
