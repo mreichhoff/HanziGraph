@@ -104,7 +104,7 @@ Promise.all(
     writeSeoMetaTags(urlState, getActiveGraph().display);
     if (urlState && urlState.word) {
         hanziBox.value = urlState.word;
-        if (urlState.word in wordSet || looksLikeEnglish(urlState.word)) {
+        if (urlState.word in wordSet) {
             search(urlState.word, getActiveGraph().locale, urlState.mode);
         } else {
             needsTokenization = true;

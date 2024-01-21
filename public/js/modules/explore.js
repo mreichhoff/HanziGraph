@@ -669,10 +669,6 @@ let initialize = function () {
             switchToTab('tab-components', currentTabs);
         }
     });
-    document.addEventListener('character-set-changed', function () {
-        voice = getVoice();
-        fetchStats();
-    });
     voice = getVoice();
     fetchStats();
 };
