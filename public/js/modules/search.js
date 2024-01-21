@@ -127,7 +127,7 @@ function renderSearchSuggestions(query, suggestions, tokens, container) {
     container.innerHTML = '';
     const isMultiWord = tokens.length > 1;
     if (!suggestions || (!suggestions[query].length && !suggestions['tokenized'].length)) {
-        renderExplanationItem(`No suggestions found for ${query}.`, container);
+        clearSuggestions();
         return;
     }
     let priorWordsForDisplay = '';
