@@ -6,7 +6,7 @@
     --primary-header-height: 40px;
     --primary-header-font-size: 30px;
     --secondary-header-font-size: 30px;
-    --tertiary-header-font-size: 24px;
+    --tertiary-header-font-size: 22px;
     --secondary-control-font-size: 14px;
     --header-font-family: Times, serif;
     --border: 1px solid #3333;
@@ -92,13 +92,11 @@ h1 {
 
 h2 {
     font-size: var(--secondary-header-font-size);
-    font-family: var(--header-font-family);
     margin: 0;
 }
 
 h3 {
     font-size: var(--tertiary-header-font-size);
-    font-family: var(--header-font-family);
     margin: 0;
 }
 
@@ -434,7 +432,7 @@ h2.word-header {
 }
 
 .explore-stat-header {
-    margin: 0;
+    margin: 8px 0 0 0;
     text-align: center;
 }
 
@@ -443,10 +441,6 @@ h2.word-header {
 }
 
 .coverage-explanation+svg {
-    margin-top: 6px;
-}
-
-svg+.explore-stat-header {
     margin-top: 6px;
 }
 
@@ -1215,7 +1209,7 @@ main.auth-form {
 @media (max-width:664px) {
     :root {
         --primary-header-font-size: 26px;
-        --tertiary-header-font-size: 22px;
+        --tertiary-header-font-size: 20px;
         --primary-header-height: 34px;
         --right-button-margin: 6px 0 0 20px;
         --menu-button-margin: 16px 0 0 0;
