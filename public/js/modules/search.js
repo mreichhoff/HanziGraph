@@ -76,11 +76,7 @@ function segment(text, locale) {
     }
     return result;
 }
-function suggestSearches(event) {
-    if (event.isComposing) {
-        // no need for suggestions if the user is currently composing, e.g. via pinyin IME.
-        return;
-    }
+function suggestSearches() {
     const partialSearch = hanziBox.value;
     if (!partialSearch) {
         clearSuggestions();
