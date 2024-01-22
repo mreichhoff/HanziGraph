@@ -124,7 +124,15 @@ function modifyHeaderTones(definitionList, word) {
 function parseDefinitions(definitionList) {
     let parsedDefinitions = {};
     for (const item of definitionList) {
-        const key = item.pinyin + (item.measure ? item.measure.join() : '');
+        // TODO: I goofed...
+        // definitions format should be:
+        // key: word (or character)
+        // val: [{pinyin: a, definitions: [a,b,c], measure: [a,b,c]}...]
+        // this would better match cedict's format
+        // could consider combining simplified and trad, but separating for
+        // the purpose of sentences seems better
+        // should also verify this format...
+        const key = item.pinyin;
         if (!(key in parsedDefinitions)) {
             parsedDefinitions[key] = [item];
         } else {
