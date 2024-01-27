@@ -1217,12 +1217,6 @@ main.auth-form {
     :root {
         --primary-header-font-size: 26px;
         --tertiary-header-font-size: 20px;
-        --primary-header-height: 34px;
-        --right-button-margin: 6px 0 0 20px;
-        --menu-button-margin: 16px 0 0 0;
-        --primary-container-height: calc(100% - 36px);
-        --search-input-height: 26px;
-        --search-font-size: 18px;
         --study-result-buttons-width: 80%;
         --instructions-font-size: 14px;
         --target-language-font-size: 22px;
