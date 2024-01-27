@@ -171,7 +171,7 @@ ul {
 }
 
 .word-header .add-button,
-.word-header .check  {
+.word-header .check {
     cursor: pointer;
     float: right;
     margin-right: 20px;
@@ -417,6 +417,7 @@ h2.word-header {
 
 .tags {
     margin-top: 8px;
+    line-height: 26px;
 }
 
 .tag {
@@ -631,6 +632,7 @@ h2.word-header {
 .right-menu-button-container .check {
     border: 2px solid var(--legend-gradient-start);
 }
+
 .right-menu-button-container .check::after {
     border-color: var(--legend-gradient-start);
 }
