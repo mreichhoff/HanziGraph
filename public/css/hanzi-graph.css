@@ -195,6 +195,10 @@ ul {
     margin-top: 4px;
 }
 
+#examples .explanation {
+    font-weight: bold;
+}
+
 .explore-tabs {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
