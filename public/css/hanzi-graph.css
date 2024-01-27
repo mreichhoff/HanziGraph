@@ -118,6 +118,11 @@ ul {
     height: auto;
 }
 
+.header h1 {
+    /* keep it centered despite the logo, which gets 44px in the grid template */
+    margin-right: 44px;
+}
+
 .header .logo {
     height: calc(var(--primary-header-height) - 6px);
     width: calc(var(--primary-header-height) - 4px);
