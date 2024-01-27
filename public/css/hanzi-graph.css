@@ -440,6 +440,7 @@ h2.word-header {
 
 .tags {
     margin-top: 8px;
+    line-height: 26px;
 }
 
 .tag {
