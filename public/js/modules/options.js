@@ -6,6 +6,7 @@ const showPinyinCheckbox = document.getElementById('show-pinyin');
 const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 const offlineItem = document.getElementById('offline-item');
 const offlineButton = document.getElementById('offline-button');
+const headerLogo = document.getElementById('header-logo');
 
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
 let freqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
@@ -50,7 +51,8 @@ const graphOptions = {
         type: 'frequency',
         hasCoverage: 'all',
         collocationsPath: 'data/traditional/collocations',
-        englishPath: 'data/traditional/english'
+        englishPath: 'data/traditional/english',
+        logoCharacter: '漢'
     },
     cantonese: {
         display: 'Cantonese',
@@ -65,7 +67,8 @@ const graphOptions = {
         defaultHanzi: ["我", "哥", "路", "細"],
         transcriptionName: 'jyutping',
         type: 'frequency',
-        disableToneColors: true
+        disableToneColors: true,
+        logoCharacter: '漢'
     }
 };
 let activeGraphKey = 'simplified';
@@ -104,7 +107,10 @@ function setTranscriptionLabel() {
     }
 }
 const walkthroughCharacterSet = document.getElementById('walkthrough-character-set');
-function updateWalkthrough() {
+function updateGraphDisplayText() {
+    if (graphOptions[activeGraphKey].logoCharacter) {
+        headerLogo.innerText = graphOptions[activeGraphKey].logoCharacter;
+    }
     walkthroughCharacterSet.innerText = graphOptions[activeGraphKey].display;
 }
 function initialize() {
@@ -132,7 +138,7 @@ function initialize() {
         window.wordSet = getWordLevelsFromGraph(window.hanzi);
     }
     setTranscriptionLabel();
-    updateWalkthrough();
+    updateGraphDisplayText();
     setupMakeOfflineButton();
 }
 let loadingIndicatorInterval = null;

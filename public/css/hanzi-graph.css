@@ -119,8 +119,15 @@ ul {
 }
 
 .header .logo {
-    height: var(--primary-header-height);
+    height: calc(var(--primary-header-height) - 2px);
     width: var(--primary-header-height);
+    margin-top: 1px;
+    border-radius: 50%;
+    background-color: var(--tone-4-color);
+    font-size: 25px;
+    font-weight: 400;
+    color: #000;
+    user-select: none;
 }
 
 .control-container {
@@ -632,6 +639,11 @@ h2.word-header {
     border-style: solid;
     transform-origin: bottom left;
     transform: rotate(45deg)
+}
+
+.left-menu-button-container,
+.right-menu-button-container {
+    cursor: pointer;
 }
 
 .right-menu-button-container .check {
