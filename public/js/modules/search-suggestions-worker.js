@@ -1,4 +1,7 @@
 const maxRecommendations = 12;
+// allow more matches for pinyin, given that we support tone-less queries,
+// where you're far more likely to have many matches.
+const maxPinyinMatches = 25;
 let trie = {
     children: {},
     words: []
@@ -107,11 +110,15 @@ function buildTries(wordSet, definitions) {
                 if (!(joinedPinyin in pinyinMap)) {
                     pinyinMap[joinedPinyin] = new Set();
                 }
-                pinyinMap[joinedPinyin].add(word);
+                if (pinyinMap[joinedPinyin].size < maxPinyinMatches) {
+                    pinyinMap[joinedPinyin].add(word);
+                }
                 if (!(removedTones in pinyinMap)) {
                     pinyinMap[removedTones] = new Set();
                 }
-                pinyinMap[removedTones].add(word);
+                if (pinyinMap[removedTones].size < maxPinyinMatches) {
+                    pinyinMap[removedTones].add(word);
+                }
                 for (const character of joinedPinyin) {
                     if (!(character in pinyinNode.children)) {
                         pinyinNode.children[character] = { children: {}, words: [] }
