@@ -137,6 +137,15 @@ ul {
     border: 2px solid black;
 }
 
+.header.has-suggestions {
+    height: auto;
+}
+
+.header .logo {
+    height: var(--primary-header-height);
+    width: var(--primary-header-height);
+}
+
 .control-container {
     max-width: 1000px;
     margin: 0 auto;
@@ -174,6 +183,7 @@ ul {
     width: 50%;
     display: flex;
     flex-direction: column;
+    margin: var(--primary-panel-margin);
 }
 
 .section-container {
