@@ -1,9 +1,11 @@
 import { hanziBox, notFoundElement } from "./dom";
 import { getActiveGraph, getPartition } from "./options";
+import { switchToState, stateKeys } from "./ui-orchestrator";
 
 let jiebaCut = null;
 let searchSuggestionsWorker = null;
 let pinyinMap = {};
+const mainHeader = document.getElementById('main-header');
 const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
 
 function looksLikeEnglish(value) {
@@ -126,6 +128,7 @@ function renderSearchSuggestions(query, suggestions, tokens, container) {
         clearSuggestions();
         return;
     }
+    mainHeader.classList.add('has-suggestions');
     let priorWordsForDisplay = '';
     let allButLastToken = [];
     if (isMultiWord) {
@@ -147,6 +150,7 @@ function renderSearchSuggestions(query, suggestions, tokens, container) {
             document.dispatchEvent(new CustomEvent('graph-update', { detail: suggestion }));
             document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [suggestion] } }));
             clearSuggestions();
+            switchToState(stateKeys.main);
         });
     }
     for (const suggestion of suggestions['tokenized']) {
@@ -157,11 +161,13 @@ function renderSearchSuggestions(query, suggestions, tokens, container) {
         item.addEventListener('mousedown', function () {
             multiWordSearch(priorWordsForDisplay + suggestion, allButLastToken.concat(suggestion));
             clearSuggestions();
+            switchToState(stateKeys.main);
         });
     }
     container.removeAttribute('style');
 }
 function clearSuggestions() {
+    mainHeader.classList.remove('has-suggestions');
     searchSuggestionsContainer.style.display = 'none';
 }
 

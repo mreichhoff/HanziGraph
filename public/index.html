@@ -21,132 +21,131 @@
 </head>
 
 <body>
-    <header class="header">
+    <header id="main-header" class="header">
         <div id="left-menu-button-container" class="left-menu-button-container">
             <i id="left-menu-button" class="menu-button"></i>
         </div>
-        <h1 id="main-header" class="main-header">HanziGraph</h1>
+        <img class="logo" src="/images/hanzigraph-192x192.png"/>
+        <h1 id="text-header" style="display:none">HanziGraph</h1>
+        <form id="hanzi-choose">
+            <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word" type="search"
+                enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
+            <ul id="search-suggestions-container" class="search-suggestions" style="display:none"></ul>
+        </form>
         <div id="right-menu-button-container" class="right-menu-button-container">
             <i id="right-menu-button" class="study-button"></i>
         </div>
     </header>
     <div id="main-app-container" class="primary-container">
-        <div id="query-container" class="control-container">
-            <form id="hanzi-choose">
-                <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word" type="search"
-                    enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
-                <ul id="search-suggestions-container" class="search-suggestions" style="display:none"></ul>
-            </form>
+        <div id="text-container" class="primary-panel">
+            <div id="explore-container" class="section-container">
+                <p style="display:none" id="not-found-message">That word was not found 😞. Please try another, or
+                    change the character set in the menu.</p>
+                <input id="show-pinyin" type="checkbox" style="display:none" />
+                <div id="walkthrough" class="walkthrough" style="display:none">
+                    <!-- i18n :-( -->
+                    <h4>
+                        Learn Chinese by exploring the relationships between characters alongside examples that
+                        illustrate their use.
+                    </h4>
+                    <p>
+                        To get started, click any hanzi or word in the diagram. You can search for hanzi, Chinese
+                        words, or English words.
+                    </p>
+                    <p>
+                        You're viewing <span id="walkthrough-character-set">Simplified</span> characters.
+                        You can choose from Simplified Chinese, Traditional Chinese, Cantonese, or the HSK wordlist
+                        in the menu in the upper left. Or check out <a class="active-link"
+                            href="https://japanesegraph.com">the Japanese version</a>.
+                    </p>
+                    <p>
+                        Just interested in how characters are composed? Check out <a class="active-link"
+                            href="/components">the components tool</a>.
+                    </p>
+                    <p>
+                        <b>This is free and open source software.</b> Check out the code
+                        on <a class="active-link" href="https://github.com/mreichhoff/HanziGraph">GitHub.</a>
+                    </p>
+                    <p>
+                        Most example sentences are human-written, but many are AI-generated. <a class="active-link"
+                            href="https://github.com/mreichhoff/HanziGraph/issues/new/choose">File an issue on
+                            GitHub</a> if you see anything weird.
+                    </p>
+                    <p>
+                        <a class="active-link" id="show-general-faq">See the FAQ for more information.</a>
+                    </p>
+                </div>
+                <div id="examples">
+                </div>
+            </div>
+            <div id="study-container" class="section-container" style="display:none">
+                <div id="study-explain-container" class="explanation">
+                    <h3>Study Mode</h3>
+                    <p id="explain-text">Not sure how this works? <a class="active-link" id="show-study-faq">Learn
+                            more.</a></p>
+                    <p id="hide-study-explanation"><a class="active-link">Hide this message</a></p>
+                </div>
+                <p id="cards-due" class="explanation">
+                    Cards due: <span id="card-due-count" class="emphasized"></span>
+                </p>
+                <p id="study-call-to-action" class="study-call-to-action">
+                    <span id="task-description">What does the text below mean?</span>
+                    <span id="task-complete">Studying complete.<br>You can add more
+                        cards when you see the <span class="add-button"></span> button.</span>
+                </p>
+                <p id="card-question-container" class="card-question"></p>
+                <p id="show-answer-button" class="study-call-to-action active-link">Show Answer</p>
+                <div id="card-answer-container" style="display:none">
+                    <p id="card-answer" class="card-answer"></p>
+                    <ul id="result-buttons">
+                        <li id="wrong-button">✕</li>
+                        <li id="right-button">✔</li>
+                    </ul>
+                    <p id="delete-card-button" class="active-link">Delete this card</p>
+                    <div id="past-performance-container" class="card-detail">
+                        <p id="card-new-message" style="display:none">This is a <span class="emphasized">new</span>
+                            card!</p>
+                        <div id="card-old-message" style="display: none;">
+                            <p>Previous attempts: <span id="card-percentage" class="emphasized"></span> correct.</p>
+                            <p>Right <span id="card-right-count" class="emphasized-but-not-that-emphasized"></span>;
+                                Wrong <span id="card-wrong-count" class="emphasized-but-not-that-emphasized"></span>.
+                            </p>
+                            <p id="card-added-time-container">Card added: <span
+                                    class="emphasized-but-not-that-emphasized" id="card-added-time"></span></p>
+                        </div>
+                    </div>
+                    <div id="related-cards-container" class="card-detail" style="display:none">
+                        Other cards with <span class="emphasized-target" id="related-card-query"></span>:
+                        <div id="related-cards" class="related-cards"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="graph-expander" class="graph-expander" style="display: none;">
+                <span class="big-up-arrow"></span>
+            </div>
         </div>
-        <div id="data-container" class="output-container">
-            <div id="text-container" class="primary-panel">
-                <div id="explore-container" class="section-container">
-                    <p style="display:none" id="not-found-message">That word was not found 😞. Please try another, or
-                        change the character set in the menu.</p>
-                    <input id="show-pinyin" type="checkbox" style="display:none" />
-                    <div id="walkthrough" class="walkthrough" style="display:none">
-                        <!-- i18n :-( -->
-                        <h4>
-                            Learn Chinese by exploring the relationships between characters alongside examples that
-                            illustrate their use.
-                        </h4>
-                        <p>
-                            To get started, click any hanzi or word in the diagram. You can search for hanzi, Chinese
-                            words, or English words.
-                        </p>
-                        <p>
-                            You're viewing <span id="walkthrough-character-set">Simplified</span> characters.
-                            You can choose from Simplified Chinese, Traditional Chinese, Cantonese, or the HSK wordlist
-                            in the menu in the upper left. Or check out <a class="active-link"
-                                href="https://japanesegraph.com">the Japanese version</a>.
-                        </p>
-                        <p>
-                            Just interested in how characters are composed? Check out <a class="active-link"
-                                href="/components">the components tool</a>.
-                        </p>
-                        <p>
-                            <b>This is free and open source software.</b> Check out the code
-                            on <a class="active-link" href="https://github.com/mreichhoff/HanziGraph">GitHub.</a>
-                        </p>
-                        <p>
-                            Most example sentences are human-written, but many are AI-generated. <a class="active-link"
-                                href="https://github.com/mreichhoff/HanziGraph/issues/new/choose">File an issue on
-                                GitHub</a> if you see anything weird.
-                        </p>
-                        <p>
-                            <a class="active-link" id="show-general-faq">See the FAQ for more information.</a>
-                        </p>
-                    </div>
-                    <div id="examples">
+        <div id="graph-container" class="primary-panel">
+            <div class="legend-container">
+                <div id="collapse-graph"><span class="down-arrow"></span></div>
+                <div id="freq-legend" style="display:none" class="legend">
+                    Common
+                    <div id="level-container"></div>
+                    Uncommon
+                </div>
+                <div id="tone-legend" class="legend">
+                    <div>Tone:
+                        <span class="tone1">1st</span>
+                        <span class="tone2">2nd</span>
+                        <span class="tone3">3rd</span>
+                        <span class="tone4">4th</span>
+                        <span class="tone5">Neutral</span>
                     </div>
                 </div>
-                <div id="study-container" class="section-container" style="display:none">
-                    <div id="study-explain-container" class="explanation">
-                        <h3>Study Mode</h3>
-                        <p id="explain-text">Not sure how this works? <a class="active-link" id="show-study-faq">Learn
-                                more.</a></p>
-                        <p id="hide-study-explanation"><a class="active-link">Hide this message</a></p>
-                    </div>
-                    <p id="cards-due" class="explanation">
-                        Cards due: <span id="card-due-count" class="emphasized"></span>
-                    </p>
-                    <p id="study-call-to-action" class="study-call-to-action">
-                        <span id="task-description">What does the text below mean?</span>
-                        <span id="task-complete">Studying complete.<br>You can add more
-                            cards when you see the <span class="add-button"></span> button.</span>
-                    </p>
-                    <p id="card-question-container" class="card-question"></p>
-                    <p id="show-answer-button" class="study-call-to-action active-link">Show Answer</p>
-                    <div id="card-answer-container" style="display:none">
-                        <p id="card-answer" class="card-answer"></p>
-                        <ul id="result-buttons">
-                            <li id="wrong-button">✕</li>
-                            <li id="right-button">✔</li>
-                        </ul>
-                        <p id="delete-card-button" class="active-link">Delete this card</p>
-                        <div id="past-performance-container" class="card-detail">
-                            <p id="card-new-message" style="display:none">This is a <span class="emphasized">new</span> card!</p>
-                            <div id="card-old-message" style="display: none;">
-                                <p>Previous attempts: <span id="card-percentage" class="emphasized"></span> correct.</p>
-                                <p>Right <span id="card-right-count" class="emphasized-but-not-that-emphasized"></span>; Wrong <span id="card-wrong-count" class="emphasized-but-not-that-emphasized"></span>.
-                                </p>
-                                <p id="card-added-time-container">Card added: <span class="emphasized-but-not-that-emphasized" id="card-added-time"></span></p>
-                            </div>
-                        </div>
-                        <div id="related-cards-container" class="card-detail" style="display:none">
-                            Other cards with <span class="emphasized-target" id="related-card-query"></span>:
-                            <div id="related-cards" class="related-cards"></div>
-                        </div>
-                    </div>
-                </div>
-                <div id="graph-expander" class="graph-expander" style="display: none;">
-                    <span class="big-up-arrow"></span>
-                </div>
+                <a class="legend-switch-button" id="switch-legend">
+                    <span class="right-arrow"></span>
+                </a>
             </div>
-            <div id="graph-container" class="primary-panel">
-                <div class="legend-container">
-                    <div id="collapse-graph"><span class="down-arrow"></span></div>
-                    <div id="freq-legend" style="display:none" class="legend">
-                        Common
-                        <div id="level-container"></div>
-                        Uncommon
-                    </div>
-                    <div id="tone-legend" class="legend">
-                        <div>Tone:
-                            <span class="tone1">1st</span>
-                            <span class="tone2">2nd</span>
-                            <span class="tone3">3rd</span>
-                            <span class="tone4">4th</span>
-                            <span class="tone5">Neutral</span>
-                        </div>
-                    </div>
-                    <a class="legend-switch-button" id="switch-legend">
-                        <span class="right-arrow"></span>
-                    </a>
-                </div>
-                <div id="graph" class="graph"></div>
-            </div>
-            <div id="flow-diagram-container" class="primary-panel" style="display:none"></div>
+            <div id="graph" class="graph"></div>
         </div>
     </div>
     <div id="stats-container" style="display:none">
@@ -275,7 +274,8 @@
                 system, like Anki.
             </p>
             <h3>Where are the flashcards stored?</h3>
-            <p>If you are signed in, the data is stored on our servers, and synced across any other device where you sign in.
+            <p>If you are signed in, the data is stored on our servers, and synced across any other device where you
+                sign in.
                 If you are not signed in, all data for the site is stored in <a
                     href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage">localStorage</a>.
                 It

@@ -35,7 +35,6 @@
     --bar-chart-height: 400px;
     --bar-chart-width: 600px;
     --bar-chart-font-size: 14px;
-    --output-container-height: calc(100% - 58px);
     --controls-padding: 14px;
     --study-result-buttons-width: 50%;
     --legend-font-size: 14px;
@@ -55,6 +54,8 @@
     --button-border-bottom: 3px solid var(--accent-color);
     --graph-expand-button-box-shadow: 2px 2px #444;
     --tag-border: 2px solid #333;
+    --primary-panel-margin: 20px 0 0 0;
+    --examples-top-margin: 4px;
 }
 
 html {
@@ -107,10 +108,19 @@ ul {
 
 .header {
     display: grid;
-    grid-template-columns: 50px 1fr 50px;
+    grid-template-columns: 50px 44px 1fr 50px;
     height: var(--primary-header-height);
     text-align: center;
     border-bottom: var(--border);
+}
+
+.header.has-suggestions {
+    height: auto;
+}
+
+.header .logo {
+    height: var(--primary-header-height);
+    width: var(--primary-header-height);
 }
 
 .control-container {
@@ -122,11 +132,12 @@ ul {
 }
 
 .primary-input {
-    width: 80%;
+    width: 100%;
+    max-width: 600px;
     text-align: center;
     height: var(--search-input-height);
     font-size: var(--search-font-size);
-    margin: 10px auto auto 0;
+    margin: 4px auto;
     padding: 0;
     text-align: center;
     border: var(--border);
@@ -140,11 +151,6 @@ ul {
 
 .primary-container {
     height: var(--primary-container-height);
-}
-
-.output-container {
-    height: var(--output-container-height);
-    /* TODO: should probably be grid, but that interacts strangely with cytoscape resizing */
     display: flex;
     max-width: 1300px;
     margin: 0 auto;
@@ -154,6 +160,7 @@ ul {
     width: 50%;
     display: flex;
     flex-direction: column;
+    margin: var(--primary-panel-margin);
 }
 
 .section-container {
@@ -171,15 +178,14 @@ ul {
 }
 
 .word-header .add-button,
-.word-header .check  {
+.word-header .check {
     cursor: pointer;
     float: right;
     margin-right: 20px;
     margin-top: 10px;
 }
 
-#graph,
-#flow-diagram-container {
+#graph {
     height: var(--graph-height);
 }
 
@@ -192,7 +198,7 @@ ul {
 #examples {
     /* avoid scrollbars while animations run, otherwise unnecessary */
     overflow-x: hidden;
-    margin-top: 4px;
+    margin-top: var(--examples-top-margin);
 }
 
 .explore-tabs {
@@ -631,6 +637,7 @@ h2.word-header {
 .right-menu-button-container .check {
     border: 2px solid var(--legend-gradient-start);
 }
+
 .right-menu-button-container .check::after {
     border-color: var(--legend-gradient-start);
 }
@@ -1213,19 +1220,20 @@ main.auth-form {
         --primary-header-height: 34px;
         --right-button-margin: 6px 0 0 20px;
         --menu-button-margin: 16px 0 0 0;
-        --primary-container-height: calc(100% - 35px);
+        --primary-container-height: calc(100% - 36px);
         --search-input-height: 26px;
         --search-font-size: 18px;
-        --output-container-height: calc(100% - 48px);
         --study-result-buttons-width: 80%;
         --instructions-font-size: 14px;
         --target-language-font-size: 22px;
         --controls-padding: 10px;
+        --primary-panel-margin: 0;
+        --examples-top-margin: 14px;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
     /* ideally only variables */
-    .output-container {
+    .primary-container {
         display: block;
     }
 
@@ -1238,8 +1246,7 @@ main.auth-form {
     }
 
     /* TODO(refactor): why is this media query using graph-container but the main one uses graph? */
-    #graph-container,
-    #flow-diagram-container {
+    #graph-container {
         height: 55%;
         border-top: var(--border);
     }
