@@ -13,6 +13,78 @@ let pinyinTrie = {
     words: []
 };
 let pinyinMap = {};
+let jiebaCut = null;
+let wordSet = null;
+
+function segment(text, locale) {
+    if (!jiebaCut && (!Intl || !Intl.Segmenter)) {
+        return [text];
+    }
+    text = text.replace(/[？。！，·【】；：、?,'!]/g, '');
+    let candidates = [];
+    let result = [];
+    if (jiebaCut) {
+        candidates = jiebaCut(text, true);
+    } else {
+        const segmenter = new Intl.Segmenter(locale, { granularity: "word" });
+        candidates = Array.from(segmenter.segment(text)).map(x => x.segment);
+    }
+    for (const candidate of candidates) {
+        result.push(...(vetCandidate(candidate)));
+    }
+    return result;
+}
+
+function looksLikeEnglish(value) {
+    return /^[\x00-\xFF]*$/.test(value);
+}
+
+// lol
+function vetCandidate(candidate) {
+    if (!(candidate in wordSet)) {
+        if (!isNaN(candidate)) {
+            // it's not not a number, so ignore it.
+            return [{ word: candidate, ignore: true }];
+        }
+        if (looksLikeEnglish(candidate)) {
+            // it's ascii, not Chinese, so ignore it
+            // TODO: just use ! in_chinese_char_range
+            return [{ word: candidate, ignore: true }];
+        }
+        // For two character words not in the wordSet, just add individual characters.
+        if (candidate.length === 2) {
+            if (candidate[0] in wordSet && candidate[1] in wordSet) {
+                return [candidate[0], candidate[1]];
+            }
+        } else if (candidate.length === 3) {
+            let first = candidate[0];
+            let last = candidate.substring(1);
+            if (first in wordSet && last in wordSet) {
+                return [first, last];
+            }
+            first = candidate.substring(0, 2);
+            last = candidate.substring(2);
+            if (first in wordSet && last in wordSet) {
+                return [first, last];
+            }
+            if (candidate[0] in wordSet && candidate[1] in wordSet && candidate[2] in wordSet) {
+                return [candidate[0], candidate[1], candidate[2]];
+            }
+        } else if (candidate.length === 4) {
+            let first = candidate.substring(0, 2);
+            let last = candidate.substring(2);
+            if (first in wordSet && last in wordSet) {
+                return [first, last]
+            }
+            if (candidate[0] in wordSet && candidate[1] in wordSet && candidate[2] in wordSet && candidate[3] in wordSet) {
+                return [candidate[0], candidate[1], candidate[2], candidate[3]];
+            }
+        }
+        // it's not a number, it's not english or something, it's not trivially repaired...ignore
+        return [{ word: candidate, ignore: true }];
+    }
+    return [candidate];
+}
 
 function queryTrie(term, trieRoot) {
     let node = trieRoot;
@@ -84,7 +156,7 @@ function getSuggestions(query, tokens) {
 function buildTries(wordSet, definitions) {
     let node = trie;
     let pinyinNode = pinyinTrie;
- 
+
     // the wordset is sorted by frequency, so take the first N we encounter per path
     for (const word of Object.keys(wordSet).sort((a, b) => wordSet[a] - wordSet[b])) {
         for (const character of word) {
@@ -106,7 +178,7 @@ function buildTries(wordSet, definitions) {
                 let joinedPinyin = syllables.join('');
                 // could do replaceAll with regex, but that wasn't supported until more recently on
                 // android webview
-                let removedTones = syllables.map(x=>x.substring(0, x.length-1)).join('');
+                let removedTones = syllables.map(x => x.substring(0, x.length - 1)).join('');
                 if (!(joinedPinyin in pinyinMap)) {
                     pinyinMap[joinedPinyin] = new Set();
                 }
@@ -148,12 +220,18 @@ function buildTries(wordSet, definitions) {
         pinyinNode = pinyinTrie;
     }
 }
-onmessage = function (e) {
+onmessage = async function (e) {
     if (e.data.type === 'data') {
+        const { default: init,
+            cut,
+        } = await import("/js/external/jieba_rs_wasm.js");
+        await init();
+        jiebaCut = cut;
         trie = {
             children: {},
             words: []
         };
+        wordSet = e.data.payload.wordSet;
         buildTries(e.data.payload.wordSet, e.data.payload.definitions);
         // pinyinMap gets built up in buildTries (which should probably be named buildDataStructures
         // or something). The main thread wants it for knowing when to treat something as pinyin vs english.
@@ -161,10 +239,19 @@ onmessage = function (e) {
             pinyinMap
         });
     } else if (e.data.type === 'query') {
+        const tokens = segment(e.data.payload.query, e.data.payload.locale);
         postMessage({
-            suggestions: getSuggestions(e.data.payload.query, e.data.payload.tokens),
+            suggestions: getSuggestions(e.data.payload.query, tokens),
             query: e.data.payload.query,
-            tokens: e.data.payload.tokens
+            tokens
+        });
+    } else if (e.data.type === 'tokenize') {
+        const tokens = segment(e.data.payload.query, e.data.payload.locale);
+        postMessage({
+            query: e.data.payload.query,
+            tokens,
+            mode: e.data.payload.mode,
+            type: e.data.type
         });
     }
 }
