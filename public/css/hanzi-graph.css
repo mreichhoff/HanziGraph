@@ -188,10 +188,6 @@ ul {
     margin: var(--primary-panel-margin);
 }
 
-.walkthrough h1 {
-    text-align: center;
-}
-
 .section-container {
     margin: var(--section-container-margin);
     flex-grow: 1;
