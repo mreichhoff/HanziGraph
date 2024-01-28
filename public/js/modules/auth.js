@@ -45,11 +45,13 @@ document.getElementById('register').addEventListener('submit', function (event) 
 });
 document.getElementById('register-link').addEventListener('click', function () {
     document.getElementById('signin').style.display = 'none';
+    document.getElementById('login-header').innerText = "Register";
     document.getElementById('register').removeAttribute('style');
     document.getElementById('error-message').style.visibility = 'hidden';
 });
 document.getElementById('signin-link').addEventListener('click', function () {
     document.getElementById('register').style.display = 'none';
+    document.getElementById('login-header').innerText = "Sign in";
     document.getElementById('signin').removeAttribute('style');
     document.getElementById('error-message').style.visibility = 'hidden';
 });

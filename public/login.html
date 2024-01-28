@@ -15,7 +15,8 @@
 <body>
     <header class="header">
         <div class="exit-container"><a href="/"><i id="faq-exit-button" class="exit-button"></i></a></div>
-        <h1 class="main-header">Sign in or Register</h1>
+        <div id="header-logo" class="logo freq">汉</div>
+        <h1 id="login-header" class="main-header">Sign in</h1>
         <div class="stats-container"></div>
     </header>
     <main class="auth-form">
@@ -44,6 +45,8 @@
             <p id="forgot-password">Forgot your password?</p>
         </form>
         <form id="register" style="display: none;">
+            <p style="margin-top:0"><span class="emphasized-but-not-that-emphasized">Note: </span> An account is not
+                required. It only allows your flash cards and study stats to be synced across devices.</p>
             <ul>
                 <li>
                     <label for="register-email">
