@@ -3,8 +3,9 @@
     --primary-font-color: rgba(0, 0, 0, 0.87);
     --primary-font: Roboto, Helvetica, Arial, sans-serif;
     --primary-font-weight: 300;
-    --primary-header-height: 40px;
+    --primary-header-height: 50px;
     --primary-header-font-size: 30px;
+    --header-background-color: #eee7;
     --secondary-header-font-size: 30px;
     --tertiary-header-font-size: 22px;
     --secondary-control-font-size: 14px;
@@ -24,9 +25,11 @@
     --input-background-color: #fff;
     --primary-input-box-shadow: 0 2px 3px 1px #eeee;
     --positive-button-color: #6de200;
-    --right-button-margin: 10px 0 0 20px;
-    --menu-button-margin: 18px 0 0 0;
-    --primary-container-height: calc(100% - 42px);
+    --right-button-height: 22px;
+    /* I was told there would be no math */
+    --right-button-margin: calc((var(--primary-header-height) - var(--right-button-height)) / 2) 0 0 20px;
+    --menu-button-margin: calc(var(--primary-header-height) / 2 - 2px) 0 0 0;
+    --primary-container-height: calc(100% - (var(--primary-header-height) + 2px));
     --legend-height: 20px;
     --graph-height: calc(100% - var(--legend-height) - 4px);
     --section-container-margin: 0 20px;
@@ -113,6 +116,7 @@ ul {
     text-align: center;
     border-bottom: var(--border);
     box-shadow: var(--primary-input-box-shadow);
+    background-color: var(--header-background-color);
 }
 
 .header.has-suggestions {
@@ -122,19 +126,25 @@ ul {
 .header h1 {
     /* keep it centered despite the logo, which gets 44px in the grid template */
     margin-right: 44px;
+    line-height: var(--primary-header-height);
 }
 
 .header .logo {
-    height: calc(var(--primary-header-height) - 10px);
-    width: calc(var(--primary-header-height) - 8px);
-    margin-top: 3px;
+    height: 30px;
+    width: 32px;
+    /* (header height - this element's height - border width*2) all over 2 */
+    margin-top: calc((var(--primary-header-height) - 30px - 6px) / 2);
     border-radius: 50%;
     background-color: var(--tone-4-color);
-    font-size: 21px;
+    font-size: 20px;
     font-weight: 400;
     color: #000;
     user-select: none;
-    border: 2px solid black;
+    border: 3px solid black;
+    cursor: pointer;
+}
+.header .logo.freq {
+    background-color: var(--tone-1-color);
 }
 
 .header.has-suggestions {
@@ -155,12 +165,12 @@ ul {
 }
 
 .primary-input {
-    width: 100%;
+    width: 90%;
     max-width: 600px;
     text-align: center;
     height: var(--search-input-height);
     font-size: var(--search-font-size);
-    margin: 4px auto;
+    margin: 9px auto;
     padding: 0;
     text-align: center;
     border: var(--border);
@@ -574,7 +584,7 @@ h2.word-header {
     height: 30px;
     border: 2px solid;
     border-radius: 4px;
-    margin-top: 2px;
+    margin-top: calc((var(--primary-header-height) - 30px) / 2);
 }
 
 .exit-button::after,
@@ -607,7 +617,7 @@ h2.word-header {
     position: relative;
     display: block;
     width: 20px;
-    height: 22px;
+    height: var(--right-button-height);
     border: 2px solid;
     border-radius: 3px;
     cursor: pointer;
@@ -644,7 +654,7 @@ h2.word-header {
     position: relative;
     display: inline-block;
     width: 22px;
-    height: 22px;
+    height: var(--right-button-height);
     border: 2px solid;
     border-radius: 100px;
     margin: var(--right-button-margin);
@@ -758,7 +768,7 @@ h2.word-header {
     position: absolute;
     border-radius: 3px;
     width: 2px;
-    height: 8px;
+    height: 10px;
     background: currentColor;
     transform: rotate(-45deg);
     top: 10px;
@@ -1224,6 +1234,7 @@ main.auth-form {
 @media (prefers-color-scheme: dark) {
     :root {
         --background-color: #121212;
+        --header-background-color: #121212;
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #333;
         --link-font-color: #68aaee;
