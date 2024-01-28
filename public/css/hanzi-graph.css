@@ -131,6 +131,7 @@ ul {
 
 .header .logo {
     height: 30px;
+    line-height: 30px;
     width: 32px;
     /* (header height - this element's height - border width*2) all over 2 */
     margin-top: calc((var(--primary-header-height) - 30px - 6px) / 2);
