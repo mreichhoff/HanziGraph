@@ -3,8 +3,9 @@
     --primary-font-color: rgba(0, 0, 0, 0.87);
     --primary-font: Roboto, Helvetica, Arial, sans-serif;
     --primary-font-weight: 300;
-    --primary-header-height: 40px;
+    --primary-header-height: 50px;
     --primary-header-font-size: 30px;
+    --header-background-color: #eee7;
     --secondary-header-font-size: 30px;
     --tertiary-header-font-size: 22px;
     --secondary-control-font-size: 14px;
@@ -24,9 +25,11 @@
     --input-background-color: #fff;
     --primary-input-box-shadow: 0 2px 3px 1px #eeee;
     --positive-button-color: #6de200;
-    --right-button-margin: 10px 0 0 20px;
-    --menu-button-margin: 18px 0 0 0;
-    --primary-container-height: calc(100% - 42px);
+    --right-button-height: 22px;
+    /* I was told there would be no math */
+    --right-button-margin: calc((var(--primary-header-height) - var(--right-button-height)) / 2) 0 0 20px;
+    --menu-button-margin: calc(var(--primary-header-height) / 2 - 2px) 0 0 0;
+    --primary-container-height: calc(100% - (var(--primary-header-height) + 2px));
     --legend-height: 20px;
     --graph-height: calc(100% - var(--legend-height) - 4px);
     --section-container-margin: 0 20px;
@@ -35,7 +38,6 @@
     --bar-chart-height: 400px;
     --bar-chart-width: 600px;
     --bar-chart-font-size: 14px;
-    --output-container-height: calc(100% - 58px);
     --controls-padding: 14px;
     --study-result-buttons-width: 50%;
     --legend-font-size: 14px;
@@ -55,6 +57,8 @@
     --button-border-bottom: 3px solid var(--accent-color);
     --graph-expand-button-box-shadow: 2px 2px #444;
     --tag-border: 2px solid #333;
+    --examples-top-margin: 14px;
+    --graph-margin-top: 14px;
 }
 
 html {
@@ -107,10 +111,46 @@ ul {
 
 .header {
     display: grid;
-    grid-template-columns: 50px 1fr 50px;
+    grid-template-columns: 50px 44px 1fr 50px;
     height: var(--primary-header-height);
     text-align: center;
     border-bottom: var(--border);
+    box-shadow: var(--primary-input-box-shadow);
+    background-color: var(--header-background-color);
+}
+
+.header.has-suggestions {
+    height: auto;
+}
+
+.header h1 {
+    /* keep it centered despite the logo, which gets 44px in the grid template */
+    margin-right: 44px;
+    line-height: var(--primary-header-height);
+}
+
+.header .logo {
+    height: 30px;
+    line-height: 30px;
+    width: 32px;
+    /* (header height - this element's height - border width*2) all over 2 */
+    margin-top: calc((var(--primary-header-height) - 30px - 6px) / 2);
+    border-radius: 50%;
+    background-color: var(--tone-4-color);
+    font-size: 20px;
+    font-weight: 400;
+    color: #000;
+    user-select: none;
+    border: 3px solid black;
+    cursor: pointer;
+}
+
+.header .logo.freq {
+    background-color: var(--tone-1-color);
+}
+
+.header.has-suggestions {
+    height: auto;
 }
 
 .control-container {
@@ -122,11 +162,12 @@ ul {
 }
 
 .primary-input {
-    width: 80%;
+    width: 90%;
+    max-width: 600px;
     text-align: center;
     height: var(--search-input-height);
     font-size: var(--search-font-size);
-    margin: 10px auto auto 0;
+    margin: 9px auto;
     padding: 0;
     text-align: center;
     border: var(--border);
@@ -134,17 +175,8 @@ ul {
     box-shadow: var(--primary-input-box-shadow);
 }
 
-#walkthrough-character-set {
-    font-weight: bold;
-}
-
 .primary-container {
     height: var(--primary-container-height);
-}
-
-.output-container {
-    height: var(--output-container-height);
-    /* TODO: should probably be grid, but that interacts strangely with cytoscape resizing */
     display: flex;
     max-width: 1300px;
     margin: 0 auto;
@@ -154,6 +186,7 @@ ul {
     width: 50%;
     display: flex;
     flex-direction: column;
+    margin: var(--primary-panel-margin);
 }
 
 .section-container {
@@ -178,9 +211,12 @@ ul {
     margin-top: 10px;
 }
 
-#graph,
-#flow-diagram-container {
+#graph {
     height: var(--graph-height);
+}
+
+#graph-container {
+    margin-top: var(--graph-margin-top);
 }
 
 .flow-explanation {
@@ -192,7 +228,11 @@ ul {
 #examples {
     /* avoid scrollbars while animations run, otherwise unnecessary */
     overflow-x: hidden;
-    margin-top: 4px;
+    margin-top: var(--examples-top-margin);
+}
+
+#examples .explanation {
+    font-weight: bold;
 }
 
 #examples .explanation {
@@ -449,11 +489,6 @@ h2.word-header {
     margin-top: 6px;
 }
 
-.suggestions-explanation {
-    font-size: var(--instructions-font-size);
-    margin-top: 4px;
-}
-
 .context,
 .coverage-explanation {
     font-size: var(--instructions-font-size);
@@ -541,7 +576,7 @@ h2.word-header {
     height: 30px;
     border: 2px solid;
     border-radius: 4px;
-    margin-top: 2px;
+    margin-top: calc((var(--primary-header-height) - 30px) / 2);
 }
 
 .exit-button::after,
@@ -574,7 +609,7 @@ h2.word-header {
     position: relative;
     display: block;
     width: 20px;
-    height: 22px;
+    height: var(--right-button-height);
     border: 2px solid;
     border-radius: 3px;
     cursor: pointer;
@@ -611,7 +646,7 @@ h2.word-header {
     position: relative;
     display: inline-block;
     width: 22px;
-    height: 22px;
+    height: var(--right-button-height);
     border: 2px solid;
     border-radius: 100px;
     margin: var(--right-button-margin);
@@ -631,6 +666,11 @@ h2.word-header {
     border-style: solid;
     transform-origin: bottom left;
     transform: rotate(45deg)
+}
+
+.left-menu-button-container,
+.right-menu-button-container {
+    cursor: pointer;
 }
 
 .right-menu-button-container .check {
@@ -720,7 +760,7 @@ h2.word-header {
     position: absolute;
     border-radius: 3px;
     width: 2px;
-    height: 8px;
+    height: 10px;
     background: currentColor;
     transform: rotate(-45deg);
     top: 10px;
@@ -841,6 +881,7 @@ h2.word-header {
     text-align: center;
     list-style-type: none;
     overflow: hidden;
+    background-color: var(--background-color);
 }
 
 .search-suggestion {
@@ -1186,6 +1227,7 @@ main.auth-form {
 @media (prefers-color-scheme: dark) {
     :root {
         --background-color: #121212;
+        --header-background-color: #121212;
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #333;
         --link-font-color: #68aaee;
@@ -1216,22 +1258,17 @@ main.auth-form {
     :root {
         --primary-header-font-size: 26px;
         --tertiary-header-font-size: 20px;
-        --primary-header-height: 34px;
-        --right-button-margin: 6px 0 0 20px;
-        --menu-button-margin: 16px 0 0 0;
-        --primary-container-height: calc(100% - 35px);
-        --search-input-height: 26px;
-        --search-font-size: 18px;
-        --output-container-height: calc(100% - 48px);
         --study-result-buttons-width: 80%;
         --instructions-font-size: 14px;
         --target-language-font-size: 22px;
         --controls-padding: 10px;
+        --examples-top-margin: 14px;
+        --graph-margin-top: 0;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
     /* ideally only variables */
-    .output-container {
+    .primary-container {
         display: block;
     }
 
@@ -1240,20 +1277,19 @@ main.auth-form {
     }
 
     #text-container {
-        height: 45%;
+        height: 50%;
     }
 
     /* TODO(refactor): why is this media query using graph-container but the main one uses graph? */
-    #graph-container,
-    #flow-diagram-container {
-        height: 55%;
+    #graph-container {
+        height: 50%;
         border-top: var(--border);
     }
 
     /* should be unreachable other than when this media query is reached... */
     @keyframes expand-panel {
         0% {
-            height: 45%;
+            height: 50%;
         }
 
         100% {
@@ -1271,7 +1307,7 @@ main.auth-form {
         }
 
         100% {
-            height: 45%;
+            height: 50%;
         }
     }
 

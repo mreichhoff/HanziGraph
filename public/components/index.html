@@ -100,7 +100,13 @@
         <div id="left-menu-button-container" class="left-menu-button-container">
             <i id="left-menu-button" class="menu-button"></i>
         </div>
-        <h1 id="main-header" class="main-header">HanziGraph</h1>
+        <img class="logo" src="/images/hanzigraph-192x192.png"/>
+        <h1 id="text-header" style="display:none">HanziGraph</h1>
+        <form id="search-form">
+            <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word" type="search"
+                enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
+            <ul id="search-suggestions-container" class="search-suggestions" style="display:none"></ul>
+        </form>
         <div id="right-menu-button-container" class="right-menu-button-container">
             <a href="https://github.com/mreichhoff/HanziGraph/blob/main/README.md">
                 <svg stroke="currentColor" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
@@ -113,41 +119,33 @@
         </div>
     </header>
     <div id="main-app-container" class="primary-container">
-        <div id="controls" class="control-container">
-            <form id="search-form">
-                <input id="hanzi-box" aria-label="Choose any hanzi" placeholder="Choose any hanzi" type="search"
-                    enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
-            </form>
+        <div id="text-container" class="primary-panel">
+            <div id="explore-container" class="section-container">
+                <p style="display:none" id="not-found-message">No data found 😞. Please try another.</p>
+                <div id="walkthrough" class="walkthrough">
+                    <p>To get started, click the diagram, or search for any character.</p>
+                    <p>The diagram shows the components of each character, the components of its components, and so
+                        on.</p>
+                    <p>
+                        The diagram is color-coded by tone. When a component has similar pronunciation with its
+                        parent, a label with pinyin (initial, final, or both) is shown. </p>
+                    <p>Pinyin rules can be found on
+                        <a class="active-link" href="https://pinyin.info/rules/initials_finals.html">pinyin.info</a>
+                    </p>
+                </div>
+                <div id="examples">
+                </div>
+            </div>
         </div>
-        <div id="data-container" class="output-container">
-            <div id="text-container" class="primary-panel">
-                <div id="explore-container" class="section-container">
-                    <p style="display:none" id="not-found-message">No data found 😞. Please try another.</p>
-                    <div id="walkthrough" class="walkthrough">
-                        <p>To get started, click the diagram, or search for any character.</p>
-                        <p>The diagram shows the components of each character, the components of its components, and so
-                            on.</p>
-                        <p>
-                            The diagram is color-coded by tone. When a component has similar pronunciation with its
-                            parent, a label with pinyin (initial, final, or both) is shown. </p>
-                        <p>Pinyin rules can be found on
-                            <a class="active-link" href="https://pinyin.info/rules/initials_finals.html">pinyin.info</a>
-                        </p>
-                    </div>
-                    <div id="examples">
-                    </div>
-                </div>
+        <div id="graph-container" class="primary-panel">
+            <div id="tone-legend" class="legend">
+                <span class="tone1">1st tone</span>
+                <span class="tone2">2nd tone</span>
+                <span class="tone3">3rd tone</span>
+                <span class="tone4">4th tone</span>
+                <span class="tone-neutral">Other</span>
             </div>
-            <div id="graph-container" class="primary-panel">
-                <div id="tone-legend" class="legend">
-                    <span class="tone1">1st tone</span>
-                    <span class="tone2">2nd tone</span>
-                    <span class="tone3">3rd tone</span>
-                    <span class="tone4">4th tone</span>
-                    <span class="tone-neutral">Other</span>
-                </div>
-                <div id="graph" class="graph"></div>
-            </div>
+            <div id="graph" class="graph"></div>
         </div>
     </div>
     <div id="menu-container" style="display:none">

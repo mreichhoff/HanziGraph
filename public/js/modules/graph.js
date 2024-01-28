@@ -8,6 +8,8 @@ const switchLegend = document.getElementById('switch-legend');
 
 const freqLegend = document.getElementById('freq-legend');
 const toneLegend = document.getElementById('tone-legend');
+// TODO: shared with options...could de-couple with custom events, but who has the time
+const headerLogo = document.getElementById('header-logo');
 
 let cy = null;
 let currentPath = [];
@@ -367,33 +369,40 @@ let showingGraph = true;
 let pendingResizeTimeout = null;
 let dirty = null;
 
+function toggleColorCodeMode() {
+    if(colorCodeMode === colorCodeModes.tones) {
+        colorCodeMode = colorCodeModes.frequency;
+        freqLegend.removeAttribute('style');
+        freqLegend.classList.add('slide-in');
+        toneLegend.style.display = 'none';
+        toneLegend.classList.remove('slide-in');
+        headerLogo.classList.add('freq');
+    } else {
+        colorCodeMode = colorCodeModes.tones;
+        toneLegend.removeAttribute('style');
+        toneLegend.classList.add('slide-in');
+        freqLegend.style.display = 'none';
+        freqLegend.classList.remove('slide-in');
+        headerLogo.classList.remove('freq');
+    }
+    updateColorScheme();
+}
+
 function toggleColorCodeVisibility() {
     if (getActiveGraph().disableToneColors) {
         colorCodeMode = colorCodeModes.frequency;
         freqLegend.removeAttribute('style');
         toneLegend.style.display = 'none';
         switchLegend.style.display = 'none';
+        headerLogo.classList.add('freq');
+    } else {
+        headerLogo.addEventListener('click', toggleColorCodeMode);
     }
 }
 
 function initialize() {
     toggleColorCodeVisibility();
-    switchLegend.addEventListener('click', function() {
-        if(colorCodeMode === colorCodeModes.tones) {
-            colorCodeMode = colorCodeModes.frequency;
-            freqLegend.removeAttribute('style');
-            freqLegend.classList.add('slide-in');
-            toneLegend.style.display = 'none';
-            toneLegend.classList.remove('slide-in');
-        } else {
-            colorCodeMode = colorCodeModes.tones;
-            toneLegend.removeAttribute('style');
-            toneLegend.classList.add('slide-in');
-            freqLegend.style.display = 'none';
-            freqLegend.classList.remove('slide-in');
-        }
-        updateColorScheme();
-    });
+    switchLegend.addEventListener('click', toggleColorCodeMode);
     document.addEventListener('graph-update', function (event) {
         buildGraph(event.detail);
     });

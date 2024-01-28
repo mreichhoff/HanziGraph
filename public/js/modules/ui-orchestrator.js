@@ -15,8 +15,12 @@ const graphExpander = document.getElementById('graph-expander');
 const explorePane = document.getElementById('explore-container');
 const studyPane = document.getElementById('study-container');
 
+const searchForm = document.getElementById('hanzi-choose');
+const textHeader = document.getElementById('text-header');
+
 const containers = [mainAppContainer, statsContainer, faqContainer, menuContainer];
 const panes = [explorePane, studyPane];
+const midHeaderOptions = [textHeader, searchForm];
 
 // TODO(refactor): I'm gonna go out on a limb and say there's a better way...
 const stateKeys = {
@@ -34,6 +38,7 @@ const states = {
         activeContainer: mainAppContainer,
         activePane: explorePane,
         leftState: 'menu',
+        activeMidHeader: searchForm,
         rightState: 'study',
         paneAnimation: 'slide-in'
     },
@@ -43,6 +48,7 @@ const states = {
         activeContainer: mainAppContainer,
         activePane: studyPane,
         leftState: 'menu',
+        activeMidHeader: searchForm,
         rightState: 'main',
         paneAnimation: 'slide-in'
     },
@@ -51,6 +57,7 @@ const states = {
         activeContainer: faqContainer,
         statePreserving: true,
         leftState: 'previous',
+        activeMidHeader: textHeader,
         animation: 'slide-in'
     },
     stats: {
@@ -58,6 +65,7 @@ const states = {
         activeContainer: statsContainer,
         statePreserving: true,
         leftState: 'main',
+        activeMidHeader: textHeader,
         animation: 'slide-in'
     },
     menu: {
@@ -65,6 +73,7 @@ const states = {
         activeContainer: menuContainer,
         statePreserving: true,
         leftState: 'previous',
+        activeMidHeader: textHeader,
         animation: 'slide-in'
     }
 };
@@ -85,6 +94,13 @@ function switchToState(state) {
         if (container.id !== stateConfig.activeContainer.id) {
             container.style.display = 'none';
             container.dispatchEvent(new Event('hidden'));
+        }
+    }
+    for (const midHeaderOption of midHeaderOptions) {
+        if(midHeaderOption.id !== stateConfig.activeMidHeader.id) {
+            midHeaderOption.style.display = 'none';
+        } else {
+            midHeaderOption.removeAttribute('style');
         }
     }
     stateConfig.activeContainer.removeAttribute('style');
