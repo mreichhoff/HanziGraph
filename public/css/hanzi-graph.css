@@ -143,17 +143,13 @@ ul {
     border: 3px solid black;
     cursor: pointer;
 }
+
 .header .logo.freq {
     background-color: var(--tone-1-color);
 }
 
 .header.has-suggestions {
     height: auto;
-}
-
-.header .logo {
-    height: var(--primary-header-height);
-    width: var(--primary-header-height);
 }
 
 .control-container {
@@ -178,10 +174,6 @@ ul {
     box-shadow: var(--primary-input-box-shadow);
 }
 
-#walkthrough-character-set {
-    font-weight: bold;
-}
-
 .primary-container {
     height: var(--primary-container-height);
     display: flex;
@@ -194,6 +186,10 @@ ul {
     display: flex;
     flex-direction: column;
     margin: var(--primary-panel-margin);
+}
+
+.walkthrough h1 {
+    text-align: center;
 }
 
 .section-container {
@@ -490,11 +486,6 @@ h2.word-header {
 
 .coverage-explanation+svg {
     margin-top: 6px;
-}
-
-.suggestions-explanation {
-    font-size: var(--instructions-font-size);
-    margin-top: 4px;
 }
 
 .context,
@@ -889,6 +880,7 @@ h2.word-header {
     text-align: center;
     list-style-type: none;
     overflow: hidden;
+    background-color: var(--background-color);
 }
 
 .search-suggestion {
