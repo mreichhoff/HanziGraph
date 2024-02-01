@@ -17,6 +17,8 @@ const rightButton = document.getElementById('right-button');
 const deleteCardButton = document.getElementById('delete-card-button');
 const cardAddedTime = document.getElementById('card-added-time');
 const cardAddedTimeContainer = document.getElementById('card-added-time-container');
+const cardAddedReason = document.getElementById('card-added-reason');
+const cardOriginContainer = document.getElementById('card-origin-container');
 
 const relatedCardsContainer = document.getElementById('related-cards-container');
 const relatedCardsElement = document.getElementById('related-cards');
@@ -187,21 +189,27 @@ let setupStudyMode = function () {
         setPerformanceClass(correctPercentage, cardPercentageElement);
         cardRightCountElement.textContent = `${currentCard.rightCount || 0} time${currentCard.rightCount != 1 ? 's' : ''}`;
         cardWrongCountElement.textContent = `${currentCard.wrongCount || 0} time${currentCard.wrongCount != 1 ? 's' : ''}`;
-        if (currentCard.added) {
-            cardAddedTimeContainer.removeAttribute('style');
-            cardAddedTime.innerText = new Date(Number(currentCard.added)).toLocaleDateString('en-US',
-                {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric"
-                })
-        } else {
-            cardAddedTimeContainer.style.display = 'none';
-        }
     } else {
         cardNewMessageElement.removeAttribute('style');
         cardOldMessageElement.style.display = 'none';
+    }
+    if (currentCard.added) {
+        cardAddedTimeContainer.removeAttribute('style');
+        cardAddedTime.innerText = new Date(Number(currentCard.added)).toLocaleDateString('en-US',
+            {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric"
+            });
+    } else {
+        cardAddedTimeContainer.style.display = 'none';
+    }
+    if(currentCard.vocabOrigin && currentCard.vocabOrigin !== currentCard.zh.join('')) {
+        cardAddedReason.innerText = currentCard.vocabOrigin;
+        cardOriginContainer.removeAttribute('style');
+    } else {
+        cardOriginContainer.style.display = 'none';
     }
     relatedCardsContainer.style.display = 'none';
 };

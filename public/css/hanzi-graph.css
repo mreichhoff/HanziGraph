@@ -141,6 +141,7 @@ ul {
     font-weight: 400;
     color: #000;
     user-select: none;
+    -webkit-user-select: none;
     border: 3px solid black;
     cursor: pointer;
 }
@@ -246,6 +247,7 @@ ul {
     margin: 4px auto;
     border-bottom: var(--border);
     user-select: none;
+    -webkit-user-select: none;
 }
 
 .explore-tab {
@@ -671,6 +673,8 @@ h2.word-header {
 .left-menu-button-container,
 .right-menu-button-container {
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .right-menu-button-container .check {
@@ -689,7 +693,7 @@ h2.word-header {
     height: 22px;
     border: 2px solid;
     transform: scale(var(--ggs, 1));
-    border-radius: 22px
+    border-radius: 22px;
 }
 
 .add-button::after,
@@ -787,6 +791,8 @@ h2.word-header {
 
 .legend-switch-button {
     margin-top: 3px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .legend-switch-button:hover {
@@ -1003,6 +1009,18 @@ h2.word-header {
     font-size: 20px;
     height: 50px;
     line-height: 50px;
+}
+
+.primary-button {
+    text-align: center;
+    padding: 12px;
+    background: var(--primary-font-color);
+    width: 120px;
+    margin: 20px auto;
+    color: var(--background-color);
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 #wrong-button {
