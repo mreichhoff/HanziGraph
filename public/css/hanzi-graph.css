@@ -5,7 +5,7 @@
     --primary-font-weight: 300;
     --primary-header-height: 50px;
     --primary-header-font-size: 30px;
-    --header-background-color: #eee7;
+    --header-background-color: #f8f8f8;
     --secondary-header-font-size: 30px;
     --tertiary-header-font-size: 22px;
     --secondary-control-font-size: 14px;
@@ -24,6 +24,7 @@
     --link-font-color: rgb(21, 36, 255);
     --input-background-color: #fff;
     --primary-input-box-shadow: 0 2px 3px 1px #eeee;
+    --header-box-shadow: 0;
     --positive-button-color: #6de200;
     --right-button-height: 22px;
     /* I was told there would be no math */
@@ -115,7 +116,7 @@ ul {
     height: var(--primary-header-height);
     text-align: center;
     border-bottom: var(--border);
-    box-shadow: var(--primary-input-box-shadow);
+    box-shadow: var(--header-box-shadow);
     background-color: var(--header-background-color);
 }
 
@@ -1251,6 +1252,7 @@ main.auth-form {
         --link-font-color: #68aaee;
         --input-background-color: #fff;
         --primary-input-box-shadow: 0 2px 3px 1px #3333;
+        --header-box-shadow: 0 2px 3px 1px #3333;
         --input-background-color: rgba(74, 74, 74, 0.9);
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
