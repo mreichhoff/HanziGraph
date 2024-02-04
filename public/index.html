@@ -74,10 +74,6 @@
                         </a>
                     </p>
                     <p>
-                        Most example sentences are human-written, but many are AI-generated. <a class="active-link"
-                            href="https://github.com/mreichhoff/HanziGraph/issues/new/choose">Let us know</a> if you see anything weird.
-                    </p>
-                    <p>
                         Just interested in how characters are composed? Check out <a class="active-link"
                             href="/components">the components tool</a>.
                     </p>
@@ -122,9 +118,9 @@
                             </p>
                         </div>
                         <p id="card-origin-container" style="display:none">Card added as an example use of <span
-                            class="emphasized" id="card-added-reason"></span>.</p>
-                        <p id="card-added-time-container">Card added on <span
-                            class="emphasized-but-not-that-emphasized" id="card-added-time"></span>.</p>
+                                class="emphasized" id="card-added-reason"></span>.</p>
+                        <p id="card-added-time-container">Card added on <span class="emphasized-but-not-that-emphasized"
+                                id="card-added-time"></span>.</p>
                     </div>
                     <div id="related-cards-container" class="card-detail" style="display:none">
                         Other cards with <span class="emphasized-target" id="related-card-query"></span>:
@@ -338,6 +334,31 @@
                 word was more commonly used. The analysis was done on movie and TV subtitles, so (in theory) the
                 diagram represents colloquial speech. You can click any of the words to see examples for it, much
                 like the graph diagram.
+            </p>
+        </section>
+        <section id="faq-sentence-metadata" style="display:none">
+            <h3>What data is shown below each sentence?</h3>
+            <p>
+                The <span class="emphasized-but-not-that-emphasized">source</span> of each sentence is shown.
+                <span class="emphasized-but-not-that-emphasized">Human-written</span> sentences are greatly preferred,
+                so most sentences come from <a href="https://tatoeba.org" class="active-link">Tatoeba</a>.
+                OpenAI's <code>gpt-3.5-turbo</code> model, plus the <a class="active-link"
+                    href="https://www.opensubtitles.org">OpenSubtitles</a> dataset
+                on <a class="active-link" href="https://opus.nlpl.eu/OpenSubtitles2018.php">Opus</a>, were used to fill
+                in the gaps.
+                We're always on the lookout for other datasets. Please feel free to
+                <a class="active-link"
+                    href="https://github.com/mreichhoff/HanziGraph/issues/new?title=Bad%20sentence:">report</a>
+                anything weird or inappropriate.
+            </p>
+            <p>
+                In addition to the source, the <span class="emphasized-but-not-that-emphasized">average frequency
+                    rank</span> of the <span class="emphasized-but-not-that-emphasized">characters</span> in the
+                sentence is shown, with
+                emojis indicating how common (🔥🔥🔥) or uncommon (🥶🥶🥶) the average is. More emojis means a more
+                extreme
+                average, whether more common or more rare. The emoji counts were based on analysis of the distribution
+                of the averages across all sentences. The idea is to indicate how difficult a sentence is likely to be.
             </p>
         </section>
     </div>

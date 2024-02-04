@@ -36,7 +36,8 @@ const graphOptions = {
         type: 'frequency',
         hasCoverage: 'all',
         collocationsPath: 'data/simplified/collocations',
-        englishPath: 'data/simplified/english'
+        englishPath: 'data/simplified/english',
+        secondarySentenceSource: 'ai'
     },
     traditional: {
         display: 'Traditional',
@@ -52,7 +53,8 @@ const graphOptions = {
         hasCoverage: 'all',
         collocationsPath: 'data/traditional/collocations',
         englishPath: 'data/traditional/english',
-        logoCharacter: '漢'
+        logoCharacter: '漢',
+        secondarySentenceSource: 'subs'
     },
     cantonese: {
         display: 'Cantonese',

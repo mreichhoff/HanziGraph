@@ -5,6 +5,7 @@ const faqStudyMode = document.getElementById('faq-study-mode');
 const faqFlow = document.getElementById('faq-flow');
 const faqContext = document.getElementById('faq-context');
 const faqGeneral = document.getElementById('faq-general');
+const faqSentenceMetadata = document.getElementById('faq-sentence-metadata');
 const showStudyFaq = document.getElementById('show-study-faq');
 const showGeneralFaq = document.getElementById('show-general-faq');
 
@@ -13,13 +14,15 @@ const faqTypesToElement = {
     studyMode: faqStudyMode,
     context: faqContext,
     general: faqGeneral,
-    flow: faqFlow
+    flow: faqFlow,
+    sentenceMetadata: faqSentenceMetadata
 };
 const faqTypes = {
     studyMode: 'studyMode',
     context: 'context',
     general: 'general',
-    flow: 'flow'
+    flow: 'flow',
+    sentenceMetadata: 'sentenceMetadata'
 };
 
 let showFaq = function (faqType) {
