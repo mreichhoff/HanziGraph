@@ -14,7 +14,7 @@
     --search-font-size: 20px;
     --search-input-height: 32px;
     --primary-opacity: 0.95;
-    --secondary-opacity: 0.85;
+    --secondary-opacity: 0.9;
     --tertiary-opacity: 0.75;
     --target-language-font-size: 24px;
     --target-language-secondary-font-size: 20px;
@@ -477,6 +477,22 @@ h2.word-header {
 
 .example {
     margin: 16px 0;
+}
+
+.example .tags {
+    margin-top: 2px;
+    line-height: normal;
+    border-left: 2px solid var(--accent-color);
+    display: inline-block;
+}
+
+.example .tag {
+    border: 0;
+    margin-left: 4px;
+}
+
+.sentence-freq-tag {
+    font-size: 12px;
 }
 
 .explore-stat-header {

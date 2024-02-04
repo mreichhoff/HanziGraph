@@ -5,9 +5,10 @@ import { renderCoverageGraph } from "./coverage-graph"
 import { diagramKeys, switchDiagramView, showNotification } from "./ui-orchestrator.js";
 import { findPinyinRelationships } from "./pronunciation-parser.js"
 import { renderUsageDiagram } from "./flow-diagram.js";
+import { showFaq, faqTypes } from "./faq.js";
 
 let coverageGraph = {};
-let charFreqs = {};
+let charFreqs = null;
 
 let maxExamples = 5;
 let currentExamples = {};
@@ -17,6 +18,12 @@ const modes = {
     explore: 'explore',
     components: 'components'
 };
+
+const sources = {
+    tatoeba: { display: 'Tatoeba', link: 'https://tatoeba.org' },
+    ai: { display: 'AI 🤖' },
+    subs: { display: 'OpenSubtitles', link: 'https://www.opensubtitles.org' }
+}
 let currentMode = modes.explore;
 let currentTabs = null;
 
@@ -213,7 +220,7 @@ let findExamples = function (word, sentences, max) {
     });
     return examples;
 };
-let setupExampleElements = function (examples, exampleList) {
+let setupExampleElements = function (examples, exampleList, defaultSource) {
     for (let i = 0; i < examples.length; i++) {
         let exampleHolder = document.createElement('li');
         exampleHolder.classList.add('example');
@@ -233,6 +240,48 @@ let setupExampleElements = function (examples, exampleList) {
         enHolder.textContent = examples[i].en;
         enHolder.className = 'base';
         exampleHolder.appendChild(enHolder);
+        let tagContainer = document.createElement('div');
+        tagContainer.classList.add('tags');
+        const sourceKey = examples[i].source || defaultSource;
+        if (sourceKey in sources) {
+            const source = sources[sourceKey];
+            const sourceTag = document.createElement('span');
+            sourceTag.classList.add('tag', 'nowrap');
+            // innerHTML should be safe since we check that sourceKey is in our sources allowlist
+            if (source.link) {
+                sourceTag.innerHTML = `<span class="deemphasized">Source: <a href="${source.link}">${source.display}</a></span>`;
+            } else {
+                sourceTag.innerHTML = `<span class="deemphasized">Source: ${source.display}</span>`;
+            }
+            tagContainer.appendChild(sourceTag);
+        }
+        if (charFreqs) {
+            const uniqueChars = [...new Set([...examples[i].zh.join('')])];
+            const knownUniqueChars = uniqueChars.filter(x => !!charFreqs[x]);
+            const averageCharacterRank = Math.round(knownUniqueChars.reduce((x, y) => x + charFreqs[y], 0) / knownUniqueChars.length);
+            const rankTag = document.createElement('span');
+            const easeString = averageCharacterRank < 160 ?
+                '🔥🔥🔥' :
+                averageCharacterRank < 300 ?
+                    '🔥🔥' :
+                    averageCharacterRank < 450 ?
+                        '🔥' :
+                        averageCharacterRank < 700 ?
+                            '🥶' :
+                            averageCharacterRank < 1000 ?
+                                '🥶🥶' :
+                                '🥶🥶🥶';
+            rankTag.classList.add('tag', 'nowrap');
+            rankTag.innerHTML = `<span class="deemphasized">Avg char freq:</span> <span class="sentence-freq-tag">${easeString}</span>`;
+            tagContainer.appendChild(rankTag);
+        }
+        tagContainer.addEventListener('click', function (event) {
+            if (event.target.nodeName.toLowerCase() === 'a') {
+                return;
+            }
+            showFaq(faqTypes.sentenceMetadata);
+        });
+        exampleHolder.appendChild(tagContainer);
         exampleList.appendChild(exampleHolder);
     }
 };
@@ -247,7 +296,7 @@ let augmentExamples = function (word, container, maxExamples) {
                 return false;
             }
             let examples = findExamples(word, data, maxExamples || 2);
-            setupExampleElements(examples, container);
+            setupExampleElements(examples, container, getActiveGraph().secondarySentenceSource);
             currentExamples[word].push(...examples);
         });
 };
@@ -351,7 +400,7 @@ let renderExamples = function (word, examples, maxExamples, container) {
     exampleList.classList.add('examples');
     container.appendChild(exampleList);
     if (examples.length > 0) {
-        setupExampleElements(examples, exampleList);
+        setupExampleElements(examples, exampleList, 'tatoeba');
     } else if (getActiveGraph().augmentPath) {
         augmentExamples(word, exampleList, maxExamples);
     }
@@ -640,7 +689,7 @@ let getCardFromDefinitions = function (text, definitionList) {
     let parsedDefinitions = parseDefinitions(definitionList);
     //this assumes definitionList non null
     let result = { zh: [text] };
-    let answer = Object.values(parsedDefinitions).map(item=>{
+    let answer = Object.values(parsedDefinitions).map(item => {
         return `${item[0].pinyin}: ${item.map(x => x.en).join(', ')}`;
     }).join('; ');
     result['en'] = answer;
