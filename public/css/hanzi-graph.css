@@ -60,6 +60,7 @@
     --tag-border: 2px solid #333;
     --examples-top-margin: 14px;
     --graph-margin-top: 14px;
+    --checked-input-border: 6px solid black;
 }
 
 html {
@@ -925,6 +926,45 @@ h2.word-header {
     width: 16px;
 }
 
+fieldset {
+    width: 270px;
+    border-radius: 12px;
+    display: inline-block;
+    margin: 4px 10px;
+}
+
+/* not to be confused with the graph legend denoted by the class .legend */
+legend {
+    color: var(--legend-color);
+    background-color: var(--legend-background-color);
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 0;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0 auto;
+}
+
+fieldset label {
+    margin: 0 8px;
+}
+
+input[type="radio"] {
+    appearance: none;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    border: var(--border);
+    transition: 0.2s all linear;
+    position: relative;
+    top: 2px;
+    margin: 0;
+}
+
+input:checked {
+    border: var(--checked-input-border);
+}
+
 .bar-chart {
     display: grid;
     width: var(--bar-chart-width);
@@ -1278,6 +1318,7 @@ main.auth-form {
         --legend-switch-button-border: 1px solid #ccc;
         --graph-expand-button-box-shadow: 0;
         --tag-border: 2px solid #aaaa;
+        --checked-input-border: 6px solid #eeee;
     }
 }
 

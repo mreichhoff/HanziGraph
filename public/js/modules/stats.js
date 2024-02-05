@@ -10,8 +10,9 @@ const hourlyGraphDetail = document.getElementById('hourly-graph-detail');
 const addedCalendarDetail = document.getElementById('added-calendar-detail');
 const studyCalendarDetail = document.getElementById('study-calendar-detail');
 const studyGraphDetail = document.getElementById('studied-graph-detail');
+const statsSummary = document.getElementById('stats-summary');
+const modeControl = document.getElementById('mode-control');
 
-let lastLevelUpdatePrefix = '';
 let shown = false;
 
 function sameDay(d1, d2) {
@@ -186,71 +187,163 @@ let fillGapDays = function (daysWithData, originalData, defaultEntry) {
         curr += (24 * 60 * 60 * 1000);
     }
 };
-let BarChartClickHandler = function (detail, totalsByLevel, prop, index, message) {
+let characterBarChartClickHandler = function (detail, totalsByLevel, index, message) {
     detail.innerHTML = '';
     //TODO: why no built-in difference method?
-    let missingHanzi = new Set([...totalsByLevel[index + 1].characters].filter(x => !totalsByLevel[index + 1][prop].has(x)));
-    missingHanzi.forEach(x => message += x);
-    detail.innerHTML = message;
+    let missingHanzi = new Set([...totalsByLevel[index + 1].characters].filter(x => !totalsByLevel[index + 1].seen.has(x)));
+    [...missingHanzi].slice(0, 10).forEach(x => message += `<span class="emphasized">${x}</span>, `);
+    // innerHTML should be safe as the missingHanzi all come from the hanzi variable, which is trusted and acts as an allowlist.
+    detail.innerHTML = message.slice(0, -2);
 };
+
+let wordBarChartClickHandler = function (detail, totalsByLevel, index, message, ranks) {
+    detail.innerHTML = '';
+    let start = 0;
+    let end = ranks[index];
+    if (index !== 0) {
+        start = ranks[index - 1];
+    }
+    let unseenWordsToShow = [];
+    for (let i = start; i < end && i < window.freqs.length; i++) {
+        if (!totalsByLevel[index + 1].seen.has(window.freqs[i])) {
+            unseenWordsToShow.push(window.freqs[i]);
+            if (unseenWordsToShow.length > 9) {
+                break;
+            }
+        }
+    }
+    for (const unseenWord of unseenWordsToShow) {
+        message += `<span class="emphasized">${unseenWord}</span>, `;
+    }
+    message = message.slice(0, -2);
+    // innerHTML should be ok since each unseenWord comes from freqs, a trusted input
+    detail.innerHTML = message;
+}
 //could be an array, but we're possibly going to add out of order, and also trying to avoid hardcoding max level
-let totalsByLevel = {};
-let updateTotalsByLevel = function () {
-    totalsByLevel = {};
+let characterTotalsByLevel = {};
+let wordTotalsByLevel = {};
+let updateTotalsByLevel = function (ranks) {
+    characterTotalsByLevel = {};
     Object.keys(hanzi).forEach(x => {
         let level = hanzi[x].node.level;
-        if (!(level in totalsByLevel)) {
-            totalsByLevel[level] = { seen: new Set(), total: 0, characters: new Set() };
+        if (!(level in characterTotalsByLevel)) {
+            characterTotalsByLevel[level] = { seen: new Set(), total: 0, characters: new Set() };
         }
-        totalsByLevel[level].total++;
-        totalsByLevel[level].characters.add(x);
+        characterTotalsByLevel[level].total++;
+        characterTotalsByLevel[level].characters.add(x);
     });
+    wordTotalsByLevel = {};
+    if (!ranks) {
+        return;
+    }
+    let priorEnd = 0;
+    for (let i = 0; i < ranks.length; i++) {
+        wordTotalsByLevel[i + 1] = { seen: new Set(), total: ranks[i] - priorEnd };
+        priorEnd = ranks[i];
+    }
 }
-let createCardGraphs = function (studyList, legend) {
-    let studyListCharacters = new Set();
-    Object.keys(studyList).forEach(x => {
-        for (let i = 0; i < x.length; i++) {
-            studyListCharacters.add(x[i]);
-        }
-    });
-    studyListCharacters.forEach(x => {
-        if (hanzi[x]) {
-            let level = hanzi[x].node.level;
-            totalsByLevel[level].seen.add(x);
-        }
-    });
+// TODO combine with the equivalent in study-mode.js
+function getPerfClass(correctPercentage) {
+    if (correctPercentage >= 80) {
+        return 'good-performance';
+    } else if (correctPercentage < 80 && correctPercentage >= 60) {
+        return 'ok-performance';
+    } else {
+        return 'bad-performance';
+    }
+}
+function setupStudyGraph() {
+    studyGraphDetail.innerHTML = '';
+    const legend = getActiveGraph().legend;
+    const nextMode = statsContainer.querySelector('input[type=radio]:checked').value;
+    const studiedGraph = document.getElementById('studied-graph');
+    studiedGraph.innerHTML = '';
     let levelData = [];
-    //safe since we don't add keys in the read of /decks/
+    const totalsByLevel = (nextMode === 'words') ? wordTotalsByLevel : characterTotalsByLevel;
     Object.keys(totalsByLevel).sort().forEach(x => {
         levelData.push({
             count: totalsByLevel[x].seen.size || 0,
             total: totalsByLevel[x].total
         });
     });
-    const studiedGraph = document.getElementById('studied-graph');
-    studiedGraph.innerHTML = '';
+    const clickHandler = function (i) {
+        const mode = statsContainer.querySelector('input[type=radio]:checked').value;
+        if (mode !== 'words') {
+            characterBarChartClickHandler(
+                studyGraphDetail,
+                totalsByLevel,
+                i,
+                `Of the characters used in words in the <span class="emphasized-but-not-that-emphasized">${legend[i]}</span>, here are some that are not in your flashcards:<br/>`
+            );
+        } else {
+            wordBarChartClickHandler(studyGraphDetail, totalsByLevel, i, `Of the <span class="emphasized-but-not-that-emphasized">${legend[i]}</span> words, here are some that are not in your flashcards:<br/>`, getActiveGraph().ranks);
+        }
+    }
     studiedGraph.appendChild(
         BarChart(levelData, {
             labelText: (i) => legend[i],
             color: () => "#68aaee",
-            clickHandler: function (i) {
-                BarChartClickHandler(
-                    studyGraphDetail,
-                    totalsByLevel,
-                    'seen',
-                    i,
-                    `In ${legend[i]}, your study list doesn't yet contain:<br>`
-                );
-            }
+            clickHandler: clickHandler
         })
     );
+}
+let createCardGraphs = function (studyList, ranks) {
+    let studyListCharacters = new Set();
+    let studyListWords = new Set();
+    Object.values(studyList).forEach(y => {
+        const joinedZh = y.zh.join('');
+        for (let i = 0; i < joinedZh.length; i++) {
+            studyListCharacters.add(joinedZh[i]);
+        }
+        for (const word of y.zh) {
+            studyListWords.add(word);
+        }
+    });
+    studyListCharacters.forEach(x => {
+        if (hanzi[x]) {
+            let level = hanzi[x].node.level;
+            characterTotalsByLevel[level].seen.add(x);
+        }
+    });
+    if (ranks && wordSet) {
+        modeControl.removeAttribute('style');
+        for (const word of studyListWords) {
+            let previousStart = 0;
+            for (let i = 0; i < ranks.length; i++) {
+                if (wordSet[word] >= previousStart && wordSet[word] < ranks[i]) {
+                    wordTotalsByLevel[i + 1].seen.add(word);
+                    break;
+                }
+                previousStart = ranks[i];
+            }
+        }
+        statsContainer.querySelectorAll('input[type=radio]').forEach(radioButton => {
+            radioButton.addEventListener('change', setupStudyGraph);
+        });
+    } else {
+        modeControl.style.display = 'none';
+    }
 
+    // these innerHTMLs should be ok due to only substituting length/size functions of JS data structures
+    if (!studyList || Object.entries(studyList).length <= 0) {
+        statsSummary.innerHTML = `<span class="emphasized-but-not-that-emphasized">You haven't used any study features yet.</span>
+            <br/>You can get started by adding cards when you see the <span class="add-button"></span> button.`;
+    } else {
+        statsSummary.innerHTML = `So far, you've created <span class="emphasized">${Object.entries(studyList).length}</span> flash cards!<br/>
+        They contain
+        <span class="emphasized">${studyListWords.size}</span> unique
+        <span class="emphasized-but-not-that-emphasized">words</span> and
+        <span class="emphasized">${studyListCharacters.size}</span> unique 
+        <span class="emphasized-but-not-that-emphasized">characters.</span>`;
+    }
+    setupStudyGraph();
 
     let addedByDay = {};
     let sortedCards = Object.values(studyList).sort((x, y) => {
         return (x.added || 0) - (y.added || 0);
     });
     let seenCharacters = new Set();
+    let seenWords = new Set();
     for (const card of sortedCards) {
         //hacky, but truncate to day granularity this way
         if (card.added) {
@@ -258,6 +351,7 @@ let createCardGraphs = function (studyList, legend) {
             if (!(day in addedByDay)) {
                 addedByDay[day] = {
                     chars: new Set(),
+                    words: new Set(),
                     total: 0
                 };
             }
@@ -268,11 +362,22 @@ let createCardGraphs = function (studyList, legend) {
                     seenCharacters.add(character);
                 }
             });
+            card.zh.forEach(word => {
+                if (wordSet && (word in wordSet)) {
+                    addedByDay[day].words.add(word);
+                    seenWords.add(word);
+                }
+            });
         } else {
             //cards are sorted with unknown add date at front, so safe to add all at the start
             [...card.zh.join('')].forEach(character => {
                 if (hanzi[character]) {
                     seenCharacters.add(character);
+                }
+            });
+            card.zh.forEach(word => {
+                if (wordSet && (word in wordSet)) {
+                    seenWords.add(word);
                 }
             });
         }
@@ -282,11 +387,12 @@ let createCardGraphs = function (studyList, legend) {
         dailyAdds.push({
             date: new Date(date),
             chars: result.chars,
+            words: result.words,
             total: result.total
         });
     }
 
-    fillGapDays(dailyAdds, addedByDay, { chars: new Set(), total: 0 });
+    fillGapDays(dailyAdds, addedByDay, { chars: new Set(), words: new Set(), total: 0 });
     dailyAdds.sort((x, y) => x.date - y.date);
 
     const addedCalendar = document.getElementById('added-calendar');
@@ -315,14 +421,36 @@ let createCardGraphs = function (studyList, legend) {
                 addedCalendarDetail.innerHTML = '';
 
                 let data = dailyAdds[i];
+                // TODO oh dear
                 let characters = '';
-                data.chars.forEach(x => characters += x);
-                if (data.total && data.chars.size) {
-                    addedCalendarDetail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with these new characters: ${characters}`;
-                } else if (data.total) {
-                    addedCalendarDetail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with no new characters.`;
+                let words = '';
+                [...data.chars].slice(0, 10).forEach(x => {
+                    if (!(x in window.hanzi)) {
+                        return;
+                    }
+                    characters += `<span class="emphasized">${x}</span>` + ', '
+                });
+                characters = characters.slice(0, -2);
+                [...data.words].slice(0, 10).forEach(x => {
+                    if (!window.wordSet || !(x in window.wordSet)) {
+                        return;
+                    }
+                    words += `<span class="emphasized">${x}</span>` + ', '
+                });
+                words = words.slice(0, -2);
+                const initialMessage = `On <span class="emphasized">${getUTCISODate(data.date)}</span>`;
+                const totalMessage = `<span class="emphasized">${parseInt(data.total)}</span>`;
+                if (data.total && data.chars.size && data.words.size) {
+                    // innerHTML should be safe for all of these, since we control the date, the total, and the words and characters that are put into the cards.
+                    // we also ensure each character and word is in the `hanzi` or `wordSet`, which functions as a trusted allowlist.
+                    // the parseInt calls also help ensure nothing untrusted seeps in
+                    // someone could, of course, modify those themselves, but self-tampering isn't really avoidable
+                    addedCalendarDetail.innerHTML = `${initialMessage}, you added ${totalMessage} cards.<br/>New characters included:<br/>${characters}<br/>and new words included:<br/>${words}`;
+                } else if (data.total && data.words.size) {
+                    // note that it's impossible to have new characters but not new words, so that case is not handled.
+                    addedCalendarDetail.innerHTML = `${initialMessage}, you added ${totalMessage} cards.<br/>New words included:<br/>${words}.<br/>There were no new characters.`;
                 } else {
-                    addedCalendarDetail.innerText = `On ${getUTCISODate(data.date)}, you added no new cards.`;
+                    addedCalendarDetail.innerHTML = `${initialMessage}, you added <span class="emphasized-but-not-that-emphasized">no</span> new cards.`;
                 }
             }
         })
@@ -399,7 +527,8 @@ let createStudyResultGraphs = function (results) {
                 studyCalendarDetail.innerHTML = '';
 
                 let data = dailyData[i];
-                studyCalendarDetail.innerText = `On ${getUTCISODate(data.date)}, you studied ${data.total || 0} cards. You got ${data.correct} right and ${data.incorrect} wrong.`;
+                // parseInt and the date function should make these variables safe for innerHTML consumption
+                studyCalendarDetail.innerHTML = `On <span class="emphasized">${getUTCISODate(data.date)}</span>, you studied <span class="emphasized">${parseInt(data.total || 0)}</span> cards. You got <span class="emphasized">${parseInt(data.correct)}</span> right and <span class="emphasized">${parseInt(data.incorrect)}</span> wrong.`;
             }
         })
     );
@@ -412,25 +541,26 @@ let createStudyResultGraphs = function (results) {
     let getHour = function (hour) { return hour == 0 ? '12am' : (hour < 12 ? `${hour}am` : hour == 12 ? '12pm' : `${hour % 12}pm`) };
     let hourlyClickHandler = function (i) {
         if ((hourlyData[i].correct + hourlyData[i].incorrect) !== 0) {
-            hourlyGraphDetail.innerText = `In the ${getHour(hourlyData[i].hour)} hour, you've gotten ${hourlyData[i].correct} correct and ${hourlyData[i].incorrect} incorrect, or ${Math.round((hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100)}% correct.`;
+            const percentage = Math.round((hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100);
+            // each variable here is either from parseInt, Math.round, or the getHour function, so should be safe
+            hourlyGraphDetail.innerHTML = `In the <span class="emphasized">${getHour(hourlyData[i].hour)}</span> hour, you've gotten <span class="emphasized">${parseInt(hourlyData[i].correct)}</span> correct and <span class="emphasized">${parseInt(hourlyData[i].incorrect)}</span> incorrect, or <span class="emphasized ${getPerfClass(percentage)}">${percentage}%</span> correct.`;
         } else {
-            hourlyGraphDetail.innerText = `In the ${getHour(hourlyData[i].hour)} hour, you've not studied.`;
+            hourlyGraphDetail.innerHTML = `In the <span class="emphasized">${getHour(hourlyData[i].hour)}</span> hour, you've not yet studied.`;
         }
     };
     let hourlyColor = i => {
+        if ((hourlyData[i].correct + hourlyData[i].incorrect) === 0) {
+            return '';// don't set the color if there's been no studying
+        }
         let percentage = (hourlyData[i].correct / (hourlyData[i].correct + hourlyData[i].incorrect)) * 100;
-        if (percentage <= 100 && percentage >= 75) {
+        // TODO: these are duplicated in the CSS, ugh 
+        if (percentage <= 100 && percentage >= 80) {
             return '#6de200';
         }
-        if (percentage < 75 && percentage >= 50) {
-            return '#68aaee';
+        if (percentage < 80 && percentage >= 60) {
+            return '#ffc300';
         }
-        if (percentage < 50 && percentage >= 25) {
-            return '#ff9b35';
-        }
-        if (percentage < 25) {
-            return '#ff635f';
-        }
+        return '#ff635f';
     };
     const hourlyGraph = document.getElementById('hourly-graph');
     hourlyGraph.innerHTML = '';
@@ -448,17 +578,12 @@ let createStudyResultGraphs = function (results) {
 };
 
 let initialize = function () {
-    lastLevelUpdatePrefix = getActiveGraph().prefix;
-    updateTotalsByLevel();
+    updateTotalsByLevel(getActiveGraph().ranks);
     statsShow.addEventListener('click', function () {
         let activeGraph = getActiveGraph();
-        if (activeGraph.prefix !== lastLevelUpdatePrefix) {
-            lastLevelUpdatePrefix = activeGraph.prefix;
-            updateTotalsByLevel();
-        }
         switchToState(stateKeys.stats);
         shown = true;
-        createCardGraphs(getStudyList(), activeGraph.legend);
+        createCardGraphs(getStudyList(), activeGraph.ranks);
         createStudyResultGraphs(getStudyResults(), activeGraph.legend);
     });
 
@@ -467,6 +592,7 @@ let initialize = function () {
         if (!shown) {
             return;
         }
+        statsSummary.innerText = '';
         studyGraphDetail.innerText = '';
         addedCalendarDetail.innerText = '';
         studyCalendarDetail.innerText = '';
@@ -474,4 +600,4 @@ let initialize = function () {
     });
 };
 
-export { createCardGraphs, createStudyResultGraphs, updateTotalsByLevel, initialize };
+export { initialize };
