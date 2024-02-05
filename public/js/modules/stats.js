@@ -364,8 +364,10 @@ let createCardGraphs = function (studyList, ranks) {
             });
             card.zh.forEach(word => {
                 if (wordSet && (word in wordSet)) {
-                    addedByDay[day].words.add(word);
-                    seenWords.add(word);
+                    if (!seenWords.has(word)) {
+                        addedByDay[day].words.add(word);
+                        seenWords.add(word);
+                    }
                 }
             });
         } else {
