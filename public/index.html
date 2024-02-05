@@ -158,12 +158,26 @@
     </div>
     <div id="stats-container" style="display:none">
         <section class="stats-category">
+            <div id="stats-summary"></div>
+        </section>
+        <section class="stats-category">
             <div id="studied-container">
-                <h3 class="stats-header">Hanzi in Flashcards</h3>
+                <h3 class="stats-header">Flashcard Coverage Stats</h3>
+                <fieldset id="mode-control">
+                    <legend>Coverage stats based on:</legend>
+                    <div>
+                        <label>
+                            <input type="radio" id="stats-characters" name="mode" value="characters" checked />
+                            Characters
+                        </label>
+                        <label>
+                            <input type="radio" id="stats-words" name="mode" value="words" />
+                            Words
+                        </label>
+                    </div>
+                </fieldset>
                 <div id="studied-graph"></div>
-                <p id="studied-graph-detail" class="explanation">Percentages are hanzi seen, not words. Click a bar
-                    in
-                    the chart for details.</p>
+                <p id="studied-graph-detail" class="explanation">Click a bar in the chart for details.</p>
             </div>
         </section>
         <section class="stats-category">
@@ -171,9 +185,7 @@
                 <h3 class="stats-header">Daily Study Stats</h3>
                 <div id="study-calendar"></div>
                 <p id='study-calendar-detail' class="stats-detail">Click a box in the calendar for details.
-                    Brighter
-                    colors mean more
-                    studying.
+                    Brighter colors mean more studying.
                 </p>
             </div>
             <h3 class="stats-header">Cards Added by Day</h3>
