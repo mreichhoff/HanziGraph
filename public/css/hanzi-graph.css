@@ -84,12 +84,6 @@ a {
     cursor: pointer;
 }
 
-input[type="search"] {
-    background-color: var(--input-background-color);
-    border: var(--border);
-    color: var(--primary-font-color);
-}
-
 h1 {
     font-size: var(--primary-header-font-size);
     margin: 4px;
@@ -152,10 +146,6 @@ ul {
     background-color: var(--tone-1-color);
 }
 
-.header.has-suggestions {
-    height: auto;
-}
-
 .control-container {
     max-width: 1000px;
     margin: 0 auto;
@@ -165,17 +155,34 @@ ul {
 }
 
 .primary-input {
+    display: inline-block;
     width: 90%;
     max-width: 600px;
     text-align: center;
     height: var(--search-input-height);
-    font-size: var(--search-font-size);
     margin: 9px auto;
     padding: 0;
-    text-align: center;
-    border: var(--border);
-    border-radius: 16px;
+    background-color: var(--input-background-color);
     box-shadow: var(--primary-input-box-shadow);
+    border: var(--border);
+    border-radius: 12px;
+}
+
+.primary-input .explore-button {
+    display: inline-block;
+    margin: 0;
+}
+
+input[type="search"] {
+    appearance: none;
+    height: 100%;
+    width: calc(100% - 36px);
+    text-align: center;
+    background-color: var(--input-background-color);
+    border: 0;
+    font-size: var(--search-font-size);
+    color: var(--primary-font-color);
+    outline: 0;
 }
 
 .primary-container {
@@ -1306,10 +1313,9 @@ main.auth-form {
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #333;
         --link-font-color: #68aaee;
-        --input-background-color: #fff;
         --primary-input-box-shadow: 0 2px 3px 1px #3333;
         --header-box-shadow: 0 2px 3px 1px #3333;
-        --input-background-color: rgba(74, 74, 74, 0.9);
+        --input-background-color: #2e2e2e;
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
         --tone-2-color: #7aeb34;
