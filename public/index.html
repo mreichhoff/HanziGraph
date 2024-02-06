@@ -28,8 +28,11 @@
         <div id="header-logo" class="logo">汉</div>
         <h1 id="text-header" style="display:none">HanziGraph</h1>
         <form id="hanzi-choose">
-            <input id="hanzi-box" aria-label="Pick a hanzi or word" placeholder="Pick a hanzi or word" type="search"
-                enterkeyhint="search" class="primary-input" autocapitalize="off" autocomplete="off" />
+            <label class="primary-input">
+                <i class="explore-button"></i>
+            <input id="hanzi-box" aria-label="Search" placeholder="Search..." type="search"
+                enterkeyhint="search" autocapitalize="off" autocomplete="off" autocorrect="off" />
+            </label>
             <ul id="search-suggestions-container" class="search-suggestions" style="display:none"></ul>
         </form>
         <div id="right-menu-button-container" class="right-menu-button-container">
