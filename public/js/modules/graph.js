@@ -400,6 +400,21 @@ function toggleColorCodeVisibility() {
     }
 }
 
+function handleResize() {
+    clearTimeout(pendingResizeTimeout);
+    pendingResizeTimeout = setTimeout(() => {
+        // if the window resizes with the graph collapsed, re-expand it
+        // note that switchDiagramView no-ops if we're going main-->main
+        if(!window.matchMedia('(max-width:664px)').matches) {
+            switchDiagramView(diagramKeys.main);
+        }
+        // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
+        if (cy && showingGraph) {
+            cy.layout(mode === modes.graph ? layout(cy.nodes().length) : bfsLayout(root)).run();
+        }
+    }, 1000);
+}
+
 function initialize() {
     toggleColorCodeVisibility();
     switchLegend.addEventListener('click', toggleColorCodeMode);
@@ -427,20 +442,8 @@ function initialize() {
             dirty = null;
         }
     });
-    window.addEventListener('resize', function () {
-        clearTimeout(pendingResizeTimeout);
-        pendingResizeTimeout = setTimeout(() => {
-            // if the window resizes with the graph collapsed, re-expand it
-            // note that switchDiagramView no-ops if we're going main-->main
-            if(window.innerWidth > 664) {
-                switchDiagramView(diagramKeys.main);
-            }
-            // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
-            if (cy && showingGraph) {
-                cy.layout(mode === modes.graph ? layout(cy.nodes().length) : bfsLayout(root)).run();
-            }
-        }, 1000);
-    });
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('user-graph-resize', handleResize);
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
 }
 

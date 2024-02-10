@@ -18,6 +18,8 @@ const studyPane = document.getElementById('study-container');
 const searchForm = document.getElementById('hanzi-choose');
 const textHeader = document.getElementById('text-header');
 
+const graphLegend = document.getElementById('graph-legend');
+
 const containers = [mainAppContainer, statsContainer, faqContainer, menuContainer];
 const panes = [explorePane, studyPane];
 const midHeaderOptions = [textHeader, searchForm];
@@ -97,7 +99,7 @@ function switchToState(state) {
         }
     }
     for (const midHeaderOption of midHeaderOptions) {
-        if(midHeaderOption.id !== stateConfig.activeMidHeader.id) {
+        if (midHeaderOption.id !== stateConfig.activeMidHeader.id) {
             midHeaderOption.style.display = 'none';
         } else {
             midHeaderOption.removeAttribute('style');
@@ -166,7 +168,7 @@ function switchDiagramView(diagramKey) {
         textContainer.addEventListener('animationend', function () {
             graphContainer.dispatchEvent(new Event('hidden'));
             graphContainer.style.display = 'none';
-            textContainer.style.height = '100%';
+            document.body.style.setProperty('--text-container-height', '100%');
             mainAppContainer.classList.remove('primary-container');
             textContainer.classList.remove('expand-panel');
             setTimeout(function () {
@@ -178,7 +180,7 @@ function switchDiagramView(diagramKey) {
         }, { once: true });
         textContainer.classList.add('expand-panel');
     } else {
-        if (window.innerWidth <= 664) {
+        if (window.matchMedia('(max-width:664px)').matches) {
             textContainer.addEventListener('animationend', function () {
                 graphContainer.dispatchEvent(new Event('shown-animationend'));
                 textContainer.classList.remove('collapse-panel');
@@ -191,11 +193,16 @@ function switchDiagramView(diagramKey) {
         graphContainer.removeAttribute('style');
         // Else here reachable if the user re-sizes from small to a larger window
         // in that case, the animation isn't run, so reset to the wide view.
-        if (window.innerWidth > 664) {
+        if (!window.matchMedia('(max-width:664px)').matches) {
             graphContainer.dispatchEvent(new Event('shown-animationend'));
         } else {
             textContainer.classList.add('collapse-panel');
         }
+        delta = 0;
+        startDelta = 0;
+        document.body.style.setProperty('--text-container-height', '50%');
+        document.body.style.setProperty('--graph-container-height', '50%');
+        document.dispatchEvent(new Event('user-graph-resize'));
     }
     currentDiagramKey = diagramKey;
 }
@@ -209,6 +216,73 @@ function showNotification() {
     }, 2000);
 }
 
+
+let swipeStart;
+let delta = 0;
+let startDelta = 0;
+let swiping = false;
+
+function getClientY(event) {
+    // we use the same event handler for touch and mouse events, so handle either.
+    return event.changedTouches ? event.changedTouches[0].clientY : event.clientY;
+}
+
+function handleTouchResizeStart(event) {
+    swiping = true;
+    swipeStart = getClientY(event);
+    startDelta = delta;
+    document.body.addEventListener('mousemove', debouncedMoveHandler);
+    document.body.addEventListener('mouseup', handleTouchResizeEnd);
+    document.body.addEventListener('touchmove', debouncedMoveHandler);
+    document.body.addEventListener('touchend', handleTouchResizeEnd);
+}
+function handleTouchResizeEnd(event) {
+    if (!swiping) {
+        return;
+    }
+    swiping = false;
+    let percentageDelta = Math.round(100 * delta / window.innerHeight);
+    let currentSwipeDelta = Math.round(100 * Math.abs(delta - startDelta) / window.innerHeight);
+    if (percentageDelta > 20) {
+        switchDiagramView(diagramKeys.none);
+    } else if (Math.abs(currentSwipeDelta) >= 3) {
+        // don't bother resizing the graph if this was a tiny change
+        document.dispatchEvent(new Event('user-graph-resize'));
+    }
+    document.body.removeEventListener('mousemove', debouncedMoveHandler);
+    document.body.removeEventListener('mouseup', handleTouchResizeEnd);
+    document.body.removeEventListener('touchmove', debouncedMoveHandler);
+    document.body.removeEventListener('touchend', handleTouchResizeEnd);
+}
+function handleTouchMove(event) {
+    if (!swiping) {
+        return;
+    }
+    delta = getClientY(event) - swipeStart + startDelta;
+    // you'd think you could just set some delta variable in the CSS, but calc seemingly doesn't update
+    // as variables that go into it change. The whole thing is probably a misuse of percentages, but
+    // whatever.
+    document.body.style.setProperty('--text-container-height', `calc(50% + ${delta}px)`);
+    document.body.style.setProperty('--graph-container-height', `calc(50% - ${delta}px)`);
+}
+
+function debounce(callback) {
+    let pendingAnimationFrame;
+
+    return (...args) => {
+        if (pendingAnimationFrame) {
+            return;
+        }
+
+        pendingAnimationFrame = window.requestAnimationFrame(() => {
+            callback(...args);
+            pendingAnimationFrame = undefined;
+        });
+    };
+}
+
+const debouncedMoveHandler = debounce(handleTouchMove);
+
 function initialize() {
     leftButtonContainer.addEventListener('click', function () {
         if (states[currentState].leftState) {
@@ -219,7 +293,21 @@ function initialize() {
         if (states[currentState].rightState) {
             switchToState(states[currentState].rightState);
         }
-    })
+    });
+    if (window.matchMedia('(max-width:664px)').matches) {
+        graphLegend.addEventListener('mousedown', handleTouchResizeStart);
+        graphLegend.addEventListener('touchstart', handleTouchResizeStart);
+    }
+    window.matchMedia('(max-width:664px)').addEventListener("change", function (event) {
+        if (event.matches) {
+            graphLegend.addEventListener('mousedown', handleTouchResizeStart);
+            graphLegend.addEventListener('touchstart', handleTouchResizeStart);
+        } else {
+            graphLegend.removeEventListener('mousedown', handleTouchResizeStart);
+            graphLegend.removeEventListener('touchstart', handleTouchResizeStart);
+        }
+        switchDiagramView(diagramKeys.main);
+    });
 }
 
 export { initialize, switchToState, switchDiagramView, showNotification, stateKeys, diagramKeys }
