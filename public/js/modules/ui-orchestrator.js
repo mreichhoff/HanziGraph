@@ -231,15 +231,19 @@ function handleTouchResizeStart(event) {
     swiping = true;
     swipeStart = getClientY(event);
     startDelta = delta;
-    document.body.addEventListener('mousemove', debouncedMoveHandler);
+    mainAppContainer.addEventListener('mousemove', handleTouchMove);
     document.body.addEventListener('mouseup', handleTouchResizeEnd);
-    document.body.addEventListener('touchmove', debouncedMoveHandler);
+    mainAppContainer.addEventListener('touchmove', handleTouchMove);
     document.body.addEventListener('touchend', handleTouchResizeEnd);
 }
 function handleTouchResizeEnd(event) {
     if (!swiping) {
         return;
     }
+    mainAppContainer.removeEventListener('mousemove', handleTouchMove);
+    document.body.removeEventListener('mouseup', handleTouchResizeEnd);
+    mainAppContainer.removeEventListener('touchmove', handleTouchMove);
+    document.body.removeEventListener('touchend', handleTouchResizeEnd);
     swiping = false;
     let percentageDelta = Math.round(100 * delta / window.innerHeight);
     let currentSwipeDelta = Math.round(100 * Math.abs(delta - startDelta) / window.innerHeight);
@@ -249,16 +253,13 @@ function handleTouchResizeEnd(event) {
         // don't bother resizing the graph if this was a tiny change
         document.dispatchEvent(new Event('user-graph-resize'));
     }
-    document.body.removeEventListener('mousemove', debouncedMoveHandler);
-    document.body.removeEventListener('mouseup', handleTouchResizeEnd);
-    document.body.removeEventListener('touchmove', debouncedMoveHandler);
-    document.body.removeEventListener('touchend', handleTouchResizeEnd);
 }
 function handleTouchMove(event) {
+    event.preventDefault();
+    // should never happen, since the listener is removed, but just in case...
     if (!swiping) {
         return;
     }
-    event.preventDefault();
     delta = getClientY(event) - swipeStart + startDelta;
     // you'd think you could just set some delta variable in the CSS, but calc seemingly doesn't update
     // as variables that go into it change. The whole thing is probably a misuse of percentages, but
