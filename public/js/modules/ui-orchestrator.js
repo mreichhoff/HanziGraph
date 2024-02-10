@@ -258,6 +258,7 @@ function handleTouchMove(event) {
     if (!swiping) {
         return;
     }
+    event.preventDefault();
     delta = getClientY(event) - swipeStart + startDelta;
     // you'd think you could just set some delta variable in the CSS, but calc seemingly doesn't update
     // as variables that go into it change. The whole thing is probably a misuse of percentages, but
