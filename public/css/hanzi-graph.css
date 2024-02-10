@@ -1260,7 +1260,7 @@ p.related-card {
 
 .menu-item {
     font-size: 18px;
-    font-weight: bold;
+    font-weight: 400;
     height: 60px;
 }
 .welcome-message {
