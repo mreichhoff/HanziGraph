@@ -2,7 +2,6 @@ import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
 
 const signinButton = document.getElementById('signin-button');
 const signoutButton = document.getElementById('signout-button');
-const welcomeMessageContainer = document.getElementById('welcome-message-container');
 const welcomeMessage = document.getElementById('welcome-message');
 
 let initialize = function () {
@@ -11,10 +10,8 @@ let initialize = function () {
         if (user) {
             signinButton.style.display = 'none';
             signoutButton.style.display = 'inline-block';
-            welcomeMessageContainer.removeAttribute('style');
-            welcomeMessage.textContent = "你好" + user.email;
+            welcomeMessage.textContent = user.email;
         } else {
-            welcomeMessageContainer.style.display = 'none';
             signoutButton.style.display = 'none';
             signinButton.style.display = 'inline-block';
             welcomeMessage.textContent = '';
