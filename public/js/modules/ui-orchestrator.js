@@ -231,6 +231,11 @@ function handleTouchResizeStart(event) {
     swiping = true;
     swipeStart = getClientY(event);
     startDelta = delta;
+    // TODO: might wanna de-bounce this?
+    // there's also apparently some passive/preventDefault intervention that happens
+    // on all but safari, but that also appears to only apply to listeners on the
+    // whole document, vs a specific element, so I think this is ok?
+    // https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#using_passive_listeners
     mainAppContainer.addEventListener('mousemove', handleTouchMove);
     document.body.addEventListener('mouseup', handleTouchResizeEnd);
     mainAppContainer.addEventListener('touchmove', handleTouchMove);
@@ -267,23 +272,6 @@ function handleTouchMove(event) {
     document.body.style.setProperty('--text-container-height', `calc(50% + ${delta}px)`);
     document.body.style.setProperty('--graph-container-height', `calc(50% - ${delta}px)`);
 }
-
-function debounce(callback) {
-    let pendingAnimationFrame;
-
-    return (...args) => {
-        if (pendingAnimationFrame) {
-            return;
-        }
-
-        pendingAnimationFrame = window.requestAnimationFrame(() => {
-            callback(...args);
-            pendingAnimationFrame = undefined;
-        });
-    };
-}
-
-const debouncedMoveHandler = debounce(handleTouchMove);
 
 function initialize() {
     leftButtonContainer.addEventListener('click', function () {
