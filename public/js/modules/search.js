@@ -35,8 +35,8 @@ function handleWorkerMessage(message) {
     if (!message.data.query || message.data.query !== hanziBox.value) {
         return;
     }
-    if(message.data.type === 'tokenize') {
-        multiWordSearch(message.data.query, message.data.tokens, message.data.mode)
+    if (message.data.type === 'tokenize') {
+        multiWordSearch(message.data.query, message.data.tokens, message.data.mode, message.data.skipState)
         return;
     }
     renderSearchSuggestions(message.data.query, message.data.suggestions, message.data.tokens, searchSuggestionsContainer);
@@ -124,7 +124,7 @@ async function initialize(term, mode) {
     }
 }
 
-function multiWordSearch(query, segments, mode) {
+function multiWordSearch(query, segments, mode, skipState) {
     let found = false;
     let wordForGraph = '';
     for (const segment of segments) {
@@ -139,21 +139,21 @@ function multiWordSearch(query, segments, mode) {
     } else {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query, mode: (mode || 'explore') } }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query, mode: (mode || 'explore'), skipState: !!skipState } }));
     }
 }
 
-function englishSearch(word, data) {
+function englishSearch(word, data, skipState) {
     if (!data) {
         notFoundElement.removeAttribute('style');
     } else {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: data[0] }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: data, display: word, type: 'english' } }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: data, display: word, type: 'english', skipState: !!skipState } }));
     }
 }
 
-function search(value, locale, mode) {
+function search(value, locale, mode, skipState) {
     clearSuggestions();
     if (!value) {
         return;
@@ -161,7 +161,7 @@ function search(value, locale, mode) {
     if (definitions[value] || (value in wordSet)) {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value], mode: (mode || 'explore') } }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value], mode: (mode || 'explore'), skipState: !!skipState } }));
         return;
     }
     if (value in pinyinMap) {
@@ -169,7 +169,7 @@ function search(value, locale, mode) {
         const results = Array.from(pinyinMap[value]);
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: results[0] }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: results, display: value, mode: (mode || 'explore') } }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: results, display: value, mode: (mode || 'explore'), skipState: !!skipState } }));
         return;
     }
     if (looksLikeEnglish(value) && getActiveGraph().englishPath) {
@@ -180,7 +180,7 @@ function search(value, locale, mode) {
                 if (value !== hanziBox.value.toLowerCase()) {
                     return false;
                 }
-                englishSearch(value, data[value]);
+                englishSearch(value, data[value], skipState);
             });
         return;
     }
@@ -189,7 +189,7 @@ function search(value, locale, mode) {
         // ask the worker to tokenize, and then on response run the multi-word search
         // TODO: if we'd ever have other actions besides a multi-word search, we would have to pass
         // the action along here or something
-        payload: { query: value, locale, mode }
+        payload: { query: value, locale, mode, skipState: !!skipState }
     });
 }
 
