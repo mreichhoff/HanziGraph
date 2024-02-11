@@ -1,6 +1,6 @@
 import { initialize as firebaseInit } from './firebase-init.js';
 import { initialize as authStateInit } from './auth-state.js';
-import { diagramKeys, initialize as orchestratorInit, stateKeys, switchToState } from "./ui-orchestrator.js"
+import { initialize as orchestratorInit, stateKeys, switchToState } from "./ui-orchestrator.js"
 import { initialize as exploreInit } from "./explore.js";
 import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
@@ -11,7 +11,7 @@ import { readExploreState } from "./data-layer.js";
 import { hanziBox, walkThrough, examplesList, writeSeoMetaTags } from "./dom.js";
 import { initialize as flowDiagramInit } from "./flow-diagram.js";
 import { initialize as dataLayerInit } from "./data-layer.js";
-import { initialize as searchInit, search, looksLikeEnglish } from "./search.js";
+import { initialize as searchInit, search } from "./search.js";
 
 // Set to false to enable running more simply, e.g. via running `python3 -m http.server` in public/.
 const USE_FIREBASE = true;
@@ -21,7 +21,7 @@ const hanziSearchForm = document.getElementById('hanzi-choose');
 function loadState(state) {
     const term = decodeURIComponent(state.word || '');
     hanziBox.value = term;
-    search(term, true);
+    search(term, getActiveGraph().locale, 'explore', true);
 }
 
 window.onpopstate = (event) => {

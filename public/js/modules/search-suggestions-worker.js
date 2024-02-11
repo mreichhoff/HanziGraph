@@ -251,7 +251,8 @@ onmessage = async function (e) {
             query: e.data.payload.query,
             tokens,
             mode: e.data.payload.mode,
-            type: e.data.type
+            type: e.data.type,
+            skipState: e.data.payload.skipState
         });
     }
 }
