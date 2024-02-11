@@ -1,5 +1,6 @@
 import { makeSentenceNavigable, addTextToSpeech } from "./explore.js";
 import { dataTypes, registerCallback, saveStudyList, getStudyList, findOtherCards, removeFromStudyList, recordEvent, studyResult, updateCard, cardTypes } from "./data-layer.js";
+import { registerStateChangeCallback, stateKeys } from "./ui-orchestrator.js";
 
 const studyContainer = document.getElementById('study-container');
 
@@ -205,7 +206,7 @@ let setupStudyMode = function () {
     } else {
         cardAddedTimeContainer.style.display = 'none';
     }
-    if(currentCard.vocabOrigin && currentCard.vocabOrigin !== currentCard.zh.join('')) {
+    if (currentCard.vocabOrigin && currentCard.vocabOrigin !== currentCard.zh.join('')) {
         cardAddedReason.innerText = currentCard.vocabOrigin;
         cardOriginContainer.removeAttribute('style');
     } else {
@@ -213,33 +214,69 @@ let setupStudyMode = function () {
     }
     relatedCardsContainer.style.display = 'none';
 };
+function keyboardShortcutHandler(event) {
+    // if the user is typing in some input field, don't mess with them.
+    // if the user is pressing ctrl/shift/alt/meta, don't mess with them.
+    // if the button to show the answer isn't being shown, there's no cards, so don't do anything.
+    if (event.target.nodeName.toLowerCase() === 'input' ||
+        event.ctrlKey || event.shiftKey || event.altKey || event.metaKey ||
+        showAnswerButton.style.display === 'none') {
+        return;
+    }
+    // could add a isFlipped variable or whatever, but that's effectively expressed with the display
+    // (or not) of the card's answer.
+    if (cardAnswerContainer.style.display === 'none' && (event.key === " " || event.code === "Space")) {
+        // in general, trying not to preventDefault, I guess? But should probably add it to the branches below...
+        event.preventDefault();
+        flip();
+        return;
+    }
+    if (cardAnswerContainer.style.display !== 'none' && event.key === 'ArrowRight') {
+        markCorrect();
+        return;
+    }
+    if (cardAnswerContainer.style.display !== 'none' && event.key === 'ArrowLeft') {
+        markIncorrect();
+        return;
+    }
+}
+function setupKeyboardShortcutEvents() {
+    document.addEventListener('keydown', keyboardShortcutHandler)
+}
+function stopKeyboardShortcutEvents() {
+    document.removeEventListener('keydown', keyboardShortcutHandler)
+}
+
+function markIncorrect() {
+    updateCard(studyResult.INCORRECT, currentKey);
+    setupStudyMode();
+    cardsDueElement.scrollIntoView();
+    cardsDueElement.classList.add('result-indicator-wrong');
+    setTimeout(function () {
+        cardsDueElement.classList.remove('result-indicator-wrong');
+    }, 750);
+    recordEvent(studyResult.INCORRECT);
+}
+function markCorrect() {
+    updateCard(studyResult.CORRECT, currentKey);
+    setupStudyMode();
+    cardsDueElement.scrollIntoView();
+    cardsDueElement.classList.add('result-indicator-right');
+    setTimeout(function () {
+        cardsDueElement.classList.remove('result-indicator-right');
+    }, 750);
+    recordEvent(studyResult.CORRECT);
+}
+function flip() {
+    showAnswerButton.innerText = "Answer:";
+    cardAnswerContainer.removeAttribute('style');
+    showAnswerButton.scrollIntoView();
+}
 
 let initialize = function () {
-    showAnswerButton.addEventListener('click', function () {
-        showAnswerButton.innerText = "Answer:";
-        cardAnswerContainer.removeAttribute('style');
-        showAnswerButton.scrollIntoView();
-    });
-    wrongButton.addEventListener('click', function () {
-        updateCard(studyResult.INCORRECT, currentKey);
-        setupStudyMode();
-        cardsDueElement.scrollIntoView();
-        cardsDueElement.classList.add('result-indicator-wrong');
-        setTimeout(function () {
-            cardsDueElement.classList.remove('result-indicator-wrong');
-        }, 750);
-        recordEvent(studyResult.INCORRECT);
-    });
-    rightButton.addEventListener('click', function () {
-        updateCard(studyResult.CORRECT, currentKey);
-        setupStudyMode();
-        cardsDueElement.scrollIntoView();
-        cardsDueElement.classList.add('result-indicator-right');
-        setTimeout(function () {
-            cardsDueElement.classList.remove('result-indicator-right');
-        }, 750);
-        recordEvent(studyResult.CORRECT);
-    });
+    showAnswerButton.addEventListener('click', flip);
+    wrongButton.addEventListener('click', markIncorrect);
+    rightButton.addEventListener('click', markCorrect);
     deleteCardButton.addEventListener('click', function () {
         let deletedKey = currentKey;
         removeFromStudyList(deletedKey);
@@ -280,6 +317,8 @@ let initialize = function () {
         }
         setupStudyMode();
     });
+    registerStateChangeCallback(stateKeys.study, 'activate', setupKeyboardShortcutEvents);
+    registerStateChangeCallback(stateKeys.study, 'deactivate', stopKeyboardShortcutEvents);
     studyContainer.addEventListener('shown', function () {
         setupStudyMode();
     });

@@ -42,7 +42,9 @@ const states = {
         leftState: 'menu',
         activeMidHeader: searchForm,
         rightState: 'study',
-        paneAnimation: 'slide-in'
+        paneAnimation: 'slide-in',
+        activateCallbacks: [],
+        deactivateCallbacks: []
     },
     study: {
         leftButtonClass: 'menu-button',
@@ -52,7 +54,9 @@ const states = {
         leftState: 'menu',
         activeMidHeader: searchForm,
         rightState: 'main',
-        paneAnimation: 'slide-in'
+        paneAnimation: 'slide-in',
+        activateCallbacks: [],
+        deactivateCallbacks: []
     },
     faq: {
         leftButtonClass: 'exit-button',
@@ -60,7 +64,9 @@ const states = {
         statePreserving: true,
         leftState: 'previous',
         activeMidHeader: textHeader,
-        animation: 'slide-in'
+        animation: 'slide-in',
+        activateCallbacks: [],
+        deactivateCallbacks: []
     },
     stats: {
         leftButtonClass: 'exit-button',
@@ -68,7 +74,9 @@ const states = {
         statePreserving: true,
         leftState: 'main',
         activeMidHeader: textHeader,
-        animation: 'slide-in'
+        animation: 'slide-in',
+        activateCallbacks: [],
+        deactivateCallbacks: []
     },
     menu: {
         leftButtonClass: 'exit-button',
@@ -76,7 +84,9 @@ const states = {
         statePreserving: true,
         leftState: 'previous',
         activeMidHeader: textHeader,
-        animation: 'slide-in'
+        animation: 'slide-in',
+        activateCallbacks: [],
+        deactivateCallbacks: []
     }
 };
 
@@ -87,6 +97,9 @@ function switchToState(state) {
     if (state === currentState) {
         // no sense doing extra work...
         return;
+    }
+    for (const deactivateCallback of states[currentState].deactivateCallbacks) {
+        deactivateCallback();
     }
     // if we don't have the new state, treat it as indicating we must go back
     // for now we don't support chains of back/forward, it's just one
@@ -141,6 +154,9 @@ function switchToState(state) {
         rightButton.removeAttribute('style');
     } else {
         rightButton.style.display = 'none';
+    }
+    for (const activateCallback of stateConfig.activateCallbacks) {
+        activateCallback();
     }
     // this 'previous' string thing is weird, but it might just work
     // (until we need any notion of reentrancy)
@@ -214,6 +230,16 @@ function showNotification() {
     setTimeout(() => {
         rightButton.className = states[currentState].rightButtonClass;
     }, 2000);
+}
+
+function registerStateChangeCallback(stateKey, type, callback) {
+    if (!(stateKey in states)) {
+        return;
+    }
+    const relevantCallbackList = (type === 'activate') ?
+        states[stateKey].activateCallbacks :
+        states[stateKey].deactivateCallbacks;
+    relevantCallbackList.push(callback);
 }
 
 
@@ -300,4 +326,4 @@ function initialize() {
     });
 }
 
-export { initialize, switchToState, switchDiagramView, showNotification, stateKeys, diagramKeys }
+export { initialize, switchToState, switchDiagramView, showNotification, registerStateChangeCallback, stateKeys, diagramKeys }
