@@ -1,8 +1,8 @@
 import { hanziBox, notFoundElement } from "./dom";
 import { getActiveGraph, getPartition } from "./options";
 import { switchToState, stateKeys } from "./ui-orchestrator";
+import { handleCommand } from "./commands.js";
 
-let jiebaCut = null;
 let searchSuggestionsWorker = null;
 let pinyinMap = {};
 const mainHeader = document.getElementById('main-header');
@@ -158,12 +158,22 @@ function search(value, locale, mode, skipState) {
     if (!value) {
         return;
     }
+    // first, check if this is a command.
+    const commandResult = handleCommand(value);
+    if(commandResult && commandResult.length > 0) {
+        notFoundElement.style.display = 'none';
+        document.dispatchEvent(new CustomEvent('graph-update', { detail: commandResult[0] }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: commandResult, mode: (mode || 'explore'), skipState: !!skipState } }));
+        return;
+    }
+    // then, check if it's a known word or character.
     if (definitions[value] || (value in wordSet)) {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: value }));
         document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [value], mode: (mode || 'explore'), skipState: !!skipState } }));
         return;
     }
+    // no luck yet? Maybe it's pinyin.
     if (value in pinyinMap) {
         // per mdn, iterating a set is done in insertion order, so should be sorted by frequency rank
         const results = Array.from(pinyinMap[value]);
@@ -172,6 +182,7 @@ function search(value, locale, mode, skipState) {
         document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: results, display: value, mode: (mode || 'explore'), skipState: !!skipState } }));
         return;
     }
+    // ok, fine, try english?
     if (looksLikeEnglish(value) && getActiveGraph().englishPath) {
         value = value.toLowerCase();
         fetch(`/${getActiveGraph().englishPath}/${getPartition(value, getActiveGraph().partitionCount)}.json`)
@@ -184,6 +195,7 @@ function search(value, locale, mode, skipState) {
             });
         return;
     }
+    // whoa, maybe it's multiple words then?
     searchSuggestionsWorker.postMessage({
         type: 'tokenize',
         // ask the worker to tokenize, and then on response run the multi-word search
