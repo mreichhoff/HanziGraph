@@ -3,7 +3,7 @@
     "dependencies": {
         "d3": "^7.8.2",
         "d3-sankey": "^0.12.3",
-        "firebase": "^9.6.1",
+        "firebase": "^10.8.0",
         "jieba-wasm": "^0.0.2"
     },
     "jshintConfig": {
@@ -13,7 +13,7 @@
         "@rollup/plugin-json": "^4.1.0",
         "@rollup/plugin-node-resolve": "^13.3.0",
         "@rollup/plugin-terser": "^0.4.4",
-        "firebase-tools": "^13.0.3",
+        "firebase-tools": "^13.1.0",
         "rollup": "^2.79.1"
     },
     "scripts": {
