@@ -1,5 +1,6 @@
+import { getApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, onSnapshot, collection, writeBatch, increment } from "firebase/firestore";
+import { getFirestore, doc, onSnapshot, collection, writeBatch, increment, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 const dataTypes = {
     studyList: 'studyList',
@@ -22,12 +23,11 @@ const MAX_RECALL = 2;
 const MAX_CLOZE = 2;
 const MAX_BATCH_SIZE = 500;
 
+// TODO: get rid of all localStorage use. Switch to indexedDB instead.
+// fortunately, any signed-in user would use firestore for this, which
+// does use indexedDB.
 let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
 let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
-
-let firstStudyListLoad = true;
-let firstDailyResultsLoad = true;
-let firstHourlyResultsLoad = true;
 
 let authenticatedUser = null;
 
@@ -55,27 +55,25 @@ let saveStudyList = function (keys, localStudyList) {
                 batch.delete(doc(db, `users/${authenticatedUser.uid}/studyList/${sanitizedKey}`));
             }
             if (count == MAX_BATCH_SIZE) {
-                batch.commit().then(() => {
-                    localStorage.setItem('studyListDirty', false);
-                }).catch(() => {
-                    localStorage.setItem('studyListDirty', true);
-                });
+                // TODO: any need to react to batch successes?
+                batch.commit();
                 batch = writeBatch(db);
                 count = 0;
             }
         }
         if (keys && keys.length > 0) {
-            //TODO: do we need to set dirty to true here?
             batch.commit().then(() => {
-                localStorage.setItem('studyListDirty', false);
-            }).catch(() => {
-                localStorage.setItem('studyListDirty', true);
+                localStorage.removeItem('studyList');
             });
+        } else {
+            // if we've been asked to save the study list, but there's no updated keys,
+            // and there's an authenticated user, clear the localStorage copy.
+            // It would be re-added if there's an error writing to firestore.
+            localStorage.removeItem('studyList');
         }
     } else {
-        localStorage.setItem('studyListDirty', true);
+        localStorage.setItem('studyList', JSON.stringify(studyList));
     }
-    localStorage.setItem('studyList', JSON.stringify(studyList));
 };
 let updateCard = function (result, key) {
     let now = new Date();
@@ -244,17 +242,11 @@ let recordEvent = function (result) {
         batch.set(doc(db, `users/${authenticatedUser.uid}/hourly/${hour}`), objectToMerge, { merge: true });
         batch.set(doc(db, `users/${authenticatedUser.uid}/daily/${day}`), objectToMerge, { merge: true });
         batch.commit().then(() => {
-            localStorage.setItem('dailyDirty', false);
-            localStorage.setItem('hourlyDirty', false);
-        }).catch((error) => {
-            localStorage.setItem('dailyDirty', true);
-            localStorage.setItem('hourlyDirty', true);
+            localStorage.removeItem('studyResults');
         });
     } else {
-        localStorage.setItem('dailyDirty', true);
-        localStorage.setItem('hourlyDirty', true);
+        localStorage.setItem('studyResults', JSON.stringify(studyResults));
     }
-    localStorage.setItem('studyResults', JSON.stringify(studyResults));
     callbacks[dataTypes.studyResults].forEach(x => x(studyResults));
 };
 
@@ -268,11 +260,8 @@ let overwriteHourlyResultKeys = function (keys) {
         batch.set(doc(db, `users/${authenticatedUser.uid}/hourly/${sanitizeKey(keys[i])}`), studyResults.hourly[keys[i]], { merge: true });
     }
     batch.commit().then(() => {
-        localStorage.setItem('hourlyDirty', false);
-    }).catch((error) => {
-        localStorage.setItem('hourlyDirty', true);
-    });
-    localStorage.setItem('studyResults', JSON.stringify(studyResults));
+        localStorage.removeItem('studyResults');
+    })
 };
 let overwriteDailyResultKeys = function (keys) {
     const db = getFirestore();
@@ -281,11 +270,8 @@ let overwriteDailyResultKeys = function (keys) {
         batch.set(doc(db, `users/${authenticatedUser.uid}/daily/${sanitizeKey(keys[i])}`), studyResults.daily[keys[i]], { merge: true });
     }
     batch.commit().then(() => {
-        localStorage.setItem('dailyDirty', false);
-    }).catch((error) => {
-        localStorage.setItem('dailyDirty', true);
+        localStorage.removeItem('studyResults');
     });
-    localStorage.setItem('studyResults', JSON.stringify(studyResults));
 };
 
 let getResultCount = function (results) {
@@ -294,6 +280,13 @@ let getResultCount = function (results) {
 }
 let initialize = function () {
     let auth = getAuth();
+    const app = getApp();
+    initializeFirestore(app,
+        {
+            localCache:
+                persistentLocalCache(/*settings*/{})
+        });
+
     // TODO cancel callback?
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -301,16 +294,16 @@ let initialize = function () {
             //TODO get study results here, too
             const db = getFirestore();
 
+            let localStudyList = JSON.parse(localStorage.getItem('studyList'));
+            let localStudyResults = JSON.parse(localStorage.getItem('studyResults'));
             //TODO: these are all horribly repetitive and overengineered
-            onSnapshot(collection(db, `users/${authenticatedUser.uid}/studyList`), (doc) => {
-                let studyListDirty = JSON.parse(localStorage.getItem('studyListDirty') || "false");
+            onSnapshot(collection(db, `users/${authenticatedUser.uid}/studyList`), { includeMetadataChanges: true }, (doc) => {
                 // if hasPendingWrites is true, we're getting a notification for our own write; ignore
-                if (!doc.metadata.hasPendingWrites) {
-                    let wasFirstLoad = false;
-                    if (firstStudyListLoad) {
-                        firstStudyListLoad = false;
-                        wasFirstLoad = true;
-                    }
+                // unless it's fromCache, possibly indicating offline updates
+                // TODO: is this or clause effectively just making this always get entered?
+                // should be ok if so, since localStudyList gets nulled out and so we'd just
+                // find no changes and call it a day (and updates in that case are small).
+                if (!doc.metadata.hasPendingWrites || doc.metadata.fromCache) {
                     let madeUpdates = false;
                     let serverStudyList = {};
                     let deletedKeys = [];
@@ -345,7 +338,7 @@ let initialize = function () {
                     // and anyway if you were studying a ton while offline, why shouldn't those count?)
                     // the main case where this algorithm would be used would be when a user is not signed in, studies, then signs in
                     // or similar.
-                    if (!studyListDirty) {
+                    if (!localStudyList || Object.keys(localStudyList).length < 1) {
                         for (const [key, value] of Object.entries(serverStudyList)) {
                             if (!studyList[key] || studyList[key].due !== value.due) {
                                 studyList[key] = value;
@@ -356,9 +349,6 @@ let initialize = function () {
                             delete studyList[deletedKey];
                             madeUpdates = true;
                         }
-                        // no keys to write to server, but we must write to localStorage
-                        // kind of a hack, I guess
-                        saveStudyList([]);
                     } else {
                         for (const deletedKey of deletedKeys) {
                             delete studyList[deletedKey];
@@ -366,7 +356,7 @@ let initialize = function () {
                         }
                         let updatedKeys = [];
                         for (const [key, value] of Object.entries(serverStudyList)) {
-                            const localCard = studyList[key];
+                            const localCard = localStudyList[key];
                             if (localCard && ((localCard.rightCount + localCard.wrongCount) > (value.rightCount + value.wrongCount))) {
                                 updatedKeys.push(key);
                             } else {
@@ -374,12 +364,13 @@ let initialize = function () {
                                 madeUpdates = true;
                             }
                         }
-                        if (wasFirstLoad) {
-                            for (const localKey of Object.keys(studyList)) {
+                        if (localStudyList) {
+                            for (const localKey of Object.keys(localStudyList)) {
                                 if (!serverStudyList[localKey]) {
                                     updatedKeys.push(localKey);
                                 }
                             }
+                            localStudyList = null;
                         }
                         saveStudyList(updatedKeys);
                     }
@@ -390,14 +381,8 @@ let initialize = function () {
                 }
             });
             // TODO: combine hourly and daily
-            onSnapshot(collection(db, `users/${authenticatedUser.uid}/hourly`), (doc) => {
-                if (!doc.metadata.hasPendingWrites) {
-                    let hourlyDirty = JSON.parse(localStorage.getItem('hourlyDirty') || "false");
-                    let wasFirstLoad = false;
-                    if (firstHourlyResultsLoad) {
-                        firstHourlyResultsLoad = false;
-                        wasFirstLoad = true;
-                    }
+            onSnapshot(collection(db, `users/${authenticatedUser.uid}/hourly`), { includeMetadataChanges: true }, (doc) => {
+                if (!doc.metadata.hasPendingWrites || doc.metadata.fromCache) {
                     let serverHourly = {};
                     for (const item of doc.docChanges()) {
                         // no support for deleting results, currently
@@ -405,29 +390,28 @@ let initialize = function () {
                             serverHourly[item.doc.id] = item.doc.data();
                         }
                     }
-                    if (hourlyDirty) {
+                    if (localStudyResults && localStudyResults.hourly && Object.keys(localStudyResults.hourly).length > 0) {
                         //we wrote something the server didn't see.
                         let updatedKeys = [];
-                        if (wasFirstLoad) {
-                            for (const [key, value] of Object.entries(studyResults.hourly)) {
-                                if (!serverHourly[key] || getResultCount(serverHourly[key]) < getResultCount(value)) {
-                                    // we have something the server doesn't know about
-                                    if (value) {
-                                        updatedKeys.push(key);
-                                    }
+                        for (const [key, value] of Object.entries(localStudyResults.hourly)) {
+                            if (!serverHourly[key] || getResultCount(serverHourly[key]) < getResultCount(value)) {
+                                // we have something the server doesn't know about
+                                if (value) {
+                                    updatedKeys.push(key);
                                 }
                             }
                         }
                         // whether first load or not, take the server's value if we can
                         // or overwrite if local is larger
                         for (const [key, value] of Object.entries(serverHourly)) {
-                            if (!studyResults.hourly[key] || getResultCount(studyResults.hourly[key]) <= getResultCount(value)) {
+                            if (!localStudyResults.hourly[key] || getResultCount(localStudyResults.hourly[key]) <= getResultCount(value)) {
                                 studyResults.hourly[key] = value;
                             } else {
                                 //key is in results, and its value is strictly greater than the server sent
                                 updatedKeys.push(key);
                             }
                         }
+                        delete localStudyResults["hourly"];
                         overwriteHourlyResultKeys(updatedKeys);
                     } else {
                         // we have no updates; server wins
@@ -437,14 +421,8 @@ let initialize = function () {
                     }
                 }
             });
-            onSnapshot(collection(db, `users/${authenticatedUser.uid}/daily`), (doc) => {
-                if (!doc.metadata.hasPendingWrites) {
-                    let dailyDirty = JSON.parse(localStorage.getItem('dailyDirty') || "false");
-                    let wasFirstLoad = false;
-                    if (firstDailyResultsLoad) {
-                        firstDailyResultsLoad = false;
-                        wasFirstLoad = true;
-                    }
+            onSnapshot(collection(db, `users/${authenticatedUser.uid}/daily`), { includeMetadataChanges: true }, (doc) => {
+                if (!doc.metadata.hasPendingWrites || doc.metadata.fromCache) {
                     let serverDaily = {};
                     for (const item of doc.docChanges()) {
                         // no support for deleting results, currently
@@ -452,27 +430,26 @@ let initialize = function () {
                             serverDaily[item.doc.id] = item.doc.data();
                         }
                     }
-                    if (dailyDirty) {
+                    if (localStudyResults && localStudyResults.daily && Object.keys(localStudyResults.daily).length > 0) {
                         //we wrote something the server didn't see.
                         let updatedKeys = [];
-                        if (wasFirstLoad) {
-                            for (const [key, value] of Object.entries(studyResults.daily)) {
-                                if (!serverDaily[key] || getResultCount(serverDaily[key]) < getResultCount(value)) {
-                                    // we have something the server doesn't know about
-                                    updatedKeys.push(key);
-                                }
+                        for (const [key, value] of Object.entries(localStudyResults.daily)) {
+                            if (!serverDaily[key] || getResultCount(serverDaily[key]) < getResultCount(value)) {
+                                // we have something the server doesn't know about
+                                updatedKeys.push(key);
                             }
                         }
                         // whether first load or not, take the server's value if we can
                         // or overwrite if local is larger
                         for (const [key, value] of Object.entries(serverDaily)) {
-                            if (!studyResults.daily[key] || getResultCount(studyResults.daily[key]) <= getResultCount(value)) {
+                            if (!localStudyResults.daily[key] || getResultCount(localStudyResults.daily[key]) <= getResultCount(value)) {
                                 studyResults.daily[key] = value;
                             } else {
                                 //key is in results, and its value is strictly greater than the server sent
                                 updatedKeys.push(key);
                             }
                         }
+                        delete localStudyResults["daily"];
                         overwriteDailyResultKeys(updatedKeys);
                     } else {
                         // we have no updates; server wins
