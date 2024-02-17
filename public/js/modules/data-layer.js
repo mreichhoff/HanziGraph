@@ -20,7 +20,7 @@ const cardTypes = {
     CLOZE: 'cloze'
 };
 const MAX_RECALL = 2;
-const MAX_CLOZE = 2;
+const MAX_CLOZE = 1;
 const MAX_BATCH_SIZE = 500;
 
 // TODO: get rid of all localStorage use. Switch to indexedDB instead.
@@ -161,7 +161,7 @@ let addCards = function (currentExamples, text, languageKey) {
     }
     // TODO: just not finding these useful. Make user prefs for them? Or just get rid of them...
     // addRecallCards(newCards, text, newKeys, languageKey);
-    // addClozeCards(newCards, text, newKeys, languageKey);
+    addClozeCards(newCards, text, newKeys, languageKey);
     //TODO: remove these keys from /deleted/ to allow re-add
     //update it whenever it changes
     saveStudyList(newKeys, null, true);
