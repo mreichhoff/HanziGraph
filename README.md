@@ -7,7 +7,8 @@ Looking for **Japanese**? See [the JapaneseGraph branch](https://github.com/mrei
 ### Demo
 
 
-https://github.com/mreichhoff/HanziGraph/assets/17800817/f960a112-4744-4e81-aa97-6a0c407fc90e
+https://github.com/mreichhoff/HanziGraph/assets/17800817/1e20d389-2303-4d3e-ae9f-7379f87e2a06
+
 
 
 ### Features
