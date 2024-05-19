@@ -530,6 +530,10 @@ h2.word-header {
     margin: var(--example-item-margin);
 }
 
+.navigable {
+    text-decoration: none;
+}
+
 .base {
     margin: var(--example-item-margin);
     opacity: var(--secondary-opacity);

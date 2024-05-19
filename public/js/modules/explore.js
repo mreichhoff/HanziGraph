@@ -741,8 +741,10 @@ let makeSentenceNavigable = function (text, container, noExampleChange) {
             a.textContent = character;
             if (hanzi[character]) {
                 a.className = 'navigable';
+                a.href = `/${getActiveGraph().prefix}/${character}`;
             }
-            a.addEventListener('click', function () {
+            a.addEventListener('click', function (e) {
+                e.preventDefault();
                 if (hanzi[character]) {
                     if (character in hanzi) {
                         switchDiagramView(diagramKeys.main);
