@@ -1,0 +1,9 @@
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/"
+                       xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>HanziGraph (simplified)</ShortName>
+  <Description></Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <!-- TODO: deferring any ability to switch out URLs...prod only for now -->
+  <Image width="16" height="16" type="image/x-icon">https://hanzigraph.com/images/favicon.ico</Image>
+  <Url type="text/html" template="https://hanzigraph.com/simplified/{searchTerms}"/>
+</OpenSearchDescription>
