@@ -148,7 +148,28 @@ function parseDefinitions(definitionList) {
     }
     return parsedDefinitions;
 }
-let setupDefinitions = function (definitionList, container) {
+function addFrequencyTag(word, container) {
+    if (!wordSet || !(word in wordSet)) {
+        return;
+    }
+    // TODO: not great to hardcode type strings
+    if (getActiveGraph().type !== 'frequency') {
+        return;
+    }
+    const rank = wordSet[word];
+    // only render frequency tags for words in the top 10k
+    if (rank > 10000) {
+        return;
+    }
+    const rankInThousands = Math.ceil(rank / 1000);
+    const tag = document.createElement('span');
+    tag.classList.add('tag', 'nowrap');
+    // direct HTML setting should be ok as `rankInThousands` is from Math.ceil, which surely would
+    // never return, like, a script tag....I hope?
+    tag.innerHTML = `<span class="deemphasized">Freq: Top ${rankInThousands}k</span>`;
+    container.appendChild(tag);
+}
+let setupDefinitions = function (word, definitionList, container) {
     if (!definitionList) {
         return;
     }
@@ -182,6 +203,7 @@ let setupDefinitions = function (definitionList, container) {
                 tagHolder.appendChild(measureSpan);
             }
         }
+        addFrequencyTag(word, tagHolder);
         definitionItem.appendChild(tagHolder);
         container.appendChild(definitionItem);
     }
@@ -310,7 +332,7 @@ let augmentDefinitions = function (word, container) {
                 return false;
             }
             let definitionList = data[word] || [];
-            setupDefinitions(definitionList, container);
+            setupDefinitions(word, definitionList, container);
             // now that we know the tones of the word/character, modify the header to be color-coded, too.
             modifyHeaderTones(definitionList, word);
             // TODO(refactor): should this be moved to setupDefinitions (and same with setupExamples/augmentExamples)?
@@ -322,7 +344,7 @@ let renderDefinitions = function (word, definitionList, container) {
     definitionsContainer.className = 'definitions';
     container.appendChild(definitionsContainer);
     if (definitionList && definitionList.length > 0) {
-        setupDefinitions(definitionList, definitionsContainer);
+        setupDefinitions(word, definitionList, definitionsContainer);
     } else if (getActiveGraph().definitionsAugmentPath) {
         augmentDefinitions(word, definitionsContainer);
     }
