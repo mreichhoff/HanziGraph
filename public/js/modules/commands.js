@@ -1,3 +1,4 @@
+import { evaluate as evaluateMathExpression } from "./hanzi-math";
 const commands = [
     {
         prefix: "!random",
@@ -17,12 +18,26 @@ const commands = [
             }
             const minCeiled = Math.ceil(startIndex);
             const maxFloored = Math.floor(endIndex);
-            if(minCeiled < 0 || maxFloored >= window.freqs.length) {
+            if (minCeiled < 0 || maxFloored >= window.freqs.length) {
                 return [];
             }
 
             const index = Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
             return [window.freqs[index]];
+        }
+    },
+    {
+        prefix: "!math",
+        parse: segments => {
+            // no spaces allowed in the math operation
+            // so segment[0] = "!math" and segment[1] = math expression
+            if (segments.length !== 2) {
+                return [];
+            }
+            const expression = segments[1];
+            const result = evaluateMathExpression(expression);
+            // limit to 10 results
+            return result.filter(x => x in hanzi).sort((a, b) => hanzi[a].node.level - hanzi[b].node.level).slice(0, 10);
         }
     }
 ];
