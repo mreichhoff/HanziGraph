@@ -45,6 +45,7 @@ function validate(input) {
     }
     return !nextMustBeCharacter;
 }
+// a breadth-first search for a given component of `candidate`
 function containsTransitiveComponent(candidate, filterComponent) {
     if (candidate === filterComponent) {
         return true;
@@ -65,6 +66,8 @@ function containsTransitiveComponent(candidate, filterComponent) {
     }
     return false;
 }
+// get components one layer deep, used in subtraction when a given
+// character is known to have the item being subtracted
 function findNonTransitiveComponents(characterList) {
     let result = new Set();
     for (const character of characterList) {
@@ -74,6 +77,8 @@ function findNonTransitiveComponents(characterList) {
     }
     return result;
 }
+// a BFS to find all compounds containing any character in `characterList`.
+// used in addition operations to find compounds containing the item being added
 function findAllTransitiveCompounds(characterList) {
     let compounds = new Set();
     for (const character of characterList) {
@@ -92,19 +97,22 @@ function findAllTransitiveCompounds(characterList) {
     }
     return compounds;
 }
+// TODO: adding two of the same character has unexpected results because of the components lists de-duping
+// (this came from the original cjkv-ids project, if I recall correctly)...worth revisiting
+//
 // move left to right, evaluating the expression as we go. Return all possible results.
 // note that we don't allow parentheses, and ordering could end up mattering.
 function evaluate(input) {
     if (!validate(input)) {
         return [];
     }
-    let leftOperand = null;
+    let leftOperandList = null;
     let nextOperator = null;
     for (const character of input) {
         // no left side yet? set it and move on.
-        // note that leftOperand can become empty
-        if (leftOperand === null) {
-            leftOperand = [character];
+        // note that leftOperandList can later become empty, which is then handled in the plus operation
+        if (leftOperandList === null) {
+            leftOperandList = [character];
             continue;
         }
         // it's an operator, so note that as our next operation and move on.
@@ -120,13 +128,13 @@ function evaluate(input) {
         // similarly: we have N candidates, remove any that do include the added operand. TBD if we should treat
         // subtractions when there aren't candidates with the operand as a no-op or a failed operation (probably the
         // former).
-        // we now have all compounds that contain any of the candidates in leftOperand so far
-        // now, incorporate the operation itself, and store the results in leftOperand
+        // we now have all compounds that contain any of the candidates in leftOperandList so far
+        // now, incorporate the operation itself, and store the results in leftOperandList
         let filtered = [];
         if (nextOperator === '-') {
-            // when subtracting, first find which operands of leftOperand have the component anywhere
+            // when subtracting, first find which operands of leftOperandList have the component anywhere
             let operandsWithComponent = [];
-            for (const candidate of leftOperand) {
+            for (const candidate of leftOperandList) {
                 if (!containsTransitiveComponent(candidate, character)) {
                     // if it already excludes the subtracted component, keep it around
                     filtered.push(candidate);
@@ -144,17 +152,22 @@ function evaluate(input) {
                 }
             }
         } else {
+            // Nothing there now, due to subtraction to 0 or due to not finding results of an add?
+            // Add the right operand and return its compounds...
+            if (leftOperandList.length < 1) {
+                leftOperandList.push(character);
+            }
             // if it's addition, get rid of any candidate that doesn't contain the rightOperand anywhere in
             // its transitive set of components
-            let compounds = findAllTransitiveCompounds(leftOperand);
+            let compounds = findAllTransitiveCompounds(leftOperandList);
             for (const candidate of compounds) {
                 if (containsTransitiveComponent(candidate, character)) {
                     filtered.push(candidate);
                 }
             }
         }
-        leftOperand = filtered;
+        leftOperandList = filtered;
     }
-    return leftOperand;
+    return leftOperandList;
 }
 export { evaluate }
