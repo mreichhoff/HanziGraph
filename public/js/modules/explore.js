@@ -174,6 +174,9 @@ let setupDefinitions = function (word, definitionList, container) {
         return;
     }
     let parsedDefinitions = parseDefinitions(definitionList);
+    // unfortunately, we don't have definition-specific frequency numbers
+    // just show any frequency tag on the first one
+    let isFirstlineItem = true;
     for (const lineItem of Object.values(parsedDefinitions)) {
         let definitionItem = document.createElement('li');
         definitionItem.classList.add('definition');
@@ -203,7 +206,10 @@ let setupDefinitions = function (word, definitionList, container) {
                 tagHolder.appendChild(measureSpan);
             }
         }
-        addFrequencyTag(word, tagHolder);
+        if (isFirstlineItem) {
+            addFrequencyTag(word, tagHolder);
+            isFirstlineItem = false;
+        }
         definitionItem.appendChild(tagHolder);
         container.appendChild(definitionItem);
     }
