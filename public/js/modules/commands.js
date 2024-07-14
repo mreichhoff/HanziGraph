@@ -53,6 +53,6 @@ function handleCommand(value) {
             return command.parse(segments);
         }
     }
-    return [];
+    return null;
 }
 export { handleCommand }

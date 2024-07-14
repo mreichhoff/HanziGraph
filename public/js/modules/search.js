@@ -160,10 +160,15 @@ function search(value, locale, mode, skipState) {
     }
     // first, check if this is a command.
     const commandResult = handleCommand(value);
-    if(commandResult && commandResult.length > 0) {
-        notFoundElement.style.display = 'none';
-        document.dispatchEvent(new CustomEvent('graph-update', { detail: commandResult[0] }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: commandResult, mode: (mode || 'explore'), skipState: !!skipState } }));
+    // null is returned if the value is not supported (i.e., not actually a command)
+    if (commandResult !== null) {
+        if (commandResult.length === 0) {
+            notFoundElement.removeAttribute('style');
+        } else {
+            notFoundElement.style.display = 'none';
+            document.dispatchEvent(new CustomEvent('graph-update', { detail: commandResult[0] }));
+            document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: commandResult, mode: (mode || 'explore'), skipState: !!skipState } }));
+        }
         return;
     }
     // then, check if it's a known word or character.
