@@ -17,8 +17,13 @@ const operators = new Set(['+', '-']);
 // +我+你
 // 我_你
 // 我 + 你
+// 我你+你
+// 你+你你
+// 你+
+// -你
 //
 // the definition of hanzi above is "exists in window.components".
+// note that the components data isn't perfect, but it's enough for a start
 function validate(input) {
     if (input.length < 3) {
         // treat single characters as invalid
