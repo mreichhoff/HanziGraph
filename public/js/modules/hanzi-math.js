@@ -133,8 +133,6 @@ function evaluate(input) {
         // similarly: we have N candidates, remove any that do include the added operand. TBD if we should treat
         // subtractions when there aren't candidates with the operand as a no-op or a failed operation (probably the
         // former).
-        // we now have all compounds that contain any of the candidates in leftOperandList so far
-        // now, incorporate the operation itself, and store the results in leftOperandList
         let filtered = [];
         if (nextOperator === '-') {
             // when subtracting, first find which operands of leftOperandList have the component anywhere
@@ -159,10 +157,18 @@ function evaluate(input) {
         } else {
             // Nothing there now, due to subtraction to 0 or due to not finding results of an add?
             // Add the right operand and return its compounds...
+            // TODO: this does mean adds of 3 or more items can be weird, with the first addition going to []
+            // and then the next addition adding items that probably shouldn't be there
+            // example:
+            // 我+你-->no result
+            // 我+你+我-->results as though it was just 我.
+            // Should probably only do special empty handling
+            // if the prior operation was a subtraction...
             if (leftOperandList.length < 1) {
                 leftOperandList.push(character);
             }
-            // if it's addition, get rid of any candidate that doesn't contain the rightOperand anywhere in
+            // if it's addition, find transitive compounds as the set of candidates,
+            // then get rid of any candidate that doesn't contain the rightOperand anywhere in
             // its transitive set of components
             let compounds = findAllTransitiveCompounds(leftOperandList);
             for (const candidate of compounds) {
