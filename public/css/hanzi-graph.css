@@ -24,7 +24,6 @@
     --link-font-color: rgb(21, 36, 255);
     --input-background-color: #fff;
     --primary-input-box-shadow: 0 2px 3px 1px #eeee;
-    --header-box-shadow: 0;
     --positive-button-color: #6de200;
     --right-button-height: 22px;
     /* I was told there would be no math */
@@ -110,7 +109,6 @@ ul {
     grid-template-columns: 50px 44px 1fr 50px;
     height: var(--primary-header-height);
     text-align: center;
-    box-shadow: var(--header-box-shadow);
 }
 
 .header.has-suggestions {
@@ -1383,7 +1381,6 @@ main.auth-form {
         --border: 1px solid #333;
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0 2px 3px 1px #3333;
-        --header-box-shadow: 0 2px 3px 1px #3333;
         --input-background-color: #2e2e2e;
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
