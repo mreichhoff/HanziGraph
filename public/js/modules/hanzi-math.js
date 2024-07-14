@@ -113,6 +113,7 @@ function evaluate(input) {
     }
     let leftOperandList = null;
     let nextOperator = null;
+    let previousOperation = null;
     for (const character of input) {
         // no left side yet? set it and move on.
         // note that leftOperandList can later become empty, which is then handled in the plus operation
@@ -122,6 +123,9 @@ function evaluate(input) {
         }
         // it's an operator, so note that as our next operation and move on.
         if (operators.has(character)) {
+            if (nextOperator !== null) {
+                previousOperation = nextOperator;
+            }
             nextOperator = character;
             continue;
         }
@@ -155,16 +159,16 @@ function evaluate(input) {
                 }
             }
         } else {
-            // Nothing there now, due to subtraction to 0 or due to not finding results of an add?
-            // Add the right operand and return its compounds...
-            // TODO: this does mean adds of 3 or more items can be weird, with the first addition going to []
+            // Nothing there now, due to subtraction to [] or due to not finding results of an add.
+            // Add the right operand and return its compounds, but first
+            // check for previous subtraction before special casing the empty list.
+            // Otherwise, adds of 3 or more items can be weird, with the first addition going to []
             // and then the next addition adding items that probably shouldn't be there
             // example:
             // 我+你-->no result
             // 我+你+我-->results as though it was just 我.
-            // Should probably only do special empty handling
-            // if the prior operation was a subtraction...
-            if (leftOperandList.length < 1) {
+            // The `previousOperation` check avoids that.
+            if (previousOperation === '-' && leftOperandList.length < 1) {
                 leftOperandList.push(character);
             }
             // if it's addition, find transitive compounds as the set of candidates,
