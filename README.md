@@ -15,6 +15,7 @@ https://github.com/mreichhoff/HanziGraph/assets/17800817/1e20d389-2303-4d3e-ae9f
 
 HanziGraph can also:
 * Demonstrate **character composition** with tree diagrams of components and compounds
+* Perform **hanzi math**, like: `酒-氵+各` (result: `酪`)
 * Show **sankey diagrams** to demonstrate how words are used together
 * Demonstrate usage with **example sentences** (mostly human-generated, with some AI-generated 🤖)
 * Automatically generate spaced repetition **flashcards**, and track your **study stats**
@@ -74,11 +75,28 @@ https://github.com/mreichhoff/HanziGraph/assets/17800817/3947ff48-341f-4fcd-acc8
 
 #### Commands
 
-In addition to searching by Chinese, English, or Pinyin, HanziGraph can run commands. Currently, the only supported command is:
+In addition to searching by Chinese, English, or Pinyin, HanziGraph can run commands.
+
+##### Math
+
+Ever wanted to type a character as a math equation? (ok, I'm weird)
+
+Now you can, with addition and subtraction via the `!math` command!
+
+Examples:
+
+* `!math 酒-氵+各` gives `酪`
+* `!math 亻+寸+广+仌+⺆` gives `腐`
+
+(better documentation coming soon!)
+
+##### Random Choice
+
+Output a random word, based on word frequency, to help find new vocabulary to study.
 
 `!random <min_freq_rank || 0> <max_freq_rank || 10,000>`
 
-More may be added in the future (e.g., `!measure <measure_word>`).
+More commands may be added in the future (e.g., `!measure <measure_word>`).
 
 ## As seen on...
 
