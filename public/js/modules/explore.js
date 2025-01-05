@@ -34,6 +34,19 @@ let getVoice = function () {
     if (!('speechSynthesis' in window)) {
         return null;
     }
+    // should probably just give every graph a tts key instead of this zh-CN defaulting
+    if (!getActiveGraph().ttsKey || getActiveGraph().ttsKey === 'zh-CN') {
+        const zhCnVoices = speechSynthesis.getVoices().filter(voice => voice.lang.replace('_', '-') === 'zh-CN');
+        // On MacOS, most voices are extremely robotic, but not Tingting, so hack around it
+        // TODO: Chrome also has a google voice, though it doesn't fire `boundary` events.
+        // also unknown what the full set of choices on all browsers/platforms is...
+        const tingtingHack = zhCnVoices.find(voice => voice.name.toLowerCase().indexOf('tingting') >= 0);
+        if (tingtingHack) {
+            return tingtingHack;
+        }
+    }
+    // if the hacks above returned nothing, use the first available zh-CN voice.
+    // ideally, the `default` property would be reliable, but at least on MacOS, it's never set.
     return speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (getActiveGraph().ttsKey || 'zh-CN'));
 };
 // hacking around garbage collection issues...
