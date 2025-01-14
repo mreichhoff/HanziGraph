@@ -9,6 +9,10 @@ def set_default(obj):
         return list(obj)
     raise TypeError
 
+# include each transitively?
+# 𠮦,  
+# should add to force_to_be_leaf_not_ideal:
+# 冂
 
 direction_characters_i_cant_incorporate_yet = [
     '⿰', '⿱', '⿲', '⿳', '⿴', '⿵', '⿶', '⿷', '⿸', '⿹', '⿺', '⿻']
