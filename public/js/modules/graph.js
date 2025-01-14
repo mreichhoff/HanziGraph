@@ -207,7 +207,7 @@ function getStylesheet() {
                 'background-color': (isTones) ? toneColor : levelColor,
                 'label': isTree ? 'data(word)' : 'data(id)',
                 'color': isTones ? makeLegible : 'black',
-                'font-size': isTree ? '20px' : '18px',
+                'font-size': '20px',
                 'text-valign': 'center',
                 'text-halign': 'center'
             }
