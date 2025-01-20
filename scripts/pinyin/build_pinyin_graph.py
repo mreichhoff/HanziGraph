@@ -37,7 +37,7 @@ def main():
     parser.add_argument(
         '--word-list', help='a frequency-sorted wordlist that will be used with a dictionary to build a graph of pinyin sounds')
     parser.add_argument(
-        '--full-dictionary', help='the full dictionary, output by dictinoary.py, used to supply pinyin')
+        '--full-dictionary', help='the full dictionary, output by dictionary.py, used to supply pinyin')
     args = parser.parse_args()
 
     word_list = parse_file(args.word_list)
