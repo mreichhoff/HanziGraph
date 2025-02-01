@@ -101,7 +101,6 @@ Promise.all(
         // This in very rare cases could cause cause a skipped re-layout on window size change
         // but that should be rare.
         document.dispatchEvent(new Event('skip-graph-resize'));
-        // preventDefault() doesn't stop this blur event on ios, but does on android.
         hanziBox.blur();
     });
 
