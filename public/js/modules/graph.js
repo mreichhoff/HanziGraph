@@ -400,6 +400,8 @@ function toggleColorCodeVisibility() {
     }
 }
 
+let skipResize = false;
+let pendingSkipResizeTimeout = null;
 function handleResize() {
     clearTimeout(pendingResizeTimeout);
     pendingResizeTimeout = setTimeout(() => {
@@ -409,9 +411,12 @@ function handleResize() {
             switchDiagramView(diagramKeys.main);
         }
         // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
-        if (cy && showingGraph) {
+        if (!skipResize && cy && showingGraph) {
             cy.layout(mode === modes.graph ? layout(cy.nodes().length) : bfsLayout(root)).run();
         }
+        skipResize = false;
+        // clear it now, it's a hacky timing based solution
+        clearTimeout(pendingSkipResizeTimeout);
     }, 1000);
 }
 
@@ -444,6 +449,18 @@ function initialize() {
     });
     window.addEventListener('resize', handleResize);
     document.addEventListener('user-graph-resize', handleResize);
+
+    // this hack is present because the android soft keyboard triggers a window resize event
+    document.addEventListener('skip-graph-resize', function () {
+        clearTimeout(pendingSkipResizeTimeout);
+        skipResize = true;
+        // skip one, but if no event is fired, reset the skip thing anyway after 1.5 seconds to prevent
+        // the event not being fired from causing a future resize to be erroneously skipped
+        // since uh...the event isn't fired at least on iOS devices, unclear android/chrome version specifics
+        pendingSkipResizeTimeout = setTimeout(function () {
+            skipResize = false;
+        }, 1500);
+    });
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
 }
 
