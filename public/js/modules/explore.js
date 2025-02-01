@@ -36,7 +36,12 @@ let getVoice = function () {
     }
     // should probably just give every graph a tts key instead of this zh-CN defaulting
     if (!getActiveGraph().ttsKey || getActiveGraph().ttsKey === 'zh-CN') {
-        const zhCnVoices = speechSynthesis.getVoices().filter(voice => voice.lang.replace('_', '-') === 'zh-CN');
+        // it appears the `lang` prop on voices on android use an underscore rather than a hyphen (so zh_CN vs zh-CN).
+        // additionally, in some cases there are other characters, like zh_CN_#Hans, so do a startsWith check.
+        // the web speech API spec seems to say the `lang` property should conform to BCP47 language tags.
+        // I don't think either of zh_CN or zh_CN_#Hans does, but perhaps I'm reading it wrong.
+        // https://www.ietf.org/rfc/bcp/bcp47.txt
+        const zhCnVoices = speechSynthesis.getVoices().filter(voice => voice.lang.replace('_', '-').startsWith('zh-CN'));
         // On MacOS, most voices are extremely robotic, but not Tingting, so hack around it
         // TODO: Chrome also has a google voice, though it doesn't fire `boundary` events.
         // also unknown what the full set of choices on all browsers/platforms is...
@@ -47,7 +52,7 @@ let getVoice = function () {
     }
     // if the hacks above returned nothing, use the first available zh-CN voice.
     // ideally, the `default` property would be reliable, but at least on MacOS, it's never set.
-    return speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-') === (getActiveGraph().ttsKey || 'zh-CN'));
+    return speechSynthesis.getVoices().find(voice => voice.lang.replace('_', '-').startsWith(getActiveGraph().ttsKey || 'zh-CN'));
 };
 // hacking around garbage collection issues...
 window.activeUtterances = [];
