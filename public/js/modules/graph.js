@@ -1,6 +1,8 @@
 import { switchToState, stateKeys, diagramKeys, switchDiagramView } from "./ui-orchestrator";
 import { getActiveGraph } from "./options";
 import { parsePinyin, trimTone, findPinyinRelationships } from "./pronunciation-parser";
+import cytoscape from "cytoscape";
+import fcose from 'cytoscape-fcose';
 
 const parent = document.getElementById('graph-container');
 const graphContainer = document.getElementById('graph');
@@ -181,7 +183,7 @@ function layout(numNodes) {
         };
     }
     return {
-        name: 'cose',
+        name: 'fcose',
         animate: false
     };
 }
@@ -370,7 +372,7 @@ let pendingResizeTimeout = null;
 let dirty = null;
 
 function toggleColorCodeMode() {
-    if(colorCodeMode === colorCodeModes.tones) {
+    if (colorCodeMode === colorCodeModes.tones) {
         colorCodeMode = colorCodeModes.frequency;
         freqLegend.removeAttribute('style');
         freqLegend.classList.add('slide-in');
@@ -407,7 +409,7 @@ function handleResize() {
     pendingResizeTimeout = setTimeout(() => {
         // if the window resizes with the graph collapsed, re-expand it
         // note that switchDiagramView no-ops if we're going main-->main
-        if(!window.matchMedia('(max-width:664px)').matches) {
+        if (!window.matchMedia('(max-width:664px)').matches) {
             switchDiagramView(diagramKeys.main);
         }
         // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
@@ -421,6 +423,7 @@ function handleResize() {
 }
 
 function initialize() {
+    cytoscape.use(fcose);
     toggleColorCodeVisibility();
     switchLegend.addEventListener('click', toggleColorCodeMode);
     document.addEventListener('graph-update', function (event) {
