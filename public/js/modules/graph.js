@@ -74,14 +74,19 @@ function addEdges(word, result) {
 function componentsBfs(value) {
     let elements = { 'nodes': [], 'edges': [] };
     let queue = [{ word: value, path: [value] }];
+    let countsByDepth = {};
     while (queue.length > 0) {
         //apparently shift isn't O(1) in js, but this is not many elements
         let curr = queue.shift();
+        if (!((curr.path.length - 1) in countsByDepth)) {
+            countsByDepth[curr.path.length - 1] = 0;
+        }
         elements.nodes.push({
             data: {
                 id: curr.path.join(''),
                 word: curr.word,
                 depth: curr.path.length - 1,
+                treeRank: countsByDepth[curr.path.length - 1]++,
                 path: curr.path,
                 level: (curr.word in hanzi ? hanzi[curr.word].node.level : 6)
             }
@@ -322,7 +327,10 @@ function bfsLayout(root) {
         roots: [root],
         padding: 6,
         spacingFactor: 0.85,
-        directed: true
+        directed: true,
+        depthSort: function (a, b) {
+            return a.data('treeRank') - b.data('treeRank')
+        }
     };
 }
 function buildComponentTree(value) {

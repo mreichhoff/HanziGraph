@@ -13,6 +13,14 @@ def set_default(obj):
 direction_characters_i_cant_incorporate_yet = [
     '⿰', '⿱', '⿲', '⿳', '⿴', '⿵', '⿶', '⿷', '⿸', '⿹', '⿺', '⿻']
 
+# should really come up with a principle here
+force_to_be_leaf_not_ideal = set(['口', '⺆', '冖', '氵', '巾', '𠃌', '冫', '巴'])
+
+def clean_force_leaves(graph):
+    for character in force_to_be_leaf_not_ideal:
+        if character in graph:
+            graph[character]['components'] = []
+
 
 def strip_directionality(line):
     return line.translate({ord(c): None for c in direction_characters_i_cant_incorporate_yet})
@@ -35,6 +43,8 @@ def build_ids_graph(breakdown_filename, allowlist):
     result = {}
     with open(breakdown_filename) as f:
         for line in f:
+            if line.startswith('#'):
+                continue
             fields = line.strip().split('\t')
             root = fields[1]
             if root not in allowlist or root in result:
@@ -89,6 +99,7 @@ def main():
     interesting_hanzi = get_character_set(args.file_list)
     graph = build_ids_graph(args.breakdown_filename, interesting_hanzi)
     build_decomp_graph(args.decomp_filename, interesting_hanzi, graph)
+    clean_force_leaves(graph)
     print(json.dumps(graph, ensure_ascii=False, default=set_default))
 
 
