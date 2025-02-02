@@ -173,7 +173,7 @@ function makeLegible(element) {
     return 'black';
 }
 
-function layout(numNodes, isNodeClick) {
+function layout(numNodes) {
     //very scientifically chosen 95 (不 was slow to load)
     //the grid layout appears to be far faster than cose
     //keeping root around in case we want to switch back to bfs
@@ -184,8 +184,7 @@ function layout(numNodes, isNodeClick) {
     }
     return {
         name: 'fcose',
-        animate: !!isNodeClick,
-        animationDuration: 300,
+        animate: false
     };
 }
 function edgeLabel(element) {
@@ -248,7 +247,7 @@ function nodeTapHandler(evt) {
     //not needed if currentHanzi contains id, which would mean the nodes have already been added
     //includes O(N) but currentHanzi almost always < 10 elements
     if (currentPath && !currentPath.includes(id)) {
-        addToGraph(id, true);
+        addToGraph(id);
     }
     document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.id()] } }));
     // notify the flow diagrams...sigh
@@ -273,7 +272,7 @@ function setupCytoscape(elements, graphContainer) {
     cy.on('tap', 'node', nodeTapHandler);
     cy.on('tap', 'edge', edgeTapHandler);
 }
-function addToGraph(character, isNodeClick) {
+function addToGraph(character) {
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
     let maxEdges = 8;
@@ -283,7 +282,7 @@ function addToGraph(character, isNodeClick) {
     cy.add(result);
     if (cy.nodes().length !== preNodeCount || cy.edges().length !== preEdgeCount) {
         //if we've actually added to the graph, re-render it; else just let it be
-        cy.layout(layout(cy.nodes().length, isNodeClick)).run();
+        cy.layout(layout(cy.nodes().length)).run();
     }
     currentPath.push(character);
 }
