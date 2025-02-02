@@ -1,6 +1,8 @@
 import { switchToState, stateKeys, diagramKeys, switchDiagramView } from "./ui-orchestrator";
 import { getActiveGraph } from "./options";
 import { parsePinyin, trimTone, findPinyinRelationships } from "./pronunciation-parser";
+import cytoscape from "cytoscape";
+import fcose from 'cytoscape-fcose';
 
 const parent = document.getElementById('graph-container');
 const graphContainer = document.getElementById('graph');
@@ -171,7 +173,7 @@ function makeLegible(element) {
     return 'black';
 }
 
-function layout(numNodes) {
+function layout(numNodes, isNodeClick) {
     //very scientifically chosen 95 (不 was slow to load)
     //the grid layout appears to be far faster than cose
     //keeping root around in case we want to switch back to bfs
@@ -181,8 +183,9 @@ function layout(numNodes) {
         };
     }
     return {
-        name: 'cose',
-        animate: false
+        name: 'fcose',
+        animate: !!isNodeClick,
+        animationDuration: 300,
     };
 }
 function edgeLabel(element) {
@@ -245,7 +248,7 @@ function nodeTapHandler(evt) {
     //not needed if currentHanzi contains id, which would mean the nodes have already been added
     //includes O(N) but currentHanzi almost always < 10 elements
     if (currentPath && !currentPath.includes(id)) {
-        addToGraph(id);
+        addToGraph(id, true);
     }
     document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [evt.target.id()] } }));
     // notify the flow diagrams...sigh
@@ -270,7 +273,7 @@ function setupCytoscape(elements, graphContainer) {
     cy.on('tap', 'node', nodeTapHandler);
     cy.on('tap', 'edge', edgeTapHandler);
 }
-function addToGraph(character) {
+function addToGraph(character, isNodeClick) {
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
     let maxEdges = 8;
@@ -280,7 +283,7 @@ function addToGraph(character) {
     cy.add(result);
     if (cy.nodes().length !== preNodeCount || cy.edges().length !== preEdgeCount) {
         //if we've actually added to the graph, re-render it; else just let it be
-        cy.layout(layout(cy.nodes().length)).run();
+        cy.layout(layout(cy.nodes().length, isNodeClick)).run();
     }
     currentPath.push(character);
 }
@@ -370,7 +373,7 @@ let pendingResizeTimeout = null;
 let dirty = null;
 
 function toggleColorCodeMode() {
-    if(colorCodeMode === colorCodeModes.tones) {
+    if (colorCodeMode === colorCodeModes.tones) {
         colorCodeMode = colorCodeModes.frequency;
         freqLegend.removeAttribute('style');
         freqLegend.classList.add('slide-in');
@@ -407,7 +410,7 @@ function handleResize() {
     pendingResizeTimeout = setTimeout(() => {
         // if the window resizes with the graph collapsed, re-expand it
         // note that switchDiagramView no-ops if we're going main-->main
-        if(!window.matchMedia('(max-width:664px)').matches) {
+        if (!window.matchMedia('(max-width:664px)').matches) {
             switchDiagramView(diagramKeys.main);
         }
         // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
@@ -421,6 +424,7 @@ function handleResize() {
 }
 
 function initialize() {
+    cytoscape.use(fcose);
     toggleColorCodeVisibility();
     switchLegend.addEventListener('click', toggleColorCodeMode);
     document.addEventListener('graph-update', function (event) {
