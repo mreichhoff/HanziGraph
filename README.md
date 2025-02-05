@@ -100,6 +100,14 @@ Output a random word, based on word frequency, to help find new vocabulary to st
 
 `!random <min_freq_rank || 0> <max_freq_rank || 10,000>`
 
+##### Query by Rank
+
+Output the word that ranks N based on frequency.
+
+The given `rank` argument must be greater than 0 and less than the number of known words.
+
+`!rank <rank>`
+
 More commands may be added in the future (e.g., `!measure <measure_word>`).
 
 ## As seen on...
