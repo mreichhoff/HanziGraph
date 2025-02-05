@@ -39,6 +39,21 @@ const commands = [
             // limit to 10 results
             return result.filter(x => x in hanzi).sort((a, b) => hanzi[a].node.level - hanzi[b].node.level).slice(0, 10);
         }
+    },
+    {
+        prefix: "!rank",
+        parse: segments => {
+            if (!window.freqs) {
+                return [];
+            }
+            const index = parseInt(segments[1]);
+            if (index != NaN && index > 0 && index < window.freqs.length) {
+                // subtract one as we'd rather not have zero indexing
+                // i.e., `!rank 5000` should display index 4999.
+                return [window.freqs[index - 1]];
+            }
+            return [];
+        }
     }
 ];
 function handleCommand(value) {
