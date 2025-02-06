@@ -892,11 +892,6 @@ h2.word-header {
     -webkit-user-select: none;
 }
 
-.legend-switch-button:hover {
-    opacity: 0.75;
-    transition: opacity 0.5s;
-}
-
 .right-arrow {
     display: inline-block;
     width: 16px;
@@ -916,11 +911,6 @@ h2.word-header {
 
 #graph-resize-indicator {
     display: none;
-}
-
-#collapse-graph:hover {
-    opacity: 0.75;
-    transition: opacity 0.5s;
 }
 
 .graph-expander {
