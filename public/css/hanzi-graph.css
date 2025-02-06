@@ -76,6 +76,15 @@ body {
     background-color: var(--background-color);
     color: var(--primary-font-color);
     overflow-x: hidden;
+    /*
+        I'm going for an app-like experience on iOS/Android, and uh...
+        without this, anytime you tap something on Android Chrome, it
+        gets a little blue flicker that makes it feel less like a native
+        app. Kinda unfortunate this is a weird, vendor-prefixed thing.
+        https://stackoverflow.com/questions/21003535
+        https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-tap-highlight-color
+    */
+    -webkit-tap-highlight-color: transparent;
 }
 
 a {
@@ -682,6 +691,7 @@ h2.word-header {
     color: var(--primary-font-color);
     margin-left: 3px;
 }
+
 .login-icon::after,
 .login-icon::before,
 .logout-icon::after,
@@ -691,6 +701,7 @@ h2.word-header {
     box-sizing: border-box;
     position: absolute
 }
+
 .login-icon::after {
     border-top: 2px solid;
     border-right: 2px solid;
@@ -700,6 +711,7 @@ h2.word-header {
     bottom: 2.5px;
     left: 3px;
 }
+
 .login-icon::before {
     border-radius: 3px;
     width: 10px;
@@ -718,6 +730,7 @@ h2.word-header {
     left: 1px;
     bottom: 2.5px
 }
+
 .logout-icon::before {
     border-radius: 3px;
     width: 10px;
@@ -1263,6 +1276,7 @@ p.related-card {
     font-weight: 400;
     height: 60px;
 }
+
 .welcome-message {
     font-size: 16px;
 }
@@ -1497,6 +1511,7 @@ main.auth-form {
         grid-row: 2;
         margin: 0;
     }
+
     .legend-switch-button {
         grid-row: 1/3;
         grid-column: 3;
