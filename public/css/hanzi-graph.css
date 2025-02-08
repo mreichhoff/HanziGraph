@@ -60,10 +60,10 @@
     --examples-top-margin: 14px;
     --graph-margin-top: 14px;
     --checked-input-border: 6px solid black;
-    --definition-padding: 8px;
+    --definition-padding: 4px;
     --example-border: 1px solid #3333;
     --example-background: #fff;
-    --example-padding: 8px 0 12px 14px;
+    --example-padding: 4px 0 10px 14px;
     --example-margin: 10px 0;
 }
 
