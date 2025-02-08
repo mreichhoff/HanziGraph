@@ -1,5 +1,5 @@
 :root {
-    --background-color: #fcfcfc;
+    --background-color: #f9f9fb;
     --primary-font-color: rgba(0, 0, 0, 0.87);
     --primary-font: Roboto, Helvetica, Arial, sans-serif;
     --primary-font-weight: 300;
@@ -60,6 +60,11 @@
     --examples-top-margin: 14px;
     --graph-margin-top: 14px;
     --checked-input-border: 6px solid black;
+    --definition-padding: 8px;
+    --example-border: 1px solid #3333;
+    --example-background: #fff;
+    --example-padding: 8px 0 12px 14px;
+    --example-margin: 10px 0;
 }
 
 html {
@@ -211,7 +216,7 @@ input[type="search"] {
 }
 
 .sentence-container {
-    width: calc(100% - 70px);
+    width: calc(100% - 58px);
 }
 
 .clickable {
@@ -455,6 +460,7 @@ h2.word-header {
 .definition {
     margin: 6px 0;
     line-height: 18px;
+    padding-left: var(--definition-padding);
 }
 
 .definition .tone1,
@@ -489,7 +495,11 @@ h2.word-header {
 }
 
 .example {
-    margin: 16px 0;
+    margin: var(--example-margin);
+    padding: var(--example-padding);
+    background: var(--example-background);
+    border: var(--example-border);
+    border-radius: 16px;
 }
 
 .example .tags {
@@ -1395,6 +1405,11 @@ main.auth-form {
         --graph-expand-button-box-shadow: 0;
         --tag-border: 2px solid #aaaa;
         --checked-input-border: 6px solid #eeee;
+        --definition-padding: 0;
+        --example-border: 0;
+        --example-background: #121212;
+        --example-padding: 0;
+        --example-margin: 16px 0;
     }
 }
 
