@@ -322,12 +322,16 @@ let initialize = function () {
     studyContainer.addEventListener('shown', function () {
         setupStudyMode();
     });
+    if (localStorage.getItem('hideStudyInfo')) {
+        explanationContainer.style.display = 'none';
+    }
     explanationHideButton.addEventListener('click', function () {
         explanationContainer.addEventListener('animationend', function () {
             explanationContainer.style.display = 'none';
             explanationContainer.classList.remove('fade');
         });
         explanationContainer.classList.add('fade');
+        localStorage.setItem('hideStudyInfo', 'true');
     })
 };
 
