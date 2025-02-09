@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.hanzigraph.twa",
+        "sha256_cert_fingerprints": ["9A:43:BC:08:9D:12:45:B6:8C:32:A5:11:92:8D:67:5D:92:E3:05:55:A4:6F:13:72:74:84:F4:DB:1D:9A:FD:60", "8B:3C:1A:BD:2A:16:79:69:04:64:2F:D8:64:DA:3A:97:8A:45:44:75:1A:1B:5D:B0:B5:A8:43:27:D9:F2:81:1C"]
+      }
+    }]

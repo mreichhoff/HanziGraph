@@ -1,0 +1,49 @@
+{
+  "packageId": "com.hanzigraph.twa",
+  "host": "hanzigraph.com",
+  "name": "HanziGraph",
+  "launcherName": "HanziGraph",
+  "display": "standalone",
+  "themeColor": "#121212",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#121212",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://hanzigraph.com/images/hanzigraph-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "<Your Keystore Path Here>",
+    "alias": "android"
+  },
+  "appVersionName": "1",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://hanzigraph.com/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://hanzigraph.com/",
+  "minSdkVersion": 21,
+  "orientation": "default",
+  "fingerprints": [
+    {
+      "value": "9A:43:BC:08:9D:12:45:B6:8C:32:A5:11:92:8D:67:5D:92:E3:05:55:A4:6F:13:72:74:84:F4:DB:1D:9A:FD:60"
+    },
+    {
+      "value": "8B:3C:1A:BD:2A:16:79:69:04:64:2F:D8:64:DA:3A:97:8A:45:44:75:1A:1B:5D:B0:B5:A8:43:27:D9:F2:81:1C"
+    }
+  ],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersion": "1"
+}

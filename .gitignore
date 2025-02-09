@@ -4,3 +4,11 @@ __pycache__
 *debug.log
 .firebaserc
 *bundle.js
+android-twa/android.keystore
+android-twa/manifest-checksum.txt
+android-twa/*.apk
+android-twa/*.aab
+android-twa/*.idsig
+android-twa/.gradle
+android-twa/gradle
+android-twa/app/build
