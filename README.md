@@ -46,13 +46,15 @@ Each hanzi can also be diagrammed as a component tree, where each successive lev
 
 As an example, here's the breakdown for 恐 (kong3), showing how it shares its pinyin final and its tone with its component 巩.
 
-<img width="483" alt="kong3-Components" src="https://github.com/mreichhoff/HanziGraph/assets/17800817/7c06d606-83f3-4b28-a38c-63a5520cee9a">
+<img width="555" alt="kong3-components" src="https://github.com/user-attachments/assets/35371aec-036a-4e0b-94cb-0c62e3cbcf66" />
+
 
 This can also help answer questions like "which simplified character has the largest number of transitive components?"
 
 Answer: 蠮 (ye1)
 
-<img width="612" alt="ye1-components" src="https://github.com/mreichhoff/HanziGraph/assets/17800817/69ea34a7-16bc-46f8-b8db-fc1ea7084d3b">
+ <img width="652" alt="ye1-components" src="https://github.com/user-attachments/assets/f3105f2c-6ec9-4e4c-828a-47124e8e9176" />
+
 
 This mode is also available as [a standalone tool](https://hanzigraph.com/components).
 
