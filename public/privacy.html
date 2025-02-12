@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HanziGraph Privacy Policy</title>
+    <link rel="stylesheet" type="text/css" href="css/hanzi-graph.css">
+    <script type="module">
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./asset-service-worker.js');
+        };
+    </script>
+    <link rel="icon" href="images/favicon-32x32.png" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <header class="header">
+        <div class="exit-container"><a href="/"><i id="faq-exit-button" class="exit-button"></i></a></div>
+        <div id="header-logo" class="logo freq">汉</div>
+        <h1 id="login-header" class="main-header">Privacy Policy</h1>
+        <div class="stats-container"></div>
+    </header>
+    <main style="margin: 0 auto; width: 90%; max-width: 600px;">
+        <p>
+            HanziGraph does not collect any of your data by default. Unless you create an account,
+            all of the data stays locally on your device. Server logs are only retained for 90 days for
+            debugging purposes, then deleted. There are no ads or 3rd party analytics tools used.
+            The site is hosted with <a href="https://firebase.google.com/">Firebase</a>.
+        </p>
+        <p>
+            If you choose to create an account, your email address and password (or just email address
+            if you use Sign in with Google) are saved. When you have an account, any flashcards you make
+            and your study stats are saved. No other data is collected.
+        </p>
+        <p>
+            HanziGraph is free and open source. All code is available on
+            <a href="https://github.com/mreichhoff/hanzigraph">GitHub</a>.
+        </p>
+        <h3 style="text-align: center;">Deleting an account</h3>
+        <p>
+            If you made an account and wish to delete it, simply log in and push the button below.
+            Your account will be deleted immediately. This cannot be undone.
+        </p>
+        <p style="text-align: center;">
+            <button id="delete-account">Delete Account</button>
+        </p>
+    </main>
+    <script src="./js/auth-bundle.js"></script>
+</body>
+
+</html>
