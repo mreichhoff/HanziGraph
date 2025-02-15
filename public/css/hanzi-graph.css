@@ -1446,9 +1446,9 @@ main.auth-form {
         --graph-margin-top: 0;
         --text-container-height: 50%;
         --graph-container-height: 50%;
-        --walkthrough-header-font-size: 40px;
-        --walkthrough-smaller-header-font-size: 20px;
-        --walkthrough-top-margin: 10px;
+        --walkthrough-header-font-size: 36px;
+        --walkthrough-smaller-header-font-size: 19px;
+        --walkthrough-top-margin: 6px;
         --walkthrough-smallest-header-font-size: 16px;
         --walkthrough-header-text-align: center;
     }
