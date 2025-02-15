@@ -63,7 +63,7 @@
     --walkthrough-header-font-size: 50px;
     --walkthrough-smaller-header-font-size: 26px;
     --walkthrough-smallest-header-font-size: 18px;
-    --walkthrough-top-margin: 100px;
+    --walkthrough-top-margin: 80px;
     --walkthrough-header-text-align: left;
 }
 
@@ -1448,7 +1448,7 @@ main.auth-form {
         --graph-container-height: 50%;
         --walkthrough-header-font-size: 40px;
         --walkthrough-smaller-header-font-size: 20px;
-        --walkthrough-top-margin: 20px;
+        --walkthrough-top-margin: 10px;
         --walkthrough-smallest-header-font-size: 16px;
         --walkthrough-header-text-align: center;
     }
