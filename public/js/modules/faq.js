@@ -7,7 +7,6 @@ const faqContext = document.getElementById('faq-context');
 const faqGeneral = document.getElementById('faq-general');
 const faqSentenceMetadata = document.getElementById('faq-sentence-metadata');
 const showStudyFaq = document.getElementById('show-study-faq');
-const showGeneralFaq = document.getElementById('show-general-faq');
 
 //TODO should combine with faqTypes
 const faqTypesToElement = {
@@ -38,9 +37,6 @@ let initialize = function () {
     });
     showStudyFaq.addEventListener('click', function () {
         showFaq(faqTypes.studyMode);
-    });
-    showGeneralFaq.addEventListener('click', function () {
-        showFaq(faqTypes.general);
     });
 }
 
