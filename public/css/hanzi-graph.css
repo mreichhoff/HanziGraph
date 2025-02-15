@@ -104,17 +104,20 @@ h1 {
 }
 
 .walkthrough h1 {
-    font-size: var(--walkthrough-header-font-size);
     margin: 0 0 16px 0;
     text-align: var(--walkthrough-header-text-align);
+    /* oh no */
+    line-height: 0;
 }
 
-.walkthrough h1 p {
-    margin: 2px 0;
+.walkthrough h1 span {
+    font-size: var(--walkthrough-header-font-size);
+    line-height: var(--walkthrough-header-font-size);
 }
 
-.walkthrough h1 p:first-of-type {
+.walkthrough h1 span:first-of-type {
     font-size: var(--walkthrough-smaller-header-font-size);
+    line-height: var(--walkthrough-smaller-header-font-size);
 }
 
 .walkthrough h2 {
