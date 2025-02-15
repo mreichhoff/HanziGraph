@@ -60,6 +60,11 @@
     --examples-top-margin: 14px;
     --graph-margin-top: 14px;
     --checked-input-border: 6px solid black;
+    --walkthrough-header-font-size: 50px;
+    --walkthrough-smaller-header-font-size: 26px;
+    --walkthrough-smallest-header-font-size: 18px;
+    --walkthrough-top-margin: 80px;
+    --walkthrough-header-text-align: left;
 }
 
 html {
@@ -96,6 +101,31 @@ h1 {
     font-size: var(--primary-header-font-size);
     margin: 4px;
     font-family: var(--header-font-family);
+}
+
+.walkthrough h1 {
+    margin: 0 0 16px 0;
+    text-align: var(--walkthrough-header-text-align);
+    /* oh no */
+    line-height: 0;
+}
+
+.walkthrough h1 span {
+    font-size: var(--walkthrough-header-font-size);
+    line-height: var(--walkthrough-header-font-size);
+}
+
+.walkthrough h1 span:first-of-type {
+    font-size: var(--walkthrough-smaller-header-font-size);
+    line-height: var(--walkthrough-smaller-header-font-size);
+}
+
+.walkthrough h2 {
+    font-size: var(--walkthrough-smallest-header-font-size);
+}
+
+.walkthrough {
+    margin-top: var(--walkthrough-top-margin);
 }
 
 h2 {
@@ -1419,6 +1449,11 @@ main.auth-form {
         --graph-margin-top: 0;
         --text-container-height: 50%;
         --graph-container-height: 50%;
+        --walkthrough-header-font-size: 36px;
+        --walkthrough-smaller-header-font-size: 19px;
+        --walkthrough-top-margin: 6px;
+        --walkthrough-smallest-header-font-size: 16px;
+        --walkthrough-header-text-align: center;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
