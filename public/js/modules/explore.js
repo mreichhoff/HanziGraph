@@ -311,10 +311,17 @@ function hideMenuPopover() {
 
 function addPopoverMenuButton(word, example, container, text, aList, cardType) {
     const button = document.createElement('span');
-    button.classList.add('add-button');
-    container.appendChild(button);
-    button.addEventListener('click', function () {
-        // if already showing, keep showing it but re-render and move
+    button.classList.add('three-dot');
+    const buttonContainer = document.createElement('span');
+    buttonContainer.classList.add('three-dot-container');
+    buttonContainer.appendChild(button);
+    container.appendChild(buttonContainer);
+    buttonContainer.addEventListener('click', function () {
+        // TODO: this was here before the safari event ordering issue, and allowed
+        // a second click of the same button to hide the menu. Safari was firing
+        // the popover close before this, running the `toggle` handler, which removes
+        // the open-button class, and only then running this event, so this branch
+        // got skipped. Workarounds weren't great. Covering the button seems fine for now.
         if (button.classList.contains('open-button')) {
             menuPopover.hidePopover();
             button.classList.remove('open-button');
@@ -326,10 +333,15 @@ function addPopoverMenuButton(word, example, container, text, aList, cardType) {
         button.classList.add('open-button');
         const buttonDimensions = button.getBoundingClientRect();
         menuPopover.style.left = `${buttonDimensions.left - 215}px`;
+        // seemingly safari fires the popover events before the
+        // click handlers, even mousedown. Touchstart might be an option, but it's too bad
+        // mobile browsers don't all handle this seeming edge case similarly.
+        // accordingly, we render the menu over the top of the button, which does seem
+        // to be a reasonably common UI pattern on both iOS and Android.
         if (buttonDimensions.bottom + (NUM_MENU_ROWS * 44) < window.visualViewport.height) {
-            menuPopover.style.top = `${buttonDimensions.top + 22}px`;
+            menuPopover.style.top = `${buttonDimensions.top + window.scrollY}px`;
         } else {
-            menuPopover.style.top = `${buttonDimensions.top - (NUM_MENU_ROWS * ROW_HEIGHT) - 6}px`;
+            menuPopover.style.top = `${buttonDimensions.top - (NUM_MENU_ROWS * ROW_HEIGHT) + window.scrollY + 16}px`;
         }
         renderMenu(word, aList, text, example, cardType);
         menuPopover.showPopover();
@@ -859,7 +871,7 @@ let initialize = function () {
             // needed as clicking the button a second time or clicking outside the menu and button
             // can both close the popover menu
             for (const button of document.querySelectorAll('.open-button')) {
-                button.classList.remove('open-button')
+                button.classList.remove('open-button');
             }
             container.removeEventListener('scroll', hideMenuPopover, { passive: true, once: true });
         } else {

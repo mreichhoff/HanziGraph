@@ -291,6 +291,10 @@ input[type="search"] {
     margin-top: 10px;
 }
 
+.word-header .three-dot-container {
+    float: right;
+}
+
 #graph {
     height: var(--graph-height);
 }
@@ -569,10 +573,18 @@ h2.word-header {
     margin-left: 4px;
 }
 
-.example .add-button,
-.example .three-dot {
+.example .add-button {
     margin-left: 28px;
     cursor: pointer;
+}
+
+.example .three-dot {
+    margin-left: 46px;
+}
+
+.three-dot-container {
+    cursor: pointer;
+    width: 70px;
 }
 
 .sentence-freq-tag {
