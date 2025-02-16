@@ -267,7 +267,11 @@ function renderMenu(word, aList, text, example, cardType) {
     textToSpeechButton.className = 'speak-button';
     const speakSpan = document.createElement('span');
     speakSpan.innerText = 'Listen';
-    speakRow.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
+    speakRow.addEventListener('click', function () {
+        runTextToSpeech(text, aList);
+        // hide the popover so as not to cover highlighting while speaking
+        setTimeout(hideMenuPopover, 250);
+    });
     speakRow.appendChild(textToSpeechButton);
     speakRow.appendChild(speakSpan);
 
@@ -288,6 +292,8 @@ function renderMenu(word, aList, text, example, cardType) {
         addSpan.classList.add('check');
         addTextSpan.innerText = 'Flashcard added';
         showNotification();
+        // give the user a brief moment to see the success message, then close.
+        setTimeout(hideMenuPopover, 1000);
     });
     addCardRow.appendChild(addSpan);
     addCardRow.appendChild(addTextSpan);
