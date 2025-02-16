@@ -258,8 +258,9 @@ let addTextToSpeech = function (container, text, aList) {
     container.appendChild(textToSpeechButton);
 };
 
-
+// TODO: move to its own module, make it less repetitive
 function renderMenu(word, aList, text, example, cardType) {
+    let numRows = 0;
     menuPopover.innerHTML = '';
     const speakRow = document.createElement('div');
     speakRow.classList.add('popover-menu-row');
@@ -274,6 +275,7 @@ function renderMenu(word, aList, text, example, cardType) {
     });
     speakRow.appendChild(textToSpeechButton);
     speakRow.appendChild(speakSpan);
+    numRows++;
 
     const addCardRow = document.createElement('div');
     addCardRow.classList.add('popover-menu-row');
@@ -297,6 +299,7 @@ function renderMenu(word, aList, text, example, cardType) {
     });
     addCardRow.appendChild(addSpan);
     addCardRow.appendChild(addTextSpan);
+    numRows++;
 
     const copyRow = document.createElement('div');
     copyRow.classList.add('popover-menu-row');
@@ -320,10 +323,48 @@ function renderMenu(word, aList, text, example, cardType) {
         }
         setTimeout(hideMenuPopover, 250);
     });
+    numRows++;
+
+    let shareRow = null;
+    if (cardType === cardTypes.definition) {
+        const shareData = {
+            text: `${word} | HanziGraph`,
+            url: `${document.location.origin}/${getActiveGraph().prefix}/${word}`
+        };
+        if (navigator.canShare && navigator.canShare(shareData)) {
+            shareRow = document.createElement('div');
+            shareRow.classList.add('popover-menu-row');
+            const shareIconSpan = document.createElement('span');
+            shareIconSpan.classList.add('share-icon');
+            shareRow.appendChild(shareIconSpan);
+            const shareText = document.createElement('span');
+            shareText.innerText = 'Share';
+            shareRow.appendChild(shareText);
+            shareRow.addEventListener('click', async function () {
+                try {
+                    await navigator.share(shareData);
+                    shareIconSpan.classList.remove('share-icon');
+                    shareIconSpan.classList.add('check');
+                    shareText.innerText = "Shared";
+                } catch (err) {
+                    // no-op, as this happens if the user cancels
+                    // no need to show an error in that case
+                    // could get more detailed here, but meh
+                }
+                setTimeout(hideMenuPopover, 250);
+            });
+            numRows++;
+        }
+    }
 
     menuPopover.appendChild(speakRow);
     menuPopover.appendChild(addCardRow);
     menuPopover.appendChild(copyRow);
+    if (shareRow) {
+        menuPopover.appendChild(shareRow);
+    }
+
+    return numRows;
 }
 
 const cardTypes = {
@@ -331,7 +372,6 @@ const cardTypes = {
     sentence: 'sentence'
 };
 
-const NUM_MENU_ROWS = 3;
 // TODO: keep in sync with css....not great. 20 for padding, 24 for height
 const ROW_HEIGHT = 44;
 
@@ -368,12 +408,12 @@ function addPopoverMenuButton(word, example, container, text, aList, cardType) {
         // mobile browsers don't all handle this seeming edge case similarly.
         // accordingly, we render the menu over the top of the button, which does seem
         // to be a reasonably common UI pattern on both iOS and Android.
-        if (buttonDimensions.bottom + (NUM_MENU_ROWS * 44) < window.visualViewport.height) {
+        const numRows = renderMenu(word, aList, text, example, cardType);
+        if (buttonDimensions.bottom + (numRows * 44) < window.visualViewport.height) {
             menuPopover.style.top = `${buttonDimensions.top + window.scrollY}px`;
         } else {
-            menuPopover.style.top = `${buttonDimensions.top - (NUM_MENU_ROWS * ROW_HEIGHT) + window.scrollY + 16}px`;
+            menuPopover.style.top = `${buttonDimensions.top - (numRows * ROW_HEIGHT) + window.scrollY + 16}px`;
         }
-        renderMenu(word, aList, text, example, cardType);
         menuPopover.showPopover();
     });
 }

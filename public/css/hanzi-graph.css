@@ -273,8 +273,13 @@ input[type="search"] {
     margin-right: 16px;
     top: 4px;
 }
+
 .popover-menu-row .copy-icon {
     margin: 0 22px 0 2px;
+}
+
+.popover-menu-row .share-icon {
+    margin: 0 28px 2px 4px;
 }
 
 .open-button {
@@ -934,36 +939,73 @@ h2.word-header {
     width: 14px;
     height: 18px;
     border: 2px solid;
-  }
-  .copy-icon::after,
-  .copy-icon::before {
+}
+
+.copy-icon::after,
+.copy-icon::before {
     content: "";
     display: block;
     box-sizing: border-box;
     position: absolute;
-  }
-  .copy-icon::before {
+}
+
+.copy-icon::before {
     background:
-      linear-gradient(to left, currentColor 5px, transparent 0) no-repeat right
-        top/5px 2px,
-      linear-gradient(to left, currentColor 5px, transparent 0) no-repeat left
-        bottom/ 2px 5px;
+        linear-gradient(to left, currentColor 5px, transparent 0) no-repeat right top/5px 2px,
+        linear-gradient(to left, currentColor 5px, transparent 0) no-repeat left bottom/ 2px 5px;
     box-shadow: inset -4px -4px 0 -2px;
     bottom: -6px;
     right: -6px;
     width: 14px;
     height: 18px;
-  }
-  .copy-icon::after {
+}
+
+.copy-icon::after {
     width: 6px;
     height: 2px;
     background: currentColor;
     left: 2px;
     top: 2px;
     box-shadow:
-      0 4px 0,
-      0 8px 0;
-  }
+        0 4px 0,
+        0 8px 0;
+}
+
+.share-icon {
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: currentColor;
+    border-radius: 100px;
+    box-shadow:
+        10px -6px 0,
+        10px 6px 0;
+}
+
+.share-icon::after,
+.share-icon::before {
+    content: "";
+    display: block;
+    box-sizing: border-box;
+    position: absolute;
+    border-radius: 3px;
+    width: 10px;
+    height: 2px;
+    background: currentColor;
+    left: 2px;
+}
+
+.share-icon::before {
+    top: 0;
+    transform: rotate(-35deg);
+}
+
+.share-icon::after {
+    bottom: 0;
+    transform: rotate(35deg);
+}
 
 .speak-button {
     box-sizing: border-box;
