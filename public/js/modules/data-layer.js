@@ -139,6 +139,31 @@ let addClozeCards = function (newCards, text, newKeys, languageKey) {
         }
     }
 };
+
+function addCard(example, text, languageKey) {
+    const card = { ...example, due: Date.now() };
+    let zhJoined = example.zh.join('');
+    if (zhJoined in studyList) {
+        // no-op...user already made this card. Shouldn't happen, but in case
+        // we receive an update from firestore between menu render and button click
+        return;
+    }
+    const newKeys = [zhJoined];
+    studyList[zhJoined] = {
+        en: card.en,
+        due: card.due,
+        zh: card.zh,
+        wrongCount: 0,
+        rightCount: 0,
+        type: cardTypes.RECOGNITION,
+        vocabOrigin: text,
+        language: languageKey || 'zh-CN',
+        added: Date.now()
+    };
+    saveStudyList(newKeys, null, true);
+    callbacks[dataTypes.studyList].forEach(x => x(studyList));
+}
+
 let addCards = function (currentExamples, text, languageKey) {
     let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
     let newKeys = [];
@@ -482,4 +507,4 @@ let writeExploreState = function (words) {
     }));
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCards, inStudyList, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, addCards, inStudyList, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }
