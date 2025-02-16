@@ -316,7 +316,7 @@ function addPopoverMenuButton(word, example, container, text, aList, cardType) {
     container.appendChild(button);
     button.addEventListener('click', function () {
         // if already showing, keep showing it but re-render and move
-        if (popoverMenuShowingTrigger == button) {
+        if (popoverMenuShowingTrigger == button || button.classList.contains('open-button')) {
             menuPopover.hidePopover();
             button.classList.remove('open-button');
             popoverMenuShowingTrigger = null;
