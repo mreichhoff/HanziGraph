@@ -1,4 +1,4 @@
-import { writeExploreState, addCards, inStudyList } from "./data-layer.js";
+import { writeExploreState, addCard, inStudyList } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough, examplesList } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
@@ -13,6 +13,7 @@ let charFreqs = null;
 let maxExamples = 5;
 let currentExamples = {};
 let currentWords = [];
+let menuPopover;
 
 const modes = {
     explore: 'explore',
@@ -102,22 +103,6 @@ let runTextToSpeech = function (text, anchors) {
     }
 };
 
-let addTextToSpeech = function (container, text, aList) {
-    let textToSpeechButton = document.createElement('span');
-    textToSpeechButton.className = 'speak-button';
-    textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
-    container.appendChild(textToSpeechButton);
-};
-let addSaveToListButton = function (container, text) {
-    let saveToListButton = document.createElement('span');
-    saveToListButton.className = (inStudyList(text) ? 'check' : 'add-button');
-    saveToListButton.addEventListener('click', function () {
-        addCards(currentExamples, text);
-        saveToListButton.className = 'check';
-        showNotification();
-    });
-    container.appendChild(saveToListButton);
-};
 let renderPinyinForDefinition = function (pinyin, container) {
     const syllables = pinyin.split(' ');
     for (const syllable of syllables) {
@@ -266,7 +251,110 @@ let findExamples = function (word, sentences, max) {
     });
     return examples;
 };
-let setupExampleElements = function (examples, exampleList, defaultSource) {
+let addTextToSpeech = function (container, text, aList) {
+    let textToSpeechButton = document.createElement('span');
+    textToSpeechButton.className = 'speak-button';
+    textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
+    container.appendChild(textToSpeechButton);
+};
+
+
+function renderMenu(word, aList, text, example, cardType) {
+    menuPopover.innerHTML = '';
+    const speakRow = document.createElement('div');
+    speakRow.classList.add('popover-menu-row');
+    let textToSpeechButton = document.createElement('span');
+    textToSpeechButton.className = 'speak-button';
+    const speakSpan = document.createElement('span');
+    speakSpan.innerText = 'Listen';
+    speakRow.addEventListener('click', function () {
+        runTextToSpeech(text, aList);
+        // hide the popover so as not to cover highlighting while speaking
+        setTimeout(hideMenuPopover, 250);
+    });
+    speakRow.appendChild(textToSpeechButton);
+    speakRow.appendChild(speakSpan);
+
+    const addCardRow = document.createElement('div');
+    addCardRow.classList.add('popover-menu-row');
+    const addSpan = document.createElement('span');
+    addSpan.classList.add(inStudyList(text) ? 'check' : 'add-button');
+    const addTextSpan = document.createElement('span');
+    addTextSpan.innerText = inStudyList(text) ? 'Flashcard added' : `Add ${cardType} flashcard`;
+    addCardRow.addEventListener('click', function () {
+        if (cardType === cardTypes.sentence) {
+            addCard(example, word, getActiveGraph().locale);
+        } else {
+            const definitionCard = currentExamples[word].find(x => x.type === cardTypes.definition);
+            addCard(definitionCard, word, getActiveGraph().locale);
+        }
+        addSpan.classList.remove('add-button');
+        addSpan.classList.add('check');
+        addTextSpan.innerText = 'Flashcard added';
+        showNotification();
+        // give the user a brief moment to see the success message, then close.
+        setTimeout(hideMenuPopover, 1000);
+    });
+    addCardRow.appendChild(addSpan);
+    addCardRow.appendChild(addTextSpan);
+
+    menuPopover.appendChild(speakRow);
+    menuPopover.appendChild(addCardRow);
+}
+
+const cardTypes = {
+    definition: 'definition',
+    sentence: 'sentence'
+};
+
+const NUM_MENU_ROWS = 2;
+// TODO: keep in sync with css....not great. 20 for padding, 24 for height
+const ROW_HEIGHT = 44;
+
+function hideMenuPopover() {
+    menuPopover.hidePopover();
+}
+
+function addPopoverMenuButton(word, example, container, text, aList, cardType) {
+    const button = document.createElement('span');
+    button.classList.add('three-dot');
+    const buttonContainer = document.createElement('span');
+    buttonContainer.classList.add('three-dot-container');
+    buttonContainer.appendChild(button);
+    container.appendChild(buttonContainer);
+    buttonContainer.addEventListener('click', function () {
+        // TODO: this was here before the safari event ordering issue, and allowed
+        // a second click of the same button to hide the menu. Safari was firing
+        // the popover close before this, running the `toggle` handler, which removes
+        // the open-button class, and only then running this event, so this branch
+        // got skipped. Workarounds weren't great. Covering the button seems fine for now.
+        if (button.classList.contains('open-button')) {
+            menuPopover.hidePopover();
+            button.classList.remove('open-button');
+            return;
+        }
+        for (const openButton of document.querySelectorAll('.open-button')) {
+            openButton.classList.remove('open-button');
+        }
+        button.classList.add('open-button');
+        const buttonDimensions = button.getBoundingClientRect();
+        menuPopover.style.left = `${buttonDimensions.left - 215}px`;
+        // seemingly safari fires the popover events before the
+        // click handlers, even mousedown. Touchstart might be an option, but it's too bad
+        // mobile browsers don't all handle this seeming edge case similarly.
+        // accordingly, we render the menu over the top of the button, which does seem
+        // to be a reasonably common UI pattern on both iOS and Android.
+        if (buttonDimensions.bottom + (NUM_MENU_ROWS * 44) < window.visualViewport.height) {
+            menuPopover.style.top = `${buttonDimensions.top + window.scrollY}px`;
+        } else {
+            menuPopover.style.top = `${buttonDimensions.top - (NUM_MENU_ROWS * ROW_HEIGHT) + window.scrollY + 16}px`;
+        }
+        renderMenu(word, aList, text, example, cardType);
+        menuPopover.showPopover();
+    });
+}
+
+let setupExampleElements = function (word, examples, exampleList, defaultSource) {
     for (let i = 0; i < examples.length; i++) {
         let exampleHolder = document.createElement('li');
         exampleHolder.classList.add('example');
@@ -274,7 +362,7 @@ let setupExampleElements = function (examples, exampleList, defaultSource) {
         let exampleText = examples[i].zh.join('');
         let aList = makeSentenceNavigable(exampleText, zhHolder, true);
         zhHolder.className = 'target';
-        addTextToSpeech(zhHolder, exampleText, aList);
+        addPopoverMenuButton(word, examples[i], zhHolder, exampleText, aList, cardTypes.sentence);
         exampleHolder.appendChild(zhHolder);
         if (examples[i].pinyin) {
             let pinyinHolder = document.createElement('p');
@@ -342,7 +430,7 @@ let augmentExamples = function (word, container, maxExamples) {
                 return false;
             }
             let examples = findExamples(word, data, maxExamples || 2);
-            setupExampleElements(examples, container, getActiveGraph().secondarySentenceSource);
+            setupExampleElements(word, examples, container, getActiveGraph().secondarySentenceSource);
             currentExamples[word].push(...examples);
         });
 };
@@ -360,7 +448,9 @@ let augmentDefinitions = function (word, container) {
             // now that we know the tones of the word/character, modify the header to be color-coded, too.
             modifyHeaderTones(definitionList, word);
             // TODO(refactor): should this be moved to setupDefinitions (and same with setupExamples/augmentExamples)?
-            currentExamples[word].push(getCardFromDefinitions(word, definitionList));
+            if (definitionList.length > 0) {
+                currentExamples[word].push(getCardFromDefinitions(word, definitionList));
+            }
         });
 };
 let renderDefinitions = function (word, definitionList, container) {
@@ -426,8 +516,7 @@ let renderWordHeader = function (word, container, active) {
     wordSpan.id = `${word}-header`;
     wordSpan.classList.add('clickable');
     wordHolder.appendChild(wordSpan);
-    addTextToSpeech(wordHolder, word, []);
-    addSaveToListButton(wordHolder, word);
+    addPopoverMenuButton(word, null, wordHolder, word, [], cardTypes.definition);
     if (active) {
         wordHolder.classList.add('active');
     }
@@ -446,7 +535,7 @@ let renderExamples = function (word, examples, maxExamples, container) {
     exampleList.classList.add('examples');
     container.appendChild(exampleList);
     if (examples.length > 0) {
-        setupExampleElements(examples, exampleList, 'tatoeba');
+        setupExampleElements(word, examples, exampleList, 'tatoeba');
     } else if (getActiveGraph().augmentPath) {
         augmentExamples(word, exampleList, maxExamples);
     }
@@ -496,6 +585,13 @@ function switchToTab(id, tabs) {
     for (const [tabId, elements] of Object.entries(tabs)) {
         const separator = elements.tab.querySelector('.separator');
         if (id === tabId) {
+            if (elements.tab.classList.contains('active')) {
+                // tab is already active, so no need to switch to it
+                // the `else` below also needn't be run for the other tabs
+                // but it's also ok if it is, or else we could do a first
+                // loop to get this answer and then the main one.
+                return;
+            }
             elements.tab.classList.add('active');
             separator.classList.add('expand');
             elements.panel.removeAttribute('style');
@@ -691,7 +787,9 @@ let setupExamples = function (words, type, skipState) {
 
         currentExamples[words[i]] = [];
         //TODO: definition list doesn't have the same interface (missing zh field)
-        currentExamples[words[i]].push(getCardFromDefinitions(words[i], definitionList));
+        if (definitionList.length > 0) {
+            currentExamples[words[i]].push(getCardFromDefinitions(words[i], definitionList));
+        }
         //setup current examples for potential future export
         currentExamples[words[i]].push(...examples);
 
@@ -733,8 +831,8 @@ let persistNavigationState = function (words) {
 // TODO: enable adding specific definition cards rather than all at once
 let getCardFromDefinitions = function (text, definitionList) {
     let parsedDefinitions = parseDefinitions(definitionList);
-    //this assumes definitionList non null
-    let result = { zh: [text] };
+    //this assumes definitionList non null and non empty
+    let result = { zh: [text], type: cardTypes.definition };
     let answer = Object.values(parsedDefinitions).map(item => {
         return `${item[0].pinyin}: ${item.map(x => x.en).join(', ')}`;
     }).join('; ');
@@ -771,6 +869,24 @@ let initialize = function () {
         if (currentMode === modes.components) {
             switchToTab('tab-components', currentTabs);
         }
+    });
+    menuPopover = document.getElementById('menu-popover');
+    menuPopover.addEventListener('toggle', function (event) {
+        const container = document.getElementById('explore-container');
+        if (event.newState === "closed") {
+            // needed as clicking the button a second time or clicking outside the menu and button
+            // can both close the popover menu
+            for (const button of document.querySelectorAll('.open-button')) {
+                button.classList.remove('open-button');
+            }
+            container.removeEventListener('scroll', hideMenuPopover, { passive: true, once: true });
+        } else {
+            container.addEventListener('scroll', hideMenuPopover, { passive: true, once: true });
+        }
+    });
+    window.addEventListener('resize', function () {
+        // resizing the screen throws off positioning of the menu...just hide it
+        menuPopover.hidePopover();
     });
     voice = getVoice();
     fetchStats();

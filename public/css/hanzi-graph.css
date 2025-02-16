@@ -65,6 +65,9 @@
     --walkthrough-smallest-header-font-size: 18px;
     --walkthrough-top-margin: 80px;
     --walkthrough-header-text-align: left;
+    --popover-background-color: #eee;
+    --popover-font-color: black;
+    --menu-popover-border: 3px solid #3333;
 }
 
 html {
@@ -241,7 +244,38 @@ input[type="search"] {
 }
 
 .sentence-container {
+    /* 22px for the add button, plus its margin of 28, uh...and I guess 20 more... */
     width: calc(100% - 70px);
+}
+
+#menu-popover {
+    width: 240px;
+    background-color: var(--popover-background-color);
+    color: var(--popover-font-color);
+    position: absolute;
+    inset: unset;
+    border-radius: 16px;
+    border: var(--menu-popover-border);
+    padding: 0;
+}
+
+.popover-menu-row {
+    height: 24px;
+    line-height: 24px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.popover-menu-row .speak-button,
+.popover-menu-row .check,
+.popover-menu-row .add-button,
+.popover-menu-row .three-dot {
+    margin-right: 16px;
+    top: 4px;
+}
+
+.open-button {
+    opacity: 0.5;
 }
 
 .clickable {
@@ -249,11 +283,16 @@ input[type="search"] {
 }
 
 .word-header .add-button,
+.word-header .three-dot,
 .word-header .check {
     cursor: pointer;
     float: right;
     margin-right: 20px;
     margin-top: 10px;
+}
+
+.word-header .three-dot-container {
+    float: right;
 }
 
 #graph {
@@ -534,6 +573,20 @@ h2.word-header {
     margin-left: 4px;
 }
 
+.example .add-button {
+    margin-left: 28px;
+    cursor: pointer;
+}
+
+.example .three-dot {
+    margin-left: 46px;
+}
+
+.three-dot-container {
+    cursor: pointer;
+    width: 70px;
+}
+
 .sentence-freq-tag {
     font-size: 12px;
 }
@@ -778,7 +831,6 @@ h2.word-header {
     height: var(--right-button-height);
     border: 2px solid;
     border-radius: 100px;
-    margin: var(--right-button-margin);
 }
 
 .check::after {
@@ -806,6 +858,7 @@ h2.word-header {
 
 .right-menu-button-container .check {
     border: 2px solid var(--legend-gradient-start);
+    margin: var(--right-button-margin);
 }
 
 .right-menu-button-container .check::after {
@@ -844,6 +897,33 @@ h2.word-header {
     left: 8px
 }
 
+.three-dot,
+.three-dot::after,
+.three-dot::before {
+    box-sizing: border-box;
+    position: relative;
+    display: block;
+    width: 4px;
+    height: 4px;
+    background: currentColor;
+    border-radius: 100%;
+}
+
+.three-dot::after,
+.three-dot::before {
+    content: "";
+    position: absolute;
+    top: 0;
+}
+
+.three-dot::after {
+    left: -6px;
+}
+
+.three-dot::before {
+    right: -6px;
+}
+
 .speak-button {
     box-sizing: border-box;
     position: relative;
@@ -854,8 +934,6 @@ h2.word-header {
     border: 2px solid;
     border-radius: 4px;
     cursor: pointer;
-    margin-top: 8px;
-    margin-left: 16px;
 }
 
 .speak-button::before {
@@ -1213,6 +1291,12 @@ input:checked {
     font-size: var(--target-language-font-size);
 }
 
+.card-question .speak-button,
+.card-answer .speak-button {
+    margin-left: 28px;
+    top: 4px;
+}
+
 .cloze-container {
     margin: 2px;
 }
@@ -1425,6 +1509,9 @@ main.auth-form {
         --graph-expand-button-box-shadow: 0;
         --tag-border: 2px solid #aaaa;
         --checked-input-border: 6px solid #eeee;
+        --popover-background-color: #222;
+        --popover-font-color: #eeee;
+        --menu-popover-border: 3px solid #eee3;
     }
 }
 
