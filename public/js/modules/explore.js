@@ -309,17 +309,15 @@ function hideMenuPopover() {
     menuPopover.hidePopover();
 }
 
-let popoverMenuShowingTrigger = null;
 function addPopoverMenuButton(word, example, container, text, aList, cardType) {
     const button = document.createElement('span');
     button.classList.add('add-button');
     container.appendChild(button);
     button.addEventListener('click', function () {
         // if already showing, keep showing it but re-render and move
-        if (popoverMenuShowingTrigger == button || button.classList.contains('open-button')) {
+        if (button.classList.contains('open-button')) {
             menuPopover.hidePopover();
             button.classList.remove('open-button');
-            popoverMenuShowingTrigger = null;
             return;
         }
         for (const openButton of document.querySelectorAll('.open-button')) {
@@ -335,7 +333,6 @@ function addPopoverMenuButton(word, example, container, text, aList, cardType) {
         }
         renderMenu(word, aList, text, example, cardType);
         menuPopover.showPopover();
-        popoverMenuShowingTrigger = button;
     });
 }
 
@@ -861,7 +858,6 @@ let initialize = function () {
         if (event.newState === "closed") {
             // needed as clicking the button a second time or clicking outside the menu and button
             // can both close the popover menu
-            popoverMenuShowingTrigger = null;
             for (const button of document.querySelectorAll('.open-button')) {
                 button.classList.remove('open-button')
             }
