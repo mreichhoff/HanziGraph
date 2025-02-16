@@ -305,6 +305,10 @@ const NUM_MENU_ROWS = 2;
 // TODO: keep in sync with css....not great. 20 for padding, 24 for height
 const ROW_HEIGHT = 44;
 
+function hideMenuPopover() {
+    menuPopover.hidePopover();
+}
+
 let popoverMenuShowingTrigger = null;
 function addPopoverMenuButton(word, example, container, text, aList, cardType) {
     const button = document.createElement('span');
@@ -853,6 +857,7 @@ let initialize = function () {
     });
     menuPopover = document.getElementById('menu-popover');
     menuPopover.addEventListener('toggle', function (event) {
+        const container = document.getElementById('explore-container');
         if (event.newState === "closed") {
             // needed as clicking the button a second time or clicking outside the menu and button
             // can both close the popover menu
@@ -860,6 +865,9 @@ let initialize = function () {
             for (const button of document.querySelectorAll('.open-button')) {
                 button.classList.remove('open-button')
             }
+            container.removeEventListener('scroll', hideMenuPopover, { passive: true, once: true });
+        } else {
+            container.addEventListener('scroll', hideMenuPopover, { passive: true, once: true });
         }
     });
     window.addEventListener('resize', function () {
