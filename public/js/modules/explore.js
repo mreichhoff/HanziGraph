@@ -298,8 +298,32 @@ function renderMenu(word, aList, text, example, cardType) {
     addCardRow.appendChild(addSpan);
     addCardRow.appendChild(addTextSpan);
 
+    const copyRow = document.createElement('div');
+    copyRow.classList.add('popover-menu-row');
+    const copyIconSpan = document.createElement('span');
+    copyIconSpan.classList.add('copy-icon');
+    copyRow.appendChild(copyIconSpan);
+    const copyText = document.createElement('span');
+    copyText.innerText = 'Copy';
+    copyRow.appendChild(copyText);
+    copyRow.addEventListener('click', async function () {
+        try {
+            await navigator.clipboard.writeText(text);
+            copyIconSpan.classList.remove('copy-icon');
+            copyIconSpan.classList.add('check');
+            copyText.innerText = 'Copied';
+        } catch (error) {
+            // we shouldn't get here: the main site is in a secure context,
+            // and to run this code you need a click, so user activation
+            // should be there.
+            copyText.innerText = 'Failed to copy';
+        }
+        setTimeout(hideMenuPopover, 250);
+    });
+
     menuPopover.appendChild(speakRow);
     menuPopover.appendChild(addCardRow);
+    menuPopover.appendChild(copyRow);
 }
 
 const cardTypes = {
@@ -307,7 +331,7 @@ const cardTypes = {
     sentence: 'sentence'
 };
 
-const NUM_MENU_ROWS = 2;
+const NUM_MENU_ROWS = 3;
 // TODO: keep in sync with css....not great. 20 for padding, 24 for height
 const ROW_HEIGHT = 44;
 
