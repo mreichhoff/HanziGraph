@@ -139,7 +139,16 @@ function multiWordSearch(query, segments, mode, skipState) {
     } else {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query, mode: (mode || 'explore'), skipState: !!skipState } }));
+        document.dispatchEvent(new CustomEvent('explore-update', {
+            detail: {
+                words: segments,
+                display: query,
+                mode: (mode || 'explore'),
+                // give eligible users the option to get an AI explanation on multi-word searches of a certain length
+                allowExplain: segments.length >= 3,
+                skipState: !!skipState
+            }
+        }));
     }
 }
 

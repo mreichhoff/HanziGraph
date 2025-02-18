@@ -327,8 +327,17 @@ input[type="search"] {
     font-weight: bold;
 }
 
-#examples .explanation {
-    font-weight: bold;
+#examples .ai-button {
+    background: linear-gradient(to right, #ff635f, #de68ee);
+    padding: 8px 12px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: black;
+    width: 120px;
+    text-align: center;
+    margin: 10px auto;
 }
 
 .explore-tabs {

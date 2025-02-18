@@ -1,4 +1,5 @@
 import { writeExploreState, addCard, inStudyList } from "./data-layer.js";
+import { getAuthState } from "./auth-state.js";
 import { hanziBox, notFoundElement, walkThrough, examplesList } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
@@ -824,7 +825,7 @@ function renderExplore(word, container, definitionList, examples, maxExamples, a
     container.appendChild(flowContainer);
 }
 
-let setupExamples = function (words, type, skipState) {
+let setupExamples = function (words, type, skipState, allowExplain) {
     currentExamples = {};
     // if we're showing examples, never show the walkthrough.
     walkThrough.style.display = 'none';
@@ -835,14 +836,20 @@ let setupExamples = function (words, type, skipState) {
     }
     let numExamples = maxExamples;
     if (words.length > 1) {
-        numExamples = 3;
+        numExamples = 2;
         if (type === 'english') {
             numExamples = 1;
         }
         let instructions = document.createElement('p');
         instructions.classList.add('explanation');
-        instructions.innerText = 'There are multiple words.';
+        instructions.innerText = `There are multiple words.`;
         examplesList.appendChild(instructions);
+        if (allowExplain && getAuthState()) {
+            const explainContainer = document.createElement('div');
+            explainContainer.innerText = 'AI explanation';
+            examplesList.appendChild(explainContainer);
+            explainContainer.classList.add('ai-button');
+        }
     }
     let rendered = false;
     for (let i = 0; i < words.length; i++) {
@@ -922,6 +929,7 @@ let fetchStats = function () {
         coverageGraph = null;
     }
 }
+
 let initialize = function () {
     // Note: github pages rewrites are only possible via a 404 hack,
     // so removing the history API integration on the main branch.
@@ -929,7 +937,7 @@ let initialize = function () {
     document.addEventListener('explore-update', function (event) {
         currentMode = ((event.detail.mode === modes.components) ? modes.components : modes.explore);
         hanziBox.value = event.detail.display || event.detail.words[0];
-        setupExamples(event.detail.words, event.detail.type || 'chinese', event.detail.skipState);
+        setupExamples(event.detail.words, event.detail.type || 'chinese', event.detail.skipState, event.detail.allowExplain);
         if (currentMode === modes.components) {
             switchToTab('tab-components', currentTabs);
         }
