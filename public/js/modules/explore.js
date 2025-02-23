@@ -864,10 +864,9 @@ function renderExplanation(explanation, container) {
     container.appendChild(explanationContainer);
 }
 
-function renderAiExplanationResponse(words, text, response, container) {
+function renderAiExplanationResponse(words, response, container) {
     // TODO: error states
     const data = response.data;
-    console.log(data);
     const exampleHeader = document.createElement('h3');
     exampleHeader.innerText = "Translated";
     // this kinda just works like a normal example here...
@@ -933,7 +932,7 @@ let setupExamples = function (words, type, skipState, allowExplain) {
                     loadingDots.removeAttribute('style');
                     const result = await pendingResult;
                     loadingDots.style.display = 'none';
-                    renderAiExplanationResponse(words, joinedText, result, aiResponseContainer);
+                    renderAiExplanationResponse(words, result, aiResponseContainer);
                     aiResponseContainer.removeAttribute('style');
                 });
                 explainContainer.classList.add('fade');
