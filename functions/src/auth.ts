@@ -24,6 +24,17 @@ export async function isUserAuthorized(context: ActionContext | undefined): Prom
     if (!context || !context.auth?.uid) {
         return false;
     }
+    // Note that there is also a concept of a role that can be set per-user
+    // https://firebase.google.com/docs/auth/admin/custom-claims
+    // however, I want the client to be able to read (but not write!) whether it has
+    // the AI permission below, so skipping for now. Most likely the right thing here is to
+    // run an on-user-created function that can set the claim, a permission, and a limit, or put
+    // a little button on the site that calls a backend function and sets this stuff up.
+    // we could then use all of:
+    // * a claim
+    // * and the DB permission's existence
+    // * and the user having remaining quota
+    // to authorize.
     const userId = context.auth.uid;
 
     const firestore = getFirestore();
