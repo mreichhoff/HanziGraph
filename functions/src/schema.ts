@@ -1,7 +1,7 @@
-import {z} from "genkit";
+import { z } from "genkit";
 
 export const explanationSchema = z.object({
-    plainTextexplanation: z.string(),
+    plainTextExplanation: z.string(),
     grammarHighlights: z.array(
         z.object({
             grammarConceptName: z.string(),
