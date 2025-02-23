@@ -2,6 +2,7 @@ import { hanziBox, notFoundElement } from "./dom";
 import { getActiveGraph, getPartition } from "./options";
 import { switchToState, stateKeys } from "./ui-orchestrator";
 import { handleCommand } from "./commands.js";
+import { translateEnglish } from "./data-layer.js";
 
 let searchSuggestionsWorker = null;
 let pinyinMap = {};
@@ -154,6 +155,7 @@ function multiWordSearch(query, segments, mode, skipState) {
 
 function englishSearch(word, data, skipState) {
     if (!data) {
+        translateEnglish(word);
         notFoundElement.removeAttribute('style');
     } else {
         notFoundElement.style.display = 'none';

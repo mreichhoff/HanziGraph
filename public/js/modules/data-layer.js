@@ -1,6 +1,7 @@
 import { getApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, onSnapshot, collection, writeBatch, increment, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions";
 
 const dataTypes = {
     studyList: 'studyList',
@@ -30,6 +31,7 @@ let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
 let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
 
 let authenticatedUser = null;
+let aiEligible = false;
 
 let getStudyResults = function () {
     return studyResults;
@@ -303,6 +305,7 @@ let getResultCount = function (results) {
     //defensive check
     return (results[studyResult.CORRECT] || 0) + (results[studyResult.INCORRECT] || 0);
 }
+
 let initialize = function () {
     let auth = getAuth();
     const app = getApp();
@@ -484,6 +487,14 @@ let initialize = function () {
                     }
                 }
             });
+
+            // users have permission to read their own doc in permissions, but not to write it.
+            onSnapshot(doc(db, `permissions/${authenticatedUser.uid}`), doc => {
+                aiEligible = (doc && doc.get('ai') === true);
+            })
+        } else {
+            // no signed in user means no AI features.
+            aiEligible = false;
         }
     });
 };
@@ -507,4 +518,24 @@ let writeExploreState = function (words) {
     }));
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, addCards, inStudyList, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, initialize, studyResult, dataTypes, cardTypes }
+async function explainChineseSentence(text) {
+    const functions = getFunctions();
+    // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+    const explainChinese = httpsCallable(functions, 'explainText');
+    const result = await explainChinese(text);
+    return result;
+}
+
+async function translateEnglish(text) {
+    const functions = getFunctions();
+    // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+    const explainEnglish = httpsCallable(functions, 'explainEnglishText');
+    const result = await explainEnglish(text);
+    return result;
+}
+
+function isAiEligible() {
+    return aiEligible;
+}
+
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, addCards, inStudyList, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, isAiEligible, initialize, studyResult, dataTypes, cardTypes }

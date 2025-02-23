@@ -35,8 +35,4 @@ let initialize = function () {
     });
 }
 
-function getAuthState() {
-    return getAuth().currentUser;
-}
-
-export { initialize, getAuthState }
+export { initialize }
