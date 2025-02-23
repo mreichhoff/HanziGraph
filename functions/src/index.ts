@@ -1,7 +1,6 @@
 import { onCallGenkit, HttpsError } from "firebase-functions/v2/https";
 import { genkit, z } from "genkit";
-import { vertexAI } from '@genkit-ai/vertexai';
-import { gemini20Flash001 } from "@genkit-ai/vertexai";
+import { vertexAI, gemini20Flash001 } from '@genkit-ai/vertexai';
 import { initializeApp, app } from "firebase-admin";
 import { isUserAuthorized } from "./auth";
 import { explanationSchema, englishExplanationSchema } from "./schema";
@@ -58,7 +57,11 @@ const explainEnglishFlow = ai.defineFlow({
         throw new HttpsError("permission-denied", "user not authorized");
     }
     const prompt = `Translate the English text ${text} into Chinese, and explain the translation.`;
-    const { output } = await ai.generate({ model: gemini20Flash001, prompt, output: { schema: englishExplanationSchema } });
+    const { output } = await ai.generate({
+        model: gemini20Flash001,
+        prompt,
+        output: { schema: englishExplanationSchema },
+    });
     if (!output) {
         throw new HttpsError("internal", 'oh no, the model like, failed?');
     }

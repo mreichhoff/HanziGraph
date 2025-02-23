@@ -4,12 +4,22 @@ import * as logger from "firebase-functions/logger";
 
 const DEFAULT_DAILY_LIMIT = 100;
 
-function getISODate(date: Date) {
-    function pad(number: number) {
+/**
+ * Convert the date to ISO8601 yyyy-mm-dd
+ * @param {Date} date
+ * @return {string} `date` in ISO8601 format, e.g., 2025-02-23
+ */
+function getISODate(date: Date): string {
+    /**
+     * pads 0 onto a number < 10 or returns number if >= 10.
+     * @param {number} number
+     * @return {string} number potentially padded left with a 0
+     */
+    function pad(number: number): string {
         if (number < 10) {
             return '0' + number;
         }
-        return number;
+        return '' + number;
     }
 
     return (
@@ -18,8 +28,15 @@ function getISODate(date: Date) {
         pad(date.getMonth() + 1) +
         '-' +
         pad(date.getDate()));
-};
+}
 
+/**
+ * Determines whether the user is authorized to use the AI features. It takes into account:
+ * * whether the user has an entry in firestore at `permissions/${userId}` with ai=true
+ * * whether the user has used up their daily quota, which can be configured per user
+ * @param {ActionContext | undefined} context
+ * @return {Promise<boolean>} a promise resolving to true if the user is authorized, and false otherwise
+ */
 export async function isUserAuthorized(context: ActionContext | undefined): Promise<boolean> {
     if (!context || !context.auth?.uid) {
         return false;
@@ -54,7 +71,7 @@ export async function isUserAuthorized(context: ActionContext | undefined): Prom
         //    per-minute (so more able to handle a quick few queries during a moment of intensive use)
         // d) this also banks on the notion of backend integration having more flexibility long-term (e.g.,
         //    to use non-gemini models or entirely removing the google APIs).
-        await firestore.runTransaction(async transaction => {
+        await firestore.runTransaction(async (transaction) => {
             const date = new Date();
             // note that this approach does assume we wouldn't get systematic clock skew
             // that just keeps moving into the past with every request or something, but
