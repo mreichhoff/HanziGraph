@@ -1,11 +1,11 @@
 import { onCallGenkit, HttpsError } from "firebase-functions/v2/https";
 import { genkit, z } from "genkit";
 import { vertexAI, gemini20Flash001 } from '@genkit-ai/vertexai';
-import { initializeApp, app } from "firebase-admin";
+import * as admin from 'firebase-admin';
 import { isUserAuthorized } from "./auth";
 import { explanationSchema, englishExplanationSchema } from "./schema";
 
-let firebaseApp: app.App;
+let firebaseApp: admin.app.App;
 
 // according to the docs, there's no need for an API key when using the vertex API,
 // as instead the service principal is granted a vertex API role.
@@ -26,7 +26,7 @@ const explainFlow = ai.defineFlow({
     outputSchema: explanationSchema,
 }, async (text, { context }) => {
     if (!firebaseApp) {
-        firebaseApp = initializeApp();
+        firebaseApp = admin.initializeApp();
     }
     // TODO: there's some authorization syntactic sugar with onCallGenkit, but it appears deprecated
     const isAuthorized = await isUserAuthorized(context);
@@ -50,7 +50,7 @@ const explainEnglishFlow = ai.defineFlow({
     outputSchema: englishExplanationSchema,
 }, async (text, { context }) => {
     if (!firebaseApp) {
-        firebaseApp = initializeApp();
+        firebaseApp = admin.initializeApp();
     }
     const isAuthorized = await isUserAuthorized(context);
     if (!isAuthorized) {
