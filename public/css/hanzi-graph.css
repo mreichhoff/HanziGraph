@@ -364,6 +364,11 @@ input[type="search"] {
     background-clip: text;
 }
 
+.ai-error {
+    text-align: center;
+    font-weight: bold;
+}
+
 .grammar-list {
     margin: 0;
 }

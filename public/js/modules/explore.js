@@ -903,10 +903,10 @@ let setupExamples = function (words, type, skipState, allowExplain) {
             numExamples = 1;
         }
         if (allowExplain && isAiEligible()) {
-            const explainContainer = document.createElement('div');
-            explainContainer.innerText = 'AI explanation';
-            examplesList.appendChild(explainContainer);
-            explainContainer.classList.add('ai-button');
+            const explainButtonContainer = document.createElement('div');
+            explainButtonContainer.innerText = 'AI explanation';
+            examplesList.appendChild(explainButtonContainer);
+            explainButtonContainer.classList.add('ai-button');
             const loadingDots = document.createElement('div');
             loadingDots.style.display = 'none';
             loadingDots.classList.add('loading-dots');
@@ -917,20 +917,30 @@ let setupExamples = function (words, type, skipState, allowExplain) {
             loadingDots.innerHTML = '<div></div><div></div><div></div><div></div>';
             examplesList.appendChild(loadingDots);
             examplesList.appendChild(aiResponseContainer);
-            explainContainer.addEventListener('click', async function () {
+            explainButtonContainer.addEventListener('click', async function () {
                 const wordsWithoutIgnored = words.map(x => x.ignore ? x.word : x);
                 let joinedText = wordsWithoutIgnored.join('');
                 const pendingResult = explainChineseSentence(joinedText);
-                explainContainer.addEventListener('animationend', async function () {
-                    explainContainer.style.display = 'none';
-                    explainContainer.classList.remove('fade');
+                explainButtonContainer.addEventListener('animationend', async function () {
+                    explainButtonContainer.style.display = 'none';
+                    explainButtonContainer.classList.remove('fade');
                     loadingDots.removeAttribute('style');
-                    const result = await pendingResult;
-                    loadingDots.style.display = 'none';
-                    renderAiExplanationResponse(wordsWithoutIgnored, result, aiResponseContainer);
-                    aiResponseContainer.removeAttribute('style');
+                    try {
+                        const result = await pendingResult;
+                        loadingDots.style.display = 'none';
+                        renderAiExplanationResponse(wordsWithoutIgnored, result, aiResponseContainer);
+                        aiResponseContainer.removeAttribute('style');
+                    } catch (ex) {
+                        loadingDots.style.display = 'none';
+                        aiResponseContainer.classList.add('ai-error')
+                        aiResponseContainer.innerText = 'Sorry, something went wrong.';
+                        aiResponseContainer.removeAttribute('style');
+                        setTimeout(function () {
+                            aiResponseContainer.style.display = 'none';
+                        }, 5000);
+                    }
                 });
-                explainContainer.classList.add('fade');
+                explainButtonContainer.classList.add('fade');
             }, { once: true });
         }
         let instructions = document.createElement('p');
