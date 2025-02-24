@@ -854,13 +854,11 @@ function renderGrammarHighlights(grammarHighlights, container) {
 function renderExplanation(explanation, container) {
     const explanationHeader = document.createElement('h3');
     explanationHeader.innerText = `Explanation`;
-    const explanationSubtitle = document.createElement('div');
 
     const explanationContainer = document.createElement('div');
     explanationContainer.innerText = explanation;
 
     container.appendChild(explanationHeader);
-    container.appendChild(explanationSubtitle);
     container.appendChild(explanationContainer);
 }
 
@@ -904,10 +902,6 @@ let setupExamples = function (words, type, skipState, allowExplain) {
         if (type === 'english') {
             numExamples = 1;
         }
-        let instructions = document.createElement('p');
-        instructions.classList.add('explanation');
-        instructions.innerText = `There are multiple words.`;
-        examplesList.appendChild(instructions);
         if (allowExplain && isAiEligible()) {
             const explainContainer = document.createElement('div');
             explainContainer.innerText = 'AI explanation';
@@ -924,7 +918,8 @@ let setupExamples = function (words, type, skipState, allowExplain) {
             examplesList.appendChild(loadingDots);
             examplesList.appendChild(aiResponseContainer);
             explainContainer.addEventListener('click', async function () {
-                let joinedText = words.map(x => x.ignore ? x.word : x).join('');
+                const wordsWithoutIgnored = words.map(x => x.ignore ? x.word : x);
+                let joinedText = wordsWithoutIgnored.join('');
                 const pendingResult = explainChineseSentence(joinedText);
                 explainContainer.addEventListener('animationend', async function () {
                     explainContainer.style.display = 'none';
@@ -932,12 +927,16 @@ let setupExamples = function (words, type, skipState, allowExplain) {
                     loadingDots.removeAttribute('style');
                     const result = await pendingResult;
                     loadingDots.style.display = 'none';
-                    renderAiExplanationResponse(words, result, aiResponseContainer);
+                    renderAiExplanationResponse(wordsWithoutIgnored, result, aiResponseContainer);
                     aiResponseContainer.removeAttribute('style');
                 });
                 explainContainer.classList.add('fade');
             }, { once: true });
         }
+        let instructions = document.createElement('p');
+        instructions.classList.add('explanation');
+        instructions.innerText = `There are multiple words.`;
+        examplesList.appendChild(instructions);
     }
     let rendered = false;
     for (let i = 0; i < words.length; i++) {

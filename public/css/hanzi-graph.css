@@ -339,6 +339,7 @@ input[type="search"] {
     width: 120px;
     text-align: center;
     margin: 14px auto;
+    user-select: none;
 }
 
 .ai-explanation-container {
@@ -347,6 +348,10 @@ input[type="search"] {
     border-radius: 12px;
     padding: 4px 14px;
     border: var(--border);
+}
+
+.ai-explanation {
+    font-size: 14px;
 }
 
 .ai-explanation-container h3 {
