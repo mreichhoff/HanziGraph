@@ -1,4 +1,4 @@
-import { writeExploreState, addCard, inStudyList } from "./data-layer.js";
+import { writeExploreState, addCard, inStudyList, explainChineseSentence, isAiEligible } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough, examplesList } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
@@ -23,7 +23,8 @@ const modes = {
 const sources = {
     tatoeba: { display: 'Tatoeba', link: 'https://tatoeba.org' },
     ai: { display: 'AI 🤖' },
-    subs: { display: 'OpenSubtitles', link: 'https://www.opensubtitles.org' }
+    subs: { display: 'OpenSubtitles', link: 'https://www.opensubtitles.org' },
+    user: { display: 'User-entered 🫅' }
 }
 let currentMode = modes.explore;
 let currentTabs = null;
@@ -824,7 +825,69 @@ function renderExplore(word, container, definitionList, examples, maxExamples, a
     container.appendChild(flowContainer);
 }
 
-let setupExamples = function (words, type, skipState) {
+function renderGrammarHighlights(grammarHighlights, container) {
+    if (!grammarHighlights || grammarHighlights.length < 1) {
+        return;
+    }
+    const grammarHeader = document.createElement('h3')
+    grammarHeader.innerText = `Grammar`;
+
+    const grammarList = document.createElement('ul');
+    grammarList.classList.add('grammar-list');
+    grammarHighlights.forEach(grammarPoint => {
+        const grammarItem = document.createElement('li');
+        const nameSpan = document.createElement('span');
+        nameSpan.classList.add('grammar-name');
+        nameSpan.innerText = `${grammarPoint.grammarConceptName}: `;
+        const explanationSpan = document.createElement('span');
+        explanationSpan.classList.add('grammar-explanation');
+        explanationSpan.innerText = grammarPoint.grammarConceptExplanation;
+        grammarItem.appendChild(nameSpan);
+        grammarItem.appendChild(explanationSpan);
+        grammarList.appendChild(grammarItem);
+    });
+
+    container.appendChild(grammarHeader);
+    container.appendChild(grammarList);
+}
+
+function renderExplanation(explanation, container) {
+    const explanationHeader = document.createElement('h3');
+    explanationHeader.innerText = `Explanation`;
+
+    const explanationContainer = document.createElement('div');
+    explanationContainer.innerText = explanation;
+
+    container.appendChild(explanationHeader);
+    container.appendChild(explanationContainer);
+}
+
+function renderAiExplanationResponse(words, response, container) {
+    // TODO: error states
+    const data = response.data;
+    const exampleHeader = document.createElement('h3');
+    exampleHeader.innerText = "Translated";
+    // this kinda just works like a normal example here...
+    const exampleList = document.createElement('ul');
+    setupExampleElements(null, [{ zh: words, pinyin: data.pinyin, en: data.englishTranslation }], exampleList, 'user');
+
+    const explanationContainer = document.createElement('div');
+    explanationContainer.classList.add('ai-explanation');
+    const explanation = data.plainTextExplanation;
+    renderExplanation(explanation, explanationContainer);
+
+    const grammarContainer = document.createElement('div');
+    grammarContainer.classList.add('ai-grammar-points');
+    const grammar = data.grammarHighlights;
+    renderGrammarHighlights(grammar, grammarContainer);
+
+    container.appendChild(exampleHeader);
+    container.appendChild(exampleList);
+    container.appendChild(explanationContainer);
+    container.appendChild(grammarContainer);
+}
+
+let setupExamples = function (words, type, skipState, allowExplain) {
     currentExamples = {};
     // if we're showing examples, never show the walkthrough.
     walkThrough.style.display = 'none';
@@ -835,13 +898,54 @@ let setupExamples = function (words, type, skipState) {
     }
     let numExamples = maxExamples;
     if (words.length > 1) {
-        numExamples = 3;
+        numExamples = 2;
         if (type === 'english') {
             numExamples = 1;
         }
+        if (allowExplain && isAiEligible()) {
+            const explainButtonContainer = document.createElement('div');
+            explainButtonContainer.innerText = 'AI explanation';
+            examplesList.appendChild(explainButtonContainer);
+            explainButtonContainer.classList.add('ai-button');
+            const loadingDots = document.createElement('div');
+            loadingDots.style.display = 'none';
+            loadingDots.classList.add('loading-dots');
+            const aiResponseContainer = document.createElement('div');
+            aiResponseContainer.style.display = 'none';
+            aiResponseContainer.classList.add('ai-explanation-container');
+            // there uh....there's four dots, ok?
+            loadingDots.innerHTML = '<div></div><div></div><div></div><div></div>';
+            examplesList.appendChild(loadingDots);
+            examplesList.appendChild(aiResponseContainer);
+            explainButtonContainer.addEventListener('click', async function () {
+                const wordsWithoutIgnored = words.map(x => x.ignore ? x.word : x);
+                let joinedText = wordsWithoutIgnored.join('');
+                const pendingResult = explainChineseSentence(joinedText);
+                explainButtonContainer.addEventListener('animationend', async function () {
+                    explainButtonContainer.style.display = 'none';
+                    explainButtonContainer.classList.remove('fade');
+                    loadingDots.removeAttribute('style');
+                    try {
+                        const result = await pendingResult;
+                        loadingDots.style.display = 'none';
+                        renderAiExplanationResponse(wordsWithoutIgnored, result, aiResponseContainer);
+                        aiResponseContainer.removeAttribute('style');
+                    } catch (ex) {
+                        loadingDots.style.display = 'none';
+                        aiResponseContainer.classList.add('ai-error')
+                        aiResponseContainer.innerText = 'Sorry, something went wrong.';
+                        aiResponseContainer.removeAttribute('style');
+                        setTimeout(function () {
+                            aiResponseContainer.style.display = 'none';
+                        }, 5000);
+                    }
+                });
+                explainButtonContainer.classList.add('fade');
+            }, { once: true });
+        }
         let instructions = document.createElement('p');
         instructions.classList.add('explanation');
-        instructions.innerText = 'There are multiple words.';
+        instructions.innerText = `There are multiple words.`;
         examplesList.appendChild(instructions);
     }
     let rendered = false;
@@ -922,6 +1026,7 @@ let fetchStats = function () {
         coverageGraph = null;
     }
 }
+
 let initialize = function () {
     // Note: github pages rewrites are only possible via a 404 hack,
     // so removing the history API integration on the main branch.
@@ -929,7 +1034,7 @@ let initialize = function () {
     document.addEventListener('explore-update', function (event) {
         currentMode = ((event.detail.mode === modes.components) ? modes.components : modes.explore);
         hanziBox.value = event.detail.display || event.detail.words[0];
-        setupExamples(event.detail.words, event.detail.type || 'chinese', event.detail.skipState);
+        setupExamples(event.detail.words, event.detail.type || 'chinese', event.detail.skipState, event.detail.allowExplain);
         if (currentMode === modes.components) {
             switchToTab('tab-components', currentTabs);
         }

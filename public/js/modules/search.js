@@ -2,6 +2,7 @@ import { hanziBox, notFoundElement } from "./dom";
 import { getActiveGraph, getPartition } from "./options";
 import { switchToState, stateKeys } from "./ui-orchestrator";
 import { handleCommand } from "./commands.js";
+import { translateEnglish } from "./data-layer.js";
 
 let searchSuggestionsWorker = null;
 let pinyinMap = {};
@@ -139,12 +140,22 @@ function multiWordSearch(query, segments, mode, skipState) {
     } else {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: segments, display: query, mode: (mode || 'explore'), skipState: !!skipState } }));
+        document.dispatchEvent(new CustomEvent('explore-update', {
+            detail: {
+                words: segments,
+                display: query,
+                mode: (mode || 'explore'),
+                // give eligible users the option to get an AI explanation on multi-word searches of a certain length
+                allowExplain: segments.length >= 3,
+                skipState: !!skipState
+            }
+        }));
     }
 }
 
 function englishSearch(word, data, skipState) {
     if (!data) {
+        translateEnglish(word);
         notFoundElement.removeAttribute('style');
     } else {
         notFoundElement.style.display = 'none';

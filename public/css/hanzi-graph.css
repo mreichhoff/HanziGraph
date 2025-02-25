@@ -327,8 +327,63 @@ input[type="search"] {
     font-weight: bold;
 }
 
-#examples .explanation {
+#examples .ai-button {
+    /* all AI *must* use gradients for colors. That's how you know it's AI. */
+    background: linear-gradient(to right, #ff635f, #de68ee);
+    padding: 8px 12px;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    color: black;
+    width: 120px;
+    text-align: center;
+    margin: 14px auto;
+    user-select: none;
+}
+
+.ai-explanation-container {
+    margin: 12px 0;
+    background-color: var(--popover-background-color);
+    border-radius: 12px;
+    padding: 4px 14px;
+    border: var(--border);
+}
+
+.ai-explanation {
+    font-size: 14px;
+}
+
+.ai-explanation-container h3 {
+    font-size: var(20px);
+    text-align: center;
+    margin: 10px 0;
+    /* again, no gradient, no AI, ok? */
+    background-image: linear-gradient(to right, var(--legend-gradient-start), var(--legend-gradient-end));
+    color: transparent;
+    background-clip: text;
+}
+
+.ai-error {
+    text-align: center;
     font-weight: bold;
+}
+
+.grammar-list {
+    margin: 0;
+}
+
+.grammar-list li {
+    margin: 8px 0;
+}
+
+.grammar-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.grammar-explanation {
+    font-size: var(--base-language-font-size);
 }
 
 .explore-tabs {
@@ -1572,6 +1627,92 @@ main.auth-form {
 
 .slide-from-right {
     animation: slide-from-right 0.25s;
+}
+
+#examples .loading-dots {
+    /* center them...40px as they're 80px wide */
+    /* there's probably better ways, yeah. */
+    left: calc(50% - 40px);
+}
+
+/* I love you https://loading.io/css/ */
+.loading-dots {
+    color: var(--tone-4-color);
+}
+
+.loading-dots,
+.loading-dots div {
+    box-sizing: border-box;
+}
+
+.loading-dots {
+    display: inline-block;
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
+.loading-dots div {
+    position: absolute;
+    top: 33.33333px;
+    width: 13.33333px;
+    height: 13.33333px;
+    border-radius: 50%;
+    background: currentColor;
+    animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+
+.loading-dots div:nth-child(1) {
+    left: 8px;
+    animation: loading-dots1 0.6s infinite;
+    color: var(--tone-1-color);
+}
+
+.loading-dots div:nth-child(2) {
+    left: 8px;
+    animation: loading-dots2 0.6s infinite;
+    color: var(--tone-3-color);
+}
+
+.loading-dots div:nth-child(3) {
+    left: 32px;
+    animation: loading-dots2 0.6s infinite;
+    color: var(--tone-4-color);
+}
+
+.loading-dots div:nth-child(4) {
+    left: 56px;
+    animation: loading-dots3 0.6s infinite;
+}
+
+@keyframes loading-dots1 {
+    0% {
+        transform: scale(0);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes loading-dots3 {
+    0% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(0);
+    }
+}
+
+@keyframes loading-dots2 {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    100% {
+        transform: translate(24px, 0);
+    }
 }
 
 @media (prefers-color-scheme: dark) {
