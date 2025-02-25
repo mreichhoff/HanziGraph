@@ -12,10 +12,9 @@ export const explanationSchema = z.object({
 });
 
 export const englishExplanationSchema = z.object({
-    translation: z.object({
-        chineseText: z.string(),
-        pinyin: z.string(),
-    }),
+    plainTextExplanation: z.string(),
+    chineseTranslationWithoutPinyin: z.string(),
+    pinyin: z.string(),
     grammarHighlights: z.array(
         z.object({
             grammarConceptName: z.string(),
