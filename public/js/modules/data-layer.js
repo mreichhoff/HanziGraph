@@ -531,6 +531,8 @@ async function translateEnglish(text) {
     // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
     const explainEnglish = httpsCallable(functions, 'explainEnglishText');
     const result = await explainEnglish(text);
+    // i know i shouldn't
+    result.data['englishTranslation'] = text;
     return result;
 }
 
