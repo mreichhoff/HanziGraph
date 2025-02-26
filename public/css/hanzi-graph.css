@@ -327,21 +327,6 @@ input[type="search"] {
     font-weight: bold;
 }
 
-#examples .ai-button {
-    /* all AI *must* use gradients for colors. That's how you know it's AI. */
-    background: linear-gradient(to right, #ff635f, #de68ee);
-    padding: 8px 12px;
-    border-radius: 16px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    color: black;
-    width: 120px;
-    text-align: center;
-    margin: 14px auto;
-    user-select: none;
-}
-
 .ai-explanation-container {
     margin: 12px 0;
     background-color: var(--popover-background-color);
