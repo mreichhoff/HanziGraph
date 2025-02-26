@@ -65,7 +65,7 @@
     --walkthrough-smallest-header-font-size: 18px;
     --walkthrough-top-margin: 80px;
     --walkthrough-header-text-align: left;
-    --popover-background-color: #eee;
+    --popover-background-color: #f7f7f7;
     --popover-font-color: black;
     --menu-popover-border: 3px solid #3333;
 }
@@ -1718,7 +1718,7 @@ main.auth-form {
         --graph-expand-button-box-shadow: 0;
         --tag-border: 2px solid #aaaa;
         --checked-input-border: 6px solid #eeee;
-        --popover-background-color: #222;
+        --popover-background-color: #191919;
         --popover-font-color: #eeee;
         --menu-popover-border: 3px solid #eee3;
     }
