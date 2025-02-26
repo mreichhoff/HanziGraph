@@ -889,7 +889,6 @@ function renderAiExplanationResponse(words, response, container) {
 
 function createLoadingDots() {
     const loadingDots = document.createElement('div');
-    loadingDots.style.display = 'none';
     loadingDots.classList.add('loading-dots');
     // there uh....there's four dots, ok?
     loadingDots.innerHTML = '<div></div><div></div><div></div><div></div>';
@@ -912,41 +911,27 @@ let setupExamples = function (words, type, skipState, allowExplain, aiData) {
             numExamples = 1;
         }
         if (allowExplain && isAiEligible()) {
-            const explainButtonContainer = document.createElement('div');
-            explainButtonContainer.innerText = 'AI explanation';
-            examplesList.appendChild(explainButtonContainer);
-            explainButtonContainer.classList.add('ai-button');
             const loadingDots = createLoadingDots();
             const aiResponseContainer = document.createElement('div');
             aiResponseContainer.style.display = 'none';
             aiResponseContainer.classList.add('ai-explanation-container');
             examplesList.appendChild(loadingDots);
             examplesList.appendChild(aiResponseContainer);
-            explainButtonContainer.addEventListener('click', async function () {
-                const wordsWithoutIgnored = words.map(x => x.ignore ? x.word : x);
-                let joinedText = wordsWithoutIgnored.join('');
-                const pendingResult = explainChineseSentence(joinedText);
-                explainButtonContainer.addEventListener('animationend', async function () {
-                    explainButtonContainer.style.display = 'none';
-                    explainButtonContainer.classList.remove('fade');
-                    loadingDots.removeAttribute('style');
-                    try {
-                        const result = await pendingResult;
-                        loadingDots.style.display = 'none';
-                        renderAiExplanationResponse(wordsWithoutIgnored, result, aiResponseContainer);
-                        aiResponseContainer.removeAttribute('style');
-                    } catch (ex) {
-                        loadingDots.style.display = 'none';
-                        aiResponseContainer.classList.add('ai-error')
-                        aiResponseContainer.innerText = 'Sorry, something went wrong.';
-                        aiResponseContainer.removeAttribute('style');
-                        setTimeout(function () {
-                            aiResponseContainer.style.display = 'none';
-                        }, 5000);
-                    }
-                });
-                explainButtonContainer.classList.add('fade');
-            }, { once: true });
+            const wordsWithoutIgnored = words.map(x => x.ignore ? x.word : x);
+            let joinedText = wordsWithoutIgnored.join('');
+            explainChineseSentence(joinedText).then(result => {
+                loadingDots.style.display = 'none';
+                renderAiExplanationResponse(wordsWithoutIgnored, result, aiResponseContainer);
+                aiResponseContainer.removeAttribute('style');
+            }).catch(e => {
+                loadingDots.style.display = 'none';
+                aiResponseContainer.classList.add('ai-error')
+                aiResponseContainer.innerText = 'Sorry, something went wrong.';
+                aiResponseContainer.removeAttribute('style');
+                setTimeout(function () {
+                    aiResponseContainer.style.display = 'none';
+                }, 5000);
+            });
         } else if (aiData && isAiEligible()) {
             const aiResponseContainer = document.createElement('div');
             aiResponseContainer.classList.add('ai-explanation-container');
@@ -1070,7 +1055,6 @@ let initialize = function () {
         // soon be cleared by a rendering of examples (this is a bad assumption)
         // (but at least there's a hide below, surely no client would ever mix that up)
         examplesList.prepend(loadingDots);
-        loadingDots.removeAttribute('style');
     });
     document.addEventListener('hide-loading-dots', function () {
         const existingLoadingDots = examplesList.querySelector('.loading-dots');
