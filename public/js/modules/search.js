@@ -2,7 +2,7 @@ import { hanziBox, notFoundElement } from "./dom";
 import { getActiveGraph, getPartition } from "./options";
 import { switchToState, stateKeys } from "./ui-orchestrator";
 import { handleCommand } from "./commands.js";
-import { translateEnglish } from "./data-layer.js";
+import { translateEnglish, isAiEligible } from "./data-layer.js";
 
 let searchSuggestionsWorker = null;
 let pinyinMap = {};
@@ -33,11 +33,14 @@ function handleWorkerMessage(message) {
         pinyinMap = message.data.pinyinMap;
         return;
     }
-    if (!message.data.query || message.data.query !== hanziBox.value) {
+    // AI searches based on unknown English text will have an `originalQuery`, since the
+    // query sent over to the search suggestions worker is for the AI's translation.
+    // in either case, we ensure the user isn't off doing other things before we render anything.
+    if (!message.data.query || (message.data.query !== hanziBox.value && message.data.originalQuery !== hanziBox.value)) {
         return;
     }
     if (message.data.type === 'tokenize') {
-        multiWordSearch(message.data.query, message.data.tokens, message.data.mode, message.data.skipState)
+        multiWordSearch(message.data.query, message.data.tokens, message.data.mode, message.data.skipState, message.data.aiData)
         return;
     }
     renderSearchSuggestions(message.data.query, message.data.suggestions, message.data.tokens, searchSuggestionsContainer);
@@ -125,7 +128,7 @@ async function initialize(term, mode) {
     }
 }
 
-function multiWordSearch(query, segments, mode, skipState) {
+function multiWordSearch(query, segments, mode, skipState, aiData) {
     let found = false;
     let wordForGraph = '';
     for (const segment of segments) {
@@ -146,21 +149,44 @@ function multiWordSearch(query, segments, mode, skipState) {
                 display: query,
                 mode: (mode || 'explore'),
                 // give eligible users the option to get an AI explanation on multi-word searches of a certain length
-                allowExplain: segments.length >= 3,
-                skipState: !!skipState
+                allowExplain: (segments.length >= 3 && !aiData),
+                skipState: !!skipState,
+                aiData
             }
         }));
     }
 }
 
-function englishSearch(word, data, skipState) {
+async function englishSearch(word, normalizedValue, data, skipState) {
     if (!data) {
-        translateEnglish(word);
-        notFoundElement.removeAttribute('style');
+        if (isAiEligible()) {
+            document.dispatchEvent(new CustomEvent('loading-dots'));
+            try {
+                const aiData = await translateEnglish(word);
+                searchSuggestionsWorker.postMessage({
+                    type: 'tokenize',
+                    payload: {
+                        query: aiData.data.chineseTranslationWithoutPinyin,
+                        locale: getActiveGraph().locale,
+                        mode: 'explore',
+                        skipState: !!skipState,
+                        originalQuery: word,
+                        aiData
+                    }
+                });
+            } catch (ex) {
+                // if the AI fails, just indicate nothing was found. Should probably use
+                // an AI-specific error message here, but for now just not found.
+                notFoundElement.removeAttribute('style');
+                document.dispatchEvent(new CustomEvent('hide-loading-dots'));
+            }
+        } else {
+            notFoundElement.removeAttribute('style');
+        }
     } else {
         notFoundElement.style.display = 'none';
         document.dispatchEvent(new CustomEvent('graph-update', { detail: data[0] }));
-        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: data, display: word, type: 'english', skipState: !!skipState } }));
+        document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: data, display: normalizedValue, type: 'english', skipState: !!skipState } }));
     }
 }
 
@@ -200,14 +226,14 @@ function search(value, locale, mode, skipState) {
     }
     // ok, fine, try english?
     if (looksLikeEnglish(value) && getActiveGraph().englishPath) {
-        value = value.toLowerCase();
-        fetch(`/${getActiveGraph().englishPath}/${getPartition(value, getActiveGraph().partitionCount)}.json`)
+        const normalizedValue = value.toLowerCase();
+        fetch(`/${getActiveGraph().englishPath}/${getPartition(normalizedValue, getActiveGraph().partitionCount)}.json`)
             .then(response => response.json())
             .then(function (data) {
-                if (value !== hanziBox.value.toLowerCase()) {
+                if (normalizedValue !== hanziBox.value.toLowerCase()) {
                     return false;
                 }
-                englishSearch(value, data[value], skipState);
+                englishSearch(value, normalizedValue, data[normalizedValue], skipState);
             });
         return;
     }

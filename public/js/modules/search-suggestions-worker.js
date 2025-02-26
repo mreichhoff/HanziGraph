@@ -252,7 +252,9 @@ onmessage = async function (e) {
             tokens,
             mode: e.data.payload.mode,
             type: e.data.type,
-            skipState: e.data.payload.skipState
+            skipState: e.data.payload.skipState,
+            originalQuery: e.data.payload.originalQuery,
+            aiData: e.data.payload.aiData
         });
     }
 }

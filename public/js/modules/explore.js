@@ -887,7 +887,16 @@ function renderAiExplanationResponse(words, response, container) {
     container.appendChild(grammarContainer);
 }
 
-let setupExamples = function (words, type, skipState, allowExplain) {
+function createLoadingDots() {
+    const loadingDots = document.createElement('div');
+    loadingDots.style.display = 'none';
+    loadingDots.classList.add('loading-dots');
+    // there uh....there's four dots, ok?
+    loadingDots.innerHTML = '<div></div><div></div><div></div><div></div>';
+    return loadingDots;
+}
+
+let setupExamples = function (words, type, skipState, allowExplain, aiData) {
     currentExamples = {};
     // if we're showing examples, never show the walkthrough.
     walkThrough.style.display = 'none';
@@ -907,14 +916,10 @@ let setupExamples = function (words, type, skipState, allowExplain) {
             explainButtonContainer.innerText = 'AI explanation';
             examplesList.appendChild(explainButtonContainer);
             explainButtonContainer.classList.add('ai-button');
-            const loadingDots = document.createElement('div');
-            loadingDots.style.display = 'none';
-            loadingDots.classList.add('loading-dots');
+            const loadingDots = createLoadingDots();
             const aiResponseContainer = document.createElement('div');
             aiResponseContainer.style.display = 'none';
             aiResponseContainer.classList.add('ai-explanation-container');
-            // there uh....there's four dots, ok?
-            loadingDots.innerHTML = '<div></div><div></div><div></div><div></div>';
             examplesList.appendChild(loadingDots);
             examplesList.appendChild(aiResponseContainer);
             explainButtonContainer.addEventListener('click', async function () {
@@ -942,6 +947,12 @@ let setupExamples = function (words, type, skipState, allowExplain) {
                 });
                 explainButtonContainer.classList.add('fade');
             }, { once: true });
+        } else if (aiData && isAiEligible()) {
+            const aiResponseContainer = document.createElement('div');
+            aiResponseContainer.classList.add('ai-explanation-container');
+            const wordsWithoutIgnored = words.map(x => x.ignore ? x.word : x);
+            renderAiExplanationResponse(wordsWithoutIgnored, aiData, aiResponseContainer);
+            examplesList.appendChild(aiResponseContainer);
         }
         let instructions = document.createElement('p');
         instructions.classList.add('explanation');
@@ -1034,7 +1045,7 @@ let initialize = function () {
     document.addEventListener('explore-update', function (event) {
         currentMode = ((event.detail.mode === modes.components) ? modes.components : modes.explore);
         hanziBox.value = event.detail.display || event.detail.words[0];
-        setupExamples(event.detail.words, event.detail.type || 'chinese', event.detail.skipState, event.detail.allowExplain);
+        setupExamples(event.detail.words, event.detail.type || 'chinese', event.detail.skipState, event.detail.allowExplain, event.detail.aiData);
         if (currentMode === modes.components) {
             switchToTab('tab-components', currentTabs);
         }
@@ -1052,6 +1063,21 @@ let initialize = function () {
         } else {
             container.addEventListener('scroll', hideMenuPopover, { passive: true, once: true });
         }
+    });
+    document.addEventListener('loading-dots', function () {
+        const loadingDots = createLoadingDots();
+        // show the loading dots at the top of the examples, and assume it will
+        // soon be cleared by a rendering of examples (this is a bad assumption)
+        // (but at least there's a hide below, surely no client would ever mix that up)
+        examplesList.prepend(loadingDots);
+        loadingDots.removeAttribute('style');
+    });
+    document.addEventListener('hide-loading-dots', function () {
+        const existingLoadingDots = examplesList.querySelector('.loading-dots');
+        if (!existingLoadingDots) {
+            return;
+        }
+        existingLoadingDots.style.display = 'none';
     });
     window.addEventListener('resize', function () {
         // resizing the screen throws off positioning of the menu...just hide it
