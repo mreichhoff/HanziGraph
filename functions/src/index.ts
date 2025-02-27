@@ -17,7 +17,13 @@ const ai = genkit({
     plugins: [
         vertexAI({ location: 'us-central1' }),
     ],
+    model: gemini20Flash001,
 });
+
+const ChineseExplanationSchema = ai.defineSchema('ChineseExplanationSchema', explanationSchema);
+const explainChinesePrompt = ai.prompt<z.ZodTypeAny, typeof ChineseExplanationSchema>('explain-chinese');
+const EnglishExplanationSchema = ai.defineSchema('EnglishExplanationSchema', englishExplanationSchema);
+const explainEnglishPrompt = ai.prompt<z.ZodTypeAny, typeof EnglishExplanationSchema>('explain-english');
 
 // TODO: dig into streamSchema and streaming structured responses
 const explainFlow = ai.defineFlow({
@@ -33,10 +39,7 @@ const explainFlow = ai.defineFlow({
     if (!isAuthorized) {
         throw new HttpsError("permission-denied", "user not authorized");
     }
-
-    const prompt = `Explain the Chinese text ${text}.`;
-
-    const { output } = await ai.generate({ model: gemini20Flash001, prompt, output: { schema: explanationSchema } });
+    const { output } = await explainChinesePrompt({ text });
     if (!output) {
         throw new HttpsError("internal", 'oh no, the model like, failed?');
     }
@@ -56,12 +59,7 @@ const explainEnglishFlow = ai.defineFlow({
     if (!isAuthorized) {
         throw new HttpsError("permission-denied", "user not authorized");
     }
-    const prompt = `Translate the English text ${text} into Chinese, and explain the translation.`;
-    const { output } = await ai.generate({
-        model: gemini20Flash001,
-        prompt,
-        output: { schema: englishExplanationSchema },
-    });
+    const { output } = await explainEnglishPrompt({ text });
     if (!output) {
         throw new HttpsError("internal", 'oh no, the model like, failed?');
     }
