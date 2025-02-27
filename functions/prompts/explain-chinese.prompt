@@ -1,0 +1,9 @@
+---
+model: vertexai/gemini-2.0-flash-001
+input:
+  schema:
+    text: string
+output:
+  schema: ChineseExplanationSchema
+---
+Explain the Chinese text {{text}}.
