@@ -3,6 +3,7 @@ const hanziBox = document.getElementById('hanzi-box');
 const notFoundElement = document.getElementById('not-found-message');
 const walkThrough = document.getElementById('walkthrough');
 const examplesList = document.getElementById('examples');
+const searchControl = document.getElementById('search-buttons');
 
 function writeSeoMetaTags(urlState, graphDisplay) {
     let urlMeta = document.createElement('meta');
@@ -34,4 +35,4 @@ function writeSeoMetaTags(urlState, graphDisplay) {
     }
 }
 
-export { hanziBox, notFoundElement, walkThrough, examplesList, writeSeoMetaTags }
+export { hanziBox, notFoundElement, walkThrough, examplesList, searchControl, writeSeoMetaTags }

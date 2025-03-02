@@ -1,4 +1,4 @@
-import { hanziBox, notFoundElement } from "./dom";
+import { hanziBox, notFoundElement, searchControl } from "./dom";
 import { getActiveGraph, getPartition } from "./options";
 import { switchToState, stateKeys } from "./ui-orchestrator";
 import { handleCommand } from "./commands.js";
@@ -57,6 +57,7 @@ function renderSuggestion(priorWordsForDisplay, suggestion, container) {
     container.appendChild(current);
 }
 function renderSearchSuggestions(query, suggestions, tokens, container) {
+    searchControl.style.display = 'none';
     container.innerHTML = '';
     const isMultiWord = tokens.length > 1;
     if (!suggestions || (!suggestions[query].length && !suggestions['tokenized'].length)) {
@@ -101,9 +102,18 @@ function renderSearchSuggestions(query, suggestions, tokens, container) {
     }
     container.removeAttribute('style');
 }
+
+function showControlsIfEligible() {
+    if (isAiEligible()) {
+        searchControl.removeAttribute('style');
+        mainHeader.classList.add('has-suggestions');
+    }
+}
+
 function clearSuggestions() {
     mainHeader.classList.remove('has-suggestions');
     searchSuggestionsContainer.style.display = 'none';
+    searchControl.style.display = 'none';
 }
 
 function sendDataToWorker() {
@@ -111,6 +121,16 @@ function sendDataToWorker() {
         type: 'data',
         payload: { wordSet: window.wordSet, definitions: window.definitions }
     });
+}
+
+let skipBlur = false;
+
+function clearIfOutsideSearchControl(event) {
+    if (!searchControl.contains(event.target) && !hanziBox.contains(event.target)) {
+        clearSuggestions();
+    } else {
+        document.addEventListener('mousedown', clearIfOutsideSearchControl, { once: true });
+    }
 }
 
 async function initialize(term, mode) {
@@ -121,7 +141,18 @@ async function initialize(term, mode) {
     // it sends, so allow waiting.
     const ensureLoaded = new Promise(ready => searchSuggestionsWorker.addEventListener("message", ready, { once: true }));
     hanziBox.addEventListener('input', suggestSearches);
-    hanziBox.addEventListener('blur', clearSuggestions);
+    hanziBox.addEventListener('blur', function () {
+        if (skipBlur) {
+            skipBlur = false;
+            document.addEventListener('mousedown', clearIfOutsideSearchControl, { once: true });
+            return;
+        }
+        clearSuggestions()
+    });
+    hanziBox.addEventListener('focus', showControlsIfEligible);
+    searchControl.addEventListener('mousedown', function () {
+        skipBlur = true;
+    });
     if (term) {
         await ensureLoaded;
         search(term, getActiveGraph().locale, (mode || 'explore'));

@@ -1,8 +1,10 @@
-import { hanziBox, notFoundElement } from "./dom";
+import { hanziBox, notFoundElement, searchControl } from "./dom";
 import { switchToState, stateKeys } from "./ui-orchestrator";
 import { analyzeImage, isAiEligible } from "./data-layer"
 
-const input = document.getElementById('image-analysis-input');
+const menuInput = document.getElementById('image-analysis-input');
+const searchPhotoInput = document.getElementById('search-photo-input');
+const searchFileInput = document.getElementById('search-file-input');
 const menuItem = document.getElementById('image-analysis-menu-item');
 
 function setVisibilityBasedOnAiEligibility() {
@@ -21,6 +23,7 @@ function handleFile(file) {
     reader.onload = async () => {
         try {
             switchToState(stateKeys.main);
+            searchControl.style.display = 'none';
             document.dispatchEvent(new CustomEvent('loading-dots'));
             const aiData = await analyzeImage(reader.result);
             document.dispatchEvent(new CustomEvent('ai-response', { detail: { aiData } }));
@@ -36,13 +39,17 @@ function handleFile(file) {
     reader.readAsDataURL(file);
 }
 
+function fileInputHandler(event) {
+    const file = event.target.files[0];
+    handleFile(file);
+}
+
 function initialize() {
     setVisibilityBasedOnAiEligibility();
     // users can choose a file in the menu
-    input.addEventListener('change', function (event) {
-        const file = event.target.files[0];
-        handleFile(file);
-    });
+    menuInput.addEventListener('change', fileInputHandler);
+    searchPhotoInput.addEventListener('change', fileInputHandler);
+    searchFileInput.addEventListener('change', fileInputHandler);
     // handle drag/drop for the main search box for eligible users.
     hanziBox.addEventListener('dragenter', function (e) {
         e.stopPropagation();
