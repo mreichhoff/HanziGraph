@@ -126,6 +126,11 @@ async function initialize(term, mode) {
         await ensureLoaded;
         search(term, getActiveGraph().locale, (mode || 'explore'));
     }
+    // very questionable architecture (mistakes were made)
+    document.addEventListener('ai-response', function (event) {
+        hanziBox.value = event.detail.aiData.data.chineseTranslationWithoutPinyin;
+        handleAiResponse(null, event.detail.aiData);
+    });
 }
 
 function multiWordSearch(query, segments, mode, skipState, aiData) {
@@ -157,23 +162,27 @@ function multiWordSearch(query, segments, mode, skipState, aiData) {
     }
 }
 
+function handleAiResponse(word, aiData, skipState) {
+    searchSuggestionsWorker.postMessage({
+        type: 'tokenize',
+        payload: {
+            query: aiData.data.chineseTranslationWithoutPinyin,
+            locale: getActiveGraph().locale,
+            mode: 'explore',
+            skipState: !!skipState,
+            originalQuery: word || aiData.data.chineseTranslationWithoutPinyin,
+            aiData
+        }
+    });
+}
+
 async function englishSearch(word, normalizedValue, data, skipState) {
     if (!data) {
         if (isAiEligible()) {
             document.dispatchEvent(new CustomEvent('loading-dots'));
             try {
                 const aiData = await translateEnglish(word);
-                searchSuggestionsWorker.postMessage({
-                    type: 'tokenize',
-                    payload: {
-                        query: aiData.data.chineseTranslationWithoutPinyin,
-                        locale: getActiveGraph().locale,
-                        mode: 'explore',
-                        skipState: !!skipState,
-                        originalQuery: word,
-                        aiData
-                    }
-                });
+                handleAiResponse(word, aiData, skipState);
             } catch (ex) {
                 // if the AI fails, just indicate nothing was found. Should probably use
                 // an AI-specific error message here, but for now just not found.

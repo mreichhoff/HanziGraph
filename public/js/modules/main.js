@@ -12,6 +12,7 @@ import { hanziBox, walkThrough, examplesList, writeSeoMetaTags } from "./dom.js"
 import { initialize as flowDiagramInit } from "./flow-diagram.js";
 import { initialize as dataLayerInit } from "./data-layer.js";
 import { initialize as searchInit, search } from "./search.js";
+import { initialize as fileAnalysisInitialize } from "./file-analysis.js"
 
 // Set to false to enable running more simply, e.g. via running `python3 -m http.server` in public/.
 const USE_FIREBASE = true;
@@ -84,6 +85,7 @@ Promise.all(
         firebaseInit();
         authStateInit();
         dataLayerInit();
+        fileAnalysisInitialize();
     }
     orchestratorInit();
     optionsInit();

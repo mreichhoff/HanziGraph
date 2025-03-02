@@ -3,7 +3,7 @@ import { genkit, z } from "genkit";
 import { vertexAI, gemini20Flash001 } from '@genkit-ai/vertexai';
 import * as admin from 'firebase-admin';
 import { isUserAuthorized } from "./auth";
-import { explanationSchema, englishExplanationSchema } from "./schema";
+import { explanationSchema, englishExplanationSchema, imageAnalysisSchema } from "./schema";
 
 let firebaseApp: admin.app.App;
 
@@ -69,3 +69,27 @@ const explainEnglishFlow = ai.defineFlow({
 export const explainText = onCallGenkit(explainFlow);
 
 export const explainEnglishText = onCallGenkit(explainEnglishFlow);
+
+// TODO: set up flows in separate files (text analysis in one, image in another)
+const ImageAnalysisSchema = ai.defineSchema('ImageAnalysisSchema', imageAnalysisSchema);
+const analyzeImagePrompt = ai.prompt<z.ZodTypeAny, typeof ImageAnalysisSchema>('analyze-image');
+const analyzeImageFlow = ai.defineFlow({
+    name: "analyzeImage",
+    inputSchema: z.string(),
+    outputSchema: imageAnalysisSchema,
+}, async (base64ImageUrl, { context }) => {
+    if (!firebaseApp) {
+        firebaseApp = admin.initializeApp();
+    }
+    const isAuthorized = await isUserAuthorized(context);
+    if (!isAuthorized) {
+        throw new HttpsError("permission-denied", "user not authorized");
+    }
+    const { output } = await analyzeImagePrompt({ base64ImageUrl });
+    if (!output) {
+        throw new HttpsError("internal", 'oh no, the model like, failed?');
+    }
+    return output;
+});
+
+export const analyzeImage = onCallGenkit(analyzeImageFlow);
