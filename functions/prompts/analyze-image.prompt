@@ -1,0 +1,9 @@
+---
+model: vertexai/gemini-2.0-flash-001
+input:
+  schema:
+    base64ImageUrl: string
+output:
+  schema: ImageAnalysisSchema
+---
+Read the Chinese text in this image: {{media url=base64ImageUrl}}, and then explain it, including an English translation and any relevant grammar rules.

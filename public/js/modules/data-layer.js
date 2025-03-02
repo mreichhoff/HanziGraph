@@ -491,10 +491,12 @@ let initialize = function () {
             // users have permission to read their own doc in permissions, but not to write it.
             onSnapshot(doc(db, `permissions/${authenticatedUser.uid}`), doc => {
                 aiEligible = (doc && doc.get('ai') === true);
+                document.dispatchEvent(new CustomEvent('ai-eligibility-changed', { detail: aiEligible }));
             })
         } else {
             // no signed in user means no AI features.
             aiEligible = false;
+            document.dispatchEvent(new CustomEvent('ai-eligibility-changed', { detail: aiEligible }));
         }
     });
 };
@@ -540,4 +542,12 @@ function isAiEligible() {
     return aiEligible;
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, addCards, inStudyList, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, isAiEligible, initialize, studyResult, dataTypes, cardTypes }
+async function analyzeImage(base64ImageContents) {
+    const functions = getFunctions();
+    // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+    const analyzeImage = httpsCallable(functions, 'analyzeImage');
+    const result = await analyzeImage(base64ImageContents);
+    return result;
+}
+
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, addCards, inStudyList, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, isAiEligible, initialize, studyResult, dataTypes, cardTypes }
