@@ -19,8 +19,10 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/images/favicon-32x32.png" type="image/x-icon">
     <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
-    <link rel="search" type="application/opensearchdescription+xml" title="HanziGraph (simplified)" href="/opensearch-simplified.xml">
-    <link rel="search" type="application/opensearchdescription+xml" title="HanziGraph (traditional)" href="/opensearch-traditional.xml">
+    <link rel="search" type="application/opensearchdescription+xml" title="HanziGraph (simplified)"
+        href="/opensearch-simplified.xml">
+    <link rel="search" type="application/opensearchdescription+xml" title="HanziGraph (traditional)"
+        href="/opensearch-traditional.xml">
 </head>
 
 <body>
@@ -37,6 +39,22 @@
                     autocapitalize="off" autocomplete="off" autocorrect="off" />
             </label>
             <ul id="search-suggestions-container" class="search-suggestions" style="display:none"></ul>
+            <div id="search-buttons" class="search-controls" style="display: none;">
+                <span class="search-button">
+                    <label>
+                        <i class="image-icon"></i>Photo
+                        <input id="search-photo-input" class="visually-hidden" type="file"
+                            accept="image/png, image/jpeg" capture="environment" />
+                    </label>
+                </span>
+                <span class="search-button">
+                    <label>
+                        <i class="file-icon"></i>File
+                        <input id="search-file-input" class="visually-hidden" type="file"
+                            accept="image/png, image/jpeg, application/pdf" />
+                    </label>
+                </span>
+            </div>
         </form>
         <div id="right-menu-button-container" class="right-menu-button-container">
             <i id="right-menu-button" class="study-button"></i>
@@ -64,9 +82,8 @@
                     <p>
                         You're viewing <span class="emphasized-but-not-that-emphasized"
                             id="walkthrough-character-set">Simplified</span> characters.
-                        See the menu for options, or try <a class="active-link"
-                            href="https://japanesegraph.com">the <span
-                                class="emphasized-but-not-that-emphasized">Japanese</span> version</a>.
+                        See the menu for options, or try <a class="active-link" href="https://japanesegraph.com">the
+                            <span class="emphasized-but-not-that-emphasized">Japanese</span> version</a>.
                     </p>
                     <p>
                         <span class="emphasized-but-not-that-emphasized">This is free and open source software.</span>
@@ -425,8 +442,8 @@
                     <i class="image-icon" style="left:4px"></i>
                     <label class="active-link" style="margin-left: 8px">
                         Analyze an image
-                        <input id="image-analysis-input" class="visually-hidden" type="file" accept="image/png, image/jpeg"
-                            capture="environment" />
+                        <input id="image-analysis-input" class="visually-hidden" type="file"
+                            accept="image/png, image/jpeg" capture="environment" />
                     </label>
                 </form>
             </div>
