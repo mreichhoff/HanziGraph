@@ -6,20 +6,16 @@ Looking for **Japanese**? See [the JapaneseGraph branch](https://github.com/mrei
 
 ### Demo
 
+<video src="./demos/graph-demo-2025-03-03.mov" controls></video>
 
-
-
-https://github.com/user-attachments/assets/3d22e3d5-0e09-4b88-9289-96e67f9d06eb
-
-
-
-
+Read on for more demos of individual features, like AI image analysis and study stats.
 
 ### Features
 
 HanziGraph can also:
 * Demonstrate **character composition** with tree diagrams of components and compounds
 * Perform **hanzi math**, like: `酒-氵+各` (result: `酪`)
+* Analyze and explain English or Chinese sentences, including in image files
 * Show **sankey diagrams** to demonstrate how words are used together
 * Demonstrate usage with **example sentences** (mostly human-generated, with some AI-generated 🤖)
 * Automatically generate spaced repetition **flashcards**, and track your **study stats**
@@ -57,6 +53,22 @@ Answer: 蠮 (ye1)
 
 
 This mode is also available as [a standalone tool](https://hanzigraph.com/components).
+
+#### AI Features
+
+While human-generated content is preferred, there are some AI features in HanziGraph.
+
+* **Sentence Explanations**: enter a sentence in Chinese or English, get it translated and explained. You can also easily create a flashcard from it.
+* **Image Analysis**: you can easily take a picture (using file input [`capture`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/capture)) or upload a photo or PDF, and HanziGraph will extract its text and explain it. Flashcards can again easily be created.
+* **Example Sentences**: for words where sentences weren't easily available, AI helped fill in the gaps.
+
+##### AI Demo
+
+Both of the below demos were taken from HanziGraph installed as a PWA.
+
+iOS|Android
+--|--
+<video src="./demos/photo-listen-demo-480.mov" controls></video>|<video src="./demos/iphone-photo-480.mov" controls></video>
 
 #### Word Relationships
 
