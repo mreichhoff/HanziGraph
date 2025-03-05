@@ -9,8 +9,10 @@ Looking for **Japanese**? See [the JapaneseGraph branch](https://github.com/mrei
 
 
 
-https://github.com/user-attachments/assets/3d22e3d5-0e09-4b88-9289-96e67f9d06eb
 
+https://github.com/user-attachments/assets/8c2e0769-7d5f-4b8b-8ab2-95e679639833
+
+Read on for other demos and screenshots, including component breakdowns, AI image analysis, study stats, and more.
 
 
 
@@ -29,6 +31,7 @@ HanziGraph can also:
 * Run in-browser **text-to-speech** to demonstrate pronunciation
 * Be **installed** as a standalone [PWA](https://web.dev/progressive-web-apps/)
 * Use **light** or **dark** themes, based on OS preferences
+* Interested in trying out an Android app (well, the PWA wrapped as a TWA)? Join [here](https://groups.google.com/g/hanzigraph) and check it out on [the Play Store](https://play.google.com/apps/testing/com.hanzigraph.twa).
 * **And more!**
 
 #### Interactive Graph
@@ -57,6 +60,21 @@ Answer: 蠮 (ye1)
 
 
 This mode is also available as [a standalone tool](https://hanzigraph.com/components).
+
+#### AI Features
+
+While human-generated content is preferred, there are several AI features in HanziGraph.
+
+* **Sentence Explanations**: enter a sentence in Chinese or English, get it translated and explained. You can also easily create a flashcard from it.
+* **Image Analysis**: you can easily take a picture (using file input [`capture`](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/capture)) or upload a photo or PDF, and HanziGraph will extract its text and explain it. Flashcards can again easily be created.
+* **Example Sentences**: for words where example sentences weren't easily available, AI helped fill in the gaps.
+
+##### AI Demo
+
+
+https://github.com/user-attachments/assets/f406ff57-f524-4e3a-9c5c-3212413e43aa
+
+The demo shows HanziGraph installed as a PWA. It uses a basic [Genkit](https://firebase.google.com/docs/genkit) flow calling Gemini 2.0 Flash with structured output. The TTS is in-browser via the Web Speech API.
 
 #### Word Relationships
 
