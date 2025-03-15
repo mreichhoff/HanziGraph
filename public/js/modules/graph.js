@@ -154,24 +154,37 @@ function toneColor(element) {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const character = (mode === modes.components) ? element.data('word') : element.data('id');
     const tone = getTone(character);
-    if (tone === '1') {
-        return '#ff635f';
-    } else if (tone === '2') {
-        return '#7aeb34';
-    } else if (tone === '3') {
-        return '#de68ee';
-    } else if (tone === '4') {
-        return '#68aaee';
+    if (tone === '1' || tone === '2' || tone === '3' || tone === '4') {
+        return getComputedStyle(document.documentElement).getPropertyValue(`--tone-${tone}-color`);
     }
     return prefersDark ? '#888' : '#000';
 }
+
+// shamelessly taken from https://stackoverflow.com/questions/3942878
+function useLightText(bgColor) {
+    let color = (bgColor.charAt(0) === '#') ? bgColor.substring(1, 7) : bgColor;
+    let r = parseInt(color.substring(0, 2), 16); // hexToR
+    let g = parseInt(color.substring(2, 4), 16); // hexToG
+    let b = parseInt(color.substring(4, 6), 16); // hexToB
+    let uicolors = [r / 255, g / 255, b / 255];
+    let c = uicolors.map((col) => {
+        if (col <= 0.03928) {
+            return col / 12.92;
+        }
+        return Math.pow((col + 0.055) / 1.055, 2.4);
+    });
+    let L = (0.2126 * c[0]) + (0.7152 * c[1]) + (0.0722 * c[2]);
+    return L <= 0.179;
+}
+
 function makeLegible(element) {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const character = (mode === modes.components) ? element.data('word') : element.data('id');
     const tone = getTone(character);
-    // if (tone === '1' || tone === '3' || tone === '4') {
-    //     return 'white'; //TODO
-    // }
+    if (tone !== '5') {
+        const toneColor = getComputedStyle(document.documentElement).getPropertyValue(`--tone-${tone}-color`);
+        return useLightText(toneColor) ? 'white' : 'black';
+    }
     if (tone === '5' && !prefersDark && !getActiveGraph().disableToneColors) {
         return 'white';
     }
@@ -472,6 +485,7 @@ function initialize() {
             skipResize = false;
         }, 1500);
     });
+    document.addEventListener('color-preferences-changed', updateColorScheme);
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateColorScheme);
 }
 
