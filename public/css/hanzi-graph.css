@@ -228,6 +228,22 @@ input[type="search"].drop-target {
     transition: outline 0.2s linear;
 }
 
+input[type="color"] {
+    width: 44px;
+}
+
+/* i know i shouldn't */
+#color-code-chooser-container fieldset {
+    width: 240px;
+    margin: 10px 0;
+}
+
+#color-code-chooser-container label {
+    white-space: nowrap;
+    font-size: 16px;
+    margin: 0;
+}
+
 /*
 shamelesssly taken from mdn
 https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_applications#using_a_label_element_to_trigger_a_hidden_file_input_element
@@ -1545,7 +1561,7 @@ p.related-card {
 .menu-item {
     font-size: 18px;
     font-weight: 400;
-    height: 60px;
+    min-height: 60px;
 }
 
 .welcome-message {

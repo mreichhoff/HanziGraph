@@ -7,6 +7,20 @@ const togglePinyinLabel = document.getElementById('toggle-pinyin-label');
 const offlineItem = document.getElementById('offline-item');
 const offlineButton = document.getElementById('offline-button');
 const headerLogo = document.getElementById('header-logo');
+const colorCodeChooserContainer = document.getElementById('color-code-chooser-container');
+const resetColors = document.getElementById('reset-default-tones');
+const toneColorInputElements = [
+    document.getElementById('first-tone-color-chooser'),
+    document.getElementById('second-tone-color-chooser'),
+    document.getElementById('third-tone-color-chooser'),
+    document.getElementById('fourth-tone-color-chooser')
+];
+const defaultColors = [
+    () => '#ff635f',
+    () => (matchMedia('(prefers-color-scheme: dark)').matches ? '#7aeb34' : '#66c42b'),
+    () => '#de68ee',
+    () => '#68aaee'
+];
 
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
 let freqLegend = ['Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k', '>10k'];
@@ -101,6 +115,57 @@ function switchGraph() {
     }
 }
 
+function colorChangeHandler() {
+    let preferences = [];
+
+    let i = 0;
+    for (const element of toneColorInputElements) {
+        preferences.push(element.value);
+        document.documentElement.style.setProperty(`--tone-${i + 1}-color`, element.value);
+        i++;
+    }
+    document.dispatchEvent(new CustomEvent('color-preferences-changed'));
+    resetColors.removeAttribute('style');
+
+    localStorage.setItem('color-preference', JSON.stringify(preferences));
+}
+
+function setupColorChoosers() {
+    // TODO: gotta enable tone colors for cantonese as well
+    if (getActiveGraph().disableToneColors) {
+        colorCodeChooserContainer.style.display = 'none';
+    } else {
+        colorCodeChooserContainer.removeAttribute('style');
+    }
+    for (const element of toneColorInputElements) {
+        element.addEventListener('change', colorChangeHandler);
+    }
+    const oldColors = JSON.parse(localStorage.getItem('color-preference'));
+    if (oldColors && oldColors.length) {
+        let i = 0;
+        for (const oldColor of oldColors) {
+            toneColorInputElements[i].value = oldColor;
+            i++;
+        }
+        colorChangeHandler();
+    }
+    resetColors.addEventListener('click', function () {
+        let i = 0;
+        for (const element of toneColorInputElements) {
+            // run it as a function to re-evaluate color scheme media query
+            // is it worth having a lighter green in dark mode by default?
+            // you be the judge.
+            // I grant you'd need to also do that when preferred scheme changes
+            // post-reset, but I just think it's rare enough I don't want to bother
+            element.value = defaultColors[i]();
+            i++;
+        }
+        colorChangeHandler();
+        localStorage.removeItem('color-preference');
+        resetColors.style.display = 'none';
+    });
+}
+
 function setTranscriptionLabel() {
     if (showPinyinCheckbox.checked) {
         togglePinyinLabel.innerText = `Turn off ${graphOptions[activeGraphKey].transcriptionName || 'pinyin'} in examples`;
@@ -142,6 +207,7 @@ function initialize() {
     setTranscriptionLabel();
     updateGraphDisplayText();
     setupMakeOfflineButton();
+    setupColorChoosers();
 }
 let loadingIndicatorInterval = null;
 let iterations = 0;
