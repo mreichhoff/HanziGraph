@@ -1868,13 +1868,13 @@ main.auth-form {
         --instructions-font-size: 14px;
         --target-language-font-size: 22px;
         --controls-padding: 10px;
-        --examples-top-margin: 14px;
+        --examples-top-margin: 8px;
         --graph-margin-top: 0;
         --text-container-height: 50%;
         --graph-container-height: 50%;
         --walkthrough-header-font-size: 36px;
         --walkthrough-smaller-header-font-size: 19px;
-        --walkthrough-top-margin: 6px;
+        --walkthrough-top-margin: 0;
         --walkthrough-smallest-header-font-size: 16px;
         --walkthrough-header-text-align: center;
     }
