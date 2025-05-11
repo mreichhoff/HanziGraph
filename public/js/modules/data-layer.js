@@ -78,17 +78,37 @@ let saveStudyList = function (keys, localStudyList) {
     }
 };
 let updateCard = function (result, key) {
-    let now = new Date();
-    if (result === studyResult.INCORRECT) {
-        studyList[key].nextJump = 0.5;
-        studyList[key].wrongCount++;
-        studyList[key].due = now.valueOf();
-    } else {
-        let nextJump = studyList[key].nextJump || 0.5;
-        studyList[key].nextJump = nextJump * 2;
-        studyList[key].rightCount++;
-        studyList[key].due = now.valueOf() + (nextJump * 24 * 60 * 60 * 1000);
+    let card = studyList[key];
+    // fix up any old data from before adopting SM2
+    if (card.ease === null || card.ease === undefined) {
+        card.ease = 2.5;
     }
+    if (card.interval === null || card.interval === undefined) {
+        card.interval = card.nextJump || 0;
+    }
+    if (card.streak === null || card.streak === undefined) {
+        card.streak = 0;
+    }
+    card.lastReviewTimestamp = Date.now();
+    const score = (result === studyResult.CORRECT) ? 4 : 1;
+    if (result === studyResult.INCORRECT) {
+        card.streak = 0;
+        card.interval = 0;
+        card.wrongCount++;
+    } else {
+        if (card.streak === 0) {
+            card.interval = 1;
+        } else if (card.streak === 1) {
+            card.interval = 3;
+        } else {
+            card.interval = Math.round(card.interval * card.ease);
+        }
+        card.streak++;
+        card.rightCount++;
+    }
+    card.ease = Math.max((card.ease + (0.1 - (5 - score) * (0.08 + (5 - score) * 0.02))), 1.3);
+    // keep setting due for compatibility with old clients and data
+    card.due = card.lastReviewTimestamp + (card.interval * 24 * 60 * 60 * 1000);
     saveStudyList([key]);
 };
 let addRecallCards = function (newCards, text, newKeys, languageKey) {
@@ -99,8 +119,12 @@ let addRecallCards = function (newCards, text, newKeys, languageKey) {
             newKeys.push(key);
             studyList[key] = {
                 en: newCards[i].en,
-                due: Date.now() + newCards.length + i,
                 zh: newCards[i].zh,
+                // data for SM2
+                streak: 0,
+                ease: 2.5,
+                interval: 0,
+                lastReviewTimestamp: Date.now(),
                 wrongCount: 0,
                 rightCount: 0,
                 type: cardTypes.RECALL,
@@ -111,7 +135,9 @@ let addRecallCards = function (newCards, text, newKeys, languageKey) {
         }
     }
 };
-// TODO: may be better combined with addRecallCards...
+
+// TODO: reinstate cloze (and maybe recall?) as another button in the sentence menu
+// should also consolidate the various addCard functions that roughly do the same
 let addClozeCards = function (newCards, text, newKeys, languageKey) {
     let added = 0;
     for (let i = 0; i < newCards.length; i++) {
@@ -128,9 +154,12 @@ let addClozeCards = function (newCards, text, newKeys, languageKey) {
             newKeys.push(key);
             studyList[key] = {
                 en: newCards[i].en,
-                // due after the recognition cards, for some reason
-                due: Date.now() + newCards.length + i,
                 zh: newCards[i].zh,
+                // data for SM2
+                streak: 0,
+                ease: 2.5,
+                interval: 0,
+                lastReviewTimestamp: Date.now(),
                 wrongCount: 0,
                 rightCount: 0,
                 type: cardTypes.CLOZE,
@@ -143,7 +172,6 @@ let addClozeCards = function (newCards, text, newKeys, languageKey) {
 };
 
 function addCard(example, text, languageKey) {
-    const card = { ...example, due: Date.now() };
     let zhJoined = example.zh.join('');
     if (zhJoined in studyList) {
         // no-op...user already made this card. Shouldn't happen, but in case
@@ -152,9 +180,14 @@ function addCard(example, text, languageKey) {
     }
     const newKeys = [zhJoined];
     studyList[zhJoined] = {
-        en: card.en,
-        due: card.due,
-        zh: card.zh,
+        en: example.en,
+        zh: example.zh,
+        due: Date.now(),
+        // data for SM2
+        streak: 0,
+        ease: 2.5,
+        interval: 0,
+        lastReviewTimestamp: Date.now(),
         wrongCount: 0,
         rightCount: 0,
         type: cardTypes.RECOGNITION,
@@ -165,35 +198,6 @@ function addCard(example, text, languageKey) {
     saveStudyList(newKeys, null, true);
     callbacks[dataTypes.studyList].forEach(x => x(studyList));
 }
-
-let addCards = function (currentExamples, text, languageKey) {
-    let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
-    let newKeys = [];
-    for (let i = 0; i < newCards.length; i++) {
-        let zhJoined = newCards[i].zh.join('');
-        if (!studyList[zhJoined] && newCards[i].en) {
-            newKeys.push(zhJoined);
-            studyList[zhJoined] = {
-                en: newCards[i].en,
-                due: newCards[i].due,
-                zh: newCards[i].zh,
-                wrongCount: 0,
-                rightCount: 0,
-                type: cardTypes.RECOGNITION,
-                vocabOrigin: text,
-                language: languageKey || 'zh-CN',
-                added: Date.now()
-            };
-        }
-    }
-    // TODO: just not finding these useful. Make user prefs for them? Or just get rid of them...
-    // addRecallCards(newCards, text, newKeys, languageKey);
-    addClozeCards(newCards, text, newKeys, languageKey);
-    //TODO: remove these keys from /deleted/ to allow re-add
-    //update it whenever it changes
-    saveStudyList(newKeys, null, true);
-    callbacks[dataTypes.studyList].forEach(x => x(studyList));
-};
 
 let inStudyList = function (text) {
     return studyList[text];
@@ -550,4 +554,4 @@ async function analyzeImage(base64ImageContents) {
     return result;
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, addCards, inStudyList, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, isAiEligible, initialize, studyResult, dataTypes, cardTypes }
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, isAiEligible, initialize, studyResult, dataTypes, cardTypes }
