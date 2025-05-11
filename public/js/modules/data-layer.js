@@ -87,7 +87,9 @@ let updateCard = function (result, key) {
         card.interval = card.nextJump || 0;
     }
     if (card.streak === null || card.streak === undefined) {
-        card.streak = 0;
+        // the old basic geometric algorithm was just nextJump *= 2 for each correct answer
+        // and reset to 0 otherwise. It could also be 0.5 because I'm a dufus, so add 1 for fun.
+        card.streak = card.nextJump ? (1 + (Math.log(card.nextJump) / Math.log(2))) : 0;
     }
     card.lastReviewTimestamp = Date.now();
     const score = (result === studyResult.CORRECT) ? 4 : 1;
