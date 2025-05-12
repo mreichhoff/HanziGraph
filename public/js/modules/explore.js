@@ -1,4 +1,4 @@
-import { writeExploreState, addCard, inStudyList, explainChineseSentence, isAiEligible } from "./data-layer.js";
+import { writeExploreState, addCard, inStudyList, isFlashCardUser, explainChineseSentence, isAiEligible, countWordsWithoutCards, hasCardWithWord, registerCallback, dataTypes } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough, examplesList } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
@@ -173,6 +173,17 @@ function addFrequencyTag(word, container) {
     tag.innerHTML = `<span class="deemphasized">Freq: Top ${rankInThousands}k</span>`;
     container.appendChild(tag);
 }
+
+// used to render a tag showing how many cards a word is in at time of rendering its definitions
+let hasCardsElements = [];
+function addFlashCardDefinitionTag(word) {
+    if (!isFlashCardUser()) {
+        return '';
+    }
+    const hasCards = hasCardWithWord(word);
+    return `<span class="deemphasized">${hasCards ? "✅ Has flashcards" : "❌ No flashcards"}</span>`;
+}
+
 let setupDefinitions = function (word, definitionList, container) {
     if (!definitionList) {
         return;
@@ -212,6 +223,13 @@ let setupDefinitions = function (word, definitionList, container) {
         }
         if (isFirstlineItem) {
             addFrequencyTag(word, tagHolder);
+            const cardTag = document.createElement('span');
+            cardTag.classList.add('tag', 'nowrap');
+            cardTag.innerHTML = addFlashCardDefinitionTag(word);
+            if (isFlashCardUser() || tagHolder.children.length > 0) {
+                tagHolder.appendChild(cardTag);
+                hasCardsElements.push({ word, cardTag });
+            }
             isFirstlineItem = false;
         }
         definitionItem.appendChild(tagHolder);
@@ -419,6 +437,13 @@ function addPopoverMenuButton(word, example, container, text, aList, cardType) {
     });
 }
 
+// used for showing flash card users how many words in a sentence are not in their flash cards
+//
+// should we just use a framework for keeping this in sync with the underlying data?
+// oh yeah
+// but will I?
+// no
+let missingWordElements = [];
 let setupExampleElements = function (word, examples, exampleList, defaultSource) {
     for (let i = 0; i < examples.length; i++) {
         let exampleHolder = document.createElement('li');
@@ -474,6 +499,15 @@ let setupExampleElements = function (word, examples, exampleList, defaultSource)
             rankTag.innerHTML = `<span class="deemphasized">Avg char freq:</span> <span class="sentence-freq-tag">${easeString}</span>`;
             tagContainer.appendChild(rankTag);
         }
+        // if the user doesn't use HanziGraph for flashcards, render nothing.
+        // otherwise, let them know how many new words are in the sentence to aid the choice of whether to make a flashcard
+        const words = examples[i].zh.filter(x => x in wordSet);
+        const unknownWordCount = countWordsWithoutCards(words);
+        const unknownWordTag = document.createElement('span');
+        unknownWordTag.innerHTML = getUnknownWordHtml(unknownWordCount);
+        unknownWordTag.classList.add('tag', 'nowrap');
+        missingWordElements.push({ unknownWordTag, words });
+        tagContainer.appendChild(unknownWordTag);
         tagContainer.addEventListener('click', function (event) {
             if (event.target.nodeName.toLowerCase() === 'a') {
                 return;
@@ -484,6 +518,14 @@ let setupExampleElements = function (word, examples, exampleList, defaultSource)
         exampleList.appendChild(exampleHolder);
     }
 };
+function getUnknownWordHtml(unknownWordCount) {
+    if (!isFlashCardUser()) {
+        return '';
+    }
+    return unknownWordCount === 0 ?
+        `<span class="deemphasized">✅ No unknown words</span>` :
+        `<span class="deemphasized">No flashcards: <b>${unknownWordCount} word${unknownWordCount !== 1 ? 's' : ''}</b></span>`;
+}
 
 // expects callers to ensure augmentation is available
 let augmentExamples = function (word, container, maxExamples) {
@@ -897,6 +939,8 @@ function createLoadingDots() {
 
 let setupExamples = function (words, type, skipState, allowExplain, aiData) {
     currentExamples = {};
+    hasCardsElements = [];
+    missingWordElements = [];
     // if we're showing examples, never show the walkthrough.
     walkThrough.style.display = 'none';
     notFoundElement.style.display = 'none';
@@ -1069,6 +1113,15 @@ let initialize = function () {
     });
     voice = getVoice();
     fetchStats();
+    registerCallback(dataTypes.studyList, function () {
+        for (const item of missingWordElements) {
+            const unknownWordCount = countWordsWithoutCards(item.words);
+            item.unknownWordTag.innerHTML = getUnknownWordHtml(unknownWordCount);
+        }
+        for (const item of hasCardsElements) {
+            item.cardTag.innerHTML = addFlashCardDefinitionTag(item.word);
+        }
+    });
 };
 
 let makeSentenceNavigable = function (text, container, noExampleChange) {

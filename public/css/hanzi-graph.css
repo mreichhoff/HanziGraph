@@ -652,33 +652,26 @@ h2.word-header {
     font-size: 18px;
 }
 
-.tags {
-    margin-top: 8px;
-    line-height: 26px;
-}
-
 .tag {
     padding: 2px;
-    border-radius: 4px;
-    border: var(--tag-border);
     cursor: pointer;
     margin-right: 4px;
+    border: 0;
+    margin-left: 4px;
 }
 
 .example {
     margin: 16px 0;
 }
 
-.example .tags {
+.tags {
     margin-top: 2px;
     line-height: normal;
     border-left: 2px solid var(--accent-color);
-    display: inline-block;
 }
 
-.example .tag {
-    border: 0;
-    margin-left: 4px;
+.definition .tags {
+    margin-top: 8px;
 }
 
 .example .add-button {
@@ -688,6 +681,7 @@ h2.word-header {
 
 .example .three-dot {
     margin-left: 46px;
+    top: 8px;
 }
 
 .three-dot-container {
