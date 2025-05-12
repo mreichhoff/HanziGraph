@@ -24,10 +24,14 @@ const MAX_RECALL = 2;
 const MAX_CLOZE = 1;
 const MAX_BATCH_SIZE = 500;
 
+let studyListCharacters = new Set();
+let studyListWords = new Set();
 // TODO: get rid of all localStorage use. Switch to indexedDB instead.
 // fortunately, any signed-in user would use firestore for this, which
 // does use indexedDB.
 let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
+initVocabSets();
+
 let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
 
 let authenticatedUser = null;
@@ -173,6 +177,15 @@ let addClozeCards = function (newCards, text, newKeys, languageKey) {
     }
 };
 
+function updateVocabWithSentence(tokenizedSentence) {
+    for (const word of tokenizedSentence) {
+        studyListWords.add(word);
+        for (const character of word) {
+            studyListCharacters.add(character);
+        }
+    }
+}
+
 function addCard(example, text, languageKey) {
     let zhJoined = example.zh.join('');
     if (zhJoined in studyList) {
@@ -198,6 +211,8 @@ function addCard(example, text, languageKey) {
         added: Date.now()
     };
     saveStudyList(newKeys, null, true);
+    updateVocabWithSentence(example.zh);
+
     callbacks[dataTypes.studyList].forEach(x => x(studyList));
 }
 
@@ -208,14 +223,45 @@ let inStudyList = function (text) {
 let getStudyList = function () {
     return studyList;
 }
+function isFlashCardUser() {
+    return studyList && Object.keys(studyList).length > 0;
+}
 let findOtherCards = function (seeking, currentKey) {
     let cards = Object.keys(studyList);
     let candidates = cards.filter(x => x !== currentKey && (!studyList[x].type || studyList[x].type === cardTypes.RECOGNITION) && x.includes(seeking)).sort((a, b) => studyList[b].rightCount - studyList[a].rightCount);
     return candidates;
 };
 
+function countWordsWithoutCards(tokenizedSentence) {
+    let count = 0;
+    const uniqueWords = new Set(tokenizedSentence);
+    for (const word of uniqueWords) {
+        if (!studyListWords.has(word)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+function initVocabSets() {
+    studyListCharacters.clear();
+    studyListWords.clear();
+    for (const card of Object.values(studyList)) {
+        updateVocabWithSentence(card.zh);
+    }
+}
+
+function hasCardWithWord(word) {
+    if (word.length === 1) {
+        return studyListCharacters.has(word);
+    }
+    return studyListWords.has(word);
+}
+
 let removeFromStudyList = function (key) {
     delete studyList[key];
+    // could keep some mapping of cards to vocab they provide, but deletions are rare enough I'd rather not deal with it
+    initVocabSets();
     callbacks[dataTypes.studyList].forEach(x => x(studyList));
     saveStudyList([key]);
 };
@@ -339,6 +385,7 @@ let initialize = function () {
                 // find no changes and call it a day (and updates in that case are small).
                 if (!doc.metadata.hasPendingWrites || doc.metadata.fromCache) {
                     let madeUpdates = false;
+                    let mustResetVocab = false;
                     let serverStudyList = {};
                     let deletedKeys = [];
                     for (const item of doc.docChanges()) {
@@ -375,6 +422,9 @@ let initialize = function () {
                     if (!localStudyList || Object.keys(localStudyList).length < 1) {
                         for (const [key, value] of Object.entries(serverStudyList)) {
                             if (!studyList[key] || studyList[key].due !== value.due) {
+                                if (!studyList[key] && value.zh) {
+                                    updateVocabWithSentence(value.zh);
+                                }
                                 studyList[key] = value;
                                 madeUpdates = true;
                             }
@@ -382,11 +432,13 @@ let initialize = function () {
                         for (const deletedKey of deletedKeys) {
                             delete studyList[deletedKey];
                             madeUpdates = true;
+                            mustResetVocab = true;
                         }
                     } else {
                         for (const deletedKey of deletedKeys) {
                             delete studyList[deletedKey];
                             madeUpdates = true;
+                            mustResetVocab = true;
                         }
                         let updatedKeys = [];
                         for (const [key, value] of Object.entries(serverStudyList)) {
@@ -394,6 +446,9 @@ let initialize = function () {
                             if (localCard && ((localCard.rightCount + localCard.wrongCount) > (value.rightCount + value.wrongCount))) {
                                 updatedKeys.push(key);
                             } else {
+                                if (!studyList[key] && value.zh) {
+                                    updateVocabWithSentence(value.zh);
+                                }
                                 studyList[key] = value;
                                 madeUpdates = true;
                             }
@@ -410,6 +465,9 @@ let initialize = function () {
                     }
 
                     if (madeUpdates) {
+                        if (mustResetVocab) {
+                            initVocabSets();
+                        }
                         callbacks[dataTypes.studyList].forEach(x => x(studyList));
                     }
                 }
@@ -556,4 +614,4 @@ async function analyzeImage(base64ImageContents) {
     return result;
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, isAiEligible, initialize, studyResult, dataTypes, cardTypes }
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, countWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes }
