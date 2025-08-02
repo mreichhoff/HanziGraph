@@ -15,11 +15,13 @@ const toneColorInputElements = [
     document.getElementById('third-tone-color-chooser'),
     document.getElementById('fourth-tone-color-chooser')
 ];
+// these are still functions instead of hardcoded strings as it's easy to imagine
+// re-adding a light/dark theme distinction for defaults
 const defaultColors = [
-    () => '#ff635f',
-    () => (matchMedia('(prefers-color-scheme: dark)').matches ? '#7aeb34' : '#66c42b'),
-    () => '#de68ee',
-    () => '#68aaee'
+    () => '#ff0d0d',
+    () => '#00ab3f',
+    () => '#c800ff',
+    () => '#007bff'
 ];
 
 let hskLegend = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'];
