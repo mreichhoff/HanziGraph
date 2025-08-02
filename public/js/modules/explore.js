@@ -508,12 +508,6 @@ let setupExampleElements = function (word, examples, exampleList, defaultSource)
         unknownWordTag.classList.add('tag', 'nowrap');
         missingWordElements.push({ unknownWordTag, words });
         tagContainer.appendChild(unknownWordTag);
-        tagContainer.addEventListener('click', function (event) {
-            if (event.target.nodeName.toLowerCase() === 'a') {
-                return;
-            }
-            showFaq(faqTypes.sentenceMetadata);
-        });
         exampleHolder.appendChild(tagContainer);
         exampleList.appendChild(exampleHolder);
     }
@@ -961,6 +955,7 @@ let setupExamples = function (words, type, skipState, allowExplain, aiData) {
             aiResponseContainer.classList.add('ai-explanation-container');
             examplesList.appendChild(loadingDots);
             examplesList.appendChild(aiResponseContainer);
+            // todo: why not include the text as-is? this drops commas and stuff
             const wordsWithoutIgnored = words.map(x => x.ignore ? x.word : x);
             let joinedText = wordsWithoutIgnored.join('');
             explainChineseSentence(joinedText).then(result => {
@@ -979,6 +974,7 @@ let setupExamples = function (words, type, skipState, allowExplain, aiData) {
         } else if (aiData && isAiEligible()) {
             const aiResponseContainer = document.createElement('div');
             aiResponseContainer.classList.add('ai-explanation-container');
+            // same todo about ignored...does this drop commas?
             const wordsWithoutIgnored = words.map(x => x.ignore ? x.word : x);
             renderAiExplanationResponse(wordsWithoutIgnored, aiData, aiResponseContainer);
             examplesList.appendChild(aiResponseContainer);
