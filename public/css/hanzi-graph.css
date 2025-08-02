@@ -654,7 +654,6 @@ h2.word-header {
 
 .tag {
     padding: 2px;
-    cursor: pointer;
     margin-right: 4px;
     border: 0;
     margin-left: 4px;
@@ -668,6 +667,7 @@ h2.word-header {
     margin-top: 2px;
     line-height: normal;
     border-left: 2px solid var(--accent-color);
+    user-select: none;
 }
 
 .definition .tags {
