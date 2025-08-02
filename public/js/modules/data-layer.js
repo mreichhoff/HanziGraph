@@ -96,7 +96,7 @@ let updateCard = function (result, key) {
         card.streak = card.nextJump ? (1 + (Math.log(card.nextJump) / Math.log(2))) : 0;
     }
     card.lastReviewTimestamp = Date.now();
-    const score = (result === studyResult.CORRECT) ? 4 : 1;
+    const score = (result === studyResult.CORRECT) ? 5 : 1;
     if (result === studyResult.INCORRECT) {
         card.streak = 0;
         card.interval = 0;
