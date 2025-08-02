@@ -282,7 +282,7 @@ function setupStudyGraph() {
     studiedGraph.appendChild(
         BarChart(levelData, {
             labelText: (i) => legend[i],
-            color: () => "#68aaee",
+            color: () => "#007bff",
             clickHandler: clickHandler
         })
     );

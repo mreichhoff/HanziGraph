@@ -48,10 +48,10 @@
     --secondary-inactive-accent-color: #6a82fb;
     --legend-gradient-start: #fc5c7d;
     --legend-gradient-end: #6a82fb;
-    --tone-1-color: #ff635f;
-    --tone-2-color: #66c42b;
-    --tone-3-color: #de68ee;
-    --tone-4-color: #68aaee;
+    --tone-1-color: #ff0d0d;
+    --tone-2-color: #00ab3f;
+    --tone-3-color: #c800ff;
+    --tone-4-color: #007bff;
     --neutral-tone-color: #000;
     --legend-switch-button-border: 1px solid #000;
     --button-border-bottom: 3px solid var(--accent-color);
@@ -1832,7 +1832,6 @@ main.auth-form {
         --input-background-color: #2e2e2e;
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
-        --tone-2-color: #7aeb34;
         --neutral-tone-color: #aaa;
         --accent-color: #ccc;
         --legend-switch-button-border: 1px solid #ccc;

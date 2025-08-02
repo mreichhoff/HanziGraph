@@ -235,7 +235,7 @@ function getStylesheet() {
         {
             selector: 'edge',
             style: {
-                'line-color': (!isTones && !isTree) ? levelColor : prefersDark ? '#666' : '#121212',
+                'line-color': (!isTones && !isTree) ? levelColor : prefersDark ? '#444' : '#121212',
                 'target-arrow-shape': !isTree ? 'none' : 'triangle',
                 'curve-style': 'straight',
                 'label': !isTree ? 'data(displayWord)' : edgeLabel,
