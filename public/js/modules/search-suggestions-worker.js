@@ -20,7 +20,6 @@ function segment(text, locale) {
     if (!jiebaCut && (!Intl || !Intl.Segmenter)) {
         return [text];
     }
-    text = text.replace(/[？。！，·【】；：、?,'!]/g, '');
     let candidates = [];
     let result = [];
     if (jiebaCut) {
