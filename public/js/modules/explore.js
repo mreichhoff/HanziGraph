@@ -105,7 +105,7 @@ let runTextToSpeech = function (text, anchors) {
 };
 
 let renderPinyinForDefinition = function (pinyin, container) {
-    const syllables = pinyin.split(' ');
+    const syllables = getSyllables(pinyin);
     for (const syllable of syllables) {
         let syllableElement = document.createElement('span');
         // TODO: could just do this with CSS (.tonewhatever under .canto: no color coding)
@@ -122,7 +122,7 @@ function modifyHeaderTones(definitionList, word) {
     }
     // TODO just send the pinyin on the word set....
     const wordHolders = document.getElementsByClassName(`${word}-header`);
-    const syllables = definitionList[0].pinyin.split(' ');
+    const syllables = getSyllables(definitionList[0].pinyin);
     for (const wordHolder of wordHolders) {
         const elementsToModify = wordHolder.querySelectorAll('.word-header-character');
         if (syllables.length !== elementsToModify.length) {
@@ -587,11 +587,21 @@ let renderCharacterHeader = function (character, container) {
     });
     container.appendChild(characterHolder);
 }
+
+function getSyllables(pinyin) {
+    // some CEDICT entries include a " - ", so like:
+    // yi1 mu2 - yi1 yang4 rather than yi1 mu2 yi1 yang4
+    // arguably that should be a data fix, but I guess
+    // it looks slightly better for display that way.
+    // but for tone color coding, we just want to have each
+    // syllable pronunciation by itself.
+    return pinyin.replace(' - ', ' ').split(' ');
+}
 let renderWordHeaderByCharacter = function (word, container) {
     const definitionList = definitions[word];
     let syllables = null;
     if (definitionList && definitionList[0].pinyin) {
-        syllables = definitionList[0].pinyin.split(' ');
+        syllables = getSyllables(definitionList[0].pinyin);
         if (syllables.length !== word.length) {
             syllables = null;
         }
