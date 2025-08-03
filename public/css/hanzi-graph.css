@@ -1398,6 +1398,7 @@ input:checked {
     max-width: 95%;
     overflow: scroll;
     margin: 0 auto;
+    scrollbar-width: none;
 }
 
 /* TODO(refactor): study mode stuff needs to be made cleaner, too */
