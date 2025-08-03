@@ -121,15 +121,17 @@ function modifyHeaderTones(definitionList, word) {
         return;
     }
     // TODO just send the pinyin on the word set....
-    const wordHolder = document.getElementById(`${word}-header`);
+    const wordHolders = document.getElementsByClassName(`${word}-header`);
     const syllables = definitionList[0].pinyin.split(' ');
-    const elementsToModify = wordHolder.querySelectorAll('.word-header-character');
-    if (syllables.length !== elementsToModify.length) {
-        return;
-    }
-    for (let i = 0; i < elementsToModify.length; i++) {
-        const syllable = syllables[i];
-        elementsToModify[i].classList.add(`tone${syllable[syllable.length - 1]}`);
+    for (const wordHolder of wordHolders) {
+        const elementsToModify = wordHolder.querySelectorAll('.word-header-character');
+        if (syllables.length !== elementsToModify.length) {
+            return;
+        }
+        for (let i = 0; i < elementsToModify.length; i++) {
+            const syllable = syllables[i];
+            elementsToModify[i].classList.add(`tone${syllable[syllable.length - 1]}`);
+        }
     }
 }
 function parseDefinitions(definitionList) {
@@ -614,8 +616,7 @@ let renderWordHeader = function (word, container, active) {
     wordHolder.classList.add('word-header');
     let wordSpan = document.createElement('span');
     renderWordHeaderByCharacter(word, wordSpan);
-    wordSpan.id = `${word}-header`;
-    wordSpan.classList.add('clickable');
+    wordSpan.classList.add('clickable', `${word}-header`);
     wordHolder.appendChild(wordSpan);
     addPopoverMenuButton(word, null, wordHolder, word, [], cardTypes.definition);
     if (active) {
