@@ -965,6 +965,7 @@ let setupExamples = function (words, type, skipState, allowExplain, aiData) {
             aiResponseContainer.style.display = 'none';
             aiResponseContainer.classList.add('ai-explanation-container');
             examplesList.appendChild(loadingDots);
+            document.getElementById('explore-container').scrollTo({ top: 0 });
             examplesList.appendChild(aiResponseContainer);
             const wordsWithoutIgnored = words.map(x => x.ignore ? x.word : x);
             let joinedText = wordsWithoutIgnored.join('');
@@ -1100,7 +1101,6 @@ let initialize = function () {
     });
     document.addEventListener('loading-dots', function () {
         const loadingDots = createLoadingDots();
-
         // show the loading dots at the top of the examples, and assume it will
         // soon be cleared by a rendering of examples (this is a bad assumption)
         // (but at least there's a hide below, surely no client would ever mix that up)
