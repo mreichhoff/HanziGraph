@@ -5,7 +5,6 @@ import { renderCoverageGraph } from "./coverage-graph"
 import { diagramKeys, switchDiagramView, showNotification } from "./ui-orchestrator.js";
 import { findPinyinRelationships } from "./pronunciation-parser.js"
 import { renderUsageDiagram } from "./flow-diagram.js";
-import { showFaq, faqTypes } from "./faq.js";
 
 let coverageGraph = {};
 let charFreqs = null;
