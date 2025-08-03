@@ -1100,10 +1100,14 @@ let initialize = function () {
     });
     document.addEventListener('loading-dots', function () {
         const loadingDots = createLoadingDots();
+
         // show the loading dots at the top of the examples, and assume it will
         // soon be cleared by a rendering of examples (this is a bad assumption)
         // (but at least there's a hide below, surely no client would ever mix that up)
         examplesList.prepend(loadingDots);
+        // make sure the loading dots show up instead of leaving the user guessing what happened
+        // TODO: get rid of this getElementById here
+        document.getElementById('explore-container').scrollTo({ top: 0 });
     });
     document.addEventListener('hide-loading-dots', function () {
         const existingLoadingDots = examplesList.querySelector('.loading-dots');
