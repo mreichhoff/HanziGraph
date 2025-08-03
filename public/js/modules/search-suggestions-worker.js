@@ -173,7 +173,9 @@ function buildTries(wordSet, definitions) {
             // yixia or yi1xia4 for 一下)
             // however, we should also add all permutations (e.g., yixia4 could also return 一下)
             for (const pinyin of uniquePinyin) {
-                const syllables = pinyin.split(' ');
+                // not great to duplicate this logic in so many places but I don't feel like making this
+                // worker file a bundle
+                const syllables = pinyin.replace(' - ', ' ').split(' ');
                 let joinedPinyin = syllables.join('');
                 // could do replaceAll with regex, but that wasn't supported until more recently on
                 // android webview
