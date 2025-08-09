@@ -36,3 +36,17 @@ export const imageAnalysisSchema = z.object({
             grammarConceptExplanation: z.string(),
         })),
 });
+
+export const generateChineseSentencesInputSchema = z.object({
+    word: z.string(),
+    definitions: z.array(z.string()),
+});
+
+export const chineseSentenceGenerationSchema = z.object({
+    sentences: z.array(
+        z.object({
+            chineseTextWithoutPinyin: z.string(),
+            pinyin: z.string(),
+            englishTranslation: z.string(),
+        })),
+});

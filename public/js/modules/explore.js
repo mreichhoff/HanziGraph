@@ -1,4 +1,4 @@
-import { writeExploreState, addCard, inStudyList, isFlashCardUser, explainChineseSentence, isAiEligible, countWordsWithoutCards, hasCardWithWord, registerCallback, dataTypes } from "./data-layer.js";
+import { writeExploreState, addCard, inStudyList, isFlashCardUser, explainChineseSentence, generateChineseSentences, isAiEligible, countWordsWithoutCards, hasCardWithWord, registerCallback, dataTypes } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough, examplesList } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
@@ -11,6 +11,7 @@ let charFreqs = null;
 
 let maxExamples = 5;
 let currentExamples = {};
+let currentDefinitions = {};
 let currentWords = [];
 let menuPopover;
 
@@ -346,6 +347,7 @@ function renderMenu(word, aList, text, example, cardType) {
     numRows++;
 
     let shareRow = null;
+    let generateSentencesRow = null;
     if (cardType === cardTypes.definition) {
         const shareData = {
             text: `${word} | HanziGraph`,
@@ -375,6 +377,39 @@ function renderMenu(word, aList, text, example, cardType) {
             });
             numRows++;
         }
+
+        if (isAiEligible() && currentDefinitions[word]) {
+            numRows++;
+            generateSentencesRow = document.createElement('div');
+            generateSentencesRow.classList.add('popover-menu-row');
+            const generateSentencesIconSpan = document.createElement('span');
+            generateSentencesIconSpan.classList.add('ai-icon');
+            generateSentencesRow.appendChild(generateSentencesIconSpan);
+            const generateSentencesText = document.createElement('span');
+            generateSentencesText.innerText = 'Generate sentences';
+            generateSentencesRow.appendChild(generateSentencesText);
+            generateSentencesRow.addEventListener('click', async function () {
+                const exampleListsToAugment = document.getElementsByClassName(word);
+                for (const exampleListElement of exampleListsToAugment) {
+                    exampleListElement.innerHTML = '';
+                    const dotsItem = document.createElement('li');
+                    dotsItem.appendChild(createLoadingDots());
+                    exampleListElement.appendChild(dotsItem);
+                }
+                hideMenuPopover();
+                try {
+                    const sentences = await generateChineseSentences(word, currentDefinitions[word].map(x => x.en));
+                    for (const exampleListElement of exampleListsToAugment) {
+                        exampleListElement.innerHTML = '';
+                        setupExampleElements(word, sentences, exampleListElement, 'ai');
+                    }
+                } catch (e) {
+                    for (const exampleListElement of exampleListsToAugment) {
+                        exampleListElement.innerHTML = 'Generation failed. Please try again.';
+                    }
+                }
+            });
+        }
     }
 
     menuPopover.appendChild(speakRow);
@@ -382,6 +417,9 @@ function renderMenu(word, aList, text, example, cardType) {
     menuPopover.appendChild(copyRow);
     if (shareRow) {
         menuPopover.appendChild(shareRow);
+    }
+    if (generateSentencesRow) {
+        menuPopover.appendChild(generateSentencesRow);
     }
 
     return numRows;
@@ -450,6 +488,8 @@ let setupExampleElements = function (word, examples, exampleList, defaultSource)
         let exampleHolder = document.createElement('li');
         exampleHolder.classList.add('example');
         let zhHolder = document.createElement('p');
+        // TODO should really centralize this
+        examples[i].zh = examples[i].zh.map(x => x.ignore ? x.word : x);
         let exampleText = examples[i].zh.join('');
         let aList = makeSentenceNavigable(exampleText, zhHolder, true);
         zhHolder.className = 'target';
@@ -552,6 +592,7 @@ let augmentDefinitions = function (word, container) {
             // TODO(refactor): should this be moved to setupDefinitions (and same with setupExamples/augmentExamples)?
             if (definitionList.length > 0) {
                 currentExamples[word].push(getCardFromDefinitions(word, definitionList));
+                currentDefinitions[word] = definitionList;
             }
         });
 };
@@ -643,7 +684,7 @@ let renderWordHeader = function (word, container, active) {
 };
 let renderExamples = function (word, examples, maxExamples, container) {
     let exampleList = document.createElement('ul');
-    exampleList.classList.add('examples');
+    exampleList.classList.add('examples', word);
     container.appendChild(exampleList);
     if (examples.length > 0) {
         setupExampleElements(word, examples, exampleList, 'tatoeba');
@@ -943,6 +984,7 @@ function createLoadingDots() {
 
 let setupExamples = function (words, type, skipState, allowExplain, aiData) {
     currentExamples = {};
+    currentDefinitions = {};
     hasCardsElements = [];
     missingWordElements = [];
     // if we're showing examples, never show the walkthrough.
@@ -1001,6 +1043,7 @@ let setupExamples = function (words, type, skipState, allowExplain, aiData) {
         currentExamples[words[i]] = [];
         //TODO: definition list doesn't have the same interface (missing zh field)
         if (definitionList.length > 0) {
+            currentDefinitions[words[i]] = definitionList;
             currentExamples[words[i]].push(getCardFromDefinitions(words[i], definitionList));
         }
         //setup current examples for potential future export

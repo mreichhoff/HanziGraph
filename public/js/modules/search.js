@@ -6,6 +6,7 @@ import { translateEnglish, isAiEligible } from "./data-layer.js";
 
 let searchSuggestionsWorker = null;
 let pinyinMap = {};
+let pendingSentenceGenCallbacks = {};
 const mainHeader = document.getElementById('main-header');
 const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
 
@@ -31,6 +32,11 @@ function handleWorkerMessage(message) {
     }
     if (message.data.pinyinMap) {
         pinyinMap = message.data.pinyinMap;
+        return;
+    }
+    if (message.data.type === 'tokenize-list') {
+        pendingSentenceGenCallbacks[message.data.word](message.data.result);
+        delete pendingSentenceGenCallbacks[message.data.word];
         return;
     }
     // AI searches based on unknown English text will have an `originalQuery`, since the
@@ -161,6 +167,22 @@ async function initialize(term, mode) {
     document.addEventListener('ai-response', function (event) {
         hanziBox.value = event.detail.aiData.data.chineseTranslationWithoutPinyin;
         handleAiResponse(null, event.detail.aiData);
+    });
+    document.addEventListener('sentence-generation-response', function (event) {
+        if (pendingSentenceGenCallbacks[event.detail.word]) {
+            // shouldn't happen, but let the existing one win
+            event.detail.reject();
+            return;
+        }
+        pendingSentenceGenCallbacks[event.detail.word] = event.detail.resolve;
+        searchSuggestionsWorker.postMessage({
+            type: 'tokenize-list',
+            payload: {
+                query: event.detail.aiData.data.sentences,
+                locale: getActiveGraph().locale,
+                word: event.detail.word
+            }
+        });
     });
 }
 
