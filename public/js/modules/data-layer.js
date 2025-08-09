@@ -602,6 +602,23 @@ async function translateEnglish(text) {
     return result;
 }
 
+async function generateChineseSentences(word, definitions) {
+    const functions = getFunctions();
+    // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+    const generateChineseSentences = httpsCallable(functions, 'generateChineseSentences');
+    const aiData = await generateChineseSentences({ word, definitions });
+    // lol, rube goldberg...run this event to trigger search to trigger the worker, which will tokenize the sentences
+    // based on the dictionary known by this client (the backend likely should tokenize instead, but I'm lazy and one
+    // could imagine old clients wanting to continue using their version of the Chinese dictionary). The tokenization
+    // will finish and then resolve the promise (or reject if there's a conflicting request for this same word), and then
+    // we can just return the sentences for rendering. The caller of this function need not know it's a giant mess,
+    // and we could move tokenization for this call to the backend if needed without changing this interface.
+    const tokenizedSentences = await new Promise((resolve, reject) => {
+        document.dispatchEvent(new CustomEvent('sentence-generation-response', { detail: { aiData, word, resolve, reject } }));
+    });
+    return tokenizedSentences;
+}
+
 function isAiEligible() {
     return aiEligible;
 }
@@ -614,4 +631,4 @@ async function analyzeImage(base64ImageContents) {
     return result;
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, countWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes }
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, countWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, generateChineseSentences, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes }

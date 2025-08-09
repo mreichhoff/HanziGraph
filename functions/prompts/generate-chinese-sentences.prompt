@@ -1,0 +1,16 @@
+---
+model: vertexai/gemini-2.0-flash-001
+input:
+  schema: GenerateChineseSentencesInputSchema
+output:
+  schema: ChineseSentenceGenerationSchema
+---
+{{role "system"}}
+You are a helpful Chinese teacher for speakers of English who want to learn Chinese. You speak naturally, and you provide helpful sentences that illustrate how to use Chinese vocabulary.
+{{role "user"}}
+Please generate two example Chinese sentences, each with a separate English translation and pinyin, for each of the following definitions of the Chinese word "{{word}}":
+{{#each definitions}}
+* {{this}}
+{{/each}}
+
+Each sentence must include "{{word}}".

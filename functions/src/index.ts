@@ -3,7 +3,13 @@ import { genkit, z } from "genkit";
 import { vertexAI, gemini20Flash001 } from '@genkit-ai/vertexai';
 import * as admin from 'firebase-admin';
 import { isUserAuthorized } from "./auth";
-import { explanationSchema, englishExplanationSchema, imageAnalysisSchema } from "./schema";
+import {
+    explanationSchema,
+    englishExplanationSchema,
+    imageAnalysisSchema,
+    chineseSentenceGenerationSchema,
+    generateChineseSentencesInputSchema,
+} from "./schema";
 
 let firebaseApp: admin.app.App;
 
@@ -93,3 +99,34 @@ const analyzeImageFlow = ai.defineFlow({
 });
 
 export const analyzeImage = onCallGenkit(analyzeImageFlow);
+
+const ChineseSentenceGenerationSchema = ai.defineSchema(
+    'ChineseSentenceGenerationSchema',
+    chineseSentenceGenerationSchema
+);
+const GenerateChineseSentencesInputSchema = ai.defineSchema(
+    'GenerateChineseSentencesInputSchema',
+    generateChineseSentencesInputSchema
+);
+const generateChineseSentencesPrompt = ai.prompt<
+    typeof GenerateChineseSentencesInputSchema, typeof ChineseSentenceGenerationSchema>('generate-chinese-sentences');
+const generateChineseSentencesFlow = ai.defineFlow({
+    name: "generateChineseSentences",
+    inputSchema: generateChineseSentencesInputSchema,
+    outputSchema: chineseSentenceGenerationSchema,
+}, async (request, { context }) => {
+    if (!firebaseApp) {
+        firebaseApp = admin.initializeApp();
+    }
+    const isAuthorized = await isUserAuthorized(context);
+    if (!isAuthorized) {
+        throw new HttpsError("permission-denied", "user not authorized");
+    }
+    const { output } = await generateChineseSentencesPrompt(request);
+    if (!output) {
+        throw new HttpsError("internal", 'oh no, the model like, failed?');
+    }
+    return output;
+});
+
+export const generateChineseSentences = onCallGenkit(generateChineseSentencesFlow);

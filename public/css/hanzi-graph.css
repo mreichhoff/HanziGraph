@@ -1153,6 +1153,15 @@ h2.word-header {
     left: 12px
 }
 
+.ai-icon {
+    display: inline-block;
+    transform: rotate(45deg);
+    width: 18px;
+    background: linear-gradient(var(--tone-4-color), var(--tone-3-color));
+    height: 18px;
+    margin: 0 16px 0 4px;
+}
+
 /* Legend stuff, ugly but less critical */
 
 .legend {

@@ -257,5 +257,19 @@ onmessage = async function (e) {
             originalQuery: e.data.payload.originalQuery,
             aiData: e.data.payload.aiData
         });
+    } else if (e.data.type === 'tokenize-list') {
+        let result = [];
+        for (const sentence of e.data.payload.query) {
+            result.push({
+                zh: segment(sentence.chineseTextWithoutPinyin, e.data.payload.locale),
+                en: sentence.englishTranslation,
+                pinyin: sentence.pinyin
+            })
+        }
+        postMessage({
+            result,
+            type: e.data.type,
+            word: e.data.payload.word
+        });
     }
 }
