@@ -358,6 +358,24 @@ let getResultCount = function (results) {
     return (results[studyResult.CORRECT] || 0) + (results[studyResult.INCORRECT] || 0);
 }
 
+let authStateUnsubscribe = null;
+let studyListUnsubscribe = null;
+let hourlyUnsubscribe = null;
+let dailyUnsubscribe = null;
+let permissionsUnsubscribe = null;
+let receivedAuthEventCount = 0;
+let receivedStudyListEventCount = 0;
+let receivedPermissionsEventCount = 0;
+let receivedDailyEventCount = 0;
+let receivedHourlyEventCount = 0;
+let lastStudyListTimestamp = Date.now();
+let lastAuthTimestamp = Date.now();
+
+const debugElement = document.getElementById('debug');
+setInterval(() => {
+    debugElement.innerHTML = `auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}`;
+}, 15000);
+
 let initialize = function () {
     let auth = getAuth();
     const app = getApp();
@@ -368,7 +386,9 @@ let initialize = function () {
         });
 
     // TODO cancel callback?
-    onAuthStateChanged(auth, (user) => {
+    authStateUnsubscribe = onAuthStateChanged(auth, (user) => {
+        receivedAuthEventCount++;
+        lastAuthTimestamp = Date.now();
         if (user) {
             authenticatedUser = user;
             //TODO get study results here, too
@@ -377,7 +397,9 @@ let initialize = function () {
             let localStudyList = JSON.parse(localStorage.getItem('studyList'));
             let localStudyResults = JSON.parse(localStorage.getItem('studyResults'));
             //TODO: these are all horribly repetitive and overengineered
-            onSnapshot(collection(db, `users/${authenticatedUser.uid}/studyList`), { includeMetadataChanges: true }, (doc) => {
+            studyListUnsubscribe = onSnapshot(collection(db, `users/${authenticatedUser.uid}/studyList`), { includeMetadataChanges: true }, (doc) => {
+                receivedStudyListEventCount++;
+                lastStudyListTimestamp = Date.now();
                 // if hasPendingWrites is true, we're getting a notification for our own write; ignore
                 // unless it's fromCache, possibly indicating offline updates
                 // TODO: is this or clause effectively just making this always get entered?
@@ -473,7 +495,8 @@ let initialize = function () {
                 }
             });
             // TODO: combine hourly and daily
-            onSnapshot(collection(db, `users/${authenticatedUser.uid}/hourly`), { includeMetadataChanges: true }, (doc) => {
+            hourlyUnsubscribe = onSnapshot(collection(db, `users/${authenticatedUser.uid}/hourly`), { includeMetadataChanges: true }, (doc) => {
+                receivedHourlyEventCount++;
                 if (!doc.metadata.hasPendingWrites || doc.metadata.fromCache) {
                     let serverHourly = {};
                     for (const item of doc.docChanges()) {
@@ -513,7 +536,8 @@ let initialize = function () {
                     }
                 }
             });
-            onSnapshot(collection(db, `users/${authenticatedUser.uid}/daily`), { includeMetadataChanges: true }, (doc) => {
+            dailyUnsubscribe = onSnapshot(collection(db, `users/${authenticatedUser.uid}/daily`), { includeMetadataChanges: true }, (doc) => {
+                receivedDailyEventCount++;
                 if (!doc.metadata.hasPendingWrites || doc.metadata.fromCache) {
                     let serverDaily = {};
                     for (const item of doc.docChanges()) {
@@ -553,7 +577,8 @@ let initialize = function () {
             });
 
             // users have permission to read their own doc in permissions, but not to write it.
-            onSnapshot(doc(db, `permissions/${authenticatedUser.uid}`), doc => {
+            permissionsUnsubscribe = onSnapshot(doc(db, `permissions/${authenticatedUser.uid}`), doc => {
+                receivedPermissionsEventCount++;
                 aiEligible = (doc && doc.get('ai') === true);
                 document.dispatchEvent(new CustomEvent('ai-eligibility-changed', { detail: aiEligible }));
             })
@@ -561,7 +586,14 @@ let initialize = function () {
             // no signed in user means no AI features.
             aiEligible = false;
             document.dispatchEvent(new CustomEvent('ai-eligibility-changed', { detail: aiEligible }));
+            studyListUnsubscribe();
+            hourlyUnsubscribe();
+            dailyUnsubscribe();
+            permissionsUnsubscribe();
         }
+    });
+    document.addEventListener('force-debug', function () {
+        debugElement.innerHTML = `auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}`;
     });
 };
 

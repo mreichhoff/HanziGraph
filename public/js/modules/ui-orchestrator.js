@@ -301,6 +301,7 @@ function handleTouchMove(event) {
 
 function initialize() {
     leftButtonContainer.addEventListener('click', function () {
+        document.dispatchEvent(new CustomEvent('force-debug'));
         if (states[currentState].leftState) {
             switchToState(states[currentState].leftState);
         }
