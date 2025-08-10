@@ -372,16 +372,22 @@ let lastStudyListTimestamp = Date.now();
 let lastAuthTimestamp = Date.now();
 let debugString = '';
 let intervalCount = 0;
+let db = null;
+let app = null;
+let auth = null;
 
 const debugElement = document.getElementById('debug');
+function getDebug() {
+    return `db: ${JSON.stringify(db)}<br>app: ${JSON.stringify(app)}<br>auth:${JSON.stringify(auth)}<br>uid: ${authenticatedUser.uid}<br>unsubscribe: ${JSON.stringify(studyListUnsubscribe)}<br>errors: ${debugString}<br>auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}<br>interval fired: ${intervalCount}`;
+}
 setInterval(() => {
     intervalCount++;
-    debugElement.innerHTML = `errors: ${debugString}<br>auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}<br>interval fired: ${intervalCount}`;
+    debugElement.innerHTML = getDebug();
 }, 15000);
 
 let initialize = function () {
-    let auth = getAuth();
-    const app = getApp();
+    auth = getAuth();
+    app = getApp();
     initializeFirestore(app,
         {
             localCache:
@@ -395,7 +401,7 @@ let initialize = function () {
         if (user) {
             authenticatedUser = user;
             //TODO get study results here, too
-            const db = getFirestore();
+            db = getFirestore();
 
             let localStudyList = JSON.parse(localStorage.getItem('studyList'));
             let localStudyResults = JSON.parse(localStorage.getItem('studyResults'));
@@ -604,7 +610,7 @@ let initialize = function () {
         }
     });
     document.addEventListener('force-debug', function () {
-        debugElement.innerHTML = `errors: ${debugString}<br>auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}<br>interval fired: ${intervalCount}`;
+        debugElement.innerHTML = getDebug();
     });
 };
 
