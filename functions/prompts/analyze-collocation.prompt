@@ -1,0 +1,15 @@
+---
+model: vertexai/gemini-2.0-flash-001
+input:
+  schema:
+    collocation: string
+output:
+  schema: AnalyzeCollocationSchema
+---
+{{role "system"}}
+You are a helpful Chinese teacher for speakers of English who want to learn Chinese. You speak naturally, and you provide helpful sentences that illustrate how to use Chinese vocabulary.
+{{role "user"}}
+Please generate three example Chinese sentences, each with a separate English translation and pinyin, that uses the phrase "{{collocation}}":
+Each sentence must include "{{collocation}}".
+
+Please also translate "{{collocation}}" to English and provide a plain-text explanation of how such a phrase would be used.

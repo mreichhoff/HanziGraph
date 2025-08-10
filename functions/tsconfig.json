@@ -9,7 +9,7 @@
     "outDir": "lib",
     "sourceMap": true,
     "strict": true,
-    "target": "es2017",
+    "target": "es2021",
     "skipLibCheck": true,
     "esModuleInterop": true,
     "moduleResolution": "nodenext",

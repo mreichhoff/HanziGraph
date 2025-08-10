@@ -42,11 +42,19 @@ export const generateChineseSentencesInputSchema = z.object({
     definitions: z.array(z.string()),
 });
 
+const sentenceSchema = z.array(
+    z.object({
+        chineseTextWithoutPinyin: z.string(),
+        pinyin: z.string(),
+        englishTranslation: z.string(),
+    }));
+
 export const chineseSentenceGenerationSchema = z.object({
-    sentences: z.array(
-        z.object({
-            chineseTextWithoutPinyin: z.string(),
-            pinyin: z.string(),
-            englishTranslation: z.string(),
-        })),
+    sentences: sentenceSchema,
+});
+
+export const analyzeCollocationSchema = z.object({
+    englishTranslation: z.string(),
+    plainTextExplanation: z.string(),
+    sentences: sentenceSchema,
 });

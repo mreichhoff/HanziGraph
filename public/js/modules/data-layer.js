@@ -619,6 +619,21 @@ async function generateChineseSentences(word, definitions) {
     return tokenizedSentences;
 }
 
+async function analyzeCollocation(collocation) {
+    const functions = getFunctions();
+    // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+    const analyzeCollocation = httpsCallable(functions, 'analyzeCollocation');
+    const aiData = await analyzeCollocation(collocation);
+    // same explanation of goofiness as `generateChineseSentences`. In the collocation case, we both generate sentences
+    // and get an explanation back. Tokenize the sentences, then return the whole thing.
+    const tokenizedSentences = await new Promise((resolve, reject) => {
+        document.dispatchEvent(new CustomEvent('sentence-generation-response', { detail: { aiData, collocation, resolve, reject } }));
+    });
+    // i know i shouldn't
+    aiData.data['sentences'] = tokenizedSentences;
+    return aiData;
+}
+
 function isAiEligible() {
     return aiEligible;
 }
@@ -631,4 +646,4 @@ async function analyzeImage(base64ImageContents) {
     return result;
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, countWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, generateChineseSentences, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes }
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, countWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, generateChineseSentences, analyzeCollocation, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes }
