@@ -3,6 +3,8 @@ import { sankey, sankeyLinkHorizontal, sankeyCenter, sankeyJustify, sankeyRight,
 import { map, schemeTableau10, union, scaleOrdinal, format as d3format, create } from "d3";
 import { getPartition, getActiveGraph } from "./options";
 import { faqTypes, showFaq } from "./faq";
+import { isAiEligible, analyzeCollocation } from "./data-layer";
+import { createLoadingDots } from "./dom";
 
 function addToTrie(trie, collocation, count, term, maxDepth) {
     let words = collocation.split(' ');
@@ -132,7 +134,7 @@ function renderCollocationData(term, collocations, nextSibling, container) {
     let description = document.createElement('p');
     description.className = 'collocations-detail';
     // TODO: assumption of ranks being present ok for now, but should be switched (well, a couple refactors would be good there)
-    description.innerHTML = `When you see <span class="emphasized freq${getFrequencyLevel(wordSet[term], getActiveGraph().ranks)}">${term}</span>, it's often used with:`;
+    description.innerHTML = `<span class="emphasized freq${getFrequencyLevel(wordSet[term], getActiveGraph().ranks)}">${term}</span> is often used with:`;
     for (const collocation of sorted) {
         let collocationsContainer = document.createElement('p');
         collocationsContainer.classList.add('collocation');
@@ -158,6 +160,10 @@ async function renderUsageDiagram(term, container) {
     // TODO(refactor): consolidate explanation classes
     explanation.classList.add('flow-explanation');
     container.appendChild(explanation);
+    // will be empty unless the user is eligible
+    const aiContainer = document.createElement('div');
+    aiContainer.classList.add('inline-button-container');
+    container.appendChild(aiContainer);
     explanation.innerText = 'Loading...';
     let count = 0;
     let loadingIndicator = setInterval(function () {
@@ -203,6 +209,32 @@ async function renderUsageDiagram(term, container) {
         nodeAlign: 'center',
         linkTitle: d => `${elements.labels[d.source.id]} ${elements.labels[d.target.id]}: ${d.value}`,
         linkClickHandler: (d, i) => {
+            if (isAiEligible()) {
+                aiContainer.innerHTML = '';
+                aiContainer.classList.remove('ai-explanation-container');
+                aiContainer.classList.add('inline-button-container');
+                const collocationsAtClickedNode = elements.collocations[i.id];
+                for (const collocation of collocationsAtClickedNode) {
+                    const collocationSentencesContainer = document.createElement('div');
+                    collocationSentencesContainer.classList.add('inline-menu-item');
+                    const aiIcon = document.createElement('span');
+                    aiIcon.classList.add('ai-icon');
+                    const sentenceButton = document.createElement('span');
+                    sentenceButton.innerText = `Analyze "${collocation}"`;
+                    collocationSentencesContainer.appendChild(aiIcon);
+                    collocationSentencesContainer.appendChild(sentenceButton);
+                    collocationSentencesContainer.addEventListener('click', async function () {
+                        aiContainer.innerHTML = '';
+                        aiContainer.classList.remove('inline-button-container');
+                        aiContainer.appendChild(createLoadingDots());
+                        const aiData = await analyzeCollocation(collocation);
+                        aiContainer.innerHTML = '';
+                        aiContainer.classList.add('ai-explanation-container');
+                        document.dispatchEvent(new CustomEvent('collocation-analysis-response', { detail: { aiData, term, collocation, aiContainer } }));
+                    });
+                    aiContainer.appendChild(collocationSentencesContainer);
+                }
+            }
             getCollocations(elements.labels[i.id]);
             switchDiagramView(diagramKeys.main);
             document.dispatchEvent(new CustomEvent('graph-update', { detail: elements.labels[i.id] }));

@@ -9,6 +9,7 @@ import {
     imageAnalysisSchema,
     chineseSentenceGenerationSchema,
     generateChineseSentencesInputSchema,
+    analyzeCollocationSchema,
 } from "./schema";
 
 let firebaseApp: admin.app.App;
@@ -130,3 +131,29 @@ const generateChineseSentencesFlow = ai.defineFlow({
 });
 
 export const generateChineseSentences = onCallGenkit(generateChineseSentencesFlow);
+
+const AnalyzeCollocationSchema = ai.defineSchema('AnalyzeCollocationSchema', analyzeCollocationSchema);
+const analyzeCollocationPrompt = ai.prompt<z.ZodTypeAny, typeof AnalyzeCollocationSchema>('analyze-collocation');
+
+const analyzeCollocationFlow = ai.defineFlow({
+    name: "analyzeCollocation",
+    inputSchema: z.string(),
+    outputSchema: analyzeCollocationSchema,
+}, async (collocation, { context }) => {
+    if (!firebaseApp) {
+        firebaseApp = admin.initializeApp();
+    }
+    const isAuthorized = await isUserAuthorized(context);
+    if (!isAuthorized) {
+        throw new HttpsError("permission-denied", "user not authorized");
+    }
+    collocation = collocation.replaceAll(' ', '');
+    const { output } = await analyzeCollocationPrompt({ collocation });
+    if (!output) {
+        throw new HttpsError("internal", 'oh no, the model like, failed?');
+    }
+    return output;
+},
+);
+
+export const analyzeCollocation = onCallGenkit(analyzeCollocationFlow);

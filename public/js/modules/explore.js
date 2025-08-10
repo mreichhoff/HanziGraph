@@ -1,5 +1,5 @@
 import { writeExploreState, addCard, inStudyList, isFlashCardUser, explainChineseSentence, generateChineseSentences, isAiEligible, countWordsWithoutCards, hasCardWithWord, registerCallback, dataTypes } from "./data-layer.js";
-import { hanziBox, notFoundElement, walkThrough, examplesList } from "./dom.js";
+import { hanziBox, notFoundElement, walkThrough, examplesList, createLoadingDots } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
 import { diagramKeys, switchDiagramView, showNotification } from "./ui-orchestrator.js";
@@ -949,6 +949,19 @@ function renderExplanation(explanation, container) {
     container.appendChild(explanationContainer);
 }
 
+// TODO combine with renderExplanation (or like, just use a framework)
+function renderStandaloneTranslation(translation, term, container) {
+    const translationHeader = document.createElement('h3');
+    translationHeader.innerText = `Translation`;
+
+    const translationContainer = document.createElement('div');
+    translationContainer.classList.add('emphasized-but-not-that-emphasized');
+    translationContainer.innerText = `"${term}" translates as: "${translation}".`;
+
+    container.appendChild(translationHeader);
+    container.appendChild(translationContainer);
+}
+
 function renderAiExplanationResponse(words, response, container) {
     // TODO: error states
     const data = response.data;
@@ -972,14 +985,6 @@ function renderAiExplanationResponse(words, response, container) {
     container.appendChild(exampleList);
     container.appendChild(explanationContainer);
     container.appendChild(grammarContainer);
-}
-
-function createLoadingDots() {
-    const loadingDots = document.createElement('div');
-    loadingDots.classList.add('loading-dots');
-    // there uh....there's four dots, ok?
-    loadingDots.innerHTML = '<div></div><div></div><div></div><div></div>';
-    return loadingDots;
 }
 
 let setupExamples = function (words, type, skipState, allowExplain, aiData) {
@@ -1161,6 +1166,22 @@ let initialize = function () {
     window.addEventListener('resize', function () {
         // resizing the screen throws off positioning of the menu...just hide it
         menuPopover.hidePopover();
+    });
+    // TODO this does not belong here...move the AI stuff to its own module, and common rendering functions
+    // to another.
+    document.addEventListener('collocation-analysis-response', function (event) {
+        const explanationContainer = document.createElement('div');
+        const translationContainer = document.createElement('div');
+        explanationContainer.classList.add('ai-explanation');
+        renderStandaloneTranslation(event.detail.aiData.data.englishTranslation, event.detail.collocation, translationContainer);
+        explanationContainer.appendChild(translationContainer);
+        const explanation = event.detail.aiData.data.plainTextExplanation;
+        event.detail.aiContainer.appendChild(explanationContainer);
+        renderExplanation(explanation, explanationContainer);
+        const exampleContainer = document.createElement('ul');
+        exampleContainer.classList.add('examples');
+        event.detail.aiContainer.appendChild(exampleContainer);
+        setupExampleElements(null, event.detail.aiData.data.sentences, exampleContainer, 'ai');
     });
     voice = getVoice();
     fetchStats();

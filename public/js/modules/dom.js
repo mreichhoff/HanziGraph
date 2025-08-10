@@ -35,4 +35,12 @@ function writeSeoMetaTags(urlState, graphDisplay) {
     }
 }
 
-export { hanziBox, notFoundElement, walkThrough, examplesList, searchControl, writeSeoMetaTags }
+function createLoadingDots() {
+    const loadingDots = document.createElement('div');
+    loadingDots.classList.add('loading-dots');
+    // there uh....there's four dots, ok?
+    loadingDots.innerHTML = '<div></div><div></div><div></div><div></div>';
+    return loadingDots;
+}
+
+export { hanziBox, notFoundElement, walkThrough, examplesList, searchControl, createLoadingDots, writeSeoMetaTags }
