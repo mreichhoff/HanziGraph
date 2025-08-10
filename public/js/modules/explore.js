@@ -770,22 +770,22 @@ let renderTabs = function (container, texts, panels, renderCallbacks, transition
     for (let i = 0; i < texts.length; i++) {
         let tabContainer = document.createElement('span');
         tabContainer.classList.add('explore-tab');
-        tabContainer.id = `tab-${texts[i].toLowerCase()}`;
+        tabContainer.dataset.tabid = `tab-${texts[i].toLowerCase()}`;
         if (i === 0) {
             tabContainer.classList.add('active');
         }
         tabContainer.innerText = texts[i];
         renderSeparator(tabContainer);
         container.appendChild(tabContainer);
-        tabs[tabContainer.id] = {
+        tabs[tabContainer.dataset.tabid] = {
             tab: tabContainer,
             panel: panels[i],
             callback: renderCallbacks[i],
             transitionClass: transitionClasses[i]
         };
 
-        tabContainer.addEventListener('click', function (event) {
-            switchToTab(event.target.id, tabs);
+        tabContainer.addEventListener('click', function () {
+            switchToTab(tabContainer.dataset.tabid, tabs);
         });
     }
     return tabs;
