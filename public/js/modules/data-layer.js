@@ -370,10 +370,13 @@ let receivedDailyEventCount = 0;
 let receivedHourlyEventCount = 0;
 let lastStudyListTimestamp = Date.now();
 let lastAuthTimestamp = Date.now();
+let debugString = '';
+let intervalCount = 0;
 
 const debugElement = document.getElementById('debug');
 setInterval(() => {
-    debugElement.innerHTML = `auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}`;
+    intervalCount++;
+    debugElement.innerHTML = `errors: ${debugString}<br>auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}<br>interval fired: ${intervalCount}`;
 }, 15000);
 
 let initialize = function () {
@@ -493,6 +496,8 @@ let initialize = function () {
                         callbacks[dataTypes.studyList].forEach(x => x(studyList));
                     }
                 }
+            }, (error) => {
+                debugString += JSON.stringify(error);
             });
             // TODO: combine hourly and daily
             hourlyUnsubscribe = onSnapshot(collection(db, `users/${authenticatedUser.uid}/hourly`), { includeMetadataChanges: true }, (doc) => {
@@ -535,6 +540,8 @@ let initialize = function () {
                         }
                     }
                 }
+            }, (error) => {
+                debugString += JSON.stringify(error);
             });
             dailyUnsubscribe = onSnapshot(collection(db, `users/${authenticatedUser.uid}/daily`), { includeMetadataChanges: true }, (doc) => {
                 receivedDailyEventCount++;
@@ -574,6 +581,8 @@ let initialize = function () {
                         }
                     }
                 }
+            }, (error) => {
+                debugString += JSON.stringify(error);
             });
 
             // users have permission to read their own doc in permissions, but not to write it.
@@ -581,6 +590,8 @@ let initialize = function () {
                 receivedPermissionsEventCount++;
                 aiEligible = (doc && doc.get('ai') === true);
                 document.dispatchEvent(new CustomEvent('ai-eligibility-changed', { detail: aiEligible }));
+            }, (error) => {
+                debugString += JSON.stringify(error);
             })
         } else {
             // no signed in user means no AI features.
@@ -593,7 +604,7 @@ let initialize = function () {
         }
     });
     document.addEventListener('force-debug', function () {
-        debugElement.innerHTML = `auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}`;
+        debugElement.innerHTML = `errors: ${debugString}<br>auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}<br>interval fired: ${intervalCount}`;
     });
 };
 
