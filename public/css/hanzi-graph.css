@@ -95,7 +95,7 @@ body {
     -webkit-tap-highlight-color: transparent;
     /* in general, disallow overscroll gestures from causing refresh */
     /* the idea is to feel more like a native app */
-    overscroll-behavior: none;
+    overscroll-behavior: contain;
 }
 
 body.allow-overscroll {
