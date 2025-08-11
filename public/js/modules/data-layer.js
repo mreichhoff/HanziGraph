@@ -388,7 +388,7 @@ setInterval(() => {
 let initialize = function () {
     auth = getAuth();
     app = getApp();
-    initializeFirestore(app,
+    db = initializeFirestore(app,
         {
             localCache:
                 persistentLocalCache(/*settings*/{})
@@ -401,7 +401,7 @@ let initialize = function () {
         if (user) {
             authenticatedUser = user;
             //TODO get study results here, too
-            db = getFirestore();
+            // db = getFirestore();
 
             let localStudyList = JSON.parse(localStorage.getItem('studyList'));
             let localStudyResults = JSON.parse(localStorage.getItem('studyResults'));
