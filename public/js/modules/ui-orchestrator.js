@@ -56,7 +56,8 @@ const states = {
         rightState: 'main',
         paneAnimation: 'slide-in',
         activateCallbacks: [],
-        deactivateCallbacks: []
+        deactivateCallbacks: [],
+        bodyClass: 'allow-overscroll'
     },
     faq: {
         leftButtonClass: 'exit-button',
@@ -125,6 +126,11 @@ function switchToState(state) {
         stateConfig.activeContainer.addEventListener('animationend', function () {
             stateConfig.activeContainer.classList.remove(stateConfig.animation);
         }, { once: true });
+    }
+    if(stateConfig.bodyClass) {
+        document.body.className = stateConfig.bodyClass;
+    } else {
+        document.body.removeAttribute('class');
     }
 
     if (stateConfig.activePane) {
