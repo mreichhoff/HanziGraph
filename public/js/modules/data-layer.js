@@ -375,11 +375,19 @@ let intervalCount = 0;
 let db = null;
 let app = null;
 let auth = null;
+let freezeCount = 0;
+let lastFreeze = null;
+let resumeCount = 0;
+let lastResume = null;
+let hiddenCount = 0;
+let lastHidden = null;
+let visibleCount = 0;
+let lastVisible = null;
 
 const debugElement = document.getElementById('debug');
 function getDebug() {
-    return `db: ${JSON.stringify(db)}<br>app: ${JSON.stringify(app)}<br>auth:${JSON.stringify(auth)}<br>uid: ${authenticatedUser.uid}<br>unsubscribe: ${JSON.stringify(studyListUnsubscribe)}<br>errors: ${debugString}<br>auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}<br>interval fired: ${intervalCount}`;
-}
+    return `hidden: ${hiddenCount}; ${lastHidden}<br>vis: ${visibleCount}; ${lastVisible}<br>resume: ${resumeCount}; ${lastResume}<br>freeze: ${freezeCount}; ${lastFreeze}<br>uid: ${authenticatedUser.uid}<br>unsubscribe: ${JSON.stringify(studyListUnsubscribe)}<br>errors: ${debugString}<br>auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}<br>interval fired: ${intervalCount}`;
+}//db: ${JSON.stringify(db)}<br>app: ${JSON.stringify(app)}<br>auth:${JSON.stringify(auth)}
 setInterval(() => {
     intervalCount++;
     debugElement.innerHTML = getDebug();
@@ -611,6 +619,24 @@ let initialize = function () {
     });
     document.addEventListener('force-debug', function () {
         debugElement.innerHTML = getDebug();
+    });
+    document.addEventListener('freeze', function () {
+        freezeCount++;
+        lastFreeze = Date.now();
+    });
+    document.addEventListener('resume', function () {
+        resumeCount++;
+        lastResume = Date.now();
+    });
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            hiddenCount++;
+            lastHidden = Date.now();
+        } else {
+            // Page became visible
+            visibleCount++;
+            lastVisible = Date.now();
+        }
     });
 };
 
