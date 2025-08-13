@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "public/**"
+      - "package*json"
 
 jobs:
   build_and_preview:
