@@ -401,8 +401,36 @@ let initialize = function () {
             localCache:
                 persistentLocalCache(/*settings*/{})
         });
+    setupFirestoreListeners();
+    document.addEventListener('force-debug', function () {
+        debugElement.innerHTML = getDebug();
+    });
+    document.addEventListener('freeze', function () {
+        freezeCount++;
+        lastFreeze = Date.now();
+    });
+    document.addEventListener('resume', function () {
+        resumeCount++;
+        lastResume = Date.now();
+    });
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            hiddenCount++;
+            lastHidden = Date.now();
+            studyListUnsubscribe();
+            hourlyUnsubscribe();
+            dailyUnsubscribe();
+            permissionsUnsubscribe();
+        } else {
+            // Page became visible
+            visibleCount++;
+            lastVisible = Date.now();
+            setupFirestoreListeners();
+        }
+    });
+};
 
-    // TODO cancel callback?
+function setupFirestoreListeners() {
     authStateUnsubscribe = onAuthStateChanged(auth, (user) => {
         receivedAuthEventCount++;
         lastAuthTimestamp = Date.now();
@@ -617,28 +645,7 @@ let initialize = function () {
             permissionsUnsubscribe();
         }
     });
-    document.addEventListener('force-debug', function () {
-        debugElement.innerHTML = getDebug();
-    });
-    document.addEventListener('freeze', function () {
-        freezeCount++;
-        lastFreeze = Date.now();
-    });
-    document.addEventListener('resume', function () {
-        resumeCount++;
-        lastResume = Date.now();
-    });
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
-            hiddenCount++;
-            lastHidden = Date.now();
-        } else {
-            // Page became visible
-            visibleCount++;
-            lastVisible = Date.now();
-        }
-    });
-};
+}
 
 let readOptionState = function () {
     return JSON.parse(localStorage.getItem('options'));
