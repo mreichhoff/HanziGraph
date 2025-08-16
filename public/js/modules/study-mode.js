@@ -299,12 +299,8 @@ function isOnlyThisGamepadButtonPushed(buttons, index) {
 }
 
 let gamePadAnimationFrame = null;
-// the specific interface we care about is:
-// press the bottom button of the right cluster (B on switch, A on xbox) to flip the flashcard
-// press the top button of the right cluster (X on switch, Y on xbox) to play audio
-// press the top-left front button (L on switch, LB on xbox) to indicate "wrong"
-// press the top-right front button (R on switch, RB on xbox) to indicate "right"
-// the spec https://w3c.github.io/gamepad/#remapping seems to indicate there's just the one "standard" layout
+// the spec https://w3c.github.io/gamepad/#remapping seems to indicate there's just the one "standard" layout.
+//   image here: https://w3c.github.io/gamepad/standard_gamepad.svg
 // and so:
 // buttons[0] is "flip card"
 // buttons[1] is "flip card" as well, since xbox and switch have different patterns (buttons[0] on xbox is confirm, but switch uses buttons[1])...let either flip
@@ -330,7 +326,7 @@ function runGamePadLoop() {
         return;
     }
     // only allow the first controller to control the flashcard interface
-    const gamepad = gamepads[0];
+    const gamepad = gamepads.find(x => x != null);
     if (!gamepad) {
         return;
     }
