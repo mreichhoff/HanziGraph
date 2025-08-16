@@ -36,6 +36,8 @@ const explanationContainer = document.getElementById('study-explain-container');
 const explanationHideButton = document.getElementById('hide-study-explanation');
 
 let currentKey = null;
+let studyModeActive = false;
+let currentTextToSpeechButton = null;
 
 // TODO: must match cardTypes, which sucks
 // why can't you do: {cardTypes.RECOGNITION: function(){...}}?
@@ -48,7 +50,7 @@ const cardRenderers = {
             aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
         }
         cardQuestionContainer.classList.add('target');
-        addTextToSpeech(cardQuestionContainer, question, aList);
+        currentTextToSpeechButton = addTextToSpeech(cardQuestionContainer, question, aList);
         cardAnswerElement.textContent = currentCard.en;
 
     },
@@ -69,7 +71,7 @@ const cardRenderers = {
         for (let i = 0; i < aList.length; i++) {
             aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
         }
-        addTextToSpeech(cardAnswerElement, answer, aList);
+        currentTextToSpeechButton = addTextToSpeech(cardAnswerElement, answer, aList);
         cardQuestionContainer.innerText = question;
     },
     'cloze': function (currentCard) {
@@ -107,7 +109,7 @@ const cardRenderers = {
         for (let i = 0; i < answerAList.length; i++) {
             answerAList[i].addEventListener('click', displayRelatedCards.bind(this, answerAList[i]));
         }
-        addTextToSpeech(cardAnswerElement, currentCard.vocabOrigin, answerAList);
+        currentTextToSpeechButton = addTextToSpeech(cardAnswerElement, currentCard.vocabOrigin, answerAList);
     }
 };
 
@@ -170,6 +172,7 @@ let setupStudyMode = function () {
     }
     cardsDueCounter.textContent = counter;
     cardQuestionContainer.innerHTML = '';
+    currentTextToSpeechButton = null;
     if (counter === 0) {
         taskCompleteElement.removeAttribute('style');
         taskDescriptionElement.style.display = 'none';
@@ -225,26 +228,35 @@ function keyboardShortcutHandler(event) {
     }
     // could add a isFlipped variable or whatever, but that's effectively expressed with the display
     // (or not) of the card's answer.
-    if (cardAnswerContainer.style.display === 'none' && (event.key === " " || event.code === "Space")) {
+    if (cardAnswerContainer.style.display === 'none' &&
+        // keypress support...
+        ((event.key === " " || event.code === "Space") ||
+            // gamepad support...
+            (event.detail && (event.detail.gamePadButton === 0 || event.detail.gamePadButton === 1)))) {
         // in general, trying not to preventDefault, I guess? But should probably add it to the branches below...
         event.preventDefault();
         flip();
         return;
     }
-    if (cardAnswerContainer.style.display !== 'none' && event.key === 'ArrowRight') {
+    if (cardAnswerContainer.style.display !== 'none' && (event.key === 'ArrowRight' || (event.detail && event.detail.gamePadButton === 5))) {
         markCorrect();
         return;
     }
-    if (cardAnswerContainer.style.display !== 'none' && event.key === 'ArrowLeft') {
+    if (cardAnswerContainer.style.display !== 'none' && (event.key === 'ArrowLeft' || (event.detail && event.detail.gamePadButton === 4))) {
         markIncorrect();
         return;
     }
+    if (currentTextToSpeechButton && ((event.key === 'r') || (event.detail && event.detail.gamePadButton === 3))) {
+        currentTextToSpeechButton.click();
+    }
 }
 function setupKeyboardShortcutEvents() {
-    document.addEventListener('keydown', keyboardShortcutHandler)
+    document.addEventListener('keydown', keyboardShortcutHandler);
+    document.addEventListener('gamepadButtonDown', keyboardShortcutHandler);
 }
 function stopKeyboardShortcutEvents() {
-    document.removeEventListener('keydown', keyboardShortcutHandler)
+    document.removeEventListener('keydown', keyboardShortcutHandler);
+    document.removeEventListener('gamepadButtonDown', keyboardShortcutHandler);
 }
 
 function markIncorrect() {
@@ -271,6 +283,76 @@ function flip() {
     showAnswerButton.innerText = "Answer:";
     cardAnswerContainer.removeAttribute('style');
     showAnswerButton.scrollIntoView();
+}
+
+function isOnlyThisGamepadButtonPushed(buttons, index) {
+    if (!buttons[index].pressed) {
+        return false;
+    }
+    for (let i = 0; i < buttons.length; i++) {
+        if (i === index) { continue; }
+        if (buttons[i].pressed) {
+            return false;
+        }
+    }
+    return true;
+}
+
+let gamePadAnimationFrame = null;
+// the specific interface we care about is:
+// press the bottom button of the right cluster (B on switch, A on xbox) to flip the flashcard
+// press the top button of the right cluster (X on switch, Y on xbox) to play audio
+// press the top-left front button (L on switch, LB on xbox) to indicate "wrong"
+// press the top-right front button (R on switch, RB on xbox) to indicate "right"
+// the spec https://w3c.github.io/gamepad/#remapping seems to indicate there's just the one "standard" layout
+// and so:
+// buttons[0] is "flip card"
+// buttons[1] is "flip card" as well, since xbox and switch have different patterns (buttons[0] on xbox is confirm, but switch uses buttons[1])...let either flip
+// buttons[3] is "play audio"
+// buttons[4] is "wrong answer"
+// buttons[5] is "right answer"
+//
+// we make a simple state machine with this array: we wait for a button to be pushed and then lifted
+// and then fire the corresponding event (kinda like keyup on keyboard)
+// why doesn't gamepad give you this interface instead of forcing you to poll?
+let priorButtonStates = [
+    /*flip card*/false,
+    /*flip card*/false,
+    /*this null corresponds to a button not mapped to any function at the moment*/null,
+    /*play audio*/false,
+    /*mark answer wrong*/false,
+    /*mark answer right*/false
+];
+let gamePadEnabled = false;
+function runGamePadLoop() {
+    const gamepads = navigator.getGamepads();
+    if (!gamepads) {
+        return;
+    }
+    // only allow the first controller to control the flashcard interface
+    const gamepad = gamepads[0];
+    if (!gamepad) {
+        return;
+    }
+
+    const buttons = gamepad.buttons;
+    [0, 1, 3, 4, 5].forEach(x => {
+        if (priorButtonStates[x] && !buttons[x].pressed) {
+            document.dispatchEvent(new CustomEvent(`gamepadButtonUp`, { detail: { gamePadButton: x } }));
+            priorButtonStates[x] = false;
+        }
+        if (isOnlyThisGamepadButtonPushed(buttons, x)) {
+            if (!priorButtonStates[x]) {
+                document.dispatchEvent(new CustomEvent(`gamepadButtonDown`, { detail: { gamePadButton: x } }));
+            }
+            priorButtonStates[x] = true;
+        }
+    });
+
+    gamePadAnimationFrame = requestAnimationFrame(runGamePadLoop);
+}
+function stopGamePadLoop() {
+    cancelAnimationFrame(gamePadAnimationFrame);
 }
 
 let initialize = function () {
@@ -317,8 +399,18 @@ let initialize = function () {
         }
         setupStudyMode();
     });
-    registerStateChangeCallback(stateKeys.study, 'activate', setupKeyboardShortcutEvents);
-    registerStateChangeCallback(stateKeys.study, 'deactivate', stopKeyboardShortcutEvents);
+    registerStateChangeCallback(stateKeys.study, 'activate', function () {
+        studyModeActive = true;
+        setupKeyboardShortcutEvents();
+        if (gamePadEnabled) {
+            runGamePadLoop();
+        }
+    });
+    registerStateChangeCallback(stateKeys.study, 'deactivate', function () {
+        studyModeActive = false;
+        stopKeyboardShortcutEvents();
+        stopGamePadLoop();
+    });
     studyContainer.addEventListener('shown', function () {
         setupStudyMode();
     });
@@ -332,7 +424,18 @@ let initialize = function () {
         });
         explanationContainer.classList.add('fade');
         localStorage.setItem('hideStudyInfo', 'true');
-    })
+    });
+
+    window.addEventListener('gamepadconnected', function () {
+        gamePadEnabled = true;
+        if (studyModeActive) {
+            runGamePadLoop();
+        }
+    });
+    window.addEventListener('gamepaddisconnected', function () {
+        gamePadEnabled = false;
+        stopGamePadLoop();
+    });
 };
 
 export { initialize }

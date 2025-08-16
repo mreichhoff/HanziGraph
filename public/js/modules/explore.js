@@ -277,6 +277,7 @@ let addTextToSpeech = function (container, text, aList) {
     textToSpeechButton.className = 'speak-button';
     textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
     container.appendChild(textToSpeechButton);
+    return textToSpeechButton;
 };
 
 // TODO: move to its own module, make it less repetitive
