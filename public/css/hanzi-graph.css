@@ -700,7 +700,7 @@ h2.word-header {
     margin: var(--example-margin);
     padding: var(--example-padding);
     border: var(--border);
-    border-radius: 12px;
+    border-radius: 8px;
     background-color: var(--sentence-card-background-color);
     box-shadow: var(--primary-input-box-shadow);
 }
@@ -708,7 +708,7 @@ h2.word-header {
 .tags {
     margin-top: 2px;
     line-height: normal;
-    border-left: 2px solid var(--accent-color);
+    border-left: 3px solid var(--accent-color);
     user-select: none;
 }
 
