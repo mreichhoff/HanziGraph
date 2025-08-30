@@ -1,5 +1,5 @@
 :root {
-    --background-color: #eee8;
+    --background-color: #f3f3f3;
     --primary-font-color: rgba(0, 0, 0, 0.87);
     --primary-font: Arial, sans-serif;
     --primary-font-weight: 400;
@@ -16,6 +16,8 @@
     --secondary-opacity: 0.9;
     --tertiary-opacity: 0.75;
     --sentence-card-background-color: #fff;
+    --example-padding: 4px 0 8px 12px;
+    --example-margin: 10px 0;
     --target-language-font-size: 24px;
     --target-language-secondary-font-size: 20px;
     --target-language-font-weight: 400;
@@ -695,8 +697,8 @@ h2.word-header {
 }
 
 .example {
-    margin: 10px 0;
-    padding: 4px 0 8px 16px;
+    margin: var(--example-margin);
+    padding: var(--example-padding);
     border: var(--border);
     border-radius: 12px;
     background-color: var(--sentence-card-background-color);
@@ -1876,7 +1878,7 @@ main.auth-form {
         --background-color: #121212;
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #333;
-        --sentence-card-background-color: #202020;
+        --sentence-card-background-color: #191919;
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0 2px 3px 1px #3333;
         --primary-button-font-color: black;
@@ -1922,6 +1924,8 @@ main.auth-form {
         --walkthrough-top-margin: 0;
         --walkthrough-smallest-header-font-size: 16px;
         --walkthrough-header-text-align: center;
+        --example-padding: 2px 0 4px 6px;
+        --example-margin: 6px 0;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
