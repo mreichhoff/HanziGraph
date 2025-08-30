@@ -1,11 +1,10 @@
 :root {
-    --background-color: #fcfcfc;
+    --background-color: #eee8;
     --primary-font-color: rgba(0, 0, 0, 0.87);
-    --primary-font: Roboto, Helvetica, Arial, sans-serif;
-    --primary-font-weight: 300;
+    --primary-font: Arial, sans-serif;
+    --primary-font-weight: 400;
     --primary-header-height: 50px;
     --primary-header-font-size: 30px;
-    --header-background-color: #f8f8f8;
     --secondary-header-font-size: 30px;
     --tertiary-header-font-size: 22px;
     --secondary-control-font-size: 14px;
@@ -16,14 +15,17 @@
     --primary-opacity: 0.95;
     --secondary-opacity: 0.9;
     --tertiary-opacity: 0.75;
+    --sentence-card-background-color: #fff;
     --target-language-font-size: 24px;
     --target-language-secondary-font-size: 20px;
     --target-language-font-weight: 400;
-    --base-language-font-size: 14px;
+    --base-language-font-size: 16px;
     --example-item-margin: 4px 0;
     --link-font-color: rgb(21, 36, 255);
     --input-background-color: #fff;
     --primary-input-box-shadow: 0 2px 3px 1px #eeee;
+    --primary-button-font-color: #fff;
+    --primary-button-background-color: black;
     --positive-button-color: #6de200;
     --right-button-height: 22px;
     /* I was told there would be no math */
@@ -40,7 +42,7 @@
     --bar-chart-font-size: 14px;
     --controls-padding: 14px;
     --study-result-buttons-width: 50%;
-    --legend-font-size: 14px;
+    --legend-font-size: 16px;
     --instructions-font-size: 16px;
     --accent-color: black;
     --secondary-accent-color: #d56eaf;
@@ -659,7 +661,7 @@ h2.word-header {
 }
 
 .definitions {
-    margin: 6px 0;
+    margin: 6px 0 6px 4px;
 }
 
 .definition {
@@ -694,6 +696,10 @@ h2.word-header {
 
 .example {
     margin: 16px 0;
+    padding: 6px 0 12px 16px;
+    border: var(--border);
+    border-radius: 12px;
+    background-color: var(--sentence-card-background-color);
 }
 
 .tags {
@@ -1472,10 +1478,10 @@ input:checked {
 .primary-button {
     text-align: center;
     padding: 12px;
-    background: var(--primary-font-color);
+    background: var(--primary-button-background-color);
     width: 120px;
     margin: 20px auto;
-    color: var(--background-color);
+    color: var(--primary-button-font-color);
     border-radius: 20px;
     font-weight: bold;
     cursor: pointer;
@@ -1867,11 +1873,13 @@ main.auth-form {
 @media (prefers-color-scheme: dark) {
     :root {
         --background-color: #121212;
-        --header-background-color: #121212;
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #333;
+        --sentence-card-background-color: #202020;
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0 2px 3px 1px #3333;
+        --primary-button-font-color: black;
+        --primary-button-background-color: #fff;
         --input-background-color: #2e2e2e;
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
