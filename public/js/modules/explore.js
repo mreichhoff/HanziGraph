@@ -886,7 +886,7 @@ function renderExplore(word, container, definitionList, examples, maxExamples, a
     flowContainer.classList.add('explore-subpane');
     flowContainer.style.display = 'none';
     // TODO: make this smarter
-    currentTabs = renderTabs(tabs, ['Meaning', 'Components', 'Stats', 'Flow'], [meaningContainer, componentsContainer, statsContainer, flowContainer], [() => { }, () => {
+    currentTabs = renderTabs(tabs, ['Meaning', 'Tree', 'Stats', 'Flow'], [meaningContainer, componentsContainer, statsContainer, flowContainer], [() => { }, () => {
         document.dispatchEvent(new CustomEvent('components-update', { detail: word[0] }));
     }, function () {
         statsContainer.innerHTML = '';
