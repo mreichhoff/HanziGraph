@@ -15,7 +15,10 @@
     --primary-opacity: 0.95;
     --secondary-opacity: 0.9;
     --tertiary-opacity: 0.75;
+    --explore-tab-active-background-color: #fff;
+    --explore-tab-padding: 8px 0;
     --sentence-card-background-color: #fff;
+    --definitions-margin: 12px 0 12px 4px;
     --example-padding: 4px 0 8px 12px;
     --example-margin: 10px 0;
     --target-language-font-size: 24px;
@@ -158,6 +161,7 @@ h3 {
 ul {
     list-style-type: none;
     padding: 0;
+    margin: 0;
 }
 
 .header {
@@ -473,23 +477,23 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     grid-template-columns: 1fr 1fr 1fr 1fr;
     text-align: center;
     margin: 4px auto;
-    border-bottom: var(--border);
     user-select: none;
     -webkit-user-select: none;
+    border: var(--border);
+    border-radius: 30px;
 }
 
 .explore-tab {
     cursor: pointer;
-    opacity: 0.8;
-}
-
-.separator {
-    display: none;
+    opacity: 0.7;
+    padding: var(--explore-tab-padding);
 }
 
 .explore-tab.active {
     opacity: 1;
-    font-weight: 400;
+    font-weight: bold;
+    background: var(--explore-tab-active-background-color);
+    border-radius: 30px;
 }
 
 .character-header {
@@ -637,17 +641,6 @@ h2.word-header {
     transition: border-left-width 0.35s, border-left-color 0.35s;
 }
 
-.explore-tab.active .separator {
-    width: 60px;
-    height: 4px;
-    display: block;
-    background: var(--accent-color);
-}
-
-.explore-tab.active .separator {
-    margin: 2px auto 0 auto;
-}
-
 .expand {
     animation: expand 0.5s;
 }
@@ -663,7 +656,7 @@ h2.word-header {
 }
 
 .definitions {
-    margin: 6px 0 6px 4px;
+    margin: var(--definitions-margin);
 }
 
 .definition {
@@ -1878,6 +1871,7 @@ main.auth-form {
         --background-color: #121212;
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #333;
+        --explore-tab-active-background-color: #2e2e2e;
         --sentence-card-background-color: #191919;
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0 2px 3px 1px #3333;
@@ -1915,6 +1909,7 @@ main.auth-form {
         --instructions-font-size: 14px;
         --target-language-font-size: 22px;
         --controls-padding: 10px;
+        --explore-tab-padding: 6px 0;
         --examples-top-margin: 8px;
         --graph-margin-top: 0;
         --text-container-height: 50%;
@@ -1926,6 +1921,7 @@ main.auth-form {
         --walkthrough-header-text-align: center;
         --example-padding: 2px 0 4px 6px;
         --example-margin: 6px 0;
+        --definitions-margin: 6px 0 6px 4px;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */

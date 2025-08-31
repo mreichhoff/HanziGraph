@@ -736,7 +736,6 @@ let renderStats = function (word, container) {
 
 function switchToTab(id, tabs) {
     for (const [tabId, elements] of Object.entries(tabs)) {
-        const separator = elements.tab.querySelector('.separator');
         if (id === tabId) {
             if (elements.tab.classList.contains('active')) {
                 // tab is already active, so no need to switch to it
@@ -746,23 +745,15 @@ function switchToTab(id, tabs) {
                 return;
             }
             elements.tab.classList.add('active');
-            separator.classList.add('expand');
             elements.panel.removeAttribute('style');
             elements.panel.classList.add(elements.transitionClass);
             elements.callback();
         } else {
             elements.tab.classList.remove('active');
-            separator.classList.remove('expand');
             elements.panel.classList.remove(elements.transitionClass);
             elements.panel.style.display = 'none';
         }
     }
-}
-function renderSeparator(container) {
-    let separator = document.createElement('span');
-    separator.classList.add('separator');
-    container.appendChild(separator);
-    return separator;
 }
 
 let renderTabs = function (container, texts, panels, renderCallbacks, transitionClasses) {
@@ -776,7 +767,6 @@ let renderTabs = function (container, texts, panels, renderCallbacks, transition
             tabContainer.classList.add('active');
         }
         tabContainer.innerText = texts[i];
-        renderSeparator(tabContainer);
         container.appendChild(tabContainer);
         tabs[tabContainer.dataset.tabid] = {
             tab: tabContainer,
