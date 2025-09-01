@@ -47,7 +47,7 @@
     --bar-chart-font-size: 14px;
     --controls-padding: 14px;
     --study-result-buttons-width: 50%;
-    --legend-font-size: 14px;
+    --legend-font-size: 16px;
     --instructions-font-size: 16px;
     --accent-color: black;
     --secondary-accent-color: #d56eaf;
@@ -1923,6 +1923,7 @@ main.auth-form {
         --example-padding: 2px 0 6px 10px;
         --example-margin: 10px 0;
         --definitions-margin: 10px 0 6px 4px;
+        --legend-font-size: 14px;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
