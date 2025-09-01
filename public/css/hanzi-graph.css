@@ -494,6 +494,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     font-weight: bold;
     background: var(--explore-tab-active-background-color);
     border-radius: 30px;
+    transition: background 0.25s;
 }
 
 .character-header {
