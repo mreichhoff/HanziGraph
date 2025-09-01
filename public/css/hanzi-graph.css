@@ -1,7 +1,7 @@
 :root {
     --background-color: #f3f3f3;
     --primary-font-color: rgba(0, 0, 0, 0.87);
-    --primary-font: Arial, sans-serif;
+    --primary-font: Roboto, Helvetica, Arial, sans-serif;
     --primary-font-weight: 400;
     --primary-header-height: 50px;
     --primary-header-font-size: 30px;
@@ -13,8 +13,8 @@
     --search-font-size: 20px;
     --search-input-height: 32px;
     --primary-opacity: 0.95;
-    --secondary-opacity: 0.9;
-    --tertiary-opacity: 0.75;
+    --secondary-opacity: 0.8;
+    --tertiary-opacity: 0.7;
     --explore-tab-active-background-color: #fff;
     --explore-tab-padding: 8px 0;
     --sentence-card-background-color: #fff;
@@ -24,7 +24,7 @@
     --target-language-font-size: 24px;
     --target-language-secondary-font-size: 20px;
     --target-language-font-weight: 400;
-    --base-language-font-size: 16px;
+    --base-language-font-size: 14px;
     --example-item-margin: 4px 0;
     --link-font-color: rgb(21, 36, 255);
     --input-background-color: #fff;
@@ -480,7 +480,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     user-select: none;
     -webkit-user-select: none;
     border: var(--border);
-    border-radius: 30px;
+    border-radius: 12px;
 }
 
 .explore-tab {
@@ -493,7 +493,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     opacity: 1;
     font-weight: bold;
     background: var(--explore-tab-active-background-color);
-    border-radius: 30px;
+    border-radius: 12px;
     transition: background 0.25s;
 }
 
@@ -693,9 +693,10 @@ h2.word-header {
 .example {
     margin: var(--example-margin);
     padding: var(--example-padding);
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: var(--sentence-card-background-color);
     box-shadow: var(--primary-input-box-shadow);
+    border: var(--border);
 }
 
 .tags {
@@ -1872,7 +1873,7 @@ main.auth-form {
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #333;
         --explore-tab-active-background-color: #2e2e2e;
-        --sentence-card-background-color: #1e1e1e;
+        --sentence-card-background-color: #202020;
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0;
         --primary-button-font-color: black;
@@ -1919,9 +1920,9 @@ main.auth-form {
         --walkthrough-top-margin: 0;
         --walkthrough-smallest-header-font-size: 16px;
         --walkthrough-header-text-align: center;
-        --example-padding: 2px 0 4px 6px;
-        --example-margin: 6px 0;
-        --definitions-margin: 6px 0 6px 4px;
+        --example-padding: 2px 0 6px 10px;
+        --example-margin: 10px 0;
+        --definitions-margin: 10px 0 6px 4px;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
