@@ -1,5 +1,5 @@
 :root {
-    --background-color: #f3f3f3;
+    --background-color: #f6f6f6;
     --primary-font-color: rgba(0, 0, 0, 0.87);
     --primary-font: Roboto, Helvetica, Arial, sans-serif;
     --primary-font-weight: 400;
@@ -16,11 +16,10 @@
     --secondary-opacity: 0.8;
     --tertiary-opacity: 0.7;
     --explore-tab-active-background-color: #fff;
-    --explore-tab-padding: 6px 0;
+    --explore-tab-padding: 4px 0;
     --sentence-card-background-color: #fff;
     --definitions-margin: 12px 0 12px 4px;
-    --example-padding: 4px 0 8px 12px;
-    --example-margin: 10px 0;
+    --example-padding: 6px 0 10px 12px;
     --target-language-font-size: 24px;
     --target-language-secondary-font-size: 20px;
     --target-language-font-weight: 400;
@@ -479,6 +478,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     cursor: pointer;
     opacity: 0.7;
     padding: var(--explore-tab-padding);
+    border: 1px solid transparent;
 }
 
 .explore-tab.active {
@@ -487,6 +487,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     background: var(--explore-tab-active-background-color);
     border-radius: 12px;
     transition: background 0.25s;
+    border: var(--border);
 }
 
 .character-header {
@@ -618,8 +619,9 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     opacity: 0.8;
 }
 
-h2.word-header {
+.word-header {
     font-family: var(--primary-font);
+    user-select: none;
 }
 
 .word-header.active .clickable {
@@ -682,13 +684,19 @@ h2.word-header {
     margin-left: 4px;
 }
 
-.example {
-    margin: var(--example-margin);
-    padding: var(--example-padding);
-    border-radius: 12px;
-    background-color: var(--sentence-card-background-color);
-    box-shadow: var(--primary-input-box-shadow);
+.examples {
+    background: var(--sentence-card-background-color);
     border: var(--border);
+    border-radius: 12px;
+}
+
+.example {
+    padding: var(--example-padding);
+    border-bottom: var(--border);
+}
+
+.example:last-of-type {
+    border-bottom: 0;
 }
 
 .tags {
@@ -1865,7 +1873,7 @@ main.auth-form {
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #444;
         --explore-tab-active-background-color: #2e2e2e;
-        --sentence-card-background-color: #191919;
+        --sentence-card-background-color: #1c1c1c;
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0;
         --primary-button-font-color: black;
@@ -1911,8 +1919,7 @@ main.auth-form {
         --walkthrough-top-margin: 0;
         --walkthrough-smallest-header-font-size: 16px;
         --walkthrough-header-text-align: center;
-        --example-padding: 2px 0 6px 10px;
-        --example-margin: 10px 0;
+        --example-padding: 6px 0 10px 10px;
         --definitions-margin: 10px 0 6px 4px;
         --legend-font-size: 14px;
     }
