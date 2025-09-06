@@ -471,7 +471,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     user-select: none;
     -webkit-user-select: none;
     border: var(--border);
-    border-radius: 12px;
+    border-radius: 8px;
 }
 
 .explore-tab {
@@ -485,7 +485,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     opacity: 1;
     font-weight: bold;
     background: var(--explore-tab-active-background-color);
-    border-radius: 12px;
+    border-radius: 8px;
     transition: background 0.25s;
     border: var(--border);
 }
@@ -688,6 +688,10 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     background: var(--sentence-card-background-color);
     border: var(--border);
     border-radius: 12px;
+}
+
+.examples:not(:has(> li)) {
+    border: 0;
 }
 
 .example {
