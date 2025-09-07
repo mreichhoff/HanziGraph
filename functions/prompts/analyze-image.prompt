@@ -6,4 +6,5 @@ input:
 output:
   schema: ImageAnalysisSchema
 ---
-Read the Chinese text in this image: {{media url=base64ImageUrl}}, and then explain it, including an English translation and any relevant grammar rules.
+Read the Chinese text in this image: {{media url=base64ImageUrl}}, split it into sentences, and then explain it, including an English translation for each sentence and any relevant grammar rules.
+If the image contains good English translations of the Chinese text, use those verbatim.
