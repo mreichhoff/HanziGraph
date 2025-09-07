@@ -35,6 +35,10 @@ function handleWorkerMessage(message) {
         return;
     }
     if (message.data.type === 'tokenize-list') {
+        if (message.data.next === 'ai-file') {
+            multiSentenceSearch(message.data.result, message.data.aiData);
+            return;
+        }
         pendingSentenceGenCallbacks[message.data.word](message.data.result);
         delete pendingSentenceGenCallbacks[message.data.word];
         return;
@@ -164,9 +168,8 @@ async function initialize(term, mode) {
         search(term, getActiveGraph().locale, (mode || 'explore'));
     }
     // very questionable architecture (mistakes were made)
-    document.addEventListener('ai-response', function (event) {
-        hanziBox.value = event.detail.aiData.data.chineseTranslationWithoutPinyin;
-        handleAiResponse(null, event.detail.aiData);
+    document.addEventListener('ai-file-response', function (event) {
+        handleAiFileResponse(event.detail.aiData);
     });
     document.addEventListener('sentence-generation-response', function (event) {
         if (pendingSentenceGenCallbacks[event.detail.word]) {
@@ -213,6 +216,54 @@ function multiWordSearch(query, segments, mode, skipState, aiData) {
             }
         }));
     }
+}
+
+function multiSentenceSearch(sentences, aiData) {
+    // we code good
+    let wordForGraph = '';
+    for (const sentence of sentences) {
+        for (const word of sentence.zh) {
+            if (!word.ignore && word in wordSet) {
+                wordForGraph = word;
+                break;
+            }
+        }
+        // you may not like it, but this is what peak code looks like
+        if (wordForGraph) {
+            break;
+        }
+    }
+    if (!wordForGraph) {
+        notFoundElement.removeAttribute('style');
+        document.dispatchEvent(new CustomEvent('hide-loading-dots'));
+    } else {
+        aiData.data.sentences = sentences;
+        notFoundElement.style.display = 'none';
+        document.dispatchEvent(new CustomEvent('graph-update', { detail: wordForGraph }));
+        document.dispatchEvent(new CustomEvent('explore-update', {
+            detail: {
+                words: sentences[0].zh,
+                display: sentences[0].zh.map(x => x.ignore ? x.word : x).join(''),
+                mode: 'explore',
+                skipState: false,
+                aiData
+            }
+        }));
+    }
+}
+
+function handleAiFileResponse(aiData, skipState) {
+    searchSuggestionsWorker.postMessage({
+        type: 'tokenize-list',
+        next: 'ai-file',
+        payload: {
+            query: aiData.data.sentences,
+            locale: getActiveGraph().locale,
+            mode: 'explore',
+            skipState: !!skipState,
+            aiData
+        }
+    });
 }
 
 function handleAiResponse(word, aiData, skipState) {

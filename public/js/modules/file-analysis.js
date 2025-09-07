@@ -26,7 +26,7 @@ function handleFile(file) {
             searchControl.style.display = 'none';
             document.dispatchEvent(new CustomEvent('loading-dots'));
             const aiData = await analyzeImage(reader.result);
-            document.dispatchEvent(new CustomEvent('ai-response', { detail: { aiData } }));
+            document.dispatchEvent(new CustomEvent('ai-file-response', { detail: { aiData } }));
         } catch (ex) {
             notFoundElement.removeAttribute('style');
             document.dispatchEvent(new CustomEvent('hide-loading-dots'));

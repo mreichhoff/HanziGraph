@@ -1,5 +1,15 @@
 import { z } from "genkit";
 
+const sentenceSchema = z.array(
+    z.object({
+        chineseTextWithoutPinyin: z.string(),
+        pinyin: z.string(),
+        englishTranslation: z.string(),
+    }));
+
+// TODO: should the `explanationSchema` and `englishExplanationSchema` also split input into sentences?
+// kinda seems like the user would've split it up themselves if that was the intention, vs an image
+// where it's often tougher to do that.
 export const explanationSchema = z.object({
     plainTextExplanation: z.string(),
     englishTranslation: z.string(),
@@ -26,10 +36,8 @@ export const englishExplanationSchema = z.object({
 // likely be combined. The frontend benefits from a uniform
 // interface.
 export const imageAnalysisSchema = z.object({
+    sentences: sentenceSchema,
     plainTextExplanation: z.string(),
-    chineseTranslationWithoutPinyin: z.string(),
-    englishTranslation: z.string(),
-    pinyin: z.string(),
     grammarHighlights: z.array(
         z.object({
             grammarConceptName: z.string(),
@@ -41,13 +49,6 @@ export const generateChineseSentencesInputSchema = z.object({
     word: z.string(),
     definitions: z.array(z.string()),
 });
-
-const sentenceSchema = z.array(
-    z.object({
-        chineseTextWithoutPinyin: z.string(),
-        pinyin: z.string(),
-        englishTranslation: z.string(),
-    }));
 
 export const chineseSentenceGenerationSchema = z.object({
     sentences: sentenceSchema,

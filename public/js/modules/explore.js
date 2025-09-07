@@ -970,7 +970,7 @@ function renderAiExplanationResponse(words, response, container) {
     exampleHeader.innerText = "Translated";
     // this kinda just works like a normal example here...
     const exampleList = document.createElement('ul');
-    setupExampleElements(null, [{ zh: words, pinyin: data.pinyin, en: data.englishTranslation }], exampleList, 'user');
+    setupExampleElements(null, data.sentences || [{ zh: words, pinyin: data.pinyin, en: data.englishTranslation }], exampleList, 'user');
 
     const explanationContainer = document.createElement('div');
     explanationContainer.classList.add('ai-explanation');

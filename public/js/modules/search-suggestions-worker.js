@@ -269,7 +269,9 @@ onmessage = async function (e) {
         postMessage({
             result,
             type: e.data.type,
-            word: e.data.payload.word
+            next: e.data.next,
+            word: e.data.payload.word,
+            aiData: e.data.payload.aiData
         });
     }
 }
