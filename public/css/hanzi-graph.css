@@ -1,8 +1,8 @@
 :root {
-    --background-color: #f6f6f6;
+    --background-color: #fafafa;
     --primary-font-color: rgba(0, 0, 0, 0.87);
     --primary-font: Roboto, Helvetica, Arial, sans-serif;
-    --primary-font-weight: 400;
+    --primary-font-weight: 300;
     --primary-header-height: 50px;
     --primary-header-font-size: 30px;
     --secondary-header-font-size: 30px;
