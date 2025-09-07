@@ -99,7 +99,9 @@ const analyzeImageFlow = ai.defineFlow({
     return output;
 });
 
-export const analyzeImage = onCallGenkit(analyzeImageFlow);
+export const analyzeImage = onCallGenkit({
+    memory: '1GiB',
+}, analyzeImageFlow);
 
 const ChineseSentenceGenerationSchema = ai.defineSchema(
     'ChineseSentenceGenerationSchema',
