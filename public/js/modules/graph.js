@@ -241,7 +241,7 @@ function getStylesheet() {
                 'label': !isTree ? 'data(displayWord)' : edgeLabel,
                 'color': (_ => prefersDark ? '#eee' : '#000'),
                 'font-size': isTree ? '12px' : '10px',
-                'text-background-color': (_ => prefersDark ? '#121212' : '#fff'),
+                'text-background-color': (_ => prefersDark ? '#121212' : '#f6f6f6'),
                 'text-background-opacity': '1',
                 'text-background-shape': 'round-rectangle',
                 'text-background-padding': '1px',

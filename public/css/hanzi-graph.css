@@ -1,11 +1,10 @@
 :root {
-    --background-color: #fcfcfc;
+    --background-color: #f6f6f6;
     --primary-font-color: rgba(0, 0, 0, 0.87);
     --primary-font: Roboto, Helvetica, Arial, sans-serif;
-    --primary-font-weight: 300;
+    --primary-font-weight: 400;
     --primary-header-height: 50px;
     --primary-header-font-size: 30px;
-    --header-background-color: #f8f8f8;
     --secondary-header-font-size: 30px;
     --tertiary-header-font-size: 22px;
     --secondary-control-font-size: 14px;
@@ -14,8 +13,13 @@
     --search-font-size: 20px;
     --search-input-height: 32px;
     --primary-opacity: 0.95;
-    --secondary-opacity: 0.9;
-    --tertiary-opacity: 0.75;
+    --secondary-opacity: 0.8;
+    --tertiary-opacity: 0.7;
+    --explore-tab-active-background-color: #fff;
+    --explore-tab-padding: 3px 0;
+    --sentence-card-background-color: #fff;
+    --definitions-margin: 12px 0 12px 4px;
+    --example-padding: 6px 0 10px 12px;
     --target-language-font-size: 24px;
     --target-language-secondary-font-size: 20px;
     --target-language-font-weight: 400;
@@ -24,6 +28,8 @@
     --link-font-color: rgb(21, 36, 255);
     --input-background-color: #fff;
     --primary-input-box-shadow: 0 2px 3px 1px #eeee;
+    --primary-button-font-color: #fff;
+    --primary-button-background-color: black;
     --positive-button-color: #6de200;
     --right-button-height: 22px;
     /* I was told there would be no math */
@@ -40,7 +46,7 @@
     --bar-chart-font-size: 14px;
     --controls-padding: 14px;
     --study-result-buttons-width: 50%;
-    --legend-font-size: 14px;
+    --legend-font-size: 16px;
     --instructions-font-size: 16px;
     --accent-color: black;
     --secondary-accent-color: #d56eaf;
@@ -154,6 +160,7 @@ h3 {
 ul {
     list-style-type: none;
     padding: 0;
+    margin: 0;
 }
 
 .header {
@@ -192,14 +199,6 @@ ul {
 
 .header .logo.freq {
     background-color: var(--tone-1-color);
-}
-
-.control-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    text-align: center;
-    border-bottom: var(--border);
-    padding-bottom: var(--controls-padding);
 }
 
 .primary-input {
@@ -469,23 +468,26 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     grid-template-columns: 1fr 1fr 1fr 1fr;
     text-align: center;
     margin: 4px auto;
-    border-bottom: var(--border);
     user-select: none;
     -webkit-user-select: none;
+    border: var(--border);
+    border-radius: 8px;
 }
 
 .explore-tab {
     cursor: pointer;
-    opacity: 0.8;
-}
-
-.separator {
-    display: none;
+    opacity: 0.6;
+    padding: var(--explore-tab-padding);
+    border: 1px solid transparent;
 }
 
 .explore-tab.active {
     opacity: 1;
-    font-weight: 400;
+    font-weight: bold;
+    background: var(--explore-tab-active-background-color);
+    border-radius: 8px;
+    transition: background 0.25s;
+    border: var(--border);
 }
 
 .character-header {
@@ -617,8 +619,9 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     opacity: 0.8;
 }
 
-h2.word-header {
+.word-header {
     font-family: var(--primary-font);
+    user-select: none;
 }
 
 .word-header.active .clickable {
@@ -631,17 +634,6 @@ h2.word-header {
     padding-left: 6px;
     padding-top: 4px;
     transition: border-left-width 0.35s, border-left-color 0.35s;
-}
-
-.explore-tab.active .separator {
-    width: 60px;
-    height: 4px;
-    display: block;
-    background: var(--accent-color);
-}
-
-.explore-tab.active .separator {
-    margin: 2px auto 0 auto;
 }
 
 .expand {
@@ -659,7 +651,7 @@ h2.word-header {
 }
 
 .definitions {
-    margin: 6px 0;
+    margin: var(--definitions-margin);
 }
 
 .definition {
@@ -692,14 +684,29 @@ h2.word-header {
     margin-left: 4px;
 }
 
+.examples {
+    background: var(--sentence-card-background-color);
+    border: var(--border);
+    border-radius: 12px;
+}
+
+.examples:not(:has(> li)) {
+    border: 0;
+}
+
 .example {
-    margin: 16px 0;
+    padding: var(--example-padding);
+    border-bottom: var(--border);
+}
+
+.example:last-of-type {
+    border-bottom: 0;
 }
 
 .tags {
     margin-top: 2px;
     line-height: normal;
-    border-left: 2px solid var(--accent-color);
+    border-left: 3px solid var(--accent-color);
     user-select: none;
 }
 
@@ -1472,10 +1479,10 @@ input:checked {
 .primary-button {
     text-align: center;
     padding: 12px;
-    background: var(--primary-font-color);
+    background: var(--primary-button-background-color);
     width: 120px;
     margin: 20px auto;
-    color: var(--background-color);
+    color: var(--primary-button-font-color);
     border-radius: 20px;
     font-weight: bold;
     cursor: pointer;
@@ -1867,11 +1874,14 @@ main.auth-form {
 @media (prefers-color-scheme: dark) {
     :root {
         --background-color: #121212;
-        --header-background-color: #121212;
         --primary-font-color: rgba(255, 255, 255, 0.87);
-        --border: 1px solid #333;
+        --border: 1px solid #444;
+        --explore-tab-active-background-color: #2e2e2e;
+        --sentence-card-background-color: #121212;
         --link-font-color: #68aaee;
-        --primary-input-box-shadow: 0 2px 3px 1px #3333;
+        --primary-input-box-shadow: 0;
+        --primary-button-font-color: black;
+        --primary-button-background-color: #fff;
         --input-background-color: #2e2e2e;
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
@@ -1913,6 +1923,9 @@ main.auth-form {
         --walkthrough-top-margin: 0;
         --walkthrough-smallest-header-font-size: 16px;
         --walkthrough-header-text-align: center;
+        --example-padding: 6px 0 10px 10px;
+        --definitions-margin: 10px 0 6px 4px;
+        --legend-font-size: 14px;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
