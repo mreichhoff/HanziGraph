@@ -1,6 +1,9 @@
 node_modules
 raw
 __pycache__
+.idea/
+*.bak
+*.new
 *debug.log
 .firebaserc
 *bundle.js
