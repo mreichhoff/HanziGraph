@@ -67,6 +67,7 @@ COPY package.json .
 # the built application from the build stage into the image.
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/public ./public
+COPY --from=build /usr/src/app/scripts ./scripts
 
 # Expose the port that the application listens on.
 EXPOSE 8000
@@ -75,4 +76,4 @@ EXPOSE 8000
 WORKDIR /usr/src/app/public
 
 # Run the application.
-CMD ["python3", "-m", "http.server"]
+ENTRYPOINT ["python3", "../scripts/server_with_rewrites.py"]
