@@ -1,19 +1,13 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import argparse
 
-class MyHTTPServer(HTTPServer):
-    def __init__(self, server_address, RequestHandlerClass,
-                 base_path='',
-                 bind_and_activate=True):
-        HTTPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate=bind_and_activate)
-        self.base_path = base_path
-
+BASE_PATH = ''
 
 class RequestHandler(SimpleHTTPRequestHandler):
     # mimic firebase hosting's rewrite rules
     def translate_path(self, request_path):
-        base_path = self.server.base_path if isinstance(self.server, MyHTTPServer) else ''
-        slashed_path = request_path.removeprefix(base_path)
+        global BASE_PATH
+        slashed_path = request_path.removeprefix(BASE_PATH)
         crit_blank = slashed_path in ('/', '')
         crit_specials = any([slashed_path.startswith(f"{candidate}") for candidate in (
             '/simplified', '/traditional', '/cantonese', '/hsk'
@@ -33,15 +27,15 @@ if __name__ == '__main__':
     parser.add_argument(
         '--port', help='your choice of port; default 8000', nargs='?', default=8000, type=int)
     parser.add_argument(
-        '--base-path', help='custom base path, e.g. /app/hanzi; useful for reverse proxy', default='')
+        '--base-path', help='custom base path, e.g. /app/hanzigraph; useful for reverse proxy', default='')
     args = parser.parse_args()
     port = int(args.port)
-    base_path = args.base_path
-    if base_path:
-        assert base_path[0] == '/', '--base-path must start with /'
-        if base_path[-1] == '/':
-            base_path = base_path[:-1]
-    myServer = MyHTTPServer(('0.0.0.0', port), RequestHandler, base_path=base_path)
+    if args.base_path:
+        BASE_PATH = args.base_path
+        assert BASE_PATH[0] == '/', '--base-path must start with /'
+        if BASE_PATH[-1] == '/':
+            BASE_PATH = BASE_PATH[:-1]
+    myServer = HTTPServer(('0.0.0.0', port), RequestHandler)
     print("HanziGraph started")
     try:
         myServer.serve_forever()
