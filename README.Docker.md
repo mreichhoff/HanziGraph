@@ -28,8 +28,8 @@ Then, in `compose.yaml` add a new bind mount to your custom wordlist by adapting
 ```yaml
     ...
     volumes:
-      - "<YOUR-PATH-TO>/wordlist.json
-        :/usr/src/app/public/data/simplified/wordlist.json
+      - "<YOUR-PATH-TO>/wordlist.json\
+        :/usr/src/app/public/data/simplified/wordlist.json\
         :ro"
     ...
 ```
