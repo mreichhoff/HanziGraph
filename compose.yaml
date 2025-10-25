@@ -7,4 +7,8 @@ services:
       NODE_ENV: production
     ports:
       - 8000:8000
+#    volumes:
+#      - "<YOUR-PATH-TO>/wordlist.json\
+#        :/usr/src/app/public/data/simplified/wordlist.json\
+#        :ro"
 
