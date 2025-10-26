@@ -7,8 +7,12 @@ services:
       NODE_ENV: production
     ports:
       - 8000:8000
+# Uncomment volumes below for custom wordlists and sentences - see README.Docker.md for details:
 #    volumes:
 #      - "<YOUR-PATH-TO>/wordlist.json\
 #        :/usr/src/app/public/data/simplified/wordlist.json\
+#        :ro"
+#      - "<YOUR-PATH-TO>/sentences.json\
+#        :/usr/src/app/public/data/simplified/sentences.json\
 #        :ro"
 
