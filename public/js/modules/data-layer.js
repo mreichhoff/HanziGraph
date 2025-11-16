@@ -232,15 +232,14 @@ let findOtherCards = function (seeking, currentKey) {
     return candidates;
 };
 
-function countWordsWithoutCards(tokenizedSentence) {
-    let count = 0;
-    const uniqueWords = new Set(tokenizedSentence);
-    for (const word of uniqueWords) {
+function getWordsWithoutCards(tokenizedSentence) {
+    const uniqueWords = new Set();
+    for (const word of tokenizedSentence) {
         if (!studyListWords.has(word)) {
-            count++;
+            uniqueWords.add(word);
         }
     }
-    return count;
+    return uniqueWords;
 }
 
 function initVocabSets() {
@@ -646,4 +645,4 @@ async function analyzeImage(base64ImageContents) {
     return result;
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, countWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, generateChineseSentences, analyzeCollocation, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes }
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, getWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, generateChineseSentences, analyzeCollocation, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes }

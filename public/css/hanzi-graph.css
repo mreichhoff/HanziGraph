@@ -711,6 +711,21 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     user-select: none;
 }
 
+.suitability-max {
+    background-color: #00ab3f;
+    color: black;
+}
+
+.suitability-high {
+    background-color: #90D5FF;
+    color: black;
+}
+
+.suitability-medium {
+    background-color: #ffc300;
+    color: black;
+}
+
 .definition .tags {
     margin-top: 8px;
 }
