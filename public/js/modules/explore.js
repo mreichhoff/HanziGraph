@@ -1,4 +1,4 @@
-import { writeExploreState, addCard, inStudyList, isFlashCardUser, explainChineseSentence, generateChineseSentences, isAiEligible, countWordsWithoutCards, hasCardWithWord, registerCallback, dataTypes } from "./data-layer.js";
+import { writeExploreState, addCard, inStudyList, isFlashCardUser, explainChineseSentence, generateChineseSentences, isAiEligible, getWordsWithoutCards, hasCardWithWord, registerCallback, dataTypes } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough, examplesList, createLoadingDots } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
@@ -544,9 +544,9 @@ let setupExampleElements = function (word, examples, exampleList, defaultSource)
         // if the user doesn't use HanziGraph for flashcards, render nothing.
         // otherwise, let them know how many new words are in the sentence to aid the choice of whether to make a flashcard
         const words = examples[i].zh.filter(x => x in wordSet);
-        const unknownWordCount = countWordsWithoutCards(words);
+        const unknownWords = getWordsWithoutCards(words);
         const unknownWordTag = document.createElement('span');
-        unknownWordTag.innerHTML = getUnknownWordHtml(unknownWordCount);
+        unknownWordTag.innerHTML = getUnknownWordHtml(unknownWords);
         unknownWordTag.classList.add('tag', 'nowrap');
         missingWordElements.push({ unknownWordTag, words });
         tagContainer.appendChild(unknownWordTag);
@@ -554,13 +554,48 @@ let setupExampleElements = function (word, examples, exampleList, defaultSource)
         exampleList.appendChild(exampleHolder);
     }
 };
-function getUnknownWordHtml(unknownWordCount) {
+function getSuitabilityClass(unknownWordSet) {
+    // TODO: make these rank cutoffs configurable, and set up a priority color coding graph style
+    const minFreqRank = 0;
+    const maxFreqRank = 10000;
+    const totalUnknownWords = unknownWordSet.size;
+    let highPriorityWordCount = 0;
+    for (const unknownWord of unknownWordSet) {
+        // we assume upstream filtering of words being in the wordset before added to unknownWordSet
+        const rank = wordSet[unknownWord];
+        // ranks in wordSet start from 1 for ease of rendering (i.e., 1st most common instead of 0th)
+        // so check min is exclusive, max is inclusive
+        if (rank <= maxFreqRank && rank > minFreqRank) {
+            highPriorityWordCount++;
+        }
+    }
+    // a heuristic approach to determining how suitable a sentence is to be made into a flashcard
+    // the idea is that one would want no more than 3 unknown words in a sentence at a time
+    // and the number of those that are 'high priority' must be nonzero.
+    // this should also probably include a minimum percentage for totalUnknownWords / allWords
+    // but for now just use minimum counts
+    if (totalUnknownWords <= 3 && highPriorityWordCount > 0) {
+        // every unknown word is high priority...great flash card
+        if (highPriorityWordCount === totalUnknownWords) {
+            return 'max';
+        }
+        // all but one of the unknown words are high priority
+        if (highPriorityWordCount == (totalUnknownWords - 1)) {
+            return 'high';
+        }
+        // at least one unknown word is high priority
+        return 'medium';
+    }
+    return 'low';
+}
+function getUnknownWordHtml(unknownWords) {
+    const unknownWordCount = unknownWords.size;
     if (!isFlashCardUser()) {
         return '';
     }
     return unknownWordCount === 0 ?
         `<span class="deemphasized">✅ No unknown words</span>` :
-        `<span class="deemphasized">No flashcards: <b>${unknownWordCount} word${unknownWordCount !== 1 ? 's' : ''}</b></span>`;
+        `<span class="deemphasized">No flashcards: <b class="${`suitability-${getSuitabilityClass(unknownWords)}`}">${unknownWordCount} word${unknownWordCount !== 1 ? 's' : ''}</b></span>`;
 }
 
 // expects callers to ensure augmentation is available
@@ -1178,8 +1213,8 @@ let initialize = function () {
     fetchStats();
     registerCallback(dataTypes.studyList, function () {
         for (const item of missingWordElements) {
-            const unknownWordCount = countWordsWithoutCards(item.words);
-            item.unknownWordTag.innerHTML = getUnknownWordHtml(unknownWordCount);
+            const unknownWords = getWordsWithoutCards(item.words);
+            item.unknownWordTag.innerHTML = getUnknownWordHtml(unknownWords);
         }
         for (const item of hasCardsElements) {
             item.cardTag.innerHTML = addFlashCardDefinitionTag(item.word);
