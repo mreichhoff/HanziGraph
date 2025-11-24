@@ -10,6 +10,7 @@
     --secondary-control-font-size: 14px;
     --header-font-family: Times, serif;
     --border: 1px solid #3333;
+    --bold-border: 1px solid #000;
     --search-font-size: 20px;
     --search-input-height: 32px;
     --primary-opacity: 0.95;
@@ -487,7 +488,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     background: var(--explore-tab-active-background-color);
     border-radius: 8px;
     transition: background 0.25s;
-    border: var(--border);
+    border: var(--bold-border);
 }
 
 .character-header {
@@ -686,8 +687,8 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
 
 .examples {
     background: var(--sentence-card-background-color);
-    border: var(--border);
-    border-radius: 12px;
+    border: var(--bold-border);
+    border-radius: 4px;
     margin-bottom: 12px;
 }
 
@@ -1892,8 +1893,9 @@ main.auth-form {
         --background-color: #121212;
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #444;
-        --explore-tab-active-background-color: #2e2e2e;
-        --sentence-card-background-color: #1a1a1a;
+        --bold-border: 1px solid #eee;
+        --explore-tab-active-background-color: #121212;
+        --sentence-card-background-color: #121212;
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0;
         --primary-button-font-color: black;
