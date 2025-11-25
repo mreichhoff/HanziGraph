@@ -20,7 +20,7 @@
     --explore-tab-padding: 3px 0;
     --sentence-card-background-color: #fff;
     --definitions-margin: 12px 0 12px 4px;
-    --example-padding: 6px 0 10px 12px;
+    --example-padding: 6px 0 10px 10px;
     --target-language-font-size: 24px;
     --target-language-secondary-font-size: 20px;
     --target-language-font-weight: 400;
@@ -39,7 +39,7 @@
     --primary-container-height: calc(100% - (var(--primary-header-height) + 2px));
     --legend-height: 30px;
     --graph-height: calc(100% - var(--legend-height) - 4px);
-    --section-container-margin: 0 20px;
+    --section-container-margin: 0 16px;
     --calendar-day-color: #eee;
     --bar-chart-separator-color: #121212;
     --bar-chart-height: 400px;
@@ -1917,7 +1917,7 @@ main.auth-form {
 
 @media (max-width: 1024px) {
     :root {
-        --section-container-margin: 0 10px;
+        --section-container-margin: 0 6px;
         --bar-chart-width: 100%;
         --bar-chart-height: 250px;
         --bar-chart-font-size: 12px;
@@ -1941,7 +1941,7 @@ main.auth-form {
         --walkthrough-top-margin: 0;
         --walkthrough-smallest-header-font-size: 16px;
         --walkthrough-header-text-align: center;
-        --example-padding: 6px 0 10px 10px;
+        --example-padding: 4px 0 8px 8px;
         --definitions-margin: 10px 0 6px 4px;
         --legend-font-size: 14px;
     }
