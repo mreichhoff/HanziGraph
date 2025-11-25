@@ -687,7 +687,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
 
 .examples {
     background: var(--sentence-card-background-color);
-    border: var(--bold-border);
+    border: var(--border);
     border-radius: 4px;
     margin-bottom: 12px;
 }
@@ -1895,7 +1895,7 @@ main.auth-form {
         --border: 1px solid #444;
         --bold-border: 1px solid #eee;
         --explore-tab-active-background-color: #121212;
-        --sentence-card-background-color: #121212;
+        --sentence-card-background-color: #1c1c1c;
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0;
         --primary-button-font-color: black;
