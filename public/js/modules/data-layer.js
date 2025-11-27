@@ -357,26 +357,93 @@ let getResultCount = function (results) {
     return (results[studyResult.CORRECT] || 0) + (results[studyResult.INCORRECT] || 0);
 }
 
+let authStateUnsubscribe = null;
+let studyListUnsubscribe = null;
+let hourlyUnsubscribe = null;
+let dailyUnsubscribe = null;
+let permissionsUnsubscribe = null;
+let receivedAuthEventCount = 0;
+let receivedStudyListEventCount = 0;
+let receivedPermissionsEventCount = 0;
+let receivedDailyEventCount = 0;
+let receivedHourlyEventCount = 0;
+let lastStudyListTimestamp = Date.now();
+let lastAuthTimestamp = Date.now();
+let debugString = '';
+let intervalCount = 0;
+let db = null;
+let app = null;
+let auth = null;
+let freezeCount = 0;
+let lastFreeze = null;
+let resumeCount = 0;
+let lastResume = null;
+let hiddenCount = 0;
+let lastHidden = null;
+let visibleCount = 0;
+let lastVisible = null;
+
+const debugElement = document.getElementById('debug');
+function getDebug() {
+    return `hidden: ${hiddenCount}; ${lastHidden}<br>vis: ${visibleCount}; ${lastVisible}<br>resume: ${resumeCount}; ${lastResume}<br>freeze: ${freezeCount}; ${lastFreeze}<br>uid: ${authenticatedUser.uid}<br>unsubscribe: ${JSON.stringify(studyListUnsubscribe)}<br>errors: ${debugString}<br>auth events: ${receivedAuthEventCount}<br>study list events: ${receivedStudyListEventCount}<br>perms: ${receivedPermissionsEventCount}<br>daily: ${receivedDailyEventCount}<br>hourly: ${receivedHourlyEventCount}<br>studylist update time: ${lastStudyListTimestamp}<br>authstate update time: ${lastAuthTimestamp}<br>interval fired: ${intervalCount}`;
+}//db: ${JSON.stringify(db)}<br>app: ${JSON.stringify(app)}<br>auth:${JSON.stringify(auth)}
+setInterval(() => {
+    intervalCount++;
+    debugElement.innerHTML = getDebug();
+}, 15000);
+
 let initialize = function () {
-    let auth = getAuth();
-    const app = getApp();
-    initializeFirestore(app,
+    auth = getAuth();
+    app = getApp();
+    db = initializeFirestore(app,
         {
             localCache:
                 persistentLocalCache(/*settings*/{})
         });
+    setupFirestoreListeners();
+    document.addEventListener('force-debug', function () {
+        debugElement.innerHTML = getDebug();
+    });
+    document.addEventListener('freeze', function () {
+        freezeCount++;
+        lastFreeze = Date.now();
+    });
+    document.addEventListener('resume', function () {
+        resumeCount++;
+        lastResume = Date.now();
+    });
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            hiddenCount++;
+            lastHidden = Date.now();
+            studyListUnsubscribe();
+            hourlyUnsubscribe();
+            dailyUnsubscribe();
+            permissionsUnsubscribe();
+        } else {
+            // Page became visible
+            visibleCount++;
+            lastVisible = Date.now();
+            setupFirestoreListeners();
+        }
+    });
+};
 
-    // TODO cancel callback?
-    onAuthStateChanged(auth, (user) => {
+function setupFirestoreListeners() {
+    authStateUnsubscribe = onAuthStateChanged(auth, (user) => {
+        receivedAuthEventCount++;
+        lastAuthTimestamp = Date.now();
         if (user) {
             authenticatedUser = user;
             //TODO get study results here, too
-            const db = getFirestore();
+            // db = getFirestore();
 
             let localStudyList = JSON.parse(localStorage.getItem('studyList'));
             let localStudyResults = JSON.parse(localStorage.getItem('studyResults'));
             //TODO: these are all horribly repetitive and overengineered
-            onSnapshot(collection(db, `users/${authenticatedUser.uid}/studyList`), { includeMetadataChanges: true }, (doc) => {
+            studyListUnsubscribe = onSnapshot(collection(db, `users/${authenticatedUser.uid}/studyList`), { includeMetadataChanges: true }, (doc) => {
+                receivedStudyListEventCount++;
+                lastStudyListTimestamp = Date.now();
                 // if hasPendingWrites is true, we're getting a notification for our own write; ignore
                 // unless it's fromCache, possibly indicating offline updates
                 // TODO: is this or clause effectively just making this always get entered?
@@ -470,9 +537,12 @@ let initialize = function () {
                         callbacks[dataTypes.studyList].forEach(x => x(studyList));
                     }
                 }
+            }, (error) => {
+                debugString += JSON.stringify(error);
             });
             // TODO: combine hourly and daily
-            onSnapshot(collection(db, `users/${authenticatedUser.uid}/hourly`), { includeMetadataChanges: true }, (doc) => {
+            hourlyUnsubscribe = onSnapshot(collection(db, `users/${authenticatedUser.uid}/hourly`), { includeMetadataChanges: true }, (doc) => {
+                receivedHourlyEventCount++;
                 if (!doc.metadata.hasPendingWrites || doc.metadata.fromCache) {
                     let serverHourly = {};
                     for (const item of doc.docChanges()) {
@@ -511,8 +581,11 @@ let initialize = function () {
                         }
                     }
                 }
+            }, (error) => {
+                debugString += JSON.stringify(error);
             });
-            onSnapshot(collection(db, `users/${authenticatedUser.uid}/daily`), { includeMetadataChanges: true }, (doc) => {
+            dailyUnsubscribe = onSnapshot(collection(db, `users/${authenticatedUser.uid}/daily`), { includeMetadataChanges: true }, (doc) => {
+                receivedDailyEventCount++;
                 if (!doc.metadata.hasPendingWrites || doc.metadata.fromCache) {
                     let serverDaily = {};
                     for (const item of doc.docChanges()) {
@@ -549,20 +622,29 @@ let initialize = function () {
                         }
                     }
                 }
+            }, (error) => {
+                debugString += JSON.stringify(error);
             });
 
             // users have permission to read their own doc in permissions, but not to write it.
-            onSnapshot(doc(db, `permissions/${authenticatedUser.uid}`), doc => {
+            permissionsUnsubscribe = onSnapshot(doc(db, `permissions/${authenticatedUser.uid}`), doc => {
+                receivedPermissionsEventCount++;
                 aiEligible = (doc && doc.get('ai') === true);
                 document.dispatchEvent(new CustomEvent('ai-eligibility-changed', { detail: aiEligible }));
+            }, (error) => {
+                debugString += JSON.stringify(error);
             })
         } else {
             // no signed in user means no AI features.
             aiEligible = false;
             document.dispatchEvent(new CustomEvent('ai-eligibility-changed', { detail: aiEligible }));
+            studyListUnsubscribe();
+            hourlyUnsubscribe();
+            dailyUnsubscribe();
+            permissionsUnsubscribe();
         }
     });
-};
+}
 
 let readOptionState = function () {
     return JSON.parse(localStorage.getItem('options'));
