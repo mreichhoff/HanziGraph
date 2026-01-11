@@ -419,6 +419,7 @@ function initialize() {
             ankiSyncStatus.className = 'connection-status status-error';
         }
         syncToAnkiButton.disabled = false;
+        ankiSyncStatus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
     // Listen for import completion
@@ -434,6 +435,7 @@ function initialize() {
         if (importFromAnkiButton) {
             importFromAnkiButton.disabled = false;
         }
+        ankiSyncStatus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 }
 
