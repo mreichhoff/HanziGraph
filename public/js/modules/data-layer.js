@@ -2,7 +2,8 @@ import { getApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, onSnapshot, collection, writeBatch, increment, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions";
-// 
+// normally we avoid * imports, but the local AI functions use the same names
+// as some in this file for convenience, so we avoid collisions this way.
 import * as localAi from './local-ai.js';
 
 const dataTypes = {
