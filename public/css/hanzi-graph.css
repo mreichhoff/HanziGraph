@@ -496,11 +496,6 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     opacity: 0.7;
 }
 
-/* .explore-tab:hover {
-    opacity: 1;
-    background: color-mix(in srgb, var(--explore-tab-tone-color, var(--explore-tab-active-background-color)) 10%, transparent);
-} */
-
 .explore-tab.active {
     opacity: 1;
     font-weight: 600;
