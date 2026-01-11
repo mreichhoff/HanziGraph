@@ -2,6 +2,8 @@ import { getApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, onSnapshot, collection, writeBatch, increment, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions";
+// 
+import * as localAi from './local-ai.js';
 
 const dataTypes = {
     studyList: 'studyList',
@@ -584,6 +586,9 @@ let writeExploreState = function (words) {
 }
 
 async function explainChineseSentence(text) {
+    if (localAi.isLocalAiEnabled()) {
+        return await localAi.explainChineseSentence(text);
+    }
     const functions = getFunctions();
     // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
     const explainChinese = httpsCallable(functions, 'explainText');
@@ -592,6 +597,9 @@ async function explainChineseSentence(text) {
 }
 
 async function translateEnglish(text) {
+    if (localAi.isLocalAiEnabled()) {
+        return await localAi.translateEnglish(text);
+    }
     const functions = getFunctions();
     // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
     const explainEnglish = httpsCallable(functions, 'explainEnglishText');
@@ -602,10 +610,15 @@ async function translateEnglish(text) {
 }
 
 async function generateChineseSentences(word, definitions) {
-    const functions = getFunctions();
-    // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
-    const generateChineseSentences = httpsCallable(functions, 'generateChineseSentences');
-    const aiData = await generateChineseSentences({ word, definitions });
+    let aiData;
+    if (localAi.isLocalAiEnabled()) {
+        aiData = await localAi.generateChineseSentences(word, definitions);
+    } else {
+        const functions = getFunctions();
+        // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+        const generateChineseSentencesCall = httpsCallable(functions, 'generateChineseSentences');
+        aiData = await generateChineseSentencesCall({ word, definitions });
+    }
     // lol, rube goldberg...run this event to trigger search to trigger the worker, which will tokenize the sentences
     // based on the dictionary known by this client (the backend likely should tokenize instead, but I'm lazy and one
     // could imagine old clients wanting to continue using their version of the Chinese dictionary). The tokenization
@@ -619,10 +632,15 @@ async function generateChineseSentences(word, definitions) {
 }
 
 async function analyzeCollocation(collocation) {
-    const functions = getFunctions();
-    // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
-    const analyzeCollocation = httpsCallable(functions, 'analyzeCollocation');
-    const aiData = await analyzeCollocation(collocation);
+    let aiData;
+    if (localAi.isLocalAiEnabled()) {
+        aiData = await localAi.analyzeCollocation(collocation);
+    } else {
+        const functions = getFunctions();
+        // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+        const analyzeCollocationCall = httpsCallable(functions, 'analyzeCollocation');
+        aiData = await analyzeCollocationCall(collocation);
+    }
     // same explanation of goofiness as `generateChineseSentences`. In the collocation case, we both generate sentences
     // and get an explanation back. Tokenize the sentences, then return the whole thing.
     const tokenizedSentences = await new Promise((resolve, reject) => {
@@ -634,10 +652,13 @@ async function analyzeCollocation(collocation) {
 }
 
 function isAiEligible() {
-    return aiEligible;
+    return aiEligible || localAi.isLocalAiEnabled();
 }
 
 async function analyzeImage(base64ImageContents) {
+    if (localAi.isLocalAiEnabled()) {
+        return await localAi.analyzeImage(base64ImageContents);
+    }
     const functions = getFunctions();
     // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
     const analyzeImage = httpsCallable(functions, 'analyzeImage');
