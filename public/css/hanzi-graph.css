@@ -35,8 +35,8 @@
     --link-font-color: rgb(21, 36, 255);
     --input-background-color: #fff;
     --primary-input-box-shadow: 0 2px 3px 1px #eeee;
-    --primary-button-font-color: #fff;
-    --primary-button-background-color: black;
+    --button-font-color: #fff;
+    --button-background-color: black;
     --positive-button-color: #6de200;
     --right-button-height: 22px;
     /* I was told there would be no math */
@@ -1513,10 +1513,10 @@ input:checked {
 .primary-button {
     text-align: center;
     padding: 12px;
-    background: var(--primary-button-background-color);
+    background: var(--button-background-color);
     width: 120px;
     margin: 20px auto;
-    color: var(--primary-button-font-color);
+    color: var(--button-font-color);
     border-radius: 20px;
     font-weight: bold;
     cursor: pointer;
@@ -1753,8 +1753,8 @@ using settings names for now
     font-size: 16px;
     border: var(--border);
     border-radius: 20px;
-    background-color: var(--background-color);
-    color: var(--primary-font-color);
+    background-color: var(--button-background-color);
+    color: var(--button-font-color);
     cursor: pointer;
 }
 
@@ -2080,8 +2080,8 @@ main.auth-form {
         --sentence-card-background-color: rgba(100, 150, 255, 0.1);
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0;
-        --primary-button-font-color: black;
-        --primary-button-background-color: #fff;
+        --button-font-color: black;
+        --button-background-color: #fff;
         --input-background-color: #1e1e1e;
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
