@@ -273,5 +273,17 @@ onmessage = async function (e) {
             word: e.data.payload.word,
             aiData: e.data.payload.aiData
         });
+    } else if (e.data.type === 'retokenize-cards') {
+        // Re-tokenize card Chinese text (e.g., when importing from Anki)
+        // Input: { cards: { key: chineseText, ... }, locale }
+        // Output: { key: tokenizedArray, ... }
+        const result = {};
+        for (const [key, chineseText] of Object.entries(e.data.payload.cards)) {
+            result[key] = segment(chineseText, e.data.payload.locale);
+        }
+        postMessage({
+            result,
+            type: e.data.type
+        });
     }
 }
