@@ -598,13 +598,15 @@ async function explainChineseSentence(text) {
 }
 
 async function translateEnglish(text) {
+    let result;
     if (localAi.isLocalAiEnabled()) {
-        return await localAi.translateEnglish(text);
+        result = await localAi.translateEnglish(text);
+    } else {
+        const functions = getFunctions();
+        // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+        const explainEnglish = httpsCallable(functions, 'explainEnglishText');
+        result = await explainEnglish(text);
     }
-    const functions = getFunctions();
-    // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
-    const explainEnglish = httpsCallable(functions, 'explainEnglishText');
-    const result = await explainEnglish(text);
     // i know i shouldn't
     result.data['englishTranslation'] = text;
     return result;
