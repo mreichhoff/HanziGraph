@@ -260,7 +260,7 @@ function getStylesheet() {
                 'font-size': isTree ? '12px' : '14px',
                 'font-weight': '400',
                 'text-background-color': (_ => prefersDark ? '#1a1a1a' : '#e4eeff'),
-                'text-background-opacity': '1',
+                'text-background-opacity': '0.9',
                 'text-background-shape': 'round-rectangle',
                 'text-background-padding': '3px',
                 'text-events': 'yes',
