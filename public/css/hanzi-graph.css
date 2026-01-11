@@ -811,7 +811,6 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     line-height: 1.4;
     font-family: var(--pinyin-font);
     letter-spacing: 0.02em;
-    color: rgba(0, 0, 0, 0.6);
 }
 
 .context,
