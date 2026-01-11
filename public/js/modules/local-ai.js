@@ -1,6 +1,5 @@
 // Local AI module for OpenAI-compatible servers (e.g., LMStudio)
 // This module provides the same interface as the Firebase functions but calls a local server instead.
-
 const SETTINGS_KEY = 'localAiSettings';
 
 // Default settings
@@ -39,7 +38,8 @@ function isLocalAiEnabled() {
     return settings.enabled && settings.endpoint && settings.model;
 }
 
-// JSON Schema definitions matching the Firebase function schemas
+// JSON Schema definitions matching the Firebase function schemas.
+// See `functions/src/schemas.ts` for the backend schema definitions.
 const schemas = {
     explanation: {
         type: 'object',
@@ -235,8 +235,10 @@ async function fetchModels() {
     }
 }
 
-// AI function implementations that mirror the Firebase functions
-
+// AI function implementations that mirror the Firebase GenKit functions
+// See `functions/src/index.ts` for the GenKit entry point.
+// TODO: it's unclear these are good prompts on the backend, and they probably are worse for
+// less-capable local models. Both sides likely need tuning.
 async function explainChineseSentence(text) {
     const messages = [
         { role: 'user', content: `Explain the Chinese text "${text}".` }
@@ -283,6 +285,8 @@ async function analyzeCollocation(collocation) {
     return { data: output };
 }
 
+// TODO: how common are multi-modal models (which this assumes) in local AI setups?
+// we might need to let the user pick a separate model for images? Not sure yet.
 async function analyzeImage(base64ImageContents) {
     // Note: Image analysis requires a vision-capable model
     // The base64 content should be in format: data:image/jpeg;base64,xxxxx
