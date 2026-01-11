@@ -7,6 +7,7 @@ const mainAppContainer = document.getElementById('main-app-container');
 const statsContainer = document.getElementById('stats-container');
 const faqContainer = document.getElementById('faq-container');
 const menuContainer = document.getElementById('menu-container');
+const settingsContainer = document.getElementById('settings-container');
 
 const textContainer = document.getElementById('text-container');
 const graphContainer = document.getElementById('graph-container');
@@ -20,7 +21,7 @@ const textHeader = document.getElementById('text-header');
 
 const graphLegend = document.getElementById('graph-legend');
 
-const containers = [mainAppContainer, statsContainer, faqContainer, menuContainer];
+const containers = [mainAppContainer, statsContainer, faqContainer, menuContainer, settingsContainer];
 const panes = [explorePane, studyPane];
 const midHeaderOptions = [textHeader, searchForm];
 
@@ -30,7 +31,8 @@ const stateKeys = {
     study: 'study',
     faq: 'faq',
     stats: 'stats',
-    menu: 'menu'
+    menu: 'menu',
+    settings: 'settings'
 };
 
 const states = {
@@ -88,6 +90,16 @@ const states = {
         animation: 'slide-in',
         activateCallbacks: [],
         deactivateCallbacks: []
+    },
+    settings: {
+        leftButtonClass: 'exit-button',
+        activeContainer: settingsContainer,
+        statePreserving: true,
+        leftState: 'main',
+        activeMidHeader: textHeader,
+        animation: 'slide-in',
+        activateCallbacks: [],
+        deactivateCallbacks: []
     }
 };
 
@@ -127,7 +139,7 @@ function switchToState(state) {
             stateConfig.activeContainer.classList.remove(stateConfig.animation);
         }, { once: true });
     }
-    if(stateConfig.bodyClass) {
+    if (stateConfig.bodyClass) {
         document.body.className = stateConfig.bodyClass;
     } else {
         document.body.removeAttribute('class');

@@ -35,8 +35,8 @@
     --link-font-color: rgb(21, 36, 255);
     --input-background-color: #fff;
     --primary-input-box-shadow: 0 2px 3px 1px #eeee;
-    --primary-button-font-color: #fff;
-    --primary-button-background-color: black;
+    --button-font-color: #fff;
+    --button-background-color: black;
     --positive-button-color: #6de200;
     --right-button-height: 22px;
     /* I was told there would be no math */
@@ -1513,10 +1513,10 @@ input:checked {
 .primary-button {
     text-align: center;
     padding: 12px;
-    background: var(--primary-button-background-color);
+    background: var(--button-background-color);
     width: 120px;
     margin: 20px auto;
-    color: var(--primary-button-font-color);
+    color: var(--button-font-color);
     border-radius: 20px;
     font-weight: bold;
     cursor: pointer;
@@ -1644,6 +1644,168 @@ p.related-card {
 
 .welcome-message {
     font-size: 16px;
+}
+
+/*
+integrations page styles, eventually to include other settings?
+using settings names for now
+*/
+.settings {
+    width: 90%;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+    padding-bottom: 40px;
+}
+
+.settings-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: var(--border);
+    border-radius: 8px;
+    background-color: var(--sentence-card-background-color);
+}
+
+.settings-section h2 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 22px;
+}
+
+.settings-section h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 18px;
+}
+
+.settings-item {
+    margin-bottom: 16px;
+}
+
+.settings-item label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 400;
+}
+
+.settings-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.settings-toggle input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.settings-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: var(--border);
+    border-radius: 4px;
+    background-color: var(--input-background-color);
+    color: var(--primary-font-color);
+    box-sizing: border-box;
+}
+
+.settings-select {
+    padding: 10px;
+    font-size: 16px;
+    border: var(--border);
+    border-radius: 4px;
+    background-color: var(--input-background-color);
+    color: var(--primary-font-color);
+    min-width: 200px;
+    max-width: 100%;
+}
+
+.settings-hint {
+    font-size: 13px;
+    color: var(--primary-font-color);
+    opacity: var(--tertiary-opacity);
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+.settings-instructions {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.settings-instructions li {
+    margin-bottom: 8px;
+}
+
+.settings-instructions code {
+    background-color: var(--background-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.secondary-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: var(--border);
+    border-radius: 20px;
+    background-color: var(--button-background-color);
+    color: var(--button-font-color);
+    cursor: pointer;
+}
+
+.icon-button {
+    padding: 8px 12px;
+    font-size: 18px;
+    border: var(--border);
+    border-radius: 4px;
+    background-color: var(--background-color);
+    color: var(--primary-font-color);
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.connection-status {
+    margin-left: 12px;
+    font-size: 14px;
+}
+
+.connection-status.status-testing {
+    color: var(--primary-font-color);
+    opacity: var(--secondary-opacity);
+}
+
+.connection-status.status-success {
+    color: var(--positive-button-color);
+}
+
+.connection-status.status-error {
+    color: var(--tone-1-color);
+}
+
+.connection-status.status-warning {
+    color: #f0a500;
+}
+
+.settings-status {
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin: 0;
+}
+
+.settings-status.status-success {
+    background-color: rgba(109, 226, 0, 0.1);
+    color: var(--positive-button-color);
+}
+
+.settings-status.status-warning {
+    background-color: rgba(240, 165, 0, 0.1);
+    color: #f0a500;
 }
 
 /* TODO(refactor): signin form stuff should be cleaned */
@@ -1918,8 +2080,8 @@ main.auth-form {
         --sentence-card-background-color: rgba(100, 150, 255, 0.1);
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0;
-        --primary-button-font-color: black;
-        --primary-button-background-color: #fff;
+        --button-font-color: black;
+        --button-background-color: #fff;
         --input-background-color: #1e1e1e;
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;

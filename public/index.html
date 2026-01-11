@@ -366,6 +366,67 @@
             </p>
         </section>
     </div>
+    <div id="settings-container" style="display:none">
+        <main class="settings">
+            <section class="settings-section">
+                <h2>Local AI Settings</h2>
+                <p class="explanation">
+                    Connect to a local AI server (like <a href="https://lmstudio.ai/" target="_blank">LMStudio</a>)
+                    to use AI features without signing in. The server must be OpenAI API compatible.
+                </p>
+
+                <div class="settings-item">
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="local-ai-enabled" />
+                        <span>Enable Local AI</span>
+                    </label>
+                </div>
+
+                <div class="settings-item">
+                    <label for="local-ai-endpoint">Server Endpoint:</label>
+                    <input type="text" id="local-ai-endpoint" placeholder="http://localhost:1234/v1"
+                        value="http://localhost:1234/v1" class="settings-input" />
+                    <p class="settings-hint">The base URL of your local AI server's OpenAI-compatible API.</p>
+                </div>
+
+                <div class="settings-item">
+                    <button id="test-connection-button" class="secondary-button">Test Connection</button>
+                    <span id="connection-status" class="connection-status"></span>
+                </div>
+
+                <div class="settings-item">
+                    <label for="local-ai-model">Model:</label>
+                    <select id="local-ai-model" class="settings-select">
+                        <option value="">-- Test connection first --</option>
+                    </select>
+                    <button id="refresh-models-button" class="icon-button" title="Refresh models">↻</button>
+                    <p class="settings-hint">Select the model to use for AI features. Some features (like image
+                        analysis) require vision-capable models.</p>
+                </div>
+
+                <div class="settings-item" id="local-ai-status-container" style="display:none">
+                    <p class="settings-status" id="local-ai-status"></p>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <h3>Instructions</h3>
+                <ol class="settings-instructions">
+                    <li>Download and install <a href="https://lmstudio.ai/" target="_blank">LMStudio</a> (or another
+                        OpenAI-compatible server).</li>
+                    <li>Download a model in LMStudio (e.g., Llama, Qwen, or a vision model for image analysis).</li>
+                    <li>Start the local server in LMStudio (Developer tab → Start Server).</li>
+                    <li>Enter the server endpoint above (default: <code>http://localhost:1234/v1</code>).</li>
+                    <li>Click "Test Connection" to verify and load available models.</li>
+                    <li>Select a model and enable Local AI.</li>
+                </ol>
+                <p class="settings-hint">
+                    <strong>Note:</strong> For best results with Chinese, use a model with good multilingual support.
+                    For image analysis, you'll need a vision-capable model.
+                </p>
+            </section>
+        </main>
+    </div>
     <div id="menu-container" style="display:none">
         <main class="menu">
             <div class="menu-item" id="welcome-message-container">
@@ -387,6 +448,11 @@
             <div class="menu-item">
                 <a id="stats-link" class="active-link">
                     <i class="stats-button"></i>Your study stats
+                </a>
+            </div>
+            <div class="menu-item">
+                <a id="settings-link" class="active-link">
+                    Integrations
                 </a>
             </div>
             <div class="menu-item">
