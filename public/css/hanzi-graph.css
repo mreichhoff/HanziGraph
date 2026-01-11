@@ -1915,7 +1915,7 @@ main.auth-form {
         --explore-tab-active-background-color: #c800ff;
         --explore-tab-active-text-color: #fff;
         --explore-tab-hover-background-color: rgba(200, 0, 255, 0.15);
-        --sentence-card-background-color: rgba(100, 150, 255, 0.05);
+        --sentence-card-background-color: rgba(100, 150, 255, 0.1);
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0;
         --primary-button-font-color: black;
