@@ -1,6 +1,7 @@
 import { makeSentenceNavigable, addTextToSpeech } from "./explore.js";
 import { dataTypes, registerCallback, saveStudyList, getStudyList, findOtherCards, removeFromStudyList, recordEvent, studyResult, updateCard, cardTypes } from "./data-layer.js";
 import { registerStateChangeCallback, stateKeys } from "./ui-orchestrator.js";
+import * as anki from "./anki.js";
 
 const studyContainer = document.getElementById('study-container');
 
@@ -34,6 +35,7 @@ const clozePlaceholder = clozePlaceholderCharacter + clozePlaceholderCharacter +
 
 const explanationContainer = document.getElementById('study-explain-container');
 const explanationHideButton = document.getElementById('hide-study-explanation');
+const ankiNudgeContainer = document.getElementById('anki-nudge-container');
 
 let currentKey = null;
 let studyModeActive = false;
@@ -159,6 +161,14 @@ let setupStudyMode = function () {
     let currentCard = null;
     cardAnswerContainer.style.display = 'none';
     showAnswerButton.innerText = "Show Answer";
+
+    // Show Anki nudge if enabled and not dismissed
+    if (anki.isAnkiEnabled()) {
+        ankiNudgeContainer.removeAttribute('style');
+    } else {
+        ankiNudgeContainer.style.display = 'none';
+    }
+
     let counter = 0;
     for (const [key, value] of Object.entries(studyList)) {
         if (value.due <= Date.now()) {
