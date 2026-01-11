@@ -1,7 +1,10 @@
 :root {
-    --background-color: #fafafa;
+    --background-color: linear-gradient(rgba(100, 150, 255, 0.05), rgba(100, 150, 255, 0.15));
     --primary-font-color: rgba(0, 0, 0, 0.87);
-    --primary-font: Roboto, Helvetica, Arial, sans-serif;
+    --primary-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --chinese-font: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif;
+    --english-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --pinyin-font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     --primary-font-weight: 300;
     --primary-header-height: 50px;
     --primary-header-font-size: 30px;
@@ -16,8 +19,11 @@
     --primary-opacity: 0.95;
     --secondary-opacity: 0.8;
     --tertiary-opacity: 0.7;
-    --explore-tab-active-background-color: #fff;
-    --explore-tab-padding: 3px 0;
+    --explore-tabs-background-color: rgba(0, 0, 0, 0.05);
+    --explore-tab-active-background-color: #c800ff;
+    --explore-tab-active-text-color: #fff;
+    --explore-tab-hover-background-color: rgba(200, 0, 255, 0.1);
+    --explore-tab-padding: 4px 16px;
     --sentence-card-background-color: #fff;
     --definitions-margin: 12px 0 12px 4px;
     --example-padding: 6px 0 10px 10px;
@@ -25,7 +31,7 @@
     --target-language-secondary-font-size: 20px;
     --target-language-font-weight: 400;
     --base-language-font-size: 14px;
-    --example-item-margin: 4px 0;
+    --example-item-margin: 8px 0;
     --link-font-color: rgb(21, 36, 255);
     --input-background-color: #fff;
     --primary-input-box-shadow: 0 2px 3px 1px #eeee;
@@ -72,7 +78,7 @@
     --walkthrough-smallest-header-font-size: 18px;
     --walkthrough-top-margin: 80px;
     --walkthrough-header-text-align: left;
-    --popover-background-color: #f7f7f7;
+    --popover-background-color: #fff;
     --popover-font-color: black;
     --menu-popover-border: 3px solid #3333;
 }
@@ -88,7 +94,7 @@ body {
     padding: 0;
     font-family: var(--primary-font);
     font-weight: var(--primary-font-weight);
-    background-color: var(--background-color);
+    background: var(--background-color);
     color: var(--primary-font-color);
     overflow-x: hidden;
     /*
@@ -468,27 +474,39 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     text-align: center;
-    margin: 4px auto;
+    margin: 8px auto 12px;
     user-select: none;
     -webkit-user-select: none;
-    border: var(--border);
-    border-radius: 8px;
+    background: var(--explore-tabs-background-color);
+    border-radius: 12px;
+    padding: 2px;
+    gap: 4px;
 }
 
 .explore-tab {
     cursor: pointer;
-    opacity: 0.6;
     padding: var(--explore-tab-padding);
     border: 1px solid transparent;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    transition: all 0.2s ease;
+    color: var(--primary-font-color);
+    opacity: 0.7;
 }
+
+/* .explore-tab:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--explore-tab-tone-color, var(--explore-tab-active-background-color)) 10%, transparent);
+} */
 
 .explore-tab.active {
     opacity: 1;
-    font-weight: bold;
-    background: var(--explore-tab-active-background-color);
-    border-radius: 8px;
-    transition: background 0.25s;
-    border: var(--bold-border);
+    font-weight: 600;
+    background: color-mix(in srgb, var(--explore-tab-tone-color, var(--explore-tab-active-background-color)) 85%, transparent);
+    color: black;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .character-header {
@@ -686,8 +704,6 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
 }
 
 .examples {
-    background: var(--sentence-card-background-color);
-    border: var(--border);
     border-radius: 4px;
     margin-bottom: 12px;
 }
@@ -697,12 +713,13 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
 }
 
 .example {
-    padding: var(--example-padding);
-    border-bottom: var(--border);
-}
-
-.example:last-of-type {
-    border-bottom: 0;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--sentence-card-background-color);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
 }
 
 .tags {
@@ -771,23 +788,30 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
 .target {
     font-size: var(--target-language-font-size);
     font-weight: var(--target-language-font-weight);
+    font-family: var(--chinese-font);
     /* TODO(refactor) why flex? */
     display: flex;
     opacity: var(--primary-opacity);
-    margin: var(--example-item-margin);
+    margin: 2px 0 8px 0;
 }
 
 .base {
     margin: var(--example-item-margin);
     opacity: var(--secondary-opacity);
     font-size: var(--base-language-font-size);
+    font-family: var(--english-font);
+    letter-spacing: 0.01em;
 }
 
 .transcription {
     display: none;
-    margin: var(--example-item-margin);
-    opacity: var(--tertiary-opacity);
-    font-size: var(--base-language-font-size);
+    margin: 6px 0;
+    opacity: 0.7;
+    font-size: 14px;
+    line-height: 1.4;
+    font-family: var(--pinyin-font);
+    letter-spacing: 0.02em;
+    color: rgba(0, 0, 0, 0.6);
 }
 
 .context,
@@ -1062,8 +1086,8 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     box-sizing: border-box;
     position: relative;
     display: block;
-    width: 4px;
-    height: 4px;
+    width: 6px;
+    height: 6px;
     background: currentColor;
     border-radius: 100%;
 }
@@ -1076,11 +1100,11 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
 }
 
 .three-dot::after {
-    left: -6px;
+    left: -8px;
 }
 
 .three-dot::before {
-    right: -6px;
+    right: -8px;
 }
 
 .copy-icon {
@@ -1890,17 +1914,20 @@ main.auth-form {
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --background-color: #121212;
+        --background-color: linear-gradient(180deg, #071024, #121212);
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #444;
         --bold-border: 1px solid #eee;
-        --explore-tab-active-background-color: #121212;
-        --sentence-card-background-color: #121212;
+        --explore-tabs-background-color: rgba(0, 0, 0, 0.5);
+        --explore-tab-active-background-color: #c800ff;
+        --explore-tab-active-text-color: #fff;
+        --explore-tab-hover-background-color: rgba(200, 0, 255, 0.15);
+        --sentence-card-background-color: rgba(100, 150, 255, 0.05);
         --link-font-color: #68aaee;
         --primary-input-box-shadow: 0;
         --primary-button-font-color: black;
         --primary-button-background-color: #fff;
-        --input-background-color: #2e2e2e;
+        --input-background-color: #1e1e1e;
         --calendar-day-color: #333;
         --bar-chart-separator-color: #fff;
         --neutral-tone-color: #aaa;
@@ -1909,9 +1936,9 @@ main.auth-form {
         --graph-expand-button-box-shadow: 0;
         --tag-border: 2px solid #aaaa;
         --checked-input-border: 6px solid #eeee;
-        --popover-background-color: #191919;
+        --popover-background-color: #121212;
         --popover-font-color: #eeee;
-        --menu-popover-border: 3px solid #eee3;
+        --menu-popover-border: 3px solid #1a1a1a;
     }
 }
 

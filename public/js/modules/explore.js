@@ -905,6 +905,10 @@ function renderComponents(word, container) {
 }
 
 function renderExplore(word, container, definitionList, examples, maxExamples, active) {
+    // Set dynamic tab color based on first tone of the word
+    const firstTone = getTone(word[0]);
+    container.style.setProperty('--explore-tab-tone-color', `var(--tone-${firstTone}-color)`);
+
     let tabs = document.createElement('div');
     renderWordHeader(word, container, active);
     tabs.classList.add('explore-tabs');
