@@ -227,36 +227,65 @@ function getStylesheet() {
                 'background-color': (isTones) ? toneColor : levelColor,
                 'label': isTree ? 'data(word)' : 'data(id)',
                 'color': isTones ? makeLegible : 'black',
-                'font-size': '20px',
+                'font-size': '32px',
+                'font-weight': '500',
                 'text-valign': 'center',
-                'text-halign': 'center'
+                'text-halign': 'center',
+                'width': '50px',
+                'height': '50px',
+                'border-width': '2px',
+                'border-color': prefersDark ? '#555' : '#e0e0e0',
+                'border-opacity': '0.6',
+                'overlay-opacity': '0',
+                'transition-property': 'background-color, border-color, border-width',
+                'transition-duration': '0.2s'
+            }
+        },
+        {
+            selector: 'node:selected',
+            style: {
+                'border-width': '3px',
+                'border-color': prefersDark ? '#fff' : '#000',
+                'border-opacity': '0.8'
             }
         },
         {
             selector: 'edge',
             style: {
-                'line-color': (!isTones && !isTree) ? levelColor : prefersDark ? '#444' : '#121212',
+                'line-color': (!isTones && !isTree) ? levelColor : prefersDark ? '#555' : '#000',
                 'target-arrow-shape': !isTree ? 'none' : 'triangle',
                 'curve-style': 'straight',
                 'label': !isTree ? 'data(displayWord)' : edgeLabel,
-                'color': (_ => prefersDark ? '#eee' : '#000'),
-                'font-size': isTree ? '12px' : '10px',
-                'text-background-color': (_ => prefersDark ? '#121212' : '#fafafa'),
-                'text-background-opacity': '1',
+                'color': (_ => prefersDark ? '#ccc' : '#121212'),
+                'font-size': isTree ? '12px' : '14px',
+                'font-weight': '400',
+                'text-background-color': (_ => prefersDark ? '#1a1a1a' : '#e4eeff'),
+                'text-background-opacity': '0.9',
                 'text-background-shape': 'round-rectangle',
-                'text-background-padding': '1px',
-                'text-events': 'yes'
+                'text-background-padding': '3px',
+                'text-events': 'yes',
+                'width': '5px',
+                'opacity': '1',
+                'overlay-opacity': '0'
+            }
+        },
+        {
+            selector: 'edge:selected',
+            style: {
+                'width': '6px',
+                'opacity': '1',
+                'line-color': prefersDark ? '#999' : '#000'
             }
         }
     ];
     if (isTree) {
-        result[1].style.width = '3px';
-        result[1].style['color'] = '#fff';
-        result[1].style['text-background-color'] = '#000';
-        result[1].style['text-background-padding'] = '2px';
-        result[1].style['arrow-scale'] = '0.65';
-        result[1].style['text-background-shape'] = 'rectangle';
-        result[1].style['target-arrow-color'] = prefersDark ? '#aaa' : '#121212';
+        result[2].style.width = '2.5px';
+        result[2].style['color'] = prefersDark ? '#eee' : '#222';
+        result[2].style['text-background-color'] = prefersDark ? '#222' : '#f5f5f5';
+        result[2].style['text-background-padding'] = '4px';
+        result[2].style['arrow-scale'] = '0.8';
+        result[2].style['text-background-shape'] = 'round-rectangle';
+        result[2].style['target-arrow-color'] = prefersDark ? '#555' : '#000';
     }
     return result;
 }
