@@ -1,5 +1,5 @@
 :root {
-    --background-color: linear-gradient(rgba(100, 150, 255, 0.05), rgba(100, 150, 255, 0.15));
+    --background-color: rgba(100, 150, 255, 0.15);
     --primary-font-color: rgba(0, 0, 0, 0.87);
     --primary-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --chinese-font: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif;
