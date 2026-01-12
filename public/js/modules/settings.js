@@ -22,7 +22,6 @@ const localAiStatus = document.getElementById('local-ai-status');
 const ankiEnabledCheckbox = document.getElementById('anki-enabled');
 const ankiEndpointInput = document.getElementById('anki-endpoint');
 const ankiDeckSelect = document.getElementById('anki-deck');
-const ankiModelSelect = document.getElementById('anki-model');
 const ankiApiKeyInput = document.getElementById('anki-api-key');
 const testAnkiConnectionButton = document.getElementById('test-anki-connection');
 const refreshDecksButton = document.getElementById('refresh-decks-button');
@@ -33,8 +32,6 @@ const syncToAnkiButton = document.getElementById('sync-to-anki-button');
 const importFromAnkiButton = document.getElementById('import-from-anki-button');
 const ankiSyncStatus = document.getElementById('anki-sync-status');
 
-// ==================== Tab Navigation ====================
-
 function switchTab(tabName) {
     settingsTabs.forEach(tab => {
         tab.classList.toggle('active', tab.dataset.tab === tabName);
@@ -43,8 +40,6 @@ function switchTab(tabName) {
         panel.classList.toggle('active', panel.id === `${tabName}-settings`);
     });
 }
-
-// ==================== Local AI Functions ====================
 
 function updateLocalAiStatus() {
     const settings = localAi.getSettings();
@@ -163,8 +158,6 @@ function loadLocalAiSettings() {
     updateLocalAiStatus();
 }
 
-// ==================== Anki Functions ====================
-
 function updateAnkiStatus() {
     const settings = anki.getSettings();
 
@@ -208,31 +201,6 @@ function populateDeckSelect(decks, selectedDeck) {
     });
 }
 
-function populateAnkiModelSelect(models, selectedModel) {
-    ankiModelSelect.innerHTML = '';
-
-    // Always include the default HanziGraph Basic option
-    const defaultOption = document.createElement('option');
-    defaultOption.value = 'HanziGraph Basic';
-    defaultOption.textContent = 'HanziGraph Basic';
-    if (selectedModel === 'HanziGraph Basic' || !selectedModel) {
-        defaultOption.selected = true;
-    }
-    ankiModelSelect.appendChild(defaultOption);
-
-    models.forEach(model => {
-        if (model !== 'HanziGraph Basic') {
-            const option = document.createElement('option');
-            option.value = model;
-            option.textContent = model;
-            if (model === selectedModel) {
-                option.selected = true;
-            }
-            ankiModelSelect.appendChild(option);
-        }
-    });
-}
-
 async function handleTestAnkiConnection() {
     ankiConnectionStatus.textContent = 'Testing...';
     ankiConnectionStatus.className = 'connection-status status-testing';
@@ -246,15 +214,12 @@ async function handleTestAnkiConnection() {
         ankiConnectionStatus.textContent = `✓ Connected (v${result.version})`;
         ankiConnectionStatus.className = 'connection-status status-success';
 
-        // Fetch and populate decks and models
+        // Fetch and populate decks
         try {
             const decks = await anki.getDecks();
             populateDeckSelect(decks, anki.getSettings().deckName);
-
-            const models = await anki.getModels();
-            populateAnkiModelSelect(models, anki.getSettings().modelName);
         } catch (error) {
-            console.error('Failed to fetch decks/models:', error);
+            console.error('Failed to fetch decks:', error);
         }
     } else {
         ankiConnectionStatus.textContent = `✗ ${result.error}`;
@@ -270,9 +235,6 @@ async function handleRefreshDecks() {
         const decks = await anki.getDecks();
         populateDeckSelect(decks, anki.getSettings().deckName);
 
-        const models = await anki.getModels();
-        populateAnkiModelSelect(models, anki.getSettings().modelName);
-
         ankiConnectionStatus.textContent = '✓ Refreshed';
         ankiConnectionStatus.className = 'connection-status status-success';
     } catch (error) {
@@ -284,10 +246,6 @@ async function handleRefreshDecks() {
 function handleAnkiDeckChange() {
     anki.saveSettings({ deckName: ankiDeckSelect.value });
     updateAnkiStatus();
-}
-
-function handleAnkiModelChange() {
-    anki.saveSettings({ modelName: ankiModelSelect.value });
 }
 
 function handleAnkiEnabledChange() {
@@ -355,15 +313,10 @@ function loadAnkiSettings() {
     ankiEnabledCheckbox.checked = settings.enabled;
     ankiEndpointInput.value = settings.endpoint;
     ankiApiKeyInput.value = settings.apiKey || '';
-
-    // Set the select values
     ankiDeckSelect.value = settings.deckName || 'HanziGraph';
-    ankiModelSelect.value = settings.modelName || 'HanziGraph Basic';
 
     updateAnkiStatus();
 }
-
-// ==================== Initialize ====================
 
 function initialize() {
     // Load initial settings
@@ -391,7 +344,6 @@ function initialize() {
     ankiEnabledCheckbox.addEventListener('change', handleAnkiEnabledChange);
     ankiEndpointInput.addEventListener('change', handleAnkiEndpointChange);
     ankiDeckSelect.addEventListener('change', handleAnkiDeckChange);
-    ankiModelSelect.addEventListener('change', handleAnkiModelChange);
     ankiApiKeyInput.addEventListener('change', handleAnkiApiKeyChange);
     testAnkiConnectionButton.addEventListener('click', handleTestAnkiConnection);
     refreshDecksButton.addEventListener('click', handleRefreshDecks);
@@ -407,7 +359,7 @@ function initialize() {
         loadAnkiSettings();
     });
 
-    // Listen for sync completion
+    // Listen for sync completion and notify user of status
     document.addEventListener('anki-sync-complete', (event) => {
         const result = event.detail;
         if (result.success) {
@@ -422,7 +374,7 @@ function initialize() {
         ankiSyncStatus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
 
-    // Listen for import completion
+    // Listen for import completion and notify user of status
     document.addEventListener('anki-import-complete', (event) => {
         const result = event.detail;
         if (result.success) {

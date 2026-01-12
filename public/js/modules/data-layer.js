@@ -386,7 +386,7 @@ let removeFromStudyList = function (key) {
 
     // Remove from Anki if enabled
     if (anki.isAnkiEnabled() && cardToRemove) {
-        anki.removeCard(key, cardToRemove).catch(err => {
+        anki.removeCard(cardToRemove).catch(err => {
             console.error('Failed to remove card from Anki:', err);
         });
     }

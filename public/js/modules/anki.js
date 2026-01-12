@@ -1,4 +1,4 @@
-// Anki Connect module for integrating with local Anki via Anki-Connect plugin
+// A module for integrating with local Anki via Anki-Connect plugin
 // See: https://git.sr.ht/~foosoft/anki-connect
 
 const SETTINGS_KEY = 'ankiConnectSettings';
@@ -41,7 +41,6 @@ function isAnkiEnabled() {
     return settings.enabled && settings.endpoint && settings.deckName && settings.modelName;
 }
 
-// Core Anki-Connect invoke function
 async function invoke(action, params = {}) {
     const request = {
         action,
@@ -76,7 +75,6 @@ async function invoke(action, params = {}) {
     return data.result;
 }
 
-// Test connection to Anki-Connect
 async function testConnection() {
     try {
         const result = await invoke('requestPermission');
@@ -94,7 +92,6 @@ async function testConnection() {
     }
 }
 
-// Deck operations
 async function getDecks() {
     return await invoke('deckNames');
 }
@@ -110,16 +107,12 @@ async function ensureDeckExists() {
     }
 }
 
-// Model (note type) operations
+// Model (note type...not to be confused with AI models or something) operations
 async function getModels() {
     return await invoke('modelNames');
 }
 
-async function getModelFieldNames(modelName) {
-    return await invoke('modelFieldNames', { modelName });
-}
-
-// Create the HanziGraph note model if it doesn't exist
+// Create the custom HanziGraph note model if it doesn't exist
 async function ensureModelExists() {
     const models = await getModels();
     if (!models.includes(settings.modelName)) {
@@ -159,12 +152,9 @@ async function ensureModelExists() {
     }
 }
 
-// Note (card) operations
-
 // Convert HanziGraph card format to Anki note format
 function cardToAnkiNote(card, key) {
     const chineseText = Array.isArray(card.zh) ? card.zh.join('') : card.zh;
-    // Extract pinyin from the card if available, otherwise leave empty
     const pinyin = card.pinyin || '';
 
     return {
@@ -319,8 +309,7 @@ async function syncCard(key, card) {
     }
 }
 
-// Remove a card from Anki
-async function removeCard(key, card) {
+async function removeCard(card) {
     if (!isAnkiEnabled()) {
         return;
     }
