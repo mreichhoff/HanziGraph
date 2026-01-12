@@ -5,6 +5,7 @@ import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/
 // normally we avoid * imports, but the local AI functions use the same names
 // as some in this file for convenience, so we avoid collisions this way.
 import * as localAi from './local-ai.js';
+import * as anki from './anki.js';
 
 const dataTypes = {
     studyList: 'studyList',
@@ -84,6 +85,100 @@ let saveStudyList = function (keys, localStudyList) {
         localStorage.setItem('studyList', JSON.stringify(studyList));
     }
 };
+
+// Sync all cards to Anki
+async function syncToAnki() {
+    if (!anki.isAnkiEnabled()) {
+        return { success: false, error: 'Anki is not enabled' };
+    }
+
+    const results = {
+        added: 0,
+        updated: 0,
+        failed: 0,
+        errors: []
+    };
+
+    for (const [key, card] of Object.entries(studyList)) {
+        try {
+            const result = await anki.syncCard(key, card);
+            if (result.added) {
+                results.added++;
+            } else if (result.updated) {
+                results.updated++;
+            }
+        } catch (error) {
+            results.failed++;
+            results.errors.push({ key, error: error.message });
+        }
+    }
+
+    return { success: true, results };
+}
+
+// Load study list from Anki (import from Anki)
+async function loadFromAnki() {
+    if (!anki.isAnkiEnabled()) {
+        return { success: false, error: 'Anki is not enabled' };
+    }
+
+    try {
+        const ankiCards = await anki.getAllCards();
+        const cardsToImport = {};
+        const cardsToTokenize = {};
+
+        // First pass: identify cards to import and collect their Chinese text
+        for (const [key, ankiCard] of Object.entries(ankiCards)) {
+            if (!studyList[key]) {
+                cardsToImport[key] = ankiCard;
+                cardsToTokenize[key] = key; // key is the Chinese text
+            }
+        }
+
+        if (Object.keys(cardsToImport).length === 0) {
+            return { success: true, imported: 0 };
+        }
+
+        // Request re-tokenization from the search worker
+        const tokenizedResults = await new Promise((resolve) => {
+            document.dispatchEvent(new CustomEvent('request-retokenize-cards', {
+                detail: { cards: cardsToTokenize, resolve }
+            }));
+        });
+
+        // Second pass: create cards with proper tokenization
+        let imported = 0;
+        for (const [key, ankiCard] of Object.entries(cardsToImport)) {
+            const tokenizedZh = tokenizedResults[key] || ankiCard.zh || [];
+            studyList[key] = {
+                en: ankiCard.en || '',
+                zh: tokenizedZh.map(x => x.ignore ? x.word : x),
+                pinyin: ankiCard.pinyin || '',
+                due: Date.now(),
+                streak: ankiCard.streak || 0,
+                ease: ankiCard.ease || 2.5,
+                interval: ankiCard.interval || 0,
+                lastReviewTimestamp: ankiCard.lastReviewTimestamp || Date.now(),
+                wrongCount: ankiCard.wrongCount || 0,
+                rightCount: ankiCard.rightCount || 0,
+                type: ankiCard.type || cardTypes.RECOGNITION,
+                vocabOrigin: ankiCard.vocabOrigin || '',
+                language: ankiCard.language || 'zh-CN',
+                added: ankiCard.added || Date.now()
+            };
+            imported++;
+        }
+
+        initVocabSets();
+        callbacks[dataTypes.studyList].forEach(x => x(studyList));
+        saveStudyList(Object.keys(cardsToImport));
+
+        return { success: true, imported };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
 let updateCard = function (result, key) {
     let card = studyList[key];
     // fix up any old data from before adopting SM2
@@ -119,6 +214,13 @@ let updateCard = function (result, key) {
     // keep setting due for compatibility with old clients and data
     card.due = card.lastReviewTimestamp + (card.interval * 24 * 60 * 60 * 1000);
     saveStudyList([key]);
+
+    // Sync updated card to Anki if enabled
+    if (anki.isAnkiEnabled()) {
+        anki.syncCard(key, card).catch(err => {
+            console.error('Failed to sync updated card to Anki:', err);
+        });
+    }
 };
 let addRecallCards = function (newCards, text, newKeys, languageKey) {
     let total = Math.min(MAX_RECALL, newCards.length);
@@ -181,7 +283,13 @@ let addClozeCards = function (newCards, text, newKeys, languageKey) {
 };
 
 function updateVocabWithSentence(tokenizedSentence) {
+    if (!Array.isArray(tokenizedSentence)) {
+        return;
+    }
     for (const word of tokenizedSentence) {
+        if (typeof word !== 'string' || !word) {
+            continue;
+        }
         studyListWords.add(word);
         for (const character of word) {
             studyListCharacters.add(character);
@@ -197,7 +305,7 @@ function addCard(example, text, languageKey) {
         return;
     }
     const newKeys = [zhJoined];
-    studyList[zhJoined] = {
+    const newCard = {
         en: example.en,
         zh: example.zh,
         due: Date.now(),
@@ -213,8 +321,16 @@ function addCard(example, text, languageKey) {
         language: languageKey || 'zh-CN',
         added: Date.now()
     };
+    studyList[zhJoined] = newCard;
     saveStudyList(newKeys, null, true);
     updateVocabWithSentence(example.zh);
+
+    // Sync to Anki if enabled
+    if (anki.isAnkiEnabled()) {
+        anki.syncCard(zhJoined, newCard).catch(err => {
+            console.error('Failed to sync new card to Anki:', err);
+        });
+    }
 
     callbacks[dataTypes.studyList].forEach(x => x(studyList));
 }
@@ -261,11 +377,19 @@ function hasCardWithWord(word) {
 }
 
 let removeFromStudyList = function (key) {
+    const cardToRemove = studyList[key];
     delete studyList[key];
     // could keep some mapping of cards to vocab they provide, but deletions are rare enough I'd rather not deal with it
     initVocabSets();
     callbacks[dataTypes.studyList].forEach(x => x(studyList));
     saveStudyList([key]);
+
+    // Remove from Anki if enabled
+    if (anki.isAnkiEnabled() && cardToRemove) {
+        anki.removeCard(cardToRemove).catch(err => {
+            console.error('Failed to remove card from Anki:', err);
+        });
+    }
 };
 
 let getISODate = function (date) {
@@ -565,6 +689,17 @@ let initialize = function () {
             document.dispatchEvent(new CustomEvent('ai-eligibility-changed', { detail: aiEligible }));
         }
     });
+
+    // Anki sync event listeners
+    document.addEventListener('request-anki-sync', async () => {
+        const result = await syncToAnki();
+        document.dispatchEvent(new CustomEvent('anki-sync-complete', { detail: result }));
+    });
+
+    document.addEventListener('request-anki-import', async () => {
+        const result = await loadFromAnki();
+        document.dispatchEvent(new CustomEvent('anki-import-complete', { detail: result }));
+    });
 };
 
 let readOptionState = function () {
@@ -669,4 +804,4 @@ async function analyzeImage(base64ImageContents) {
     return result;
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, getWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, generateChineseSentences, analyzeCollocation, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes }
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, getWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, generateChineseSentences, analyzeCollocation, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes, syncToAnki, loadFromAnki }

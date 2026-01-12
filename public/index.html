@@ -107,6 +107,10 @@
                             more.</a></p>
                     <p id="hide-study-explanation"><a class="active-link">Hide this message</a></p>
                 </div>
+                <div id="anki-nudge-container" class="explanation" style="display:none">
+                    <p><span class="emphasized">Anki sync enabled</span>.</p>
+                    <p>Your flash cards are synced to Anki, so you may intend to study there.</p>
+                </div>
                 <p id="cards-due" class="explanation">
                     Cards due: <span id="card-due-count" class="emphasized"></span>
                 </p>
@@ -368,63 +372,147 @@
     </div>
     <div id="settings-container" style="display:none">
         <main class="settings">
-            <section class="settings-section">
-                <h2>Local AI Settings</h2>
-                <p class="explanation">
-                    Connect to a local AI server (like <a href="https://lmstudio.ai/" target="_blank">LMStudio</a>)
-                    to use AI features without signing in. The server must be OpenAI API compatible.
-                </p>
+            <nav class="settings-nav">
+                <button class="settings-tab active" data-tab="local-ai">Local AI</button>
+                <button class="settings-tab" data-tab="anki">Anki</button>
+            </nav>
 
-                <div class="settings-item">
-                    <label class="settings-toggle">
-                        <input type="checkbox" id="local-ai-enabled" />
-                        <span>Enable Local AI</span>
-                    </label>
-                </div>
+            <div id="local-ai-settings" class="settings-panel active">
+                <section class="settings-section">
+                    <h2>Local AI Settings</h2>
+                    <p class="explanation">
+                        Connect to a local AI server (like <a href="https://lmstudio.ai/" target="_blank">LMStudio</a>)
+                        to use AI features without signing in. The server must be OpenAI API compatible.
+                    </p>
 
-                <div class="settings-item">
-                    <label for="local-ai-endpoint">Server Endpoint:</label>
-                    <input type="text" id="local-ai-endpoint" placeholder="http://localhost:1234/v1"
-                        value="http://localhost:1234/v1" class="settings-input" />
-                    <p class="settings-hint">The base URL of your local AI server's OpenAI-compatible API.</p>
-                </div>
+                    <div class="settings-item">
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="local-ai-enabled" />
+                            <span>Enable Local AI</span>
+                        </label>
+                    </div>
 
-                <div class="settings-item">
-                    <button id="test-connection-button" class="secondary-button">Test Connection</button>
-                    <span id="connection-status" class="connection-status"></span>
-                </div>
+                    <div class="settings-item">
+                        <label for="local-ai-endpoint">Server Endpoint:</label>
+                        <input type="text" id="local-ai-endpoint" placeholder="http://localhost:1234/v1"
+                            value="http://localhost:1234/v1" class="settings-input" />
+                        <p class="settings-hint">The base URL of your local AI server's OpenAI-compatible API.</p>
+                    </div>
 
-                <div class="settings-item">
-                    <label for="local-ai-model">Model:</label>
-                    <select id="local-ai-model" class="settings-select">
-                        <option value="">-- Test connection first --</option>
-                    </select>
-                    <button id="refresh-models-button" class="icon-button" title="Refresh models">↻</button>
-                    <p class="settings-hint">Select the model to use for AI features. Some features (like image
-                        analysis) require vision-capable models.</p>
-                </div>
+                    <div class="settings-item">
+                        <button id="test-connection-button" class="secondary-button">Test Connection</button>
+                        <span id="connection-status" class="connection-status"></span>
+                    </div>
 
-                <div class="settings-item" id="local-ai-status-container" style="display:none">
-                    <p class="settings-status" id="local-ai-status"></p>
-                </div>
-            </section>
+                    <div class="settings-item">
+                        <label for="local-ai-model">Model:</label>
+                        <select id="local-ai-model" class="settings-select">
+                            <option value="">-- Test connection first --</option>
+                        </select>
+                        <button id="refresh-models-button" class="icon-button" title="Refresh models">↻</button>
+                        <p class="settings-hint">Select the model to use for AI features. Some features (like image
+                            analysis) require vision-capable models.</p>
+                    </div>
 
-            <section class="settings-section">
-                <h3>Instructions</h3>
-                <ol class="settings-instructions">
-                    <li>Download and install <a href="https://lmstudio.ai/" target="_blank">LMStudio</a> (or another
-                        OpenAI-compatible server).</li>
-                    <li>Download a model in LMStudio (e.g., Llama, Qwen, or a vision model for image analysis).</li>
-                    <li>Start the local server in LMStudio (Developer tab → Start Server).</li>
-                    <li>Enter the server endpoint above (default: <code>http://localhost:1234/v1</code>).</li>
-                    <li>Click "Test Connection" to verify and load available models.</li>
-                    <li>Select a model and enable Local AI.</li>
-                </ol>
-                <p class="settings-hint">
-                    <strong>Note:</strong> For best results with Chinese, use a model with good multilingual support.
-                    For image analysis, you'll need a vision-capable model.
-                </p>
-            </section>
+                    <div class="settings-item" id="local-ai-status-container" style="display:none">
+                        <p class="settings-status" id="local-ai-status"></p>
+                    </div>
+                </section>
+
+                <section class="settings-section">
+                    <h3>Instructions</h3>
+                    <ol class="settings-instructions">
+                        <li>Download and install <a href="https://lmstudio.ai/" target="_blank">LMStudio</a> (or another
+                            OpenAI-compatible server).</li>
+                        <li>Download a model in LMStudio (e.g., Llama, Qwen, or a vision model for image analysis).</li>
+                        <li>Start the local server in LMStudio (Developer tab → Start Server).</li>
+                        <li>Enter the server endpoint above (default: <code>http://localhost:1234/v1</code>).</li>
+                        <li>Click "Test Connection" to verify and load available models.</li>
+                        <li>Select a model and enable Local AI.</li>
+                    </ol>
+                    <p class="settings-hint">
+                        <strong>Note:</strong> For best results with Chinese, use a model with good multilingual
+                        support.
+                        For image analysis, you'll need a vision-capable model.
+                    </p>
+                </section>
+            </div>
+
+            <div id="anki-settings" class="settings-panel">
+                <section class="settings-section">
+                    <h2>Anki Connect Settings</h2>
+                    <p class="explanation">
+                        Sync your flashcards with <a href="https://apps.ankiweb.net/" target="_blank">Anki</a> using the
+                        <a href="https://ankiweb.net/shared/info/2055492159" target="_blank">Anki-Connect</a> plugin.
+                    </p>
+
+                    <div class="settings-item">
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="anki-enabled" />
+                            <span>Enable Anki Sync</span>
+                        </label>
+                    </div>
+
+                    <div class="settings-item">
+                        <label for="anki-endpoint">Anki-Connect URL:</label>
+                        <input type="text" id="anki-endpoint" placeholder="http://127.0.0.1:8765"
+                            value="http://127.0.0.1:8765" class="settings-input" />
+                        <p class="settings-hint">The URL where Anki-Connect is running (default port is 8765).</p>
+                    </div>
+
+                    <div class="settings-item">
+                        <button id="test-anki-connection" class="secondary-button">Test Connection</button>
+                        <span id="anki-connection-status" class="connection-status"></span>
+                    </div>
+
+                    <div class="settings-item">
+                        <label for="anki-deck">Deck Name:</label>
+                        <select id="anki-deck" class="settings-select">
+                            <option value="HanziGraph">HanziGraph</option>
+                        </select>
+                        <button id="refresh-decks-button" class="icon-button" title="Refresh decks">↻</button>
+                        <p class="settings-hint">The Anki deck where cards will be synced. Will be created if it doesn't
+                            exist.</p>
+                    </div>
+
+                    <div class="settings-item">
+                        <label for="anki-api-key">API Key (optional):</label>
+                        <input type="password" id="anki-api-key" placeholder="Leave empty if not configured"
+                            class="settings-input" />
+                        <p class="settings-hint">Only required if you've configured authentication in Anki-Connect.</p>
+                    </div>
+
+                    <div class="settings-item" id="anki-status-container" style="display:none">
+                        <p class="settings-status" id="anki-status"></p>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button id="sync-to-anki-button" class="primary-button">Export to Anki</button>
+                        <button id="import-from-anki-button" class="primary-button">Import from Anki</button>
+                    </div>
+                    <p id="anki-sync-status" class="connection-status"></p>
+                </section>
+
+                <section class="settings-section">
+                    <h3>Instructions</h3>
+                    <ol class="settings-instructions">
+                        <li>Install <a href="https://apps.ankiweb.net/" target="_blank">Anki</a> if you haven't already.
+                        </li>
+                        <li>Install the <a href="https://ankiweb.net/shared/info/2055492159"
+                                target="_blank">Anki-Connect</a>
+                            plugin (Tools → Add-ons → Get Add-ons → Enter code: 2055492159).</li>
+                        <li>Restart Anki after installing the plugin.</li>
+                        <li>Keep Anki running in the background.</li>
+                        <li>Click "Test Connection" to verify connectivity.</li>
+                        <li>Enable Anki Sync to automatically sync new cards.</li>
+                    </ol>
+                    <p class="settings-hint">
+                        <strong>Note:</strong> Anki must be running for sync to work. On macOS, you may need to
+                        <a href="https://git.sr.ht/~foosoft/anki-connect#notes-for-macos-users" target="_blank">disable
+                            App Nap</a>.
+                    </p>
+                </section>
+            </div>
         </main>
     </div>
     <div id="menu-container" style="display:none">

@@ -46,7 +46,7 @@
     --legend-height: 30px;
     --graph-height: calc(100% - var(--legend-height) - 4px);
     --section-container-margin: 0 16px;
-    --calendar-day-color: #eee;
+    --calendar-day-color: #3333;
     --bar-chart-separator-color: #121212;
     --bar-chart-height: 400px;
     --bar-chart-width: 600px;
@@ -109,6 +109,8 @@ body {
     /* in general, disallow overscroll gestures from causing refresh */
     /* the idea is to feel more like a native app */
     overscroll-behavior: contain;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
 }
 
 body.allow-overscroll {
@@ -1659,6 +1661,42 @@ using settings names for now
     padding-bottom: 40px;
 }
 
+.settings-nav {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: var(--border);
+}
+
+.settings-tab {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--secondary-font-color);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.settings-tab:hover {
+    color: var(--primary-font-color);
+}
+
+.settings-tab.active {
+    color: var(--link-color);
+    border-bottom-color: var(--link-color);
+}
+
+.settings-panel {
+    display: none;
+}
+
+.settings-panel.active {
+    display: block;
+}
+
 .settings-section {
     margin-bottom: 30px;
     padding: 20px;
@@ -1806,6 +1844,32 @@ using settings names for now
 .settings-status.status-warning {
     background-color: rgba(240, 165, 0, 0.1);
     color: #f0a500;
+}
+
+.settings-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.settings-actions button {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.settings-actions button:hover {
+    opacity: 0.9;
+}
+
+.settings-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* TODO(refactor): signin form stuff should be cleaned */

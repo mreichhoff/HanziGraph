@@ -7,6 +7,7 @@ import { translateEnglish, isAiEligible } from "./data-layer.js";
 let searchSuggestionsWorker = null;
 let pinyinMap = {};
 let pendingSentenceGenCallbacks = {};
+let pendingRetokenizeCallback = null;
 const mainHeader = document.getElementById('main-header');
 const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
 
@@ -41,6 +42,13 @@ function handleWorkerMessage(message) {
         }
         pendingSentenceGenCallbacks[message.data.word](message.data.result);
         delete pendingSentenceGenCallbacks[message.data.word];
+        return;
+    }
+    if (message.data.type === 'retokenize-cards') {
+        if (pendingRetokenizeCallback) {
+            pendingRetokenizeCallback(message.data.result);
+            pendingRetokenizeCallback = null;
+        }
         return;
     }
     // AI searches based on unknown English text will have an `originalQuery`, since the
@@ -184,6 +192,18 @@ async function initialize(term, mode) {
                 query: event.detail.aiData.data.sentences,
                 locale: getActiveGraph().locale,
                 word: event.detail.word
+            }
+        });
+    });
+
+    // Handle re-tokenization requests (e.g., when importing from Anki)
+    document.addEventListener('request-retokenize-cards', function (event) {
+        pendingRetokenizeCallback = event.detail.resolve;
+        searchSuggestionsWorker.postMessage({
+            type: 'retokenize-cards',
+            payload: {
+                cards: event.detail.cards,
+                locale: getActiveGraph().locale
             }
         });
     });
