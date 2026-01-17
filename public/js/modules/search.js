@@ -3,6 +3,7 @@ import { getActiveGraph, getPartition } from "./options";
 import { switchToState, stateKeys } from "./ui-orchestrator";
 import { handleCommand } from "./commands.js";
 import { translateEnglish, isAiEligible } from "./data-layer.js";
+import * as speechRecognition from "./speech-recognition.js";
 
 let searchSuggestionsWorker = null;
 let pinyinMap = {};
@@ -125,6 +126,10 @@ function showControlsIfEligible() {
     if (isAiEligible()) {
         searchControl.removeAttribute('style');
         mainHeader.classList.add('has-suggestions');
+        // Show speech button if supported
+        if (speechRecognition.isSpeechRecognitionSupported()) {
+            speechRecognition.showButton();
+        }
     }
 }
 
@@ -132,6 +137,7 @@ function clearSuggestions() {
     mainHeader.classList.remove('has-suggestions');
     searchSuggestionsContainer.style.display = 'none';
     searchControl.style.display = 'none';
+    speechRecognition.hideButton();
 }
 
 function sendDataToWorker() {
