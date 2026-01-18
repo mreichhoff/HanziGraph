@@ -1242,7 +1242,6 @@ let initialize = function () {
 // containerPadding is the horizontal padding of the definition container's parent (default 16)
 // sentence is the full sentence text (optional, used for AI explain feature)
 let renderInlineDefinition = function (word, definitionContainer, wordSpan, containerPadding = 16, sentence = null) {
-    // Clear previous content
     definitionContainer.innerHTML = '';
 
     const caret = document.createElement('span');
@@ -1259,7 +1258,6 @@ let renderInlineDefinition = function (word, definitionContainer, wordSpan, cont
         caret.style.left = `${Math.max(8, caretLeft)}px`;
     }
 
-    // Create content wrapper with word header and close button
     const contentWrapper = document.createElement('div');
     contentWrapper.className = 'inline-definition-content';
 
@@ -1335,6 +1333,7 @@ let renderInlineDefinition = function (word, definitionContainer, wordSpan, cont
 
                 explanationContainer.style.display = 'block';
                 explainButton.style.display = 'none';
+                explanationContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             } catch (error) {
                 console.error('Failed to explain word in context:', error);
                 buttonText.textContent = 'Explain usage';
@@ -1349,6 +1348,7 @@ let renderInlineDefinition = function (word, definitionContainer, wordSpan, cont
 
     definitionContainer.appendChild(contentWrapper);
     definitionContainer.style.display = 'block';
+    definitionContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
 // Options object for makeSentenceNavigable:
@@ -1393,13 +1393,10 @@ let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange)
             }
         }
 
-        // Iterate over processed words
         for (const word of processedWords) {
-            // Create a span wrapper for the word
             const wordSpan = document.createElement('span');
             wordSpan.className = 'word-span';
 
-            // Add navigable class if the word is clickable
             if (hanzi[word] || (wordSet && wordSet[word])) {
                 wordSpan.classList.add('navigable');
             }
@@ -1412,7 +1409,6 @@ let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange)
                 anchorList.push(a);
             }
 
-            // Click handler on the word span
             wordSpan.addEventListener('click', function () {
                 const hasDefinition = hanzi[word] || (wordSet && wordSet[word]);
 
