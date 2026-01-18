@@ -1,4 +1,4 @@
-import { writeExploreState, addCard, inStudyList, isFlashCardUser, explainChineseSentence, generateChineseSentences, isAiEligible, getWordsWithoutCards, hasCardWithWord, registerCallback, dataTypes } from "./data-layer.js";
+import { writeExploreState, addCard, inStudyList, isFlashCardUser, explainChineseSentence, generateChineseSentences, explainWordInContext, isAiEligible, getWordsWithoutCards, hasCardWithWord, registerCallback, dataTypes } from "./data-layer.js";
 import { hanziBox, notFoundElement, walkThrough, examplesList, createLoadingDots } from "./dom.js";
 import { getActiveGraph, getPartition } from "./options.js";
 import { renderCoverageGraph } from "./coverage-graph"
@@ -1240,7 +1240,8 @@ let initialize = function () {
 // Helper to render inline definition for a word, reusing renderDefinitions
 // wordSpan is the span element wrapping the word (to center caret under it)
 // containerPadding is the horizontal padding of the definition container's parent (default 16)
-let renderInlineDefinition = function (word, definitionContainer, wordSpan, containerPadding = 16) {
+// sentence is the full sentence text (optional, used for AI explain feature)
+let renderInlineDefinition = function (word, definitionContainer, wordSpan, containerPadding = 16, sentence = null) {
     // Clear previous content
     definitionContainer.innerHTML = '';
 
@@ -1289,6 +1290,63 @@ let renderInlineDefinition = function (word, definitionContainer, wordSpan, cont
     const definitionList = definitions[word] || [];
     renderDefinitions(word, definitionList, contentWrapper);
 
+    // Add AI explain button if eligible and we have a sentence
+    if (isAiEligible() && sentence) {
+        const explainButton = document.createElement('button');
+        explainButton.className = 'inline-definition-explain-btn';
+
+        const aiIcon = document.createElement('span');
+        aiIcon.className = 'ai-icon';
+        explainButton.appendChild(aiIcon);
+
+        const buttonText = document.createElement('span');
+        buttonText.className = 'explain-btn-text';
+        buttonText.textContent = 'Explain usage';
+        explainButton.appendChild(buttonText);
+
+        const explanationContainer = document.createElement('div');
+        explanationContainer.className = 'inline-definition-explanation';
+        explanationContainer.style.display = 'none';
+
+        explainButton.addEventListener('click', async function (e) {
+            e.stopPropagation();
+            explainButton.disabled = true;
+            buttonText.textContent = 'Explaining...';
+
+            try {
+                const result = await explainWordInContext(word, sentence);
+                const data = result.data;
+
+                explanationContainer.innerHTML = '';
+
+                const meaningHeader = document.createElement('div');
+                meaningHeader.className = 'inline-explanation-meaning';
+                meaningHeader.innerHTML = `<strong>Meaning here: </strong>`;
+                const meaningText = document.createElement('span');
+                meaningText.innerText = data.wordMeaning;
+                meaningText.className = 'emphasized-but-not-that-emphasized';
+                meaningHeader.appendChild(meaningText);
+                explanationContainer.appendChild(meaningHeader);
+
+                const explanationText = document.createElement('div');
+                explanationText.className = 'inline-explanation-text';
+                explanationText.textContent = data.plainTextExplanation;
+                explanationContainer.appendChild(explanationText);
+
+                explanationContainer.style.display = 'block';
+                explainButton.style.display = 'none';
+            } catch (error) {
+                console.error('Failed to explain word in context:', error);
+                buttonText.textContent = 'Explain usage';
+                explainButton.disabled = false;
+                showNotification('Failed to get explanation. Please try again.', 'error');
+            }
+        });
+
+        contentWrapper.appendChild(explainButton);
+        contentWrapper.appendChild(explanationContainer);
+    }
+
     definitionContainer.appendChild(contentWrapper);
     definitionContainer.style.display = 'block';
 };
@@ -1298,6 +1356,7 @@ let renderInlineDefinition = function (word, definitionContainer, wordSpan, cont
 // - words: array of word strings (segmented sentence) to enable word-level clicking
 // - definitionContainer: DOM element where inline definition will be rendered
 // - containerPadding: horizontal padding of the definition container's parent (default 16)
+// - sentence: the full sentence text (for AI explain feature, defaults to text param)
 let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange) {
     // Support both old signature (boolean) and new signature (options object)
     let options = {};
@@ -1307,7 +1366,9 @@ let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange)
         options = optionsOrNoExampleChange;
     }
 
-    const { noExampleChange, words, definitionContainer, containerPadding = 16 } = options;
+    const { noExampleChange, words, definitionContainer, containerPadding = 16, sentence } = options;
+    // Use provided sentence or fall back to text parameter
+    const sentenceText = sentence || text;
 
     let sentenceContainer = document.createElement('span');
     sentenceContainer.className = "sentence-container";
@@ -1370,7 +1431,7 @@ let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange)
 
                     // Show inline definition if container is provided
                     if (definitionContainer) {
-                        renderInlineDefinition(word, definitionContainer, wordSpan, containerPadding);
+                        renderInlineDefinition(word, definitionContainer, wordSpan, containerPadding, sentenceText);
                     }
 
                     // Enable seamless switching

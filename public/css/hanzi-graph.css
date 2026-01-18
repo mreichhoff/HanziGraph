@@ -416,6 +416,56 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     padding: 0;
 }
 
+/* Explain usage button */
+.inline-definition-explain-btn {
+    display: inline-flex;
+    align-items: center;
+    background: var(--popover-background-color);
+    color: var(--primary-font-color);
+    border: var(--border);
+    border-radius: 24px;
+    padding: 0 12px;
+    margin-top: 8px;
+    height: 40px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.inline-definition-explain-btn:hover:not(:disabled) {
+    opacity: 0.8;
+}
+
+.inline-definition-explain-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.inline-definition-explain-btn .ai-icon {
+    position: relative;
+    top: 0;
+    margin: 0 10px 0 4px;
+}
+
+/* Explanation content */
+.inline-definition-explanation {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: var(--border);
+}
+
+.inline-explanation-meaning {
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.inline-explanation-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--secondary-font-color);
+}
+
 /* Word span styling */
 .word-span {
     cursor: default;

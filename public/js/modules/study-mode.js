@@ -54,7 +54,8 @@ const cardRenderers = {
         let aList = makeSentenceNavigable(question, cardQuestionContainer, {
             words: currentCard.zh,
             definitionContainer: studyInlineDefContainer,
-            containerPadding: 0
+            containerPadding: 0,
+            sentence: question
         });
 
         for (let i = 0; i < aList.length; i++) {
@@ -82,7 +83,8 @@ const cardRenderers = {
         let aList = makeSentenceNavigable(answer, cardAnswerElement, {
             words: currentCard.zh,
             definitionContainer: studyInlineDefContainer,
-            containerPadding: 0
+            containerPadding: 0,
+            sentence: answer
         });
 
         for (let i = 0; i < aList.length; i++) {
@@ -114,7 +116,8 @@ const cardRenderers = {
         let aList = makeSentenceNavigable(clozedSentence, clozeContainer, {
             words: clozedWords,
             definitionContainer: studyInlineDefContainer,
-            containerPadding: 0
+            containerPadding: 0,
+            sentence: currentCard.zh.join('')  // Use full sentence for AI explain
         });
         for (let i = 0; i < aList.length; i++) {
             // TODO yuck
@@ -135,7 +138,8 @@ const cardRenderers = {
         let answerAList = makeSentenceNavigable(currentCard.vocabOrigin, cardAnswerElement, {
             words: [currentCard.vocabOrigin],
             definitionContainer: studyInlineDefContainer,
-            containerPadding: 0
+            containerPadding: 0,
+            sentence: currentCard.zh.join('')  // Use full sentence for AI explain
         });
 
         for (let i = 0; i < answerAList.length; i++) {
