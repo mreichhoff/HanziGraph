@@ -286,19 +286,36 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
 
 .search-controls .search-button {
     display: inline-block;
-    padding: 8px 12px;
-    border: var(--border);
-    border-radius: 20px;
-    margin-top: 8px;
-    background-color: var(--popover-background-color);
-    margin: 0 10px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 24px;
+    background-color: var(--sentence-card-background-color);
+    margin: 0 6px;
     user-select: none;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    letter-spacing: 0.02em;
 }
 
 .search-controls .search-button i {
     margin-right: 8px;
     top: 2px;
+}
+
+/* Small screens: icons only for search buttons, to prevent line wrapping */
+/* kind of a hack to zero out the font size, but oh well */
+@media (max-width: 480px) {
+    .search-controls .search-button {
+        padding: 10px 20px;
+        font-size: 0;
+    }
+
+    .search-controls .search-button i {
+        margin-right: 0;
+        font-size: 14px; /* Reset font-size for icon pseudo-elements */
+        top: 0;
+    }
 }
 
 .primary-container {
@@ -2034,6 +2051,7 @@ main.auth-form {
     animation: loading-dots3 0.6s infinite;
 }
 
+/* Image icon for camera tool (when a camera is available) / image upload button */
 .image-icon {
     box-sizing: border-box;
     position: relative;
@@ -2041,9 +2059,10 @@ main.auth-form {
     width: 20px;
     height: 16px;
     overflow: hidden;
-    box-shadow: 0 0 0 2px;
+    box-shadow: 0 0 0 2px var(--tone-2-color);
     border-radius: 2px;
     transform: scale(1.2);
+    color: var(--tone-2-color);
 }
 
 .image-icon::after,
@@ -2052,7 +2071,7 @@ main.auth-form {
     display: block;
     box-sizing: border-box;
     position: absolute;
-    border: 2px solid;
+    border: 2px solid var(--tone-2-color);
 }
 
 .image-icon::after {
@@ -2070,8 +2089,11 @@ main.auth-form {
     border-radius: 100%;
     top: 2px;
     left: 2px;
+    background: #ffc300;
+    border-color: #ffc300;
 }
 
+/* File icon for document upload button */
 .file-icon {
     box-sizing: border-box;
     position: relative;
@@ -2082,10 +2104,11 @@ main.auth-form {
     border: 2px solid transparent;
     border-right: 0;
     border-top: 0;
-    box-shadow: 0 0 0 2px;
+    box-shadow: 0 0 0 2px var(--tone-4-color);
     border-radius: 1px;
     border-top-right-radius: 4px;
     overflow: hidden;
+    color: var(--tone-4-color);
 }
 
 .file-icon::after {
@@ -2095,10 +2118,69 @@ main.auth-form {
     position: absolute;
     width: 6px;
     height: 6px;
-    border-left: 2px solid;
-    border-bottom: 2px solid;
+    border-left: 2px solid var(--tone-4-color);
+    border-bottom: 2px solid var(--tone-4-color);
     right: -1px;
     top: -1px;
+}
+
+/* Microphone icon for voice search */
+.mic-icon {
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+    transform: scale(1.4);
+    width: 12px;
+    height: 18px;
+    color: var(--tone-3-color);
+}
+
+.mic-icon::before {
+    content: "";
+    display: block;
+    box-sizing: border-box;
+    position: absolute;
+    width: 8px;
+    height: 12px;
+    border: 2px solid var(--tone-3-color);
+    border-radius: 4px 4px 4px 4px;
+    top: 1px;
+    left: 2px;
+}
+
+.mic-icon::after {
+    content: "";
+    display: block;
+    box-sizing: border-box;
+    position: absolute;
+    width: 12px;
+    height: 6px;
+    border: 2px solid var(--tone-3-color);
+    border-top: 0;
+    border-radius: 0 0 8px 8px;
+    top: 10px;
+    left: 0;
+}
+
+/* Make sure the user knows they are recording with a pulsing animation */
+.search-button.listening .mic-icon {
+    animation: mic-pulse 1s ease-in-out infinite;
+}
+
+.search-button.listening .mic-icon::before,
+.search-button.listening .mic-icon::after {
+    border-color: #e53935;
+}
+
+@keyframes mic-pulse {
+    0%,
+    100% {
+        transform: scale(1.2);
+    }
+
+    50% {
+        transform: scale(1.4);
+    }
 }
 
 @keyframes loading-dots1 {
