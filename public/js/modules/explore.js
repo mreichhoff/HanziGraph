@@ -492,10 +492,21 @@ let setupExampleElements = function (word, examples, exampleList, defaultSource)
         // TODO should really centralize this
         examples[i].zh = examples[i].zh.map(x => x.ignore ? x.word : x);
         let exampleText = examples[i].zh.join('');
-        let aList = makeSentenceNavigable(exampleText, zhHolder, true);
+
+        // Create inline definition container (shown below sentence when user clicks a word)
+        let inlineDefContainer = document.createElement('div');
+        inlineDefContainer.className = 'inline-definition-container';
+        inlineDefContainer.style.display = 'none';
+
+        let aList = makeSentenceNavigable(exampleText, zhHolder, {
+            noExampleChange: true,
+            words: examples[i].zh,
+            definitionContainer: inlineDefContainer
+        });
         zhHolder.className = 'target';
         addPopoverMenuButton(word, examples[i], zhHolder, exampleText, aList, cardTypes.sentence);
         exampleHolder.appendChild(zhHolder);
+        exampleHolder.appendChild(inlineDefContainer);
         if (examples[i].pinyin) {
             let pinyinHolder = document.createElement('p');
             pinyinHolder.textContent = examples[i].pinyin;
@@ -1226,34 +1237,172 @@ let initialize = function () {
     });
 };
 
-let makeSentenceNavigable = function (text, container, noExampleChange) {
+// Helper to render inline definition for a word, reusing renderDefinitions
+// wordSpan is the span element wrapping the word (to center caret under it)
+let renderInlineDefinition = function (word, definitionContainer, wordSpan) {
+    // Clear previous content
+    definitionContainer.innerHTML = '';
+
+    const caret = document.createElement('span');
+    caret.className = 'inline-definition-caret';
+    definitionContainer.appendChild(caret);
+
+    // Position caret under the center of the word span
+    if (wordSpan) {
+        const spanRect = wordSpan.getBoundingClientRect();
+        const containerRect = definitionContainer.parentElement.getBoundingClientRect();
+        const wordCenter = spanRect.left + (spanRect.width / 2);
+        const caretLeft = wordCenter - containerRect.left - 24; // 24 = 8 (half of caret width) + 16 (padding)
+        caret.style.left = `${Math.max(8, caretLeft)}px`;
+    }
+
+    // Create content wrapper with word header and close button
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'inline-definition-content';
+
+    const headerRow = document.createElement('div');
+    headerRow.className = 'inline-definition-header';
+
+    const wordHeader = document.createElement('span');
+    wordHeader.className = 'inline-definition-word';
+    wordHeader.textContent = word;
+    headerRow.appendChild(wordHeader);
+
+    const closeButton = document.createElement('button');
+    closeButton.className = 'inline-definition-close';
+    closeButton.textContent = '×';
+    closeButton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        definitionContainer.style.display = 'none';
+        // Also clear the word highlight
+        definitionContainer.parentElement.querySelectorAll('.word-clicked').forEach(el => {
+            el.classList.remove('word-clicked');
+        });
+    });
+    headerRow.appendChild(closeButton);
+
+    contentWrapper.appendChild(headerRow);
+
+    // Reuse renderDefinitions to show the definition
+    const definitionList = definitions[word] || [];
+    renderDefinitions(word, definitionList, contentWrapper);
+
+    definitionContainer.appendChild(contentWrapper);
+    definitionContainer.style.display = 'block';
+};
+
+// Options object for makeSentenceNavigable:
+// - noExampleChange: if true, don't update the main examples panel on click
+// - words: array of word strings (segmented sentence) to enable word-level clicking
+// - definitionContainer: DOM element where inline definition will be rendered
+let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange) {
+    // Support both old signature (boolean) and new signature (options object)
+    let options = {};
+    if (typeof optionsOrNoExampleChange === 'boolean') {
+        options.noExampleChange = optionsOrNoExampleChange;
+    } else if (optionsOrNoExampleChange && typeof optionsOrNoExampleChange === 'object') {
+        options = optionsOrNoExampleChange;
+    }
+
+    const { noExampleChange, words, definitionContainer } = options;
+
     let sentenceContainer = document.createElement('span');
     sentenceContainer.className = "sentence-container";
 
     let anchorList = [];
-    for (let i = 0; i < text.length; i++) {
-        (function (character) {
-            let a = document.createElement('a');
-            a.textContent = character;
-            if (hanzi[character]) {
-                a.className = 'navigable';
+
+    // If we have word segmentation, use word-based iteration
+    if (words && words.length > 0) {
+        // Pre-process: break unknown words into individual characters
+        // TODO: should set up tokenization for tatoeba / pre-computed AI sentences
+        // that matches the word set for which we have definitions.
+        let processedWords = [];
+        for (const word of words) {
+            if (wordSet && wordSet[word]) {
+                // Word is known, keep it as-is
+                processedWords.push(word);
+            } else {
+                // Word is unknown, break into individual characters
+                for (const char of word) {
+                    processedWords.push(char);
+                }
             }
-            a.addEventListener('click', function () {
-                if (hanzi[character]) {
-                    if (character in hanzi) {
-                        switchDiagramView(diagramKeys.main);
-                        document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
+        }
+
+        // Iterate over processed words
+        for (const word of processedWords) {
+            // Create a span wrapper for the word
+            const wordSpan = document.createElement('span');
+            wordSpan.className = 'word-span';
+
+            // Add navigable class if the word is clickable
+            if (hanzi[word] || (wordSet && wordSet[word])) {
+                wordSpan.classList.add('navigable');
+            }
+
+            // Create anchor for each character in the word (needed for TTS highlighting)
+            for (const character of word) {
+                let a = document.createElement('a');
+                a.textContent = character;
+                wordSpan.appendChild(a);
+                anchorList.push(a);
+            }
+
+            // Click handler on the word span
+            wordSpan.addEventListener('click', function () {
+                const hasDefinition = hanzi[word] || (wordSet && wordSet[word]);
+
+                if (hasDefinition) {
+                    // Clear previous highlights in this sentence
+                    sentenceContainer.querySelectorAll('.word-clicked').forEach(el => {
+                        el.classList.remove('word-clicked');
+                    });
+
+                    // Highlight this word span
+                    wordSpan.classList.add('word-clicked');
+
+                    // Update graph with the word
+                    switchDiagramView(diagramKeys.main);
+                    document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
+
+                    // Show inline definition if container is provided
+                    if (definitionContainer) {
+                        renderInlineDefinition(word, definitionContainer, wordSpan);
                     }
-                    //enable seamless switching, but don't update if we're already showing examples for character
-                    if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== character))) {
-                        setupExamples([character], 'chinese');
+
+                    // Enable seamless switching
+                    if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== word))) {
+                        setupExamples([word], 'chinese');
                     }
                 }
             });
-            anchorList.push(a);
-            sentenceContainer.appendChild(a);
-        }(text[i]));
+
+            sentenceContainer.appendChild(wordSpan);
+        }
+    } else {
+        // Fallback: character-by-character (original behavior for study-mode.js)
+        for (let i = 0; i < text.length; i++) {
+            (function (character) {
+                let a = document.createElement('a');
+                a.textContent = character;
+                if (hanzi[character]) {
+                    a.className = 'navigable';
+                }
+                a.addEventListener('click', function () {
+                    if (hanzi[character]) {
+                        switchDiagramView(diagramKeys.main);
+                        document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
+                        if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== character))) {
+                            setupExamples([character], 'chinese');
+                        }
+                    }
+                });
+                anchorList.push(a);
+                sentenceContainer.appendChild(a);
+            }(text[i]));
+        }
     }
+
     container.appendChild(sentenceContainer);
     return anchorList;
 };
