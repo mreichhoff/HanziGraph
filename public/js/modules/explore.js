@@ -1239,7 +1239,8 @@ let initialize = function () {
 
 // Helper to render inline definition for a word, reusing renderDefinitions
 // wordSpan is the span element wrapping the word (to center caret under it)
-let renderInlineDefinition = function (word, definitionContainer, wordSpan) {
+// containerPadding is the horizontal padding of the definition container's parent (default 16)
+let renderInlineDefinition = function (word, definitionContainer, wordSpan, containerPadding = 16) {
     // Clear previous content
     definitionContainer.innerHTML = '';
 
@@ -1252,7 +1253,8 @@ let renderInlineDefinition = function (word, definitionContainer, wordSpan) {
         const spanRect = wordSpan.getBoundingClientRect();
         const containerRect = definitionContainer.parentElement.getBoundingClientRect();
         const wordCenter = spanRect.left + (spanRect.width / 2);
-        const caretLeft = wordCenter - containerRect.left - 24; // 24 = 8 (half of caret width) + 16 (padding)
+        // 8 = half of caret width, containerPadding accounts for parent's horizontal padding
+        const caretLeft = wordCenter - containerRect.left - 8 - containerPadding;
         caret.style.left = `${Math.max(8, caretLeft)}px`;
     }
 
@@ -1295,6 +1297,7 @@ let renderInlineDefinition = function (word, definitionContainer, wordSpan) {
 // - noExampleChange: if true, don't update the main examples panel on click
 // - words: array of word strings (segmented sentence) to enable word-level clicking
 // - definitionContainer: DOM element where inline definition will be rendered
+// - containerPadding: horizontal padding of the definition container's parent (default 16)
 let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange) {
     // Support both old signature (boolean) and new signature (options object)
     let options = {};
@@ -1304,7 +1307,7 @@ let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange)
         options = optionsOrNoExampleChange;
     }
 
-    const { noExampleChange, words, definitionContainer } = options;
+    const { noExampleChange, words, definitionContainer, containerPadding = 16 } = options;
 
     let sentenceContainer = document.createElement('span');
     sentenceContainer.className = "sentence-container";
@@ -1367,7 +1370,7 @@ let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange)
 
                     // Show inline definition if container is provided
                     if (definitionContainer) {
-                        renderInlineDefinition(word, definitionContainer, wordSpan);
+                        renderInlineDefinition(word, definitionContainer, wordSpan, containerPadding);
                     }
 
                     // Enable seamless switching
@@ -1378,28 +1381,6 @@ let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange)
             });
 
             sentenceContainer.appendChild(wordSpan);
-        }
-    } else {
-        // Fallback: character-by-character (original behavior for study-mode.js)
-        for (let i = 0; i < text.length; i++) {
-            (function (character) {
-                let a = document.createElement('a');
-                a.textContent = character;
-                if (hanzi[character]) {
-                    a.className = 'navigable';
-                }
-                a.addEventListener('click', function () {
-                    if (hanzi[character]) {
-                        switchDiagramView(diagramKeys.main);
-                        document.dispatchEvent(new CustomEvent('graph-update', { detail: character }));
-                        if (!noExampleChange && (!currentWords || (currentWords.length !== 1 || currentWords[0] !== character))) {
-                            setupExamples([character], 'chinese');
-                        }
-                    }
-                });
-                anchorList.push(a);
-                sentenceContainer.appendChild(a);
-            }(text[i]));
         }
     }
 
