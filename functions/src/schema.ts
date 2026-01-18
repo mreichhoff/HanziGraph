@@ -59,3 +59,13 @@ export const analyzeCollocationSchema = z.object({
     plainTextExplanation: z.string(),
     sentences: sentenceSchema,
 });
+
+export const explainWordInContextInputSchema = z.object({
+    word: z.string(),
+    sentence: z.string(),
+});
+
+export const explainWordInContextSchema = z.object({
+    wordMeaning: z.string(),
+    plainTextExplanation: z.string(),
+});

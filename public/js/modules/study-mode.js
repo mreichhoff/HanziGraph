@@ -37,6 +37,9 @@ const explanationContainer = document.getElementById('study-explain-container');
 const explanationHideButton = document.getElementById('hide-study-explanation');
 const ankiNudgeContainer = document.getElementById('anki-nudge-container');
 
+// Shared inline definition container for study mode - created once and reused
+let studyInlineDefContainer = null;
+
 let currentKey = null;
 let studyModeActive = false;
 let currentTextToSpeechButton = null;
@@ -47,7 +50,14 @@ const cardRenderers = {
     'recognition': function (currentCard) {
         taskDescriptionElement.innerText = 'What does the text below mean?';
         let question = currentCard.zh.join('');
-        let aList = makeSentenceNavigable(question, cardQuestionContainer);
+
+        let aList = makeSentenceNavigable(question, cardQuestionContainer, {
+            words: currentCard.zh,
+            definitionContainer: studyInlineDefContainer,
+            containerPadding: 0,
+            sentence: question
+        });
+
         for (let i = 0; i < aList.length; i++) {
             aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
         }
@@ -69,7 +79,14 @@ const cardRenderers = {
         cardQuestionContainer.classList.remove('target');
         // TODO(refactor): target causes side effects
         // cardAnswerContainer.classList.add('target');
-        let aList = makeSentenceNavigable(answer, cardAnswerElement);
+
+        let aList = makeSentenceNavigable(answer, cardAnswerElement, {
+            words: currentCard.zh,
+            definitionContainer: studyInlineDefContainer,
+            containerPadding: 0,
+            sentence: answer
+        });
+
         for (let i = 0; i < aList.length; i++) {
             aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
         }
@@ -79,19 +96,29 @@ const cardRenderers = {
     'cloze': function (currentCard) {
         taskDescriptionElement.innerText = `Can you replace ${clozePlaceholder} to match the translation?`;
         let clozedSentence;
+        let clozedWords;
         if (currentCard.vocabOrigin.length === 1) {
             clozedSentence = currentCard.zh.join('');
             clozedSentence = clozedSentence.replaceAll(currentCard.vocabOrigin, x => clozePlaceholder);
+            // For single-char vocab, build words array with placeholders
+            clozedWords = currentCard.zh.map(w => w.includes(currentCard.vocabOrigin) ? w.replaceAll(currentCard.vocabOrigin, clozePlaceholder) : w);
         }
         else {
             clozedSentence = currentCard.zh.map(x => x === currentCard.vocabOrigin ? clozePlaceholder : x).join('');
+            clozedWords = currentCard.zh.map(x => x === currentCard.vocabOrigin ? clozePlaceholder : x);
         }
         let clozeContainer = document.createElement('p');
         clozeContainer.className = 'cloze-container';
         //TODO(refactor): target shouldn't make this thing into a flex element the way it does now
         cardQuestionContainer.classList.remove('target');
         // cardAnswerContainer.classList.add('target');
-        let aList = makeSentenceNavigable(clozedSentence, clozeContainer);
+
+        let aList = makeSentenceNavigable(clozedSentence, clozeContainer, {
+            words: clozedWords,
+            definitionContainer: studyInlineDefContainer,
+            containerPadding: 0,
+            sentence: currentCard.zh.join('')  // Use full sentence for AI explain
+        });
         for (let i = 0; i < aList.length; i++) {
             // TODO yuck
             if (i >= 2 && aList[i].innerText === clozePlaceholderCharacter && aList[i - 1].innerText === clozePlaceholderCharacter && aList[i - 2].innerText === clozePlaceholderCharacter) {
@@ -107,7 +134,14 @@ const cardRenderers = {
         clozeAnswerContainer.innerText = currentCard.en;
         cardQuestionContainer.appendChild(clozeAnswerContainer);
         cardAnswerElement.innerHTML = '';
-        let answerAList = makeSentenceNavigable(currentCard.vocabOrigin, cardAnswerElement);
+
+        let answerAList = makeSentenceNavigable(currentCard.vocabOrigin, cardAnswerElement, {
+            words: [currentCard.vocabOrigin],
+            definitionContainer: studyInlineDefContainer,
+            containerPadding: 0,
+            sentence: currentCard.zh.join('')  // Use full sentence for AI explain
+        });
+
         for (let i = 0; i < answerAList.length; i++) {
             answerAList[i].addEventListener('click', displayRelatedCards.bind(this, answerAList[i]));
         }
@@ -161,6 +195,19 @@ let setupStudyMode = function () {
     let currentCard = null;
     cardAnswerContainer.style.display = 'none';
     showAnswerButton.innerText = "Show Answer";
+
+    // Create shared inline definition container once, as sibling after cardQuestionContainer
+    if (!studyInlineDefContainer) {
+        studyInlineDefContainer = document.createElement('div');
+        studyInlineDefContainer.className = 'inline-definition-container';
+        cardQuestionContainer.parentNode.insertBefore(
+            studyInlineDefContainer,
+            cardQuestionContainer.nextSibling
+        );
+    }
+    // Reset and hide the definition container for new card
+    studyInlineDefContainer.style.display = 'none';
+    studyInlineDefContainer.innerHTML = '';
 
     // Show Anki nudge if enabled and not dismissed
     if (anki.isAnkiEnabled()) {

@@ -804,4 +804,15 @@ async function analyzeImage(base64ImageContents) {
     return result;
 }
 
-export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, getWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, generateChineseSentences, analyzeCollocation, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes, syncToAnki, loadFromAnki }
+async function explainWordInContext(word, sentence) {
+    if (localAi.isLocalAiEnabled()) {
+        return await localAi.explainWordInContext(word, sentence);
+    }
+    const functions = getFunctions();
+    // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+    const explainWordInContextCall = httpsCallable(functions, 'explainWordInContext');
+    const result = await explainWordInContextCall({ word, sentence });
+    return result;
+}
+
+export { writeExploreState, readExploreState, writeOptionState, readOptionState, registerCallback, saveStudyList, addCard, inStudyList, getWordsWithoutCards, getStudyList, isFlashCardUser, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, explainChineseSentence, translateEnglish, analyzeImage, generateChineseSentences, analyzeCollocation, explainWordInContext, isAiEligible, hasCardWithWord, initialize, studyResult, dataTypes, cardTypes, syncToAnki, loadFromAnki }

@@ -1,0 +1,17 @@
+---
+model: vertexai/gemini-2.0-flash-001
+input:
+  schema: ExplainWordInContextInputSchema
+output:
+  schema: ExplainWordInContextSchema
+---
+{{role "system"}}
+You are a helpful Chinese teacher for speakers of English who want to learn Chinese. You provide clear, concise explanations that help learners understand how words are used in context.
+{{role "user"}}
+In the sentence "{{sentence}}", explain how the word "{{word}}" is used.
+
+Provide:
+1. The meaning of "{{word}}" as used in this specific sentence (in English).
+2. A plain-text explanation of why "{{word}}" is used here, including any nuances, grammatical role, or idiomatic usage that would help a learner understand its function in this context.
+
+Keep your explanation focused and practical for a language learner.

@@ -148,6 +148,14 @@ const schemas = {
             }
         },
         required: ['sentences', 'plainTextExplanation', 'grammarHighlights']
+    },
+    wordInContext: {
+        type: 'object',
+        properties: {
+            wordMeaning: { type: 'string' },
+            plainTextExplanation: { type: 'string' }
+        },
+        required: ['wordMeaning', 'plainTextExplanation']
     }
 };
 
@@ -312,6 +320,25 @@ async function analyzeImage(base64ImageContents) {
     return { data: output };
 }
 
+async function explainWordInContext(word, sentence) {
+    const messages = [
+        { role: 'system', content: systemPrompts.chineseTeacher },
+        {
+            role: 'user',
+            content: `In the sentence "${sentence}", explain how the word "${word}" is used.
+
+Provide:
+1. The meaning of "${word}" as used in this specific sentence (in English).
+2. A plain-text explanation of why "${word}" is used here, including any nuances, grammatical role, or idiomatic usage that would help a learner understand its function in this context.
+
+Keep your explanation focused and practical for a language learner.`
+        }
+    ];
+
+    const output = await callLocalAi(messages, schemas.wordInContext);
+    return { data: output };
+}
+
 export {
     loadSettings,
     saveSettings,
@@ -323,5 +350,6 @@ export {
     translateEnglish,
     generateChineseSentences,
     analyzeCollocation,
-    analyzeImage
+    analyzeImage,
+    explainWordInContext
 };

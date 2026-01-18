@@ -10,6 +10,8 @@ import {
     chineseSentenceGenerationSchema,
     generateChineseSentencesInputSchema,
     analyzeCollocationSchema,
+    explainWordInContextInputSchema,
+    explainWordInContextSchema,
 } from "./schema";
 
 let firebaseApp: admin.app.App;
@@ -159,3 +161,35 @@ const analyzeCollocationFlow = ai.defineFlow({
 );
 
 export const analyzeCollocation = onCallGenkit(analyzeCollocationFlow);
+
+const ExplainWordInContextInputSchema = ai.defineSchema(
+    'ExplainWordInContextInputSchema',
+    explainWordInContextInputSchema
+);
+const ExplainWordInContextSchema = ai.defineSchema(
+    'ExplainWordInContextSchema',
+    explainWordInContextSchema
+);
+const explainWordInContextPrompt = ai.prompt<
+    typeof ExplainWordInContextInputSchema, typeof ExplainWordInContextSchema>('explain-word-in-context');
+
+const explainWordInContextFlow = ai.defineFlow({
+    name: "explainWordInContext",
+    inputSchema: explainWordInContextInputSchema,
+    outputSchema: explainWordInContextSchema,
+}, async (request, { context }) => {
+    if (!firebaseApp) {
+        firebaseApp = admin.initializeApp();
+    }
+    const isAuthorized = await isUserAuthorized(context);
+    if (!isAuthorized) {
+        throw new HttpsError("permission-denied", "user not authorized");
+    }
+    const { output } = await explainWordInContextPrompt(request);
+    if (!output) {
+        throw new HttpsError("internal", 'oh no, the model like, failed?');
+    }
+    return output;
+});
+
+export const explainWordInContext = onCallGenkit(explainWordInContextFlow);
