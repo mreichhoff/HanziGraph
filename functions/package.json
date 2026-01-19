@@ -9,13 +9,17 @@
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "eval:start": "genkit start -- npx tsx src/genkit-eval.ts",
+    "eval:flow": "genkit eval:flow",
+    "eval:run": "genkit eval:run"
   },
   "name": "functions",
   "engines": {
     "node": "22"
   },
   "dependencies": {
+    "@genkit-ai/evaluator": "^1.27.0",
     "@genkit-ai/firebase": "^1.0.5",
     "@genkit-ai/vertexai": "^1.0.5",
     "express": "^4.21.2",

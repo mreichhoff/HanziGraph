@@ -1,0 +1,66 @@
+[
+    {
+        "input": {
+            "word": "学习",
+            "definitions": [
+                "to study",
+                "to learn"
+            ]
+        },
+        "reference": {
+            "expectedContent": "Sentences should use 学习 in contexts like studying at school, learning a skill, etc."
+        }
+    },
+    {
+        "input": {
+            "word": "可能",
+            "definitions": [
+                "might (happen)",
+                "possible",
+                "maybe",
+                "probable"
+            ]
+        },
+        "reference": {
+            "expectedContent": "Sentences should demonstrate 可能 as both adjective and adverb usage"
+        }
+    },
+    {
+        "input": {
+            "word": "帮助",
+            "definitions": [
+                "assistance; aid",
+                "to help; to assist"
+            ]
+        },
+        "reference": {
+            "expectedContent": "Sentences should show 帮助 as verb and noun"
+        }
+    },
+    {
+        "input": {
+            "word": "虽然",
+            "definitions": [
+                "although",
+                "even though"
+            ]
+        },
+        "reference": {
+            "expectedContent": "Sentences should demonstrate 虽然...但是... pattern"
+        }
+    },
+    {
+        "input": {
+            "word": "打",
+            "definitions": [
+                "to beat",
+                "to strike",
+                "to hit",
+                "to break"
+            ]
+        },
+        "reference": {
+            "expectedContent": "Sentences should cover multiple meanings of this versatile verb"
+        }
+    }
+]

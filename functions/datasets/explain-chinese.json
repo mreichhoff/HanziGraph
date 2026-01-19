@@ -1,0 +1,51 @@
+[
+    {
+        "input": "我喜欢吃苹果",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Subject-Verb-Object structure",
+                "喜欢 + verb pattern"
+            ],
+            "expectedTranslation": "I like to eat apples"
+        }
+    },
+    {
+        "input": "昨天我去了北京",
+        "reference": {
+            "expectedGrammarPoints": [
+                "了 as completed action marker",
+                "Time word placement"
+            ],
+            "expectedTranslation": "Yesterday I went to Beijing"
+        }
+    },
+    {
+        "input": "他比我高",
+        "reference": {
+            "expectedGrammarPoints": [
+                "比 comparison structure"
+            ],
+            "expectedTranslation": "He is taller than me"
+        }
+    },
+    {
+        "input": "你会说中文吗？",
+        "reference": {
+            "expectedGrammarPoints": [
+                "会 for ability",
+                "吗 question particle"
+            ],
+            "expectedTranslation": "Can you speak Chinese?"
+        }
+    },
+    {
+        "input": "这本书是我朋友的",
+        "reference": {
+            "expectedGrammarPoints": [
+                "的 possessive particle",
+                "是...的 structure"
+            ],
+            "expectedTranslation": "This book is my friend's"
+        }
+    }
+]

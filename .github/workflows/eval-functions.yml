@@ -1,0 +1,201 @@
+name: Evaluate AI Functions
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "functions/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "functions/prompts/**"
+      - "functions/src/**"
+  workflow_dispatch: # Allow manual runs. Customization of inputs a TODO.
+
+concurrency:
+  group: eval-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run_evaluations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write # Required for Workload Identity Federation
+      pull-requests: write # To post eval results as PR comment
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install dependencies
+        working-directory: functions
+        run: npm ci
+
+      - name: Build
+        working-directory: functions
+        run: npm run build
+
+      # Authenticate to Google Cloud for Vertex AI
+      # Uses the same service account as Firebase deployment
+      # TODO: Workload Identity Federation is better?
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HANZIGRAPH }}
+
+      - name: Install Genkit CLI
+        run: npm install -g genkit-cli
+
+      - name: Run evaluations
+        working-directory: functions
+        id: eval
+        run: |
+          # Ensure cleanup on exit
+          cleanup() {
+            kill $GENKIT_PID 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          # Start genkit in background
+          npx tsx src/genkit-eval.ts &
+          GENKIT_PID=$!
+
+          # Wait for server to be ready (up to 60 seconds)
+          echo "Waiting for Genkit server to start..."
+          for i in {1..60}; do
+            if curl -s http://localhost:4000/api/__health > /dev/null 2>&1; then
+              echo "Server ready after ${i}s"
+              break
+            fi
+            if ! kill -0 $GENKIT_PID 2>/dev/null; then
+              echo "Server process died unexpectedly"
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Verify server is running
+          if ! curl -s http://localhost:4000/api/__health > /dev/null 2>&1; then
+            echo "Server failed to start within 60 seconds"
+            exit 1
+          fi
+
+          # Run evals and capture output
+          mkdir -p eval-results
+          EVAL_ERRORS=0
+
+          echo "Running explainText evaluation..."
+          genkit eval:flow explainText \
+            --input datasets/explain-chinese.json \
+            --evaluators=custom/chineseTextPresent,custom/validPinyinFormat,custom/outputStructureValid \
+            --output eval-results/explain-chinese-results.json || { echo "⚠️ explainText evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
+
+          echo "Running generateChineseSentences evaluation..."
+          genkit eval:flow generateChineseSentences \
+            --input datasets/generate-chinese-sentences.json \
+            --evaluators=custom/chineseTextPresent,custom/validPinyinFormat,custom/outputStructureValid \
+            --output eval-results/generate-sentences-results.json || { echo "⚠️ generateChineseSentences evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
+
+          echo "Running analyzeCollocation evaluation..."
+          genkit eval:flow analyzeCollocation \
+            --input datasets/analyze-collocation.json \
+            --evaluators=custom/chineseTextPresent,custom/englishTranslationPresent,custom/outputStructureValid \
+            --output eval-results/collocation-results.json || { echo "⚠️ analyzeCollocation evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
+
+          echo "Running explainWordInContext evaluation..."
+          genkit eval:flow explainWordInContext \
+            --input datasets/explain-word-in-context.json \
+            --evaluators=custom/outputStructureValid \
+            --output eval-results/word-context-results.json || { echo "⚠️ explainWordInContext evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
+
+          if [ $EVAL_ERRORS -gt 0 ]; then
+            echo "⚠️ $EVAL_ERRORS evaluation(s) had errors - check results for details"
+          fi
+
+      - name: Check evaluation thresholds
+        working-directory: functions
+        run: |
+          node scripts/check-eval-thresholds.js
+
+      - name: Upload eval results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-results
+          path: functions/eval-results/
+          retention-days: 30
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            let comment = '## 🧪 AI Evaluation Results\n\n';
+            const resultsDir = 'functions/eval-results';
+            if (!fs.existsSync(resultsDir)) {
+              comment += '⚠️ No evaluation results found\n';
+            } else {
+              const files = fs.readdirSync(resultsDir).filter(f => f.endsWith('.json'));
+              for (const file of files) {
+                const flowName = file.replace('-results.json', '').replace(/-/g, ' ');
+                comment += `### ${flowName}\n\n`;
+                try {
+                  const content = fs.readFileSync(path.join(resultsDir, file), 'utf8');
+                  const data = JSON.parse(content);
+                  const evaluations = Array.isArray(data) ? data : (data.evaluations || []);
+                  if (evaluations.length === 0) {
+                    comment += '- No test cases found\n\n';
+                    continue;
+                  }
+                  // Aggregate metrics across all test cases
+                  const metricResults = {};
+                  for (const evalResult of evaluations) {
+                    const metrics = evalResult.metrics || evalResult.evaluation || {};
+                    for (const [name, value] of Object.entries(metrics)) {
+                      if (!metricResults[name]) {
+                        metricResults[name] = { passed: 0, total: 0 };
+                      }
+                      metricResults[name].total++;
+                      const score = typeof value === 'object' ? (value.score ?? value.value) : value;
+                      if (score === true || (typeof score === 'number' && score >= 0.5)) {
+                        metricResults[name].passed++;
+                      }
+                    }
+                  }
+                  if (Object.keys(metricResults).length > 0) {
+                    comment += `| Evaluator | Pass Rate |\n|-----------|----------|\n`;
+                    for (const [name, result] of Object.entries(metricResults)) {
+                      const rate = ((result.passed / result.total) * 100).toFixed(0);
+                      const emoji = result.passed === result.total ? '✅' : (result.passed / result.total >= 0.8 ? '🟡' : '❌');
+                      const displayName = name.replace('custom/', '');
+                      comment += `| ${displayName} | ${emoji} ${result.passed}/${result.total} (${rate}%) |\n`;
+                    }
+                  } else {
+                    comment += `- Test cases: ${evaluations.length}\n`;
+                  }
+                  comment += '\n';
+                } catch (e) {
+                  comment += `- ⚠️ Error parsing results: ${e.message}\n\n`;
+                }
+              }
+            }
+            // Add link to artifacts
+            comment += `\n---\n📦 [Download full results](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})\n`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
