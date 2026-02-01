@@ -107,6 +107,12 @@ jobs:
             --evaluators=custom/chineseTextPresent,custom/validPinyinFormat,custom/outputStructureValid,custom/grammarExplanationQuality \
             --output eval-results/explain-chinese-results.json || { echo "⚠️ explainText evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
 
+          echo "Running explainEnglish evaluation..."
+          genkit eval:flow explainEnglish \
+            --input datasets/explain-english.json \
+            --evaluators=custom/chineseTextPresent,custom/validPinyinFormat,custom/outputStructureValid,custom/grammarExplanationQuality \
+            --output eval-results/explain-english-results.json || { echo "⚠️ explainEnglish evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
+
           echo "Running generateChineseSentences evaluation..."
           genkit eval:flow generateChineseSentences \
             --input datasets/generate-chinese-sentences.json \
