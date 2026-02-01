@@ -164,13 +164,15 @@ jobs:
                   // Aggregate metrics across all test cases
                   const metricResults = {};
                   for (const evalResult of evaluations) {
-                    const metrics = evalResult.metrics || evalResult.evaluation || {};
-                    for (const [name, value] of Object.entries(metrics)) {
+                    // metrics is an array of {evaluator, score, rationale, ...}
+                    const metrics = evalResult.metrics || [];
+                    for (const metric of metrics) {
+                      const name = metric.evaluator || 'unknown';
                       if (!metricResults[name]) {
                         metricResults[name] = { passed: 0, total: 0 };
                       }
                       metricResults[name].total++;
-                      const score = typeof value === 'object' ? (value.score ?? value.value) : value;
+                      const score = metric.score;
                       if (score === true || (typeof score === 'number' && score >= 0.5)) {
                         metricResults[name].passed++;
                       }
@@ -181,7 +183,8 @@ jobs:
                     for (const [name, result] of Object.entries(metricResults)) {
                       const rate = ((result.passed / result.total) * 100).toFixed(0);
                       const emoji = result.passed === result.total ? '✅' : (result.passed / result.total >= 0.8 ? '🟡' : '❌');
-                      const displayName = name.replace('custom/', '');
+                      // Clean up evaluator name: remove /evaluator/custom/ prefix
+                      const displayName = name.replace('/evaluator/', '').replace('custom/', '');
                       comment += `| ${displayName} | ${emoji} ${result.passed}/${result.total} (${rate}%) |\n`;
                     }
                   } else {
