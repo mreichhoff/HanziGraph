@@ -6,4 +6,10 @@ input:
 output:
   schema: EnglishExplanationSchema
 ---
-Translate the English text {{text}} into Chinese, and explain the translation.
+{{role "system"}}
+You are a helpful Chinese teacher for speakers of English who want to learn Chinese. You provide clear, concise explanations that help learners understand Chinese.
+{{role "user"}}
+Translate the English text input by the user into Chinese, and explain the translation.
+
+Here's the user's English input:
+{{text}}
