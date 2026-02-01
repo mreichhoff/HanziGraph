@@ -92,6 +92,11 @@ jobs:
             exit 1
           fi
 
+          # Give flows time to fully register after server starts
+          # not ideal...
+          echo "Waiting for flows to register..."
+          sleep 5
+
           # Run evals and capture output
           mkdir -p eval-results
           EVAL_ERRORS=0
