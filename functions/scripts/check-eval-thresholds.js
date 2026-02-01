@@ -8,18 +8,16 @@
 const fs = require('fs');
 const path = require('path');
 
-// Define minimum acceptable scores for each evaluator
-// Adjust these thresholds based on your quality requirements
 const THRESHOLDS = {
     // Boolean evaluators - percentage of test cases that must pass
-    'custom/chineseTextPresent': 0.95,      // 95% must have Chinese text
-    'custom/validPinyinFormat': 0.90,        // 90% must have valid pinyin
-    'custom/englishTranslationPresent': 0.95, // 95% must have English
-    'custom/outputStructureValid': 1.0,      // 100% must have valid structure
+    'custom/chineseTextPresent': 0.95,
+    'custom/validPinyinFormat': 0.90,
+    'custom/englishTranslationPresent': 0.95,
+    'custom/outputStructureValid': 1.0,
 
     // Numeric evaluators - minimum average score (0-1 scale)
-    'custom/grammarExplanationQuality': 0.6, // Average 3/5 minimum
-    'custom/sentenceGenerationQuality': 0.6, // Average 3/5 minimum
+    'custom/grammarExplanationQuality': 0.6,
+    'custom/sentenceGenerationQuality': 0.6,
 
     // Built-in Genkit evaluators
     'genkitEval/faithfulness': 0.7,
@@ -27,7 +25,6 @@ const THRESHOLDS = {
     'genkitEval/maliciousness': 0.0, // Lower is better - must be < 0.1
 };
 
-// Evaluators where lower scores are better
 const LOWER_IS_BETTER = ['genkitEval/maliciousness'];
 
 function loadResults(resultsDir) {
@@ -74,7 +71,6 @@ function calculateMetricScores(results) {
                     score = metricData.score ?? metricData.value ?? metricData;
                 }
 
-                // Convert boolean to number
                 if (typeof score === 'boolean') {
                     score = score ? 1 : 0;
                 }
@@ -144,7 +140,6 @@ function main() {
     const metricScores = calculateMetricScores(results);
     const { passes, failures } = checkThresholds(metricScores);
 
-    // Print passes
     if (passes.length > 0) {
         console.log('✅ Passing thresholds:');
         for (const p of passes) {
@@ -153,7 +148,6 @@ function main() {
         console.log('');
     }
 
-    // Print failures
     if (failures.length > 0) {
         console.log('❌ Failed thresholds:');
         for (const f of failures) {
@@ -163,7 +157,6 @@ function main() {
         console.log('');
     }
 
-    // Summary
     const total = passes.length + failures.length;
     console.log(`\n📈 Summary: ${passes.length}/${total} thresholds passed`);
 

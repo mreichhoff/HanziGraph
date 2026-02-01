@@ -31,7 +31,7 @@ This directory contains the evaluation framework for HanziGraph's AI flows.
 
 ## Evaluation Datasets
 
-Sample datasets are in `datasets/`:
+Eval datasets (currently rather minimal, but hopefully growing over time) are in `datasets/`:
 
 - `explain-chinese.json` - Chinese text explanation test cases
 - `explain-english.json` - English to Chinese translation test cases  
