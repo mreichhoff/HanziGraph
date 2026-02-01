@@ -66,8 +66,8 @@ jobs:
           }
           trap cleanup EXIT
 
-          # Start genkit in background
-          npx tsx src/genkit-eval.ts &
+          # Start genkit dev server in background (see package.json script)
+          npm run eval:start &
           GENKIT_PID=$!
 
           # Wait for server to be ready (up to 60 seconds)
