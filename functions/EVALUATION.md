@@ -70,11 +70,12 @@ genkit eval:flow explainText --input datasets/explain-chinese.json \
 # Run with batching for faster evaluation
 genkit eval:flow explainText --input datasets/explain-chinese.json --batchSize 5
 
-# Extract data from previous runs for analysis
-genkit eval:extractData explainText --label myTestRun --output results.json
+# Extract data from previous flow runs in the trace store
+# (requires having run the flow previously via the UI or flow:run)
+genkit eval:extractData explainText --output extracted-data.json --maxRows 50
 
-# Run raw evaluation on extracted data
-genkit eval:run results.json
+# Run evaluation on extracted/existing dataset
+genkit eval:run extracted-data.json --evaluators=custom/chineseTextPresent
 ```
 
 ## Adding Test Cases
