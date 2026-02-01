@@ -67,7 +67,9 @@ jobs:
           trap cleanup EXIT
 
           # Start genkit dev server in background (see package.json script)
-          npm run eval:start &
+          # Pipe empty input to auto-accept the Genkit CLI cookie consent prompt
+          # TODO: surely there's a better way to do this?
+          echo "" | npm run eval:start &
           GENKIT_PID=$!
 
           # Wait for server to be ready (up to 60 seconds)
