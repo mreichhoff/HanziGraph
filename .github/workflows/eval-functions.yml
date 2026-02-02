@@ -7,12 +7,14 @@ on:
     paths:
       - "functions/prompts/**"
       - "functions/src/**"
+      - "functions/datasets/**"
   push:
     branches:
       - main
     paths:
       - "functions/prompts/**"
       - "functions/src/**"
+      - "functions/datasets/**"
   workflow_dispatch: # Allow manual runs. Customization of inputs a TODO.
 
 concurrency:
