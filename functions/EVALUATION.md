@@ -1,6 +1,8 @@
 # Genkit Evaluation Setup
 
-This directory contains the evaluation framework for HanziGraph's AI flows.
+The `functions/` directory also includes evals for HanziGraph's AI flows.
+
+Genkit's eval tooling ([docs](https://genkit.dev/docs/evaluation/)) is used for this purpose.
 
 ## Quick Start
 
