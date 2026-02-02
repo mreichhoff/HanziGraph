@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths:
-      - "functions/**"
+      - "functions/prompts/**"
+      - "functions/src/**"
   push:
     branches:
       - main
