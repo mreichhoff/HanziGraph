@@ -1,14 +1,42 @@
 /**
  * Check evaluation results against defined thresholds.
  * Exits with code 1 if any threshold is not met.
- * 
- * Usage: node scripts/check-eval-thresholds.js
+ *
+ * Usage: npx tsx src/check-eval-thresholds.ts
  */
 
-const fs = require('fs');
-const path = require('path');
+import * as fs from 'fs';
+import * as path from 'path';
 
-const THRESHOLDS = {
+interface ThresholdConfig {
+    [metric: string]: number;
+}
+
+interface EvalMetric {
+    evaluator?: string;
+    score?: number | boolean;
+    value?: number;
+}
+
+interface EvalResult {
+    metrics?: EvalMetric[] | Record<string, EvalMetric>;
+    evaluation?: Record<string, EvalMetric>;
+}
+
+interface ResultFile {
+    file: string;
+    data: EvalResult[] | { evaluations?: EvalResult[] };
+}
+
+interface ThresholdResult {
+    metric: string;
+    avgScore: string;
+    threshold: number;
+    sampleCount: number;
+    passed: boolean;
+}
+
+const THRESHOLDS: ThresholdConfig = {
     // Boolean evaluators - percentage of test cases that must pass
     'custom/chineseTextPresent': 0.95,
     'custom/validPinyinFormat': 0.90,
@@ -27,8 +55,8 @@ const THRESHOLDS = {
 
 const LOWER_IS_BETTER = ['genkitEval/maliciousness'];
 
-function loadResults(resultsDir) {
-    const results = [];
+function loadResults(resultsDir: string): ResultFile[] {
+    const results: ResultFile[] = [];
 
     if (!fs.existsSync(resultsDir)) {
         console.log('⚠️  No eval-results directory found');
@@ -43,40 +71,59 @@ function loadResults(resultsDir) {
             const data = JSON.parse(content);
             results.push({ file, data });
         } catch (e) {
-            console.error(`Failed to parse ${file}:`, e.message);
+            console.error(`Failed to parse ${file}:`, (e as Error).message);
         }
     }
 
     return results;
 }
 
-function calculateMetricScores(results) {
-    const metricScores = {};
+function calculateMetricScores(results: ResultFile[]): Record<string, number[]> {
+    const metricScores: Record<string, number[]> = {};
 
-    for (const { file, data } of results) {
-        // Handle different possible output formats from genkit eval
-        const evaluations = Array.isArray(data) ? data : (data.evaluations || []);
+    for (const { data } of results) {
+        const evaluations: EvalResult[] = Array.isArray(data)
+            ? data
+            : ((data as { evaluations?: EvalResult[] }).evaluations || []);
 
         for (const evalResult of evaluations) {
             const metrics = evalResult.metrics || evalResult.evaluation || {};
 
-            for (const [metricName, metricData] of Object.entries(metrics)) {
-                if (!metricScores[metricName]) {
-                    metricScores[metricName] = [];
-                }
+            if (Array.isArray(metrics)) {
+                // Array format: [{evaluator: "name", score: 0.5}, ...]
+                for (const metric of metrics) {
+                    const metricName = metric.evaluator || 'unknown';
+                    if (!metricScores[metricName]) {
+                        metricScores[metricName] = [];
+                    }
 
-                // Handle different score formats
-                let score = metricData;
-                if (typeof metricData === 'object') {
-                    score = metricData.score ?? metricData.value ?? metricData;
+                    let score = metric.score;
+                    if (typeof score === 'boolean') {
+                        score = score ? 1 : 0;
+                    }
+                    if (typeof score === 'number' && !isNaN(score)) {
+                        metricScores[metricName].push(score);
+                    }
                 }
+            } else {
+                // Object format: {metricName: {score: 0.5}, ...}
+                for (const [metricName, metricData] of Object.entries(metrics)) {
+                    if (!metricScores[metricName]) {
+                        metricScores[metricName] = [];
+                    }
 
-                if (typeof score === 'boolean') {
-                    score = score ? 1 : 0;
-                }
+                    let score: number | boolean | undefined = metricData as unknown as number;
+                    if (typeof metricData === 'object' && metricData !== null) {
+                        score = metricData.score ?? metricData.value;
+                    }
 
-                if (typeof score === 'number' && !isNaN(score)) {
-                    metricScores[metricName].push(score);
+                    if (typeof score === 'boolean') {
+                        score = score ? 1 : 0;
+                    }
+
+                    if (typeof score === 'number' && !isNaN(score)) {
+                        metricScores[metricName].push(score);
+                    }
                 }
             }
         }
@@ -85,9 +132,12 @@ function calculateMetricScores(results) {
     return metricScores;
 }
 
-function checkThresholds(metricScores) {
-    const failures = [];
-    const passes = [];
+function checkThresholds(metricScores: Record<string, number[]>): {
+    passes: ThresholdResult[];
+    failures: ThresholdResult[];
+} {
+    const failures: ThresholdResult[] = [];
+    const passes: ThresholdResult[] = [];
 
     for (const [metric, scores] of Object.entries(metricScores)) {
         if (scores.length === 0) continue;
@@ -105,7 +155,7 @@ function checkThresholds(metricScores) {
             ? avgScore <= threshold
             : avgScore >= threshold;
 
-        const result = {
+        const result: ThresholdResult = {
             metric,
             avgScore: avgScore.toFixed(3),
             threshold,
@@ -123,7 +173,7 @@ function checkThresholds(metricScores) {
     return { passes, failures };
 }
 
-function main() {
+function main(): void {
     console.log('🔍 Checking evaluation thresholds...\n');
 
     const resultsDir = path.join(__dirname, '..', 'eval-results');
@@ -132,7 +182,7 @@ function main() {
     if (results.length === 0) {
         console.log('⚠️  No evaluation results to check');
         console.log('   This may be expected if evals failed to run.');
-        process.exit(0); // Don't fail CI if no results
+        process.exit(0); // Don't fail CI if no results. TODO: or should we?
     }
 
     console.log(`📊 Found ${results.length} result file(s)\n`);

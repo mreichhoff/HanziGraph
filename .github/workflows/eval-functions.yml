@@ -141,7 +141,7 @@ jobs:
       - name: Check evaluation thresholds
         working-directory: functions
         run: |
-          node scripts/check-eval-thresholds.js
+          npx tsx src/check-eval-thresholds.ts
 
       - name: Upload eval results
         uses: actions/upload-artifact@v4
