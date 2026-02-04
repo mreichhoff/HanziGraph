@@ -1,14 +1,14 @@
 /**
  * Genkit Evaluation Entry Point
- * 
+ *
  * This file is used for running evaluations locally with the Genkit CLI.
  * It's separate from the main Cloud Functions entry point (index.ts) to allow
  * evaluations to run without Firebase auth requirements.
- * 
+ *
  * Usage:
  *   npm run eval:start     # Start Genkit dev server with eval support
  *   npm run eval:flow      # Run evaluation on a specific flow
- * 
+ *
  * Or directly with genkit CLI:
  *   genkit start -- npx tsx src/genkit-eval.ts
  *   genkit eval:flow explainText --input datasets/explain-chinese.json
@@ -41,14 +41,22 @@ const ai = genkit({
 });
 
 // Register schemas - MUST be done before loading prompts
-const ChineseExplanationSchema = ai.defineSchema('ChineseExplanationSchema', explanationSchema);
-const EnglishExplanationSchema = ai.defineSchema('EnglishExplanationSchema', englishExplanationSchema);
-const ImageAnalysisSchema = ai.defineSchema('ImageAnalysisSchema', imageAnalysisSchema);
-const ChineseSentenceGenerationSchema = ai.defineSchema('ChineseSentenceGenerationSchema', chineseSentenceGenerationSchema);
-const GenerateChineseSentencesInputSchema = ai.defineSchema('GenerateChineseSentencesInputSchema', generateChineseSentencesInputSchema);
-const AnalyzeCollocationSchema = ai.defineSchema('AnalyzeCollocationSchema', analyzeCollocationSchema);
-const ExplainWordInContextInputSchema = ai.defineSchema('ExplainWordInContextInputSchema', explainWordInContextInputSchema);
-const ExplainWordInContextSchema = ai.defineSchema('ExplainWordInContextSchema', explainWordInContextSchema);
+const ChineseExplanationSchema = ai.defineSchema(
+    'ChineseExplanationSchema', explanationSchema);
+const EnglishExplanationSchema = ai.defineSchema(
+    'EnglishExplanationSchema', englishExplanationSchema);
+const ImageAnalysisSchema = ai.defineSchema(
+    'ImageAnalysisSchema', imageAnalysisSchema);
+const ChineseSentenceGenerationSchema = ai.defineSchema(
+    'ChineseSentenceGenerationSchema', chineseSentenceGenerationSchema);
+const GenerateChineseSentencesInputSchema = ai.defineSchema(
+    'GenerateChineseSentencesInputSchema', generateChineseSentencesInputSchema);
+const AnalyzeCollocationSchema = ai.defineSchema(
+    'AnalyzeCollocationSchema', analyzeCollocationSchema);
+const ExplainWordInContextInputSchema = ai.defineSchema(
+    'ExplainWordInContextInputSchema', explainWordInContextInputSchema);
+const ExplainWordInContextSchema = ai.defineSchema(
+    'ExplainWordInContextSchema', explainWordInContextSchema);
 
 // ============================================================================
 // CUSTOM EVALUATORS - defined inline to use the same Genkit instance
@@ -65,9 +73,9 @@ export const chineseTextPresentEvaluator = ai.defineEvaluator(
         definition: 'Checks if the output contains Chinese characters when expected.',
     },
     async (datapoint: BaseEvalDataPoint) => {
-        const output = typeof datapoint.output === 'string'
-            ? datapoint.output
-            : JSON.stringify(datapoint.output);
+        const output = typeof datapoint.output === 'string' ?
+            datapoint.output :
+            JSON.stringify(datapoint.output);
 
         const chineseRegex = /[\u4e00-\u9fff]/;
         const hasChineseText = chineseRegex.test(output);
@@ -77,9 +85,9 @@ export const chineseTextPresentEvaluator = ai.defineEvaluator(
             evaluation: {
                 score: hasChineseText,
                 details: {
-                    reasoning: hasChineseText
-                        ? 'Output contains Chinese characters as expected.'
-                        : 'Output does not contain Chinese characters.',
+                    reasoning: hasChineseText ?
+                        'Output contains Chinese characters as expected.' :
+                        'Output does not contain Chinese characters.',
                 },
             },
         };
@@ -97,9 +105,9 @@ export const validPinyinFormatEvaluator = ai.defineEvaluator(
         definition: 'Checks if pinyin in the output follows valid patterns with tone marks or numbers.',
     },
     async (datapoint: BaseEvalDataPoint) => {
-        const output = typeof datapoint.output === 'string'
-            ? datapoint.output
-            : JSON.stringify(datapoint.output);
+        const output = typeof datapoint.output === 'string' ?
+            datapoint.output :
+            JSON.stringify(datapoint.output);
 
         const toneMarks = /[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]/i;
         const toneNumbers = /[a-z]+[1-4]/i;
@@ -110,9 +118,9 @@ export const validPinyinFormatEvaluator = ai.defineEvaluator(
             evaluation: {
                 score: hasPinyin,
                 details: {
-                    reasoning: hasPinyin
-                        ? 'Output contains valid pinyin with tone marks or numbers.'
-                        : 'Output does not appear to contain valid pinyin.',
+                    reasoning: hasPinyin ?
+                        'Output contains valid pinyin with tone marks or numbers.' :
+                        'Output does not appear to contain valid pinyin.',
                 },
             },
         };
@@ -120,7 +128,7 @@ export const validPinyinFormatEvaluator = ai.defineEvaluator(
 );
 
 /**
- * Evaluator: English Translation Present  
+ * Evaluator: English Translation Present
  * Checks if the output contains English text (for translation outputs)
  */
 export const englishTranslationPresentEvaluator = ai.defineEvaluator(
@@ -130,9 +138,9 @@ export const englishTranslationPresentEvaluator = ai.defineEvaluator(
         definition: 'Checks if the output contains English text for translations.',
     },
     async (datapoint: BaseEvalDataPoint) => {
-        const output = typeof datapoint.output === 'string'
-            ? datapoint.output
-            : JSON.stringify(datapoint.output);
+        const output = typeof datapoint.output === 'string' ?
+            datapoint.output :
+            JSON.stringify(datapoint.output);
 
         const englishWordRegex = /\b[a-zA-Z]{3,}\b/;
         const hasEnglish = englishWordRegex.test(output);
@@ -142,9 +150,9 @@ export const englishTranslationPresentEvaluator = ai.defineEvaluator(
             evaluation: {
                 score: hasEnglish,
                 details: {
-                    reasoning: hasEnglish
-                        ? 'Output contains English text.'
-                        : 'Output does not appear to contain English text.',
+                    reasoning: hasEnglish ?
+                        'Output contains English text.' :
+                        'Output does not appear to contain English text.',
                 },
             },
         };
@@ -162,12 +170,12 @@ export const grammarExplanationQualityEvaluator = ai.defineEvaluator(
         definition: 'Assesses if grammar explanations are clear, accurate, and helpful for language learners.',
     },
     async (datapoint: BaseEvalDataPoint) => {
-        const input = typeof datapoint.input === 'string'
-            ? datapoint.input
-            : JSON.stringify(datapoint.input);
-        const output = typeof datapoint.output === 'string'
-            ? datapoint.output
-            : JSON.stringify(datapoint.output);
+        const input = typeof datapoint.input === 'string' ?
+            datapoint.input :
+            JSON.stringify(datapoint.input);
+        const output = typeof datapoint.output === 'string' ?
+            datapoint.output :
+            JSON.stringify(datapoint.output);
 
         const { output: evalResult } = await ai.generate({
             prompt: `You are evaluating a Chinese language learning tool's output quality.
@@ -230,12 +238,12 @@ export const sentenceGenerationQualityEvaluator = ai.defineEvaluator(
         definition: 'Evaluates if generated Chinese sentences properly use the target word and are natural.',
     },
     async (datapoint: BaseEvalDataPoint) => {
-        const input = typeof datapoint.input === 'string'
-            ? datapoint.input
-            : JSON.stringify(datapoint.input);
-        const output = typeof datapoint.output === 'string'
-            ? datapoint.output
-            : JSON.stringify(datapoint.output);
+        const input = typeof datapoint.input === 'string' ?
+            datapoint.input :
+            JSON.stringify(datapoint.input);
+        const output = typeof datapoint.output === 'string' ?
+            datapoint.output :
+            JSON.stringify(datapoint.output);
 
         const { output: evalResult } = await ai.generate({
             prompt: `You are evaluating generated Chinese example sentences for a language learning app.
@@ -317,16 +325,16 @@ export const outputStructureValidEvaluator = ai.defineEvaluator(
             // Validate sentence structure
             const firstSentence = output.sentences[0];
             const sentenceFields = ['chineseTextWithoutPinyin', 'pinyin', 'englishTranslation'];
-            const hasSentenceStructure = sentenceFields.every(field => field in firstSentence);
+            const hasSentenceStructure = sentenceFields.every((field) => field in firstSentence);
 
             return {
                 testCaseId: datapoint.testCaseId,
                 evaluation: {
                     score: hasSentenceStructure,
                     details: {
-                        reasoning: hasSentenceStructure
-                            ? `Output has valid sentences array with ${output.sentences.length} sentences`
-                            : `Sentences missing required fields. Found: ${Object.keys(firstSentence).join(', ')}`,
+                        reasoning: hasSentenceStructure ?
+                            `Output has valid sentences array with ${output.sentences.length} sentences` :
+                            `Sentences missing required fields. Found: ${Object.keys(firstSentence).join(', ')}`,
                         sentenceCount: output.sentences.length,
                     },
                 },
@@ -340,15 +348,19 @@ export const outputStructureValidEvaluator = ai.defineEvaluator(
                 evaluation: {
                     score: true,
                     details: {
-                        reasoning: 'Output has valid word-in-context structure with wordMeaning and plainTextExplanation',
+                        reasoning: 'Output has valid word-in-context structure ' +
+                            'with wordMeaning and plainTextExplanation',
                     },
                 },
             };
         }
 
         // Check for explanation flows (have plainTextExplanation, etc.)
-        const commonFields = ['plainTextExplanation', 'englishTranslation', 'chineseTranslationWithoutPinyin', 'pinyin', 'grammarHighlights', 'sentences'];
-        const presentFields = commonFields.filter(field => field in output);
+        const commonFields = [
+            'plainTextExplanation', 'englishTranslation', 'chineseTranslationWithoutPinyin',
+            'pinyin', 'grammarHighlights', 'sentences',
+        ];
+        const presentFields = commonFields.filter((field) => field in output);
         const hasRequiredStructure = presentFields.length >= 2;
 
         return {
@@ -356,9 +368,9 @@ export const outputStructureValidEvaluator = ai.defineEvaluator(
             evaluation: {
                 score: hasRequiredStructure,
                 details: {
-                    reasoning: hasRequiredStructure
-                        ? `Output has expected structure with fields: ${presentFields.join(', ')}`
-                        : `Output missing expected fields. Found: ${Object.keys(output).join(', ')}`,
+                    reasoning: hasRequiredStructure ?
+                        `Output has expected structure with fields: ${presentFields.join(', ')}` :
+                        `Output missing expected fields. Found: ${Object.keys(output).join(', ')}`,
                     presentFields,
                 },
             },
@@ -371,12 +383,24 @@ export const outputStructureValidEvaluator = ai.defineEvaluator(
 // ============================================================================
 
 // Load prompts
-const explainChinesePrompt = ai.prompt<z.ZodTypeAny, typeof ChineseExplanationSchema>('explain-chinese');
-const explainEnglishPrompt = ai.prompt<z.ZodTypeAny, typeof EnglishExplanationSchema>('explain-english');
-const analyzeImagePrompt = ai.prompt<z.ZodTypeAny, typeof ImageAnalysisSchema>('analyze-image');
-const generateChineseSentencesPrompt = ai.prompt<typeof GenerateChineseSentencesInputSchema, typeof ChineseSentenceGenerationSchema>('generate-chinese-sentences');
-const analyzeCollocationPrompt = ai.prompt<z.ZodTypeAny, typeof AnalyzeCollocationSchema>('analyze-collocation');
-const explainWordInContextPrompt = ai.prompt<typeof ExplainWordInContextInputSchema, typeof ExplainWordInContextSchema>('explain-word-in-context');
+const explainChinesePrompt = ai.prompt<
+    z.ZodTypeAny, typeof ChineseExplanationSchema
+>('explain-chinese');
+const explainEnglishPrompt = ai.prompt<
+    z.ZodTypeAny, typeof EnglishExplanationSchema
+>('explain-english');
+const analyzeImagePrompt = ai.prompt<
+    z.ZodTypeAny, typeof ImageAnalysisSchema
+>('analyze-image');
+const generateChineseSentencesPrompt = ai.prompt<
+    typeof GenerateChineseSentencesInputSchema, typeof ChineseSentenceGenerationSchema
+>('generate-chinese-sentences');
+const analyzeCollocationPrompt = ai.prompt<
+    z.ZodTypeAny, typeof AnalyzeCollocationSchema
+>('analyze-collocation');
+const explainWordInContextPrompt = ai.prompt<
+    typeof ExplainWordInContextInputSchema, typeof ExplainWordInContextSchema
+>('explain-word-in-context');
 
 /**
  * Flow: explainText
@@ -411,7 +435,7 @@ export const explainEnglishFlow = ai.defineFlow({
 });
 
 /**
- * Flow: analyzeImage  
+ * Flow: analyzeImage
  * Analyzes images containing Chinese text
  */
 export const analyzeImageFlow = ai.defineFlow({
@@ -479,5 +503,10 @@ export const explainWordInContextFlow = ai.defineFlow({
 export { ai };
 
 console.log('Genkit evaluation server ready.');
-console.log('Available flows: explainText, explainEnglish, analyzeImage, generateChineseSentences, analyzeCollocation, explainWordInContext');
-console.log('Custom evaluators: chineseTextPresent, validPinyinFormat, englishTranslationPresent, grammarExplanationQuality, sentenceGenerationQuality, outputStructureValid');
+console.log(
+    'Available flows: explainText, explainEnglish, analyzeImage, ' +
+    'generateChineseSentences, analyzeCollocation, explainWordInContext');
+console.log(
+    'Custom evaluators: chineseTextPresent, validPinyinFormat, ' +
+    'englishTranslationPresent, grammarExplanationQuality, ' +
+    'sentenceGenerationQuality, outputStructureValid');

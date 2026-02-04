@@ -55,6 +55,11 @@ const THRESHOLDS: ThresholdConfig = {
 
 const LOWER_IS_BETTER = ['genkitEval/maliciousness'];
 
+/**
+ * Loads evaluation result files from the specified directory.
+ * @param {string} resultsDir - Path to the directory containing result files
+ * @return {ResultFile[]} Array of parsed result files
+ */
 function loadResults(resultsDir: string): ResultFile[] {
     const results: ResultFile[] = [];
 
@@ -63,7 +68,7 @@ function loadResults(resultsDir: string): ResultFile[] {
         return results;
     }
 
-    const files = fs.readdirSync(resultsDir).filter(f => f.endsWith('.json'));
+    const files = fs.readdirSync(resultsDir).filter((f) => f.endsWith('.json'));
 
     for (const file of files) {
         try {
@@ -78,13 +83,18 @@ function loadResults(resultsDir: string): ResultFile[] {
     return results;
 }
 
+/**
+ * Calculates aggregated scores for each metric across all results.
+ * @param {ResultFile[]} results - Array of evaluation result files
+ * @return {Record<string, number[]>} Map of metric names to arrays of scores
+ */
 function calculateMetricScores(results: ResultFile[]): Record<string, number[]> {
     const metricScores: Record<string, number[]> = {};
 
     for (const { data } of results) {
-        const evaluations: EvalResult[] = Array.isArray(data)
-            ? data
-            : ((data as { evaluations?: EvalResult[] }).evaluations || []);
+        const evaluations: EvalResult[] = Array.isArray(data) ?
+            data :
+            ((data as { evaluations?: EvalResult[] }).evaluations || []);
 
         for (const evalResult of evaluations) {
             const metrics = evalResult.metrics || evalResult.evaluation || {};
@@ -132,6 +142,11 @@ function calculateMetricScores(results: ResultFile[]): Record<string, number[]> 
     return metricScores;
 }
 
+/**
+ * Checks metric scores against defined thresholds.
+ * @param {Record<string, number[]>} metricScores - Map of metric names to scores
+ * @return {{passes: ThresholdResult[], failures: ThresholdResult[]}} Results
+ */
 function checkThresholds(metricScores: Record<string, number[]>): {
     passes: ThresholdResult[];
     failures: ThresholdResult[];
@@ -151,9 +166,9 @@ function checkThresholds(metricScores: Record<string, number[]>): {
         }
 
         const isLowerBetter = LOWER_IS_BETTER.includes(metric);
-        const passed = isLowerBetter
-            ? avgScore <= threshold
-            : avgScore >= threshold;
+        const passed = isLowerBetter ?
+            avgScore <= threshold :
+            avgScore >= threshold;
 
         const result: ThresholdResult = {
             metric,
@@ -173,6 +188,9 @@ function checkThresholds(metricScores: Record<string, number[]>): {
     return { passes, failures };
 }
 
+/**
+ * Main entry point - loads results, checks thresholds, and reports status.
+ */
 function main(): void {
     console.log('🔍 Checking evaluation thresholds...\n');
 
