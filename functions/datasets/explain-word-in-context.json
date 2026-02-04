@@ -1,0 +1,52 @@
+[
+    {
+        "input": {
+            "word": "打",
+            "sentence": "我每天早上打太极拳"
+        },
+        "reference": {
+            "expectedMeaning": "to do/practice (martial arts)",
+            "notes": "打 with martial arts meaning"
+        }
+    },
+    {
+        "input": {
+            "word": "打",
+            "sentence": "我要打电话给妈妈"
+        },
+        "reference": {
+            "expectedMeaning": "to make (a phone call)",
+            "notes": "打电话 - common fixed expression"
+        }
+    },
+    {
+        "input": {
+            "word": "会",
+            "sentence": "明天会下雨吗？"
+        },
+        "reference": {
+            "expectedMeaning": "will (future tense marker)",
+            "notes": "会 as future marker, not ability"
+        }
+    },
+    {
+        "input": {
+            "word": "会",
+            "sentence": "她会说三种语言"
+        },
+        "reference": {
+            "expectedMeaning": "can / know how to (learned ability)",
+            "notes": "会 as ability marker"
+        }
+    },
+    {
+        "input": {
+            "word": "了",
+            "sentence": "他吃了三碗饭"
+        },
+        "reference": {
+            "expectedMeaning": "completed action marker",
+            "notes": "了 after verb indicating completion"
+        }
+    }
+]

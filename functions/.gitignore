@@ -8,3 +8,6 @@ typings/
 # Node.js dependency directory
 node_modules/
 *.local
+
+# Genkit local data (traces, evals, datasets)
+.genkit/

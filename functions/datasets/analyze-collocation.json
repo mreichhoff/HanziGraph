@@ -1,0 +1,30 @@
+[
+    {
+        "input": "的时候",
+        "reference": {
+            "expectedTranslation": "when / at the time of",
+            "notes": "Time-marking collocation, attaches to verbs/clauses to indicate 'when X happens'"
+        }
+    },
+    {
+        "input": "情况下",
+        "reference": {
+            "expectedTranslation": "under the circumstances / in the situation",
+            "notes": "Often preceded by 在...的 or 这种/那种, used to describe conditions"
+        }
+    },
+    {
+        "input": "软件的问题",
+        "reference": {
+            "expectedTranslation": "software problem / software issue",
+            "notes": "Noun + 的 + noun pattern showing possession/relation"
+        }
+    },
+    {
+        "input": "我马上回来",
+        "reference": {
+            "expectedTranslation": "I'll be right back",
+            "notes": "Common phrase with 马上 (immediately) modifying the verb 回来 (come back)"
+        }
+    }
+]

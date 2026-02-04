@@ -1,0 +1,49 @@
+[
+    {
+        "input": "I want to learn Chinese",
+        "reference": {
+            "expectedTranslation": "我想学中文",
+            "expectedGrammarPoints": [
+                "想 + verb for 'want to'"
+            ]
+        }
+    },
+    {
+        "input": "The weather today is very good",
+        "reference": {
+            "expectedTranslation": "今天天气很好",
+            "expectedGrammarPoints": [
+                "Time word placement",
+                "很 + adjective"
+            ]
+        }
+    },
+    {
+        "input": "Have you eaten yet?",
+        "reference": {
+            "expectedTranslation": "你吃了吗？",
+            "expectedGrammarPoints": [
+                "了 completion aspect",
+                "吗 question particle"
+            ]
+        }
+    },
+    {
+        "input": "She is reading a book",
+        "reference": {
+            "expectedTranslation": "她在看书",
+            "expectedGrammarPoints": [
+                "在 progressive aspect"
+            ]
+        }
+    },
+    {
+        "input": "This is too expensive",
+        "reference": {
+            "expectedTranslation": "这太贵了",
+            "expectedGrammarPoints": [
+                "太...了 excessive degree"
+            ]
+        }
+    }
+]

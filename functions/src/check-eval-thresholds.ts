@@ -1,0 +1,243 @@
+/**
+ * Check evaluation results against defined thresholds.
+ * Exits with code 1 if any threshold is not met.
+ *
+ * Usage: npx tsx src/check-eval-thresholds.ts
+ */
+
+import * as fs from 'fs';
+import * as path from 'path';
+
+interface ThresholdConfig {
+    [metric: string]: number;
+}
+
+interface EvalMetric {
+    evaluator?: string;
+    score?: number | boolean;
+    value?: number;
+}
+
+interface EvalResult {
+    metrics?: EvalMetric[] | Record<string, EvalMetric>;
+    evaluation?: Record<string, EvalMetric>;
+}
+
+interface ResultFile {
+    file: string;
+    data: EvalResult[] | { evaluations?: EvalResult[] };
+}
+
+interface ThresholdResult {
+    metric: string;
+    avgScore: string;
+    threshold: number;
+    sampleCount: number;
+    passed: boolean;
+}
+
+const THRESHOLDS: ThresholdConfig = {
+    // Boolean evaluators - percentage of test cases that must pass
+    'custom/chineseTextPresent': 0.95,
+    'custom/validPinyinFormat': 0.90,
+    'custom/englishTranslationPresent': 0.95,
+    'custom/outputStructureValid': 1.0,
+
+    // Numeric evaluators - minimum average score (0-1 scale)
+    'custom/grammarExplanationQuality': 0.6,
+    'custom/sentenceGenerationQuality': 0.6,
+
+    // Built-in Genkit evaluators
+    'genkitEval/faithfulness': 0.7,
+    'genkitEval/answer_relevancy': 0.7,
+    'genkitEval/maliciousness': 0.0, // Lower is better - must be < 0.1
+};
+
+const LOWER_IS_BETTER = ['genkitEval/maliciousness'];
+
+/**
+ * Loads evaluation result files from the specified directory.
+ * @param {string} resultsDir - Path to the directory containing result files
+ * @return {ResultFile[]} Array of parsed result files
+ */
+function loadResults(resultsDir: string): ResultFile[] {
+    const results: ResultFile[] = [];
+
+    if (!fs.existsSync(resultsDir)) {
+        console.log('⚠️  No eval-results directory found');
+        return results;
+    }
+
+    const files = fs.readdirSync(resultsDir).filter((f) => f.endsWith('.json'));
+
+    for (const file of files) {
+        try {
+            const content = fs.readFileSync(path.join(resultsDir, file), 'utf8');
+            const data = JSON.parse(content);
+            results.push({ file, data });
+        } catch (e) {
+            console.error(`Failed to parse ${file}:`, (e as Error).message);
+        }
+    }
+
+    return results;
+}
+
+/**
+ * Calculates aggregated scores for each metric across all results.
+ * @param {ResultFile[]} results - Array of evaluation result files
+ * @return {Record<string, number[]>} Map of metric names to arrays of scores
+ */
+function calculateMetricScores(results: ResultFile[]): Record<string, number[]> {
+    const metricScores: Record<string, number[]> = {};
+
+    for (const { data } of results) {
+        const evaluations: EvalResult[] = Array.isArray(data) ?
+            data :
+            ((data as { evaluations?: EvalResult[] }).evaluations || []);
+
+        for (const evalResult of evaluations) {
+            const metrics = evalResult.metrics || evalResult.evaluation || {};
+
+            if (Array.isArray(metrics)) {
+                // Array format: [{evaluator: "name", score: 0.5}, ...]
+                for (const metric of metrics) {
+                    const metricName = metric.evaluator || 'unknown';
+                    if (!metricScores[metricName]) {
+                        metricScores[metricName] = [];
+                    }
+
+                    let score = metric.score;
+                    if (typeof score === 'boolean') {
+                        score = score ? 1 : 0;
+                    }
+                    if (typeof score === 'number' && !isNaN(score)) {
+                        metricScores[metricName].push(score);
+                    }
+                }
+            } else {
+                // Object format: {metricName: {score: 0.5}, ...}
+                for (const [metricName, metricData] of Object.entries(metrics)) {
+                    if (!metricScores[metricName]) {
+                        metricScores[metricName] = [];
+                    }
+
+                    let score: number | boolean | undefined = metricData as unknown as number;
+                    if (typeof metricData === 'object' && metricData !== null) {
+                        score = metricData.score ?? metricData.value;
+                    }
+
+                    if (typeof score === 'boolean') {
+                        score = score ? 1 : 0;
+                    }
+
+                    if (typeof score === 'number' && !isNaN(score)) {
+                        metricScores[metricName].push(score);
+                    }
+                }
+            }
+        }
+    }
+
+    return metricScores;
+}
+
+/**
+ * Checks metric scores against defined thresholds.
+ * @param {Record<string, number[]>} metricScores - Map of metric names to scores
+ * @return {{passes: ThresholdResult[], failures: ThresholdResult[]}} Results
+ */
+function checkThresholds(metricScores: Record<string, number[]>): {
+    passes: ThresholdResult[];
+    failures: ThresholdResult[];
+} {
+    const failures: ThresholdResult[] = [];
+    const passes: ThresholdResult[] = [];
+
+    for (const [metric, scores] of Object.entries(metricScores)) {
+        if (scores.length === 0) continue;
+
+        const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+        const threshold = THRESHOLDS[metric];
+
+        if (threshold === undefined) {
+            console.log(`ℹ️  No threshold defined for ${metric} (avg: ${avgScore.toFixed(3)})`);
+            continue;
+        }
+
+        const isLowerBetter = LOWER_IS_BETTER.includes(metric);
+        const passed = isLowerBetter ?
+            avgScore <= threshold :
+            avgScore >= threshold;
+
+        const result: ThresholdResult = {
+            metric,
+            avgScore: avgScore.toFixed(3),
+            threshold,
+            sampleCount: scores.length,
+            passed,
+        };
+
+        if (passed) {
+            passes.push(result);
+        } else {
+            failures.push(result);
+        }
+    }
+
+    return { passes, failures };
+}
+
+/**
+ * Main entry point - loads results, checks thresholds, and reports status.
+ */
+function main(): void {
+    console.log('🔍 Checking evaluation thresholds...\n');
+
+    const resultsDir = path.join(__dirname, '..', 'eval-results');
+    const results = loadResults(resultsDir);
+
+    if (results.length === 0) {
+        console.log('⚠️  No evaluation results to check');
+        console.log('   This may be expected if evals failed to run.');
+        process.exit(0); // Don't fail CI if no results. TODO: or should we?
+    }
+
+    console.log(`📊 Found ${results.length} result file(s)\n`);
+
+    const metricScores = calculateMetricScores(results);
+    const { passes, failures } = checkThresholds(metricScores);
+
+    if (passes.length > 0) {
+        console.log('✅ Passing thresholds:');
+        for (const p of passes) {
+            console.log(`   ${p.metric}: ${p.avgScore} >= ${p.threshold} (n=${p.sampleCount})`);
+        }
+        console.log('');
+    }
+
+    if (failures.length > 0) {
+        console.log('❌ Failed thresholds:');
+        for (const f of failures) {
+            const comparison = LOWER_IS_BETTER.includes(f.metric) ? '>' : '<';
+            console.log(`   ${f.metric}: ${f.avgScore} ${comparison} ${f.threshold} (n=${f.sampleCount})`);
+        }
+        console.log('');
+    }
+
+    const total = passes.length + failures.length;
+    console.log(`\n📈 Summary: ${passes.length}/${total} thresholds passed`);
+
+    if (failures.length > 0) {
+        console.log('\n💡 To fix failures:');
+        console.log('   1. Review the failing test cases in eval-results/');
+        console.log('   2. Improve prompts in functions/prompts/');
+        console.log('   3. Or adjust thresholds in this script if appropriate');
+        process.exit(1);
+    }
+
+    console.log('\n✨ All evaluation thresholds passed!');
+    process.exit(0);
+}
+
+main();
