@@ -15,7 +15,7 @@
  */
 
 import { genkit, z } from "genkit";
-import { vertexAI, gemini20Flash001 } from '@genkit-ai/vertexai';
+import { vertexAI } from '@genkit-ai/google-genai';
 import { BaseEvalDataPoint } from 'genkit/evaluator';
 import {
     explanationSchema,
@@ -30,6 +30,7 @@ import {
 
 // Initialize Genkit with evaluation support
 // Note: This instance doesn't include Firebase auth for easier local testing
+// Flows use Flash for cost/speed, but LLM-as-judge evaluators use Pro for accuracy
 const ai = genkit({
     plugins: [
         vertexAI({
@@ -37,7 +38,7 @@ const ai = genkit({
             projectId: process.env.GCLOUD_PROJECT || 'hanzigraph',
         }),
     ],
-    model: gemini20Flash001,
+    model: vertexAI.model('gemini-2.5-flash'),
 });
 
 // Register schemas - MUST be done before loading prompts
@@ -178,6 +179,7 @@ export const grammarExplanationQualityEvaluator = ai.defineEvaluator(
             JSON.stringify(datapoint.output);
 
         const { output: evalResult } = await ai.generate({
+            model: vertexAI.model('gemini-2.5-pro'),
             prompt: `You are evaluating a Chinese language learning tool's output quality.
 
 Input (Chinese text to explain): ${input}
@@ -246,6 +248,7 @@ export const sentenceGenerationQualityEvaluator = ai.defineEvaluator(
             JSON.stringify(datapoint.output);
 
         const { output: evalResult } = await ai.generate({
+            model: vertexAI.model('gemini-2.5-pro'),
             prompt: `You are evaluating generated Chinese example sentences for a language learning app.
 
 Input (word and definitions): ${input}

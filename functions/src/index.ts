@@ -1,6 +1,6 @@
 import { onCallGenkit, HttpsError } from "firebase-functions/v2/https";
 import { genkit, z } from "genkit";
-import { vertexAI, gemini20Flash001 } from '@genkit-ai/vertexai';
+import { vertexAI } from '@genkit-ai/google-genai';
 import * as admin from 'firebase-admin';
 import { isUserAuthorized } from "./auth";
 import {
@@ -26,7 +26,7 @@ const ai = genkit({
     plugins: [
         vertexAI({ location: 'us-central1' }),
     ],
-    model: gemini20Flash001,
+    model: vertexAI.model('gemini-2.5-flash'),
 });
 
 const ChineseExplanationSchema = ai.defineSchema('ChineseExplanationSchema', explanationSchema);
