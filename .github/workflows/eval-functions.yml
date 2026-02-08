@@ -183,23 +183,27 @@ jobs:
                     for (const metric of metrics) {
                       const name = metric.evaluator || 'unknown';
                       if (!metricResults[name]) {
-                        metricResults[name] = { passed: 0, total: 0 };
+                        metricResults[name] = { passed: 0, total: 0, scores: [] };
                       }
                       metricResults[name].total++;
                       const score = metric.score;
-                      if (score === true || (typeof score === 'number' && score >= 0.5)) {
+                      const numericScore = score === true ? 1 : (score === false ? 0 : score);
+                      metricResults[name].scores.push(numericScore);
+                      // Use 0.8 threshold - LLM-as-judge scores should be high quality
+                      if (score === true || (typeof score === 'number' && score >= 0.8)) {
                         metricResults[name].passed++;
                       }
                     }
                   }
                   if (Object.keys(metricResults).length > 0) {
-                    comment += `| Evaluator | Pass Rate |\n|-----------|----------|\n`;
+                    comment += `| Evaluator | Pass Rate | Avg Score |\n|-----------|----------|----------|\n`;
                     for (const [name, result] of Object.entries(metricResults)) {
                       const rate = ((result.passed / result.total) * 100).toFixed(0);
+                      const avgScore = (result.scores.reduce((a, b) => a + b, 0) / result.scores.length * 100).toFixed(1);
                       const emoji = result.passed === result.total ? '✅' : (result.passed / result.total >= 0.8 ? '🟡' : '❌');
                       // Clean up evaluator name: remove /evaluator/custom/ prefix
                       const displayName = name.replace('/evaluator/', '').replace('custom/', '');
-                      comment += `| ${displayName} | ${emoji} ${result.passed}/${result.total} (${rate}%) |\n`;
+                      comment += `| ${displayName} | ${emoji} ${result.passed}/${result.total} (${rate}%) | ${avgScore}% |\n`;
                     }
                   } else {
                     comment += `- Test cases: ${evaluations.length}\n`;
