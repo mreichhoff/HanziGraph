@@ -44,8 +44,8 @@ const THRESHOLDS: ThresholdConfig = {
     'custom/outputStructureValid': 1.0,
 
     // Numeric evaluators - minimum average score (0-1 scale)
-    'custom/grammarExplanationQuality': 0.6,
-    'custom/sentenceGenerationQuality': 0.6,
+    'custom/grammarExplanationQuality': 0.8,
+    'custom/sentenceGenerationQuality': 0.8,
 
     // Built-in Genkit evaluators
     'genkitEval/faithfulness': 0.7,
