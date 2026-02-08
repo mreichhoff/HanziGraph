@@ -47,5 +47,661 @@
             ],
             "expectedTranslation": "This book is my friend's"
         }
+    },
+    {
+        "input": "我去过中国",
+        "reference": {
+            "expectedGrammarPoints": [
+                "过 experiential aspect marker"
+            ],
+            "expectedTranslation": "I have been to China"
+        }
+    },
+    {
+        "input": "她正在看电视",
+        "reference": {
+            "expectedGrammarPoints": [
+                "正在 progressive aspect",
+                "在 + verb for ongoing action"
+            ],
+            "expectedTranslation": "She is watching TV"
+        }
+    },
+    {
+        "input": "门开着",
+        "reference": {
+            "expectedGrammarPoints": [
+                "着 continuous state marker"
+            ],
+            "expectedTranslation": "The door is open"
+        }
+    },
+    {
+        "input": "他跑得很快",
+        "reference": {
+            "expectedGrammarPoints": [
+                "得 degree complement",
+                "Verb + 得 + adjective structure"
+            ],
+            "expectedTranslation": "He runs very fast"
+        }
+    },
+    {
+        "input": "我把书放在桌子上了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "把 construction",
+                "Disposal form",
+                "Location with 在...上"
+            ],
+            "expectedTranslation": "I put the book on the table"
+        }
+    },
+    {
+        "input": "那本书被他借走了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "被 passive construction",
+                "Resultative complement 走"
+            ],
+            "expectedTranslation": "That book was borrowed by him"
+        }
+    },
+    {
+        "input": "你能不能帮我一下？",
+        "reference": {
+            "expectedGrammarPoints": [
+                "A不A question pattern",
+                "能 for ability/permission",
+                "一下 softening"
+            ],
+            "expectedTranslation": "Can you help me?"
+        }
+    },
+    {
+        "input": "我没有去过日本",
+        "reference": {
+            "expectedGrammarPoints": [
+                "没有 negation with 过",
+                "Negating experiential aspect"
+            ],
+            "expectedTranslation": "I have never been to Japan"
+        }
+    },
+    {
+        "input": "别说话！",
+        "reference": {
+            "expectedGrammarPoints": [
+                "别 negative imperative",
+                "Command/prohibition"
+            ],
+            "expectedTranslation": "Don't talk!"
+        }
+    },
+    {
+        "input": "你应该早点睡觉",
+        "reference": {
+            "expectedGrammarPoints": [
+                "应该 modal verb for 'should'",
+                "早点 'a bit earlier'"
+            ],
+            "expectedTranslation": "You should go to sleep earlier"
+        }
+    },
+    {
+        "input": "我听不懂他说的话",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Potential complement with 不",
+                "听懂 resultative verb",
+                "的 nominalization"
+            ],
+            "expectedTranslation": "I can't understand what he says"
+        }
+    },
+    {
+        "input": "他走进来了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Directional complement",
+                "进来 compound directional complement"
+            ],
+            "expectedTranslation": "He walked in"
+        }
+    },
+    {
+        "input": "我看完了那本书",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Result complement 完",
+                "Completion of action"
+            ],
+            "expectedTranslation": "I finished reading that book"
+        }
+    },
+    {
+        "input": "虽然很累，但是我很开心",
+        "reference": {
+            "expectedGrammarPoints": [
+                "虽然...但是... concessive structure",
+                "Expressing contrast"
+            ],
+            "expectedTranslation": "Although I'm tired, I'm happy"
+        }
+    },
+    {
+        "input": "因为下雨，所以我没去",
+        "reference": {
+            "expectedGrammarPoints": [
+                "因为...所以... cause and effect",
+                "Expressing reason"
+            ],
+            "expectedTranslation": "Because it rained, I didn't go"
+        }
+    },
+    {
+        "input": "如果明天下雨，我就不去了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "如果...就... conditional",
+                "Hypothetical statements"
+            ],
+            "expectedTranslation": "If it rains tomorrow, I won't go"
+        }
+    },
+    {
+        "input": "他不但会说中文，而且会说日文",
+        "reference": {
+            "expectedGrammarPoints": [
+                "不但...而且... progressive conjunction",
+                "Expressing addition"
+            ],
+            "expectedTranslation": "He can not only speak Chinese, but also Japanese"
+        }
+    },
+    {
+        "input": "除了他以外，大家都来了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "除了...以外 exception structure",
+                "都 emphasis with exception"
+            ],
+            "expectedTranslation": "Everyone came except him"
+        }
+    },
+    {
+        "input": "连小孩都知道",
+        "reference": {
+            "expectedGrammarPoints": [
+                "连...都 emphatic structure",
+                "Expressing 'even'"
+            ],
+            "expectedTranslation": "Even children know"
+        }
+    },
+    {
+        "input": "天气越来越冷了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "越来越 gradual change",
+                "Change of state 了"
+            ],
+            "expectedTranslation": "The weather is getting colder and colder"
+        }
+    },
+    {
+        "input": "你越说，我越不明白",
+        "reference": {
+            "expectedGrammarPoints": [
+                "越...越... correlative structure",
+                "The more...the more..."
+            ],
+            "expectedTranslation": "The more you explain, the less I understand"
+        }
+    },
+    {
+        "input": "我是昨天来的",
+        "reference": {
+            "expectedGrammarPoints": [
+                "是...的 structure for emphasis",
+                "Emphasizing time/manner of past action"
+            ],
+            "expectedTranslation": "It was yesterday that I came"
+        }
+    },
+    {
+        "input": "桌子上有三本书",
+        "reference": {
+            "expectedGrammarPoints": [
+                "有 existential sentence",
+                "Measure word 本",
+                "Location + 有 + object"
+            ],
+            "expectedTranslation": "There are three books on the table"
+        }
+    },
+    {
+        "input": "我给他打了一个电话",
+        "reference": {
+            "expectedGrammarPoints": [
+                "给 as preposition 'to/for'",
+                "Measure word 个",
+                "打电话 verb-object compound"
+            ],
+            "expectedTranslation": "I gave him a call"
+        }
+    },
+    {
+        "input": "这件衣服太小了，穿不了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "太...了 excessive degree",
+                "Potential complement 不了"
+            ],
+            "expectedTranslation": "This piece of clothing is too small, I can't wear it"
+        }
+    },
+    {
+        "input": "我让他帮我买东西",
+        "reference": {
+            "expectedGrammarPoints": [
+                "让 causative structure",
+                "Pivotal sentence structure"
+            ],
+            "expectedTranslation": "I asked him to help me buy things"
+        }
+    },
+    {
+        "input": "他请我吃饭",
+        "reference": {
+            "expectedGrammarPoints": [
+                "请 pivotal verb",
+                "Double object structure"
+            ],
+            "expectedTranslation": "He treated me to a meal"
+        }
+    },
+    {
+        "input": "我边走边吃",
+        "reference": {
+            "expectedGrammarPoints": [
+                "边...边... simultaneous actions",
+                "Doing two things at once"
+            ],
+            "expectedTranslation": "I walk while eating"
+        }
+    },
+    {
+        "input": "他一说完就走了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "一...就... immediate succession",
+                "As soon as...then..."
+            ],
+            "expectedTranslation": "As soon as he finished speaking, he left"
+        }
+    },
+    {
+        "input": "无论你去不去，我都要去",
+        "reference": {
+            "expectedGrammarPoints": [
+                "无论...都... unconditional",
+                "Regardless of...",
+                "A不A pattern in subordinate clause"
+            ],
+            "expectedTranslation": "Regardless of whether you go or not, I will go"
+        }
+    },
+    {
+        "input": "只要努力，就能成功",
+        "reference": {
+            "expectedGrammarPoints": [
+                "只要...就... conditional 'as long as'",
+                "Sufficient condition"
+            ],
+            "expectedTranslation": "As long as you work hard, you can succeed"
+        }
+    },
+    {
+        "input": "只有他知道答案",
+        "reference": {
+            "expectedGrammarPoints": [
+                "只有 exclusive structure",
+                "Expressing 'only'"
+            ],
+            "expectedTranslation": "Only he knows the answer"
+        }
+    },
+    {
+        "input": "我跟他一样高",
+        "reference": {
+            "expectedGrammarPoints": [
+                "跟...一样 comparison of equality",
+                "A 跟 B 一样 + adjective"
+            ],
+            "expectedTranslation": "I am as tall as him"
+        }
+    },
+    {
+        "input": "他没有我高",
+        "reference": {
+            "expectedGrammarPoints": [
+                "没有 negative comparison",
+                "A 没有 B + adjective"
+            ],
+            "expectedTranslation": "He is not as tall as me"
+        }
+    },
+    {
+        "input": "这是我见过的最好的电影",
+        "reference": {
+            "expectedGrammarPoints": [
+                "最 superlative",
+                "过 with modifying clause",
+                "的 relative clause marker"
+            ],
+            "expectedTranslation": "This is the best movie I've ever seen"
+        }
+    },
+    {
+        "input": "她高兴得跳起来了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "得 degree complement with verb phrase",
+                "Expressing extent/result"
+            ],
+            "expectedTranslation": "She was so happy that she jumped up"
+        }
+    },
+    {
+        "input": "我有很多作业要做",
+        "reference": {
+            "expectedGrammarPoints": [
+                "有...要 expressing obligation",
+                "Topic-comment structure"
+            ],
+            "expectedTranslation": "I have a lot of homework to do"
+        }
+    },
+    {
+        "input": "这道题很难回答",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Topic-comment structure",
+                "Adjective + verb complement"
+            ],
+            "expectedTranslation": "This question is hard to answer"
+        }
+    },
+    {
+        "input": "对不起，来晚了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Verb + 晚 resultative complement",
+                "Omitted subject"
+            ],
+            "expectedTranslation": "Sorry, I came late"
+        }
+    },
+    {
+        "input": "你先走吧",
+        "reference": {
+            "expectedGrammarPoints": [
+                "先 sequence adverb",
+                "吧 suggestion particle"
+            ],
+            "expectedTranslation": "You go first"
+        }
+    },
+    {
+        "input": "她比以前更漂亮了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "比 comparison with 更",
+                "Change of state 了"
+            ],
+            "expectedTranslation": "She is even more beautiful than before"
+        }
+    },
+    {
+        "input": "这本书我看了三遍",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Topic-comment structure",
+                "Measure word 遍 for times/occurrences",
+                "Verb + number + measure word"
+            ],
+            "expectedTranslation": "I've read this book three times"
+        }
+    },
+    {
+        "input": "他学了两年中文",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Duration complement",
+                "Time duration after verb"
+            ],
+            "expectedTranslation": "He has studied Chinese for two years"
+        }
+    },
+    {
+        "input": "我等了他半个小时",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Duration complement with object",
+                "半 for 'half'"
+            ],
+            "expectedTranslation": "I waited for him for half an hour"
+        }
+    },
+    {
+        "input": "饭做好了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Result complement 好",
+                "Topic-comment structure"
+            ],
+            "expectedTranslation": "The food is ready"
+        }
+    },
+    {
+        "input": "我刚到北京",
+        "reference": {
+            "expectedGrammarPoints": [
+                "刚 recent past adverb",
+                "Immediate past action"
+            ],
+            "expectedTranslation": "I just arrived in Beijing"
+        }
+    },
+    {
+        "input": "他们快要结婚了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "快要...了 imminent action",
+                "About to happen"
+            ],
+            "expectedTranslation": "They are about to get married"
+        }
+    },
+    {
+        "input": "我差点儿迟到了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "差点儿 near miss",
+                "Almost happened"
+            ],
+            "expectedTranslation": "I almost arrived late"
+        }
+    },
+    {
+        "input": "再说一遍",
+        "reference": {
+            "expectedGrammarPoints": [
+                "再 for future repetition",
+                "Measure word 遍"
+            ],
+            "expectedTranslation": "Say it again"
+        }
+    },
+    {
+        "input": "又下雨了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "又 for past repetition",
+                "Change of state 了"
+            ],
+            "expectedTranslation": "It's raining again"
+        }
+    },
+    {
+        "input": "我还没吃饭呢",
+        "reference": {
+            "expectedGrammarPoints": [
+                "还没...呢 not yet",
+                "呢 softening particle"
+            ],
+            "expectedTranslation": "I haven't eaten yet"
+        }
+    },
+    {
+        "input": "你怎么了？",
+        "reference": {
+            "expectedGrammarPoints": [
+                "怎么了 asking what's wrong",
+                "Concern expression"
+            ],
+            "expectedTranslation": "What's wrong with you?"
+        }
+    },
+    {
+        "input": "他住在我家对面",
+        "reference": {
+            "expectedGrammarPoints": [
+                "住在 location with verb",
+                "对面 relative position"
+            ],
+            "expectedTranslation": "He lives across from my house"
+        }
+    },
+    {
+        "input": "从这儿往左拐",
+        "reference": {
+            "expectedGrammarPoints": [
+                "从...往... direction expression",
+                "Giving directions"
+            ],
+            "expectedTranslation": "Turn left from here"
+        }
+    },
+    {
+        "input": "我对中国文化很感兴趣",
+        "reference": {
+            "expectedGrammarPoints": [
+                "对...感兴趣 interested in",
+                "Preposition 对 for target"
+            ],
+            "expectedTranslation": "I'm very interested in Chinese culture"
+        }
+    },
+    {
+        "input": "这件事跟我没关系",
+        "reference": {
+            "expectedGrammarPoints": [
+                "跟...有/没关系 related to",
+                "Expressing relevance"
+            ],
+            "expectedTranslation": "This matter has nothing to do with me"
+        }
+    },
+    {
+        "input": "你看起来很累",
+        "reference": {
+            "expectedGrammarPoints": [
+                "看起来 appearance expression",
+                "Verb + 起来 for impression"
+            ],
+            "expectedTranslation": "You look tired"
+        }
+    },
+    {
+        "input": "听说他病了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "听说 hearsay expression",
+                "Reporting information"
+            ],
+            "expectedTranslation": "I heard he's sick"
+        }
+    },
+    {
+        "input": "据说这家餐厅很好吃",
+        "reference": {
+            "expectedGrammarPoints": [
+                "据说 reported information",
+                "Formal hearsay marker"
+            ],
+            "expectedTranslation": "It is said that this restaurant is very good"
+        }
+    },
+    {
+        "input": "我觉得他说得对",
+        "reference": {
+            "expectedGrammarPoints": [
+                "觉得 expressing opinion",
+                "得 complement after 说"
+            ],
+            "expectedTranslation": "I think what he said is correct"
+        }
+    },
+    {
+        "input": "希望你能来",
+        "reference": {
+            "expectedGrammarPoints": [
+                "希望 expressing hope",
+                "Omitted subject"
+            ],
+            "expectedTranslation": "I hope you can come"
+        }
+    },
+    {
+        "input": "恐怕我不能参加",
+        "reference": {
+            "expectedGrammarPoints": [
+                "恐怕 expressing concern/fear",
+                "Polite refusal"
+            ],
+            "expectedTranslation": "I'm afraid I can't attend"
+        }
+    },
+    {
+        "input": "既然你不想去，我们就不去了",
+        "reference": {
+            "expectedGrammarPoints": [
+                "既然...就... since/given that",
+                "Expressing logical conclusion"
+            ],
+            "expectedTranslation": "Since you don't want to go, we won't go"
+        }
+    },
+    {
+        "input": "与其在家，不如出去走走",
+        "reference": {
+            "expectedGrammarPoints": [
+                "与其...不如... rather than",
+                "Expressing preference"
+            ],
+            "expectedTranslation": "Rather than staying home, it's better to go out for a walk"
+        }
+    },
+    {
+        "input": "宁可饿着，也不吃那个",
+        "reference": {
+            "expectedGrammarPoints": [
+                "宁可...也... would rather",
+                "Strong preference expression"
+            ],
+            "expectedTranslation": "I would rather go hungry than eat that"
+        }
     }
 ]
