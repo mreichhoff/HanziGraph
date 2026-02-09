@@ -38,7 +38,7 @@ const ai = genkit({
             projectId: process.env.GCLOUD_PROJECT || 'hanzigraph',
         }),
     ],
-    model: vertexAI.model('gemini-2.5-flash'),
+    model: vertexAI.model('gemini-2.0-flash'),
 });
 
 // Register schemas - MUST be done before loading prompts
