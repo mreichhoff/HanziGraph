@@ -34,7 +34,7 @@ import {
 const ai = genkit({
     plugins: [
         vertexAI({
-            location: 'us-central1',
+            location: 'global',
             projectId: process.env.GCLOUD_PROJECT || 'hanzigraph',
         }),
     ],
