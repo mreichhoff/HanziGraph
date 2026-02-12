@@ -24,9 +24,9 @@ let firebaseApp: admin.app.App;
 // and choose the Gemini (Vertex AI) tab.
 const ai = genkit({
     plugins: [
-        vertexAI({ location: 'us-central1' }),
+        vertexAI({ location: 'global' }),
     ],
-    model: vertexAI.model('gemini-2.5-flash'),
+    model: vertexAI.model('gemini-3-flash-preview'),
 });
 
 const ChineseExplanationSchema = ai.defineSchema('ChineseExplanationSchema', explanationSchema);
