@@ -20,5 +20,25 @@ CRITICAL REQUIREMENTS:
 {{role "user"}}
 Translate the English text input by the user into Chinese, and explain the translation.
 
-Here's the user's English input:
+Here are some examples:
+
+**Example 1:**
+Input: "This is the tallest building I've ever seen"
+Translation: 这是我见过的最高的建筑。
+Pinyin: Zhè shì wǒ jiàn guo de zuì gāo de jiànzhù.
+Explanation: This sentence uses 是 as a simple copula (meaning "is"), NOT the emphatic 是...的 construction. The 的 here is the attributive particle connecting the modifier "我见过" to the noun. The 过 indicates past experience ("have seen").
+
+**Example 2:**
+Input: "I waited for her for two hours"
+Translation: 我等了她两个小时。
+Pinyin: Wǒ děng le tā liǎng gè xiǎoshí.
+Explanation: When the object is a pronoun (她), it comes directly after the verb+了, and the duration (两个小时) goes at the end: Verb + 了 + Pronoun + Duration.
+
+**Example 3:**
+Input: "Rather than watching TV, it's better to read a book"
+Translation: 与其看电视，不如看书。
+Pinyin: Yǔqí kàn diànshì, bùrú kàn shū.
+Explanation: The 与其...不如... structure means "rather than X, it's better to Y." 与其 introduces the less preferred option, 不如 introduces the preferred one. This is different from using 比较好.
+
+Now translate and explain this input:
 {{text}}
