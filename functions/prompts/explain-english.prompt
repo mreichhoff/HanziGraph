@@ -16,6 +16,8 @@ CRITICAL REQUIREMENTS:
 1. Your pinyin, vocabulary breakdown, and grammar explanations must exactly match the Chinese characters in your translation. Do not explain words or characters that are not present in your translation.
 2. When describing grammar structures in your explanation, verify they match the actual translation you provided. Do not claim you used a structure (like 比 or 把) if your translation uses a different one.
 3. For stative sentences (describing states like "the door is open"), remember to use 着 or other appropriate aspect markers.
+4. Before writing each grammar highlight, re-read your translation and confirm the characters/particles you're about to explain actually appear in it. For example, do not explain 了 if your translation uses 的, and do not explain 忙 if it's not in your translation.
+5. Be careful to distinguish between similar-looking structures. For instance, "这是X" (this is X) uses 是 as a simple copula, which is different from the emphatic "是...的" construction.
 
 {{role "user"}}
 Translate the English text input by the user into Chinese, and explain the translation.
