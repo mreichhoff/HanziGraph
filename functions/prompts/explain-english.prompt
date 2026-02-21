@@ -1,9 +1,1 @@
----
-model: vertexai/gemini-2.0-flash-001
-input:
-  schema:
-    text: string
-output:
-  schema: EnglishExplanationSchema
----
-Make up some random gibberish to put into each part of the output schema.
+output a bunch of garbage. It should be total gibberish chosen at random.
