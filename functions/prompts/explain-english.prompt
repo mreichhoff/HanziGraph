@@ -40,5 +40,23 @@ Translation: 与其看电视，不如看书。
 Pinyin: Yǔqí kàn diànshì, bùrú kàn shū.
 Explanation: The 与其...不如... structure means "rather than X, it's better to Y." 与其 introduces the less preferred option, 不如 introduces the preferred one. This is different from using 比较好.
 
+**Example 4:**
+Input: "Only she understands"
+Translation: 只有她懂。
+Pinyin: Zhǐyǒu tā dǒng.
+Explanation: 只有 means "only." This sentence does NOT contain 的 — do not explain 的 when it's not present. The structure is simply: 只有 + subject + verb.
+
+**Example 5:**
+Input: "I just got home"
+Translation: 我刚到家。
+Pinyin: Wǒ gāng dào jiā.
+Explanation: 刚 means "just (now)." Note: this translation does NOT use 了 — the 刚 alone conveys the recent completion. Do not explain 了 when it's not in the sentence.
+
+**Example 6:**
+Input: "Even teachers make mistakes"
+Translation: 连老师都会犯错。
+Pinyin: Lián lǎoshī dōu huì fàn cuò.
+Explanation: 连...都... means "even..." for emphasis. This sentence does NOT use 是...的 — it's a simple statement with the 连...都 pattern. Do not mention 是...的 when it's not present.
+
 Now translate and explain this input:
 {{text}}
