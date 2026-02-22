@@ -264,17 +264,18 @@ function getStylesheet() {
                 'text-background-shape': 'round-rectangle',
                 'text-background-padding': '3px',
                 'text-events': 'yes',
-                'width': '5px',
+                'width': '6px',
                 'opacity': '1',
-                'overlay-opacity': '0'
+                'overlay-opacity': '0',
+                'transition-property': 'background-color, line-outline-color, line-outline-width',
+                'transition-duration': '0.2s'
             }
         },
         {
             selector: 'edge:selected',
             style: {
-                'width': '6px',
-                'opacity': '1',
-                'line-color': prefersDark ? '#999' : '#000'
+                'line-outline-width': '3px',
+                'line-outline-color': '#aaa'
             }
         }
     ];

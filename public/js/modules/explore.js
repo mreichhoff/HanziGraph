@@ -85,15 +85,15 @@ let runTextToSpeech = function (text, anchors) {
             }
             anchors.forEach((character, index) => {
                 if (index >= event.charIndex && index < (event.charIndex + (event.charLength || 1))) {
-                    character.style.backgroundColor = '#6de200';
+                    character.classList.add('word-clicked');
                 } else {
-                    character.removeAttribute('style');
+                    character.classList.remove('word-clicked');
                 }
             });
         });
         utterance.addEventListener('end', function () {
             anchors.forEach(character => {
-                character.removeAttribute('style');
+                character.classList.remove('word-clicked');
             });
             // length check shouldn't be necessary, but just in case, I guess?
             if (activeUtterances.length !== 0) {

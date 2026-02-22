@@ -1,5 +1,5 @@
 :root {
-    --background-color: linear-gradient(rgba(100, 150, 255, 0.05), rgba(100, 150, 255, 0.15));
+    --background-color: rgba(100, 150, 255, 0.12);
     --primary-font-color: rgba(0, 0, 0, 0.87);
     --primary-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --chinese-font: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif;
@@ -155,6 +155,9 @@ h1 {
 
 .walkthrough {
     margin-top: var(--walkthrough-top-margin);
+    padding: 10px;
+    background: var(--sentence-card-background-color);
+    border-radius: 12px;
 }
 
 h2 {
@@ -427,14 +430,11 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     padding: 0 12px;
     margin-top: 8px;
     height: 40px;
+    width: fit-content;
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
     transition: opacity 0.2s;
-}
-
-.inline-definition-explain-btn:hover:not(:disabled) {
-    opacity: 0.8;
 }
 
 .inline-definition-explain-btn:disabled {
@@ -475,23 +475,17 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
     cursor: pointer;
 }
 
-/* Word click highlighting - apply to the word span */
-.sentence-container .word-span.word-clicked {
+.word-clicked {
     background-color: var(--highlight-color, rgba(0, 226, 102, 0.3));
     transform: scale(1.1);
     display: inline-block;
     border-radius: 2px;
-    margin: 0 2px;
     transition: transform 0.1s ease, background-color 0.1s ease;
 }
 
-/* Legacy: single character highlighting for study-mode (no word spans) */
-.sentence-container>a.word-clicked {
-    background-color: var(--highlight-color, rgba(109, 226, 0, 0.3));
-    transform: scale(1.1);
-    display: inline-block;
-    border-radius: 2px;
-    transition: transform 0.1s ease, background-color 0.1s ease;
+/* Word click highlighting - apply to the word span */
+.sentence-container .word-span.word-clicked {
+    margin: 0 2px;
 }
 
 #menu-popover {
@@ -2367,7 +2361,7 @@ main.auth-form {
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --background-color: linear-gradient(180deg, #071024, #121212);
+        --background-color: #071024;
         --primary-font-color: rgba(255, 255, 255, 0.87);
         --border: 1px solid #444;
         --border-color: #444;
