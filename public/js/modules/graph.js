@@ -266,7 +266,9 @@ function getStylesheet() {
                 'text-events': 'yes',
                 'width': '5px',
                 'opacity': '1',
-                'overlay-opacity': '0'
+                'overlay-opacity': '0',
+                'transition-property': 'background-color, line-outline-color, line-outline-width',
+                'transition-duration': '0.2s'
             }
         },
         {
@@ -274,7 +276,8 @@ function getStylesheet() {
             style: {
                 'width': '6px',
                 'opacity': '1',
-                'line-color': prefersDark ? '#999' : '#000'
+                'line-outline-width': '3px',
+                'line-outline-color': '#aaa'
             }
         }
     ];
