@@ -155,6 +155,9 @@ h1 {
 
 .walkthrough {
     margin-top: var(--walkthrough-top-margin);
+    padding: 10px;
+    background: var(--sentence-card-background-color);
+    border-radius: 12px;
 }
 
 h2 {
