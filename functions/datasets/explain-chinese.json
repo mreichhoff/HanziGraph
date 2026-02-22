@@ -703,5 +703,145 @@
             ],
             "expectedTranslation": "I would rather go hungry than eat that"
         }
+    },
+    {
+        "input": "他跑的很快",
+        "reference": {
+            "expectedGrammarPoints": [
+                "得 degree complement"
+            ],
+            "expectedTranslation": "He runs very fast",
+            "expectedError": {
+                "type": "wrong particle",
+                "description": "Should use 得 instead of 的 for degree complements after verbs",
+                "correction": "他跑得很快"
+            }
+        }
+    },
+    {
+        "input": "天气是很好",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Adjectival predicate"
+            ],
+            "expectedTranslation": "The weather is very good",
+            "expectedError": {
+                "type": "unnecessary 是",
+                "description": "是 should not be used before adjectives in Chinese adjectival predicate sentences",
+                "correction": "天气很好"
+            }
+        }
+    },
+    {
+        "input": "我买了一个书",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Measure words"
+            ],
+            "expectedTranslation": "I bought a book",
+            "expectedError": {
+                "type": "wrong measure word",
+                "description": "书 (book) requires measure word 本, not 个",
+                "correction": "我买了一本书"
+            }
+        }
+    },
+    {
+        "input": "我昨天不去学校",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Negation of past actions"
+            ],
+            "expectedTranslation": "I didn't go to school yesterday",
+            "expectedError": {
+                "type": "wrong negation",
+                "description": "Past actions should be negated with 没(有), not 不",
+                "correction": "我昨天没去学校"
+            }
+        }
+    },
+    {
+        "input": "他很高兴地笑",
+        "reference": {
+            "expectedGrammarPoints": [
+                "地 adverbial particle"
+            ],
+            "expectedTranslation": "He laughed happily",
+            "expectedError": {
+                "type": "unnatural phrasing",
+                "description": "While grammatically acceptable, native speakers would more naturally say 他高兴地笑了 or 他开心地笑",
+                "correction": "他高兴地笑了"
+            }
+        }
+    },
+    {
+        "input": "在见",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Common farewell expression"
+            ],
+            "expectedTranslation": "Goodbye / See you again",
+            "expectedError": {
+                "type": "typo/homophone error",
+                "description": "在 (at/in) is wrong; should be 再 (again)",
+                "correction": "再见"
+            }
+        }
+    },
+    {
+        "input": "我想买那个红的衣服",
+        "reference": {
+            "expectedGrammarPoints": [
+                "的 with adjectives modifying nouns"
+            ],
+            "expectedTranslation": "I want to buy that red piece of clothing",
+            "expectedError": {
+                "type": "unnecessary 的",
+                "description": "Single-syllable adjectives like 红 directly modify nouns without 的: 红衣服",
+                "correction": "我想买那件红衣服"
+            }
+        }
+    },
+    {
+        "input": "我吃饭了已经",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Word order with 已经"
+            ],
+            "expectedTranslation": "I have already eaten",
+            "expectedError": {
+                "type": "word order error",
+                "description": "已经 should come before the verb, not at the end of the sentence",
+                "correction": "我已经吃饭了"
+            }
+        }
+    },
+    {
+        "input": "她的很漂亮",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Adjective predicates"
+            ],
+            "expectedTranslation": "She is very beautiful",
+            "expectedError": {
+                "type": "misplaced 的",
+                "description": "的 should not be placed after a pronoun when followed by an adjective predicate; 的 makes it possessive",
+                "correction": "她很漂亮"
+            }
+        }
+    },
+    {
+        "input": "我给你打电话明天",
+        "reference": {
+            "expectedGrammarPoints": [
+                "Time word placement"
+            ],
+            "expectedTranslation": "I will call you tomorrow",
+            "expectedError": {
+                "type": "word order error",
+                "description": "Time words like 明天 should come before the verb phrase or at the beginning of the sentence",
+                "correction": "我明天给你打电话"
+            }
+        }
     }
 ]
