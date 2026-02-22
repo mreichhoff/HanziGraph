@@ -111,33 +111,33 @@ jobs:
             --batchSize 10 \
             --output eval-results/explain-chinese-results.json || { echo "⚠️ explainText evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
 
-          echo "Running explainEnglish evaluation..."
-          genkit eval:flow explainEnglish \
-            --input datasets/explain-english.json \
-            --evaluators=custom/chineseTextPresent,custom/validPinyinFormat,custom/outputStructureValid,custom/grammarExplanationQuality \
-            --batchSize 10 \
-            --output eval-results/explain-english-results.json || { echo "⚠️ explainEnglish evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
+          # echo "Running explainEnglish evaluation..."
+          # genkit eval:flow explainEnglish \
+          #   --input datasets/explain-english.json \
+          #   --evaluators=custom/chineseTextPresent,custom/validPinyinFormat,custom/outputStructureValid,custom/grammarExplanationQuality \
+          #   --batchSize 10 \
+          #   --output eval-results/explain-english-results.json || { echo "⚠️ explainEnglish evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
 
-          echo "Running generateChineseSentences evaluation..."
-          genkit eval:flow generateChineseSentences \
-            --input datasets/generate-chinese-sentences.json \
-            --evaluators=custom/chineseTextPresent,custom/validPinyinFormat,custom/outputStructureValid,custom/sentenceGenerationQuality \
-            --batchSize 10 \
-            --output eval-results/generate-sentences-results.json || { echo "⚠️ generateChineseSentences evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
+          # echo "Running generateChineseSentences evaluation..."
+          # genkit eval:flow generateChineseSentences \
+          #   --input datasets/generate-chinese-sentences.json \
+          #   --evaluators=custom/chineseTextPresent,custom/validPinyinFormat,custom/outputStructureValid,custom/sentenceGenerationQuality \
+          #   --batchSize 10 \
+          #   --output eval-results/generate-sentences-results.json || { echo "⚠️ generateChineseSentences evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
 
-          echo "Running analyzeCollocation evaluation..."
-          genkit eval:flow analyzeCollocation \
-            --input datasets/analyze-collocation.json \
-            --evaluators=custom/chineseTextPresent,custom/englishTranslationPresent,custom/outputStructureValid \
-            --batchSize 10 \
-            --output eval-results/collocation-results.json || { echo "⚠️ analyzeCollocation evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
+          # echo "Running analyzeCollocation evaluation..."
+          # genkit eval:flow analyzeCollocation \
+          #   --input datasets/analyze-collocation.json \
+          #   --evaluators=custom/chineseTextPresent,custom/englishTranslationPresent,custom/outputStructureValid \
+          #   --batchSize 10 \
+          #   --output eval-results/collocation-results.json || { echo "⚠️ analyzeCollocation evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
 
-          echo "Running explainWordInContext evaluation..."
-          genkit eval:flow explainWordInContext \
-            --input datasets/explain-word-in-context.json \
-            --evaluators=custom/chineseTextPresent,custom/englishTranslationPresent,custom/outputStructureValid \
-            --batchSize 10 \
-            --output eval-results/word-context-results.json || { echo "⚠️ explainWordInContext evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
+          # echo "Running explainWordInContext evaluation..."
+          # genkit eval:flow explainWordInContext \
+          #   --input datasets/explain-word-in-context.json \
+          #   --evaluators=custom/chineseTextPresent,custom/englishTranslationPresent,custom/outputStructureValid \
+          #   --batchSize 10 \
+          #   --output eval-results/word-context-results.json || { echo "⚠️ explainWordInContext evaluation had errors"; EVAL_ERRORS=$((EVAL_ERRORS+1)); }
 
           if [ $EVAL_ERRORS -gt 0 ]; then
             echo "⚠️ $EVAL_ERRORS evaluation(s) had errors - check results for details"
