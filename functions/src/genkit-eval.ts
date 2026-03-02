@@ -177,6 +177,25 @@ export const grammarExplanationQualityEvaluator = ai.defineEvaluator(
         const output = typeof datapoint.output === 'string' ?
             datapoint.output :
             JSON.stringify(datapoint.output);
+        
+        // Check if reference includes expected error information
+        const reference = datapoint.reference as {
+            expectedError?: {
+                type: string;
+                description: string;
+                correction: string;
+            };
+        } | undefined;
+        
+        const hasExpectedError = reference?.expectedError != null;
+        const errorContext = hasExpectedError
+            ? `\n\nIMPORTANT: The input text contains an intentional error that the tool should identify:
+- Error type: ${reference!.expectedError!.type}
+- What's wrong: ${reference!.expectedError!.description}
+- Correct form: ${reference!.expectedError!.correction}
+
+The tool MUST identify and explain this error to receive a high score. If the output does not mention this error, give a score of 1 or 2.`
+            : '';
 
         const { output: evalResult } = await ai.generate({
             model: vertexAI.model('gemini-3-pro-preview'),
@@ -184,7 +203,7 @@ export const grammarExplanationQualityEvaluator = ai.defineEvaluator(
 
 Input (Chinese text to explain): ${input}
 
-Output (explanation provided): ${output}
+Output (explanation provided): ${output}${errorContext}
 
 Evaluate the quality of this explanation on a scale of 1-5:
 1 = Poor: Incorrect, confusing, or unhelpful
@@ -197,7 +216,8 @@ Consider:
 - Is the translation accurate?
 - Are grammar explanations clear and correct?
 - Is the pinyin accurate?
-- Would this help a learner understand the text?`,
+- Would this help a learner understand the text?
+- If the input contains errors, does the output identify and explain them?`,
             output: {
                 schema: z.object({
                     score: z.number().min(1).max(5).describe('Quality score from 1-5'),
