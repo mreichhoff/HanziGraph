@@ -3,6 +3,12 @@ import argparse
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        # Without this, browsers apply heuristic caching based on Last-Modified and may serve stale data files.
+        # no-cache forces revalidation on every request; the server still returns 304 when unchanged,
+        #   so the cost is just a round-trip header check.
+        self.send_header('Cache-Control', 'no-cache')
+        super().end_headers()
 
     # mimic firebase hosting's rewrite rules
     def translate_path(self, path):
