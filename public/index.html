@@ -423,6 +423,68 @@
                 </section>
 
                 <section class="settings-section">
+                    <details class="prompt-settings">
+                        <summary class="prompt-settings-summary">Customize Prompts</summary>
+                        <p class="settings-hint">Override the prompts sent to your local model. Leave a field empty to
+                            use the default. Use placeholders like <code>{word}</code> or <code>{text}</code> where
+                            shown.</p>
+
+                        <div class="settings-item">
+                            <label for="prompt-system">System Prompt:</label>
+                            <textarea id="prompt-system" class="settings-input prompt-textarea" rows="3"
+                                placeholder="Default will be used if empty"></textarea>
+                            <p class="settings-hint">Used as the system context for all AI features.</p>
+                        </div>
+
+                        <div class="settings-item">
+                            <label for="prompt-explain-chinese">Explain Chinese Sentence:</label>
+                            <textarea id="prompt-explain-chinese" class="settings-input prompt-textarea" rows="2"
+                                placeholder="Default will be used if empty"></textarea>
+                            <p class="settings-hint">Available: <code>{text}</code></p>
+                        </div>
+
+                        <div class="settings-item">
+                            <label for="prompt-translate-english">Translate English:</label>
+                            <textarea id="prompt-translate-english" class="settings-input prompt-textarea" rows="2"
+                                placeholder="Default will be used if empty"></textarea>
+                            <p class="settings-hint">Available: <code>{text}</code></p>
+                        </div>
+
+                        <div class="settings-item">
+                            <label for="prompt-generate-sentences">Generate Sentences:</label>
+                            <textarea id="prompt-generate-sentences" class="settings-input prompt-textarea" rows="4"
+                                placeholder="Default will be used if empty"></textarea>
+                            <p class="settings-hint">Available: <code>{word}</code>, <code>{definitions}</code></p>
+                        </div>
+
+                        <div class="settings-item">
+                            <label for="prompt-analyze-collocation">Analyze Collocation:</label>
+                            <textarea id="prompt-analyze-collocation" class="settings-input prompt-textarea" rows="4"
+                                placeholder="Default will be used if empty"></textarea>
+                            <p class="settings-hint">Available: <code>{collocation}</code></p>
+                        </div>
+
+                        <div class="settings-item">
+                            <label for="prompt-analyze-image">Analyze Image:</label>
+                            <textarea id="prompt-analyze-image" class="settings-input prompt-textarea" rows="3"
+                                placeholder="Default will be used if empty"></textarea>
+                            <p class="settings-hint">No placeholders — this is sent as the text alongside the image.</p>
+                        </div>
+
+                        <div class="settings-item">
+                            <label for="prompt-word-in-context">Word in Context:</label>
+                            <textarea id="prompt-word-in-context" class="settings-input prompt-textarea" rows="5"
+                                placeholder="Default will be used if empty"></textarea>
+                            <p class="settings-hint">Available: <code>{word}</code>, <code>{sentence}</code></p>
+                        </div>
+
+                        <div class="settings-item">
+                            <button id="reset-prompts-button" class="secondary-button">Reset to Defaults</button>
+                        </div>
+                    </details>
+                </section>
+
+                <section class="settings-section">
                     <h3>Instructions</h3>
                     <ol class="settings-instructions">
                         <li>Download and install <a href="https://lmstudio.ai/" target="_blank">LMStudio</a> (or another

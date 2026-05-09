@@ -1913,6 +1913,33 @@ using settings names for now
     box-sizing: border-box;
 }
 
+textarea.settings-input {
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.prompt-settings {
+    margin-top: 4px;
+}
+
+.prompt-settings-summary {
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 8px 0;
+    color: var(--primary-font-color);
+    user-select: none;
+}
+
+.prompt-settings-summary::-webkit-details-marker {
+    color: var(--primary-font-color);
+}
+
+.prompt-settings .settings-item {
+    margin-top: 16px;
+}
+
 .settings-select {
     padding: 10px;
     font-size: 16px;

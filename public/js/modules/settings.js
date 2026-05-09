@@ -18,6 +18,18 @@ const connectionStatus = document.getElementById('connection-status');
 const localAiStatusContainer = document.getElementById('local-ai-status-container');
 const localAiStatus = document.getElementById('local-ai-status');
 
+// Prompt customization DOM elements
+const promptTextareas = {
+    systemPrompt: document.getElementById('prompt-system'),
+    explainChinese: document.getElementById('prompt-explain-chinese'),
+    translateEnglish: document.getElementById('prompt-translate-english'),
+    generateSentences: document.getElementById('prompt-generate-sentences'),
+    analyzeCollocation: document.getElementById('prompt-analyze-collocation'),
+    analyzeImage: document.getElementById('prompt-analyze-image'),
+    wordInContext: document.getElementById('prompt-word-in-context')
+};
+const resetPromptsButton = document.getElementById('reset-prompts-button');
+
 // Anki DOM elements
 const ankiEnabledCheckbox = document.getElementById('anki-enabled');
 const ankiEndpointInput = document.getElementById('anki-endpoint');
@@ -145,6 +157,27 @@ function handleLocalAiEndpointChange() {
     connectionStatus.className = 'connection-status';
 }
 
+function handlePromptChange(key) {
+    const customPrompts = { ...(localAi.getSettings().customPrompts || {}) };
+    customPrompts[key] = promptTextareas[key].value;
+    localAi.saveSettings({ customPrompts });
+}
+
+function handleResetPrompts() {
+    localAi.saveSettings({ customPrompts: {} });
+    loadPromptSettings();
+}
+
+function loadPromptSettings() {
+    const settings = localAi.getSettings();
+    const defaults = localAi.getDefaultPrompts();
+    const custom = settings.customPrompts || {};
+    for (const key of Object.keys(promptTextareas)) {
+        promptTextareas[key].value = custom[key] || '';
+        promptTextareas[key].placeholder = defaults[key] || 'Default will be used if empty';
+    }
+}
+
 function loadLocalAiSettings() {
     const settings = localAi.getSettings();
 
@@ -156,6 +189,7 @@ function loadLocalAiSettings() {
     }
 
     updateLocalAiStatus();
+    loadPromptSettings();
 }
 
 function updateAnkiStatus() {
@@ -339,6 +373,12 @@ function initialize() {
     localAiModelSelect.addEventListener('change', handleModelChange);
     testConnectionButton.addEventListener('click', handleTestConnection);
     refreshModelsButton.addEventListener('click', handleRefreshModels);
+
+    // Prompt customization event listeners
+    for (const key of Object.keys(promptTextareas)) {
+        promptTextareas[key].addEventListener('change', () => handlePromptChange(key));
+    }
+    resetPromptsButton.addEventListener('click', handleResetPrompts);
 
     // Anki event listeners
     ankiEnabledCheckbox.addEventListener('change', handleAnkiEnabledChange);
