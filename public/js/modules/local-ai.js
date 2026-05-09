@@ -2,12 +2,24 @@
 // This module provides the same interface as the Firebase functions but calls a local server instead.
 const SETTINGS_KEY = 'localAiSettings';
 
+// Default prompt templates. Placeholders use {varName} syntax.
+const defaultPrompts = {
+    systemPrompt: 'You are a helpful Chinese teacher for speakers of English who want to learn Chinese. You speak naturally, and you provide helpful sentences that illustrate how to use Chinese vocabulary.',
+    explainChinese: 'Explain the Chinese text "{text}".',
+    translateEnglish: 'Translate the English text "{text}" into Chinese, and explain the translation.',
+    generateSentences: 'Please generate two example Chinese sentences, each with a separate English translation and pinyin, for each of the following definitions of the Chinese word "{word}":\n{definitions}\n\nEach sentence must include "{word}".',
+    analyzeCollocation: 'Please generate three example Chinese sentences, each with a separate English translation and pinyin, that uses the phrase "{collocation}".\nEach sentence must include "{collocation}".\n\nPlease also translate "{collocation}" to English and provide a plain-text explanation of how such a phrase would be used.',
+    analyzeImage: 'Read the Chinese text in this image, split it into sentences, and then explain it, including an English translation for each sentence and any relevant grammar rules. If the image contains good English translations of the Chinese text, use those verbatim.',
+    wordInContext: 'In the sentence "{sentence}", explain how the word "{word}" is used.\n\nProvide:\n1. The meaning of "{word}" as used in this specific sentence (in English).\n2. A plain-text explanation of why "{word}" is used here, including any nuances, grammatical role, or idiomatic usage that would help a learner understand its function in this context.\n\nKeep your explanation focused and practical for a language learner.'
+};
+
 // Default settings
 const defaultSettings = {
     enabled: false,
     endpoint: 'http://localhost:1234/v1',
     model: '',
-    availableModels: []
+    availableModels: [],
+    customPrompts: {}
 };
 
 let settings = loadSettings();
@@ -36,6 +48,26 @@ function getSettings() {
 
 function isLocalAiEnabled() {
     return settings.enabled && settings.endpoint && settings.model;
+}
+
+function getDefaultPrompts() {
+    return { ...defaultPrompts };
+}
+
+// Returns the active prompts: custom values override defaults, empty strings fall back to defaults.
+function getActivePrompts() {
+    const custom = settings.customPrompts || {};
+    const result = {};
+    for (const key of Object.keys(defaultPrompts)) {
+        result[key] = (custom[key] !== undefined && custom[key] !== '') ? custom[key] : defaultPrompts[key];
+    }
+    return result;
+}
+
+// threat model here is users calling a local API with prompts and input that they control, so little need to worry about escaping or injection here. 
+// The user can already do whatever they want with the prompts and input.
+function applyTemplate(template, vars) {
+    return template.replace(/\{(\w+)\}/g, (_, key) => (vars[key] !== undefined ? vars[key] : `{${key}}`));
 }
 
 // JSON Schema definitions matching the Firebase function schemas.
@@ -159,11 +191,6 @@ const schemas = {
     }
 };
 
-// System prompts
-const systemPrompts = {
-    chineseTeacher: 'You are a helpful Chinese teacher for speakers of English who want to learn Chinese. You speak naturally, and you provide helpful sentences that illustrate how to use Chinese vocabulary.'
-};
-
 async function callLocalAi(messages, schema) {
     const response = await fetch(`${settings.endpoint}/chat/completions`, {
         method: 'POST',
@@ -245,11 +272,11 @@ async function fetchModels() {
 
 // AI function implementations that mirror the Firebase GenKit functions
 // See `functions/src/index.ts` for the GenKit entry point.
-// TODO: it's unclear these are good prompts on the backend, and they probably are worse for
-// less-capable local models. Both sides likely need tuning.
 async function explainChineseSentence(text) {
+    const prompts = getActivePrompts();
     const messages = [
-        { role: 'user', content: `Explain the Chinese text "${text}".` }
+        { role: 'system', content: prompts.systemPrompt },
+        { role: 'user', content: applyTemplate(prompts.explainChinese, { text }) }
     ];
 
     const output = await callLocalAi(messages, schemas.explanation);
@@ -257,8 +284,10 @@ async function explainChineseSentence(text) {
 }
 
 async function translateEnglish(text) {
+    const prompts = getActivePrompts();
     const messages = [
-        { role: 'user', content: `Translate the English text "${text}" into Chinese, and explain the translation.` }
+        { role: 'system', content: prompts.systemPrompt },
+        { role: 'user', content: applyTemplate(prompts.translateEnglish, { text }) }
     ];
 
     const output = await callLocalAi(messages, schemas.englishExplanation);
@@ -267,12 +296,13 @@ async function translateEnglish(text) {
 }
 
 async function generateChineseSentences(word, definitions) {
+    const prompts = getActivePrompts();
     const definitionsList = definitions.map(d => `* ${d}`).join('\n');
     const messages = [
-        { role: 'system', content: systemPrompts.chineseTeacher },
+        { role: 'system', content: prompts.systemPrompt },
         {
             role: 'user',
-            content: `Please generate two example Chinese sentences, each with a separate English translation and pinyin, for each of the following definitions of the Chinese word "${word}":\n${definitionsList}\n\nEach sentence must include "${word}".`
+            content: applyTemplate(prompts.generateSentences, { word, definitions: definitionsList })
         }
     ];
 
@@ -281,11 +311,12 @@ async function generateChineseSentences(word, definitions) {
 }
 
 async function analyzeCollocation(collocation) {
+    const prompts = getActivePrompts();
     const messages = [
-        { role: 'system', content: systemPrompts.chineseTeacher },
+        { role: 'system', content: prompts.systemPrompt },
         {
             role: 'user',
-            content: `Please generate three example Chinese sentences, each with a separate English translation and pinyin, that uses the phrase "${collocation}".\nEach sentence must include "${collocation}".\n\nPlease also translate "${collocation}" to English and provide a plain-text explanation of how such a phrase would be used.`
+            content: applyTemplate(prompts.analyzeCollocation, { collocation })
         }
     ];
 
@@ -296,15 +327,17 @@ async function analyzeCollocation(collocation) {
 // TODO: how common are multi-modal models (which this assumes) in local AI setups?
 // we might need to let the user pick a separate model for images? Not sure yet.
 async function analyzeImage(base64ImageContents) {
+    const prompts = getActivePrompts();
     // Note: Image analysis requires a vision-capable model
     // The base64 content should be in format: data:image/jpeg;base64,xxxxx
     const messages = [
+        { role: 'system', content: prompts.systemPrompt },
         {
             role: 'user',
             content: [
                 {
                     type: 'text',
-                    text: 'Read the Chinese text in this image, split it into sentences, and then explain it, including an English translation for each sentence and any relevant grammar rules. If the image contains good English translations of the Chinese text, use those verbatim.'
+                    text: prompts.analyzeImage
                 },
                 {
                     type: 'image_url',
@@ -321,17 +354,12 @@ async function analyzeImage(base64ImageContents) {
 }
 
 async function explainWordInContext(word, sentence) {
+    const prompts = getActivePrompts();
     const messages = [
-        { role: 'system', content: systemPrompts.chineseTeacher },
+        { role: 'system', content: prompts.systemPrompt },
         {
             role: 'user',
-            content: `In the sentence "${sentence}", explain how the word "${word}" is used.
-
-Provide:
-1. The meaning of "${word}" as used in this specific sentence (in English).
-2. A plain-text explanation of why "${word}" is used here, including any nuances, grammatical role, or idiomatic usage that would help a learner understand its function in this context.
-
-Keep your explanation focused and practical for a language learner.`
+            content: applyTemplate(prompts.wordInContext, { word, sentence })
         }
     ];
 
@@ -343,6 +371,7 @@ export {
     loadSettings,
     saveSettings,
     getSettings,
+    getDefaultPrompts,
     isLocalAiEnabled,
     testConnection,
     fetchModels,
