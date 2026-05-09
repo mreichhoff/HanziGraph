@@ -11,6 +11,48 @@
     ],
     "rewrites": [
       {
+        "source": "/explainText",
+        "function": {
+          "functionId": "explainText",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/explainEnglishText",
+        "function": {
+          "functionId": "explainEnglishText",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/analyzeImage",
+        "function": {
+          "functionId": "analyzeImage",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/generateChineseSentences",
+        "function": {
+          "functionId": "generateChineseSentences",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/analyzeCollocation",
+        "function": {
+          "functionId": "analyzeCollocation",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/explainWordInContext",
+        "function": {
+          "functionId": "explainWordInContext",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "/components/**",
         "destination": "/components/index.html"
       },
