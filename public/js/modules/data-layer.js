@@ -725,7 +725,7 @@ async function explainChineseSentence(text) {
     if (localAi.isLocalAiEnabled()) {
         return await localAi.explainChineseSentence(text);
     }
-    const functions = getFunctions();
+    const functions = getFunctions(getApp(), window.location.origin);
     // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
     const explainChinese = httpsCallable(functions, 'explainText');
     const result = await explainChinese(text);
@@ -737,7 +737,7 @@ async function translateEnglish(text) {
     if (localAi.isLocalAiEnabled()) {
         result = await localAi.translateEnglish(text);
     } else {
-        const functions = getFunctions();
+        const functions = getFunctions(getApp(), window.location.origin);
         // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
         const explainEnglish = httpsCallable(functions, 'explainEnglishText');
         result = await explainEnglish(text);
@@ -752,7 +752,7 @@ async function generateChineseSentences(word, definitions) {
     if (localAi.isLocalAiEnabled()) {
         aiData = await localAi.generateChineseSentences(word, definitions);
     } else {
-        const functions = getFunctions();
+        const functions = getFunctions(getApp(), window.location.origin);
         // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
         const generateChineseSentencesCall = httpsCallable(functions, 'generateChineseSentences');
         aiData = await generateChineseSentencesCall({ word, definitions });
@@ -774,7 +774,7 @@ async function analyzeCollocation(collocation) {
     if (localAi.isLocalAiEnabled()) {
         aiData = await localAi.analyzeCollocation(collocation);
     } else {
-        const functions = getFunctions();
+        const functions = getFunctions(getApp(), window.location.origin);
         // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
         const analyzeCollocationCall = httpsCallable(functions, 'analyzeCollocation');
         aiData = await analyzeCollocationCall(collocation);
@@ -797,7 +797,7 @@ async function analyzeImage(base64ImageContents) {
     if (localAi.isLocalAiEnabled()) {
         return await localAi.analyzeImage(base64ImageContents);
     }
-    const functions = getFunctions();
+    const functions = getFunctions(getApp(), window.location.origin);
     // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
     const analyzeImage = httpsCallable(functions, 'analyzeImage');
     const result = await analyzeImage(base64ImageContents);
@@ -808,7 +808,7 @@ async function explainWordInContext(word, sentence) {
     if (localAi.isLocalAiEnabled()) {
         return await localAi.explainWordInContext(word, sentence);
     }
-    const functions = getFunctions();
+    const functions = getFunctions(getApp(), window.location.origin);
     // connectFunctionsEmulator(functions, "127.0.0.1", 5001);
     const explainWordInContextCall = httpsCallable(functions, 'explainWordInContext');
     const result = await explainWordInContextCall({ word, sentence });
