@@ -14,7 +14,7 @@ function setVisibilityBasedOnAiEligibility() {
         menuItem.removeAttribute('style');
     }
 }
-const MAX_IMAGE_DIMENSION = 1024;
+const MAX_IMAGE_DIMENSION = 1280;
 
 function resizeImage(file) {
     return new Promise((resolve, reject) => {
