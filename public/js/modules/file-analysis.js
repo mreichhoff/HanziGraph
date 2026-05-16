@@ -14,29 +14,46 @@ function setVisibilityBasedOnAiEligibility() {
         menuItem.removeAttribute('style');
     }
 }
+const MAX_IMAGE_DIMENSION = 1024;
+
+function resizeImage(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = reject;
+        img.src = objectUrl;
+    });
+}
+
 function handleFile(file) {
     hanziBox.classList.remove('drop-target');
     if (!isAiEligible()) {
         return;
     }
-    const reader = new FileReader();
-    reader.onload = async () => {
+    resizeImage(file).then(async (dataUrl) => {
         try {
             switchToState(stateKeys.main);
             searchControl.style.display = 'none';
             document.dispatchEvent(new CustomEvent('loading-dots'));
-            const aiData = await analyzeImage(reader.result);
+            const aiData = await analyzeImage(dataUrl);
             document.dispatchEvent(new CustomEvent('ai-file-response', { detail: { aiData } }));
         } catch (ex) {
             notFoundElement.removeAttribute('style');
             document.dispatchEvent(new CustomEvent('hide-loading-dots'));
             alert("The AI didn't like that.");
         }
-    };
-    reader.onerror = () => {
+    }).catch(() => {
         alert("Error reading the file. Please try again.");
-    };
-    reader.readAsDataURL(file);
+    });
 }
 
 function fileInputHandler(event) {
