@@ -248,7 +248,7 @@ export const sentenceGenerationQualityEvaluator = ai.defineEvaluator(
             JSON.stringify(datapoint.output);
 
         const { output: evalResult } = await ai.generate({
-            model: vertexAI.model('gemini-3-pro-preview'),
+            model: vertexAI.model('gemini-3.1-pro-preview'),
             prompt: `You are evaluating generated Chinese example sentences for a language learning app.
 
 Input (word and definitions): ${input}
