@@ -179,7 +179,7 @@ export const grammarExplanationQualityEvaluator = ai.defineEvaluator(
             JSON.stringify(datapoint.output);
 
         const { output: evalResult } = await ai.generate({
-            model: vertexAI.model('gemini-3-pro-preview'),
+            model: vertexAI.model('gemini-3.1-pro-preview'),
             prompt: `You are evaluating a Chinese language learning tool's output quality.
 
 Input (Chinese text to explain): ${input}
