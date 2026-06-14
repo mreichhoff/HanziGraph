@@ -9,6 +9,7 @@ let searchSuggestionsWorker = null;
 let pinyinMap = {};
 let pendingSentenceGenCallbacks = {};
 let pendingRetokenizeCallback = null;
+let pendingDefinitionFetches = {};
 const mainHeader = document.getElementById('main-header');
 const searchSuggestionsContainer = document.getElementById('search-suggestions-container');
 
@@ -65,15 +66,111 @@ function handleWorkerMessage(message) {
     renderSearchSuggestions(message.data.query, message.data.suggestions, message.data.tokens, searchSuggestionsContainer);
 }
 
+function getSyllables(pinyin) {
+    return pinyin.replace(' - ', ' ').split(' ');
+}
+
+function renderPinyin(pinyin, container) {
+    if (!pinyin) {
+        return;
+    }
+    const syllables = getSyllables(pinyin);
+    for (const syllable of syllables) {
+        const syllableElement = document.createElement('span');
+        if (!getActiveGraph().disableToneColors) {
+            syllableElement.classList.add(`tone${syllable[syllable.length - 1]}`);
+        }
+        syllableElement.textContent = syllable;
+        container.appendChild(syllableElement);
+    }
+}
+
+function getDefinitionPreview(definitionList) {
+    if (!definitionList || definitionList.length <= 0) {
+        return '';
+    }
+    const preview = definitionList
+        .slice(0, 2)
+        .map(definition => definition.en)
+        .filter(x => !!x)
+        .join('; ');
+    const maxPreviewLength = 140;
+    if (preview.length <= maxPreviewLength) {
+        return preview;
+    }
+    return `${preview.substring(0, maxPreviewLength - 3)}...`;
+}
+
+function renderSuggestionDetails(suggestion, container) {
+    const existingDetails = container.querySelector('.search-suggestion-details');
+    if (existingDetails) {
+        existingDetails.remove();
+    }
+    const definitionList = window.definitions[suggestion];
+    if (!definitionList || definitionList.length <= 0) {
+        return;
+    }
+
+    const details = document.createElement('div');
+    details.classList.add('search-suggestion-details');
+
+    const pinyin = document.createElement('span');
+    pinyin.classList.add('search-suggestion-pinyin');
+    renderPinyin(definitionList[0].pinyin, pinyin);
+    details.appendChild(pinyin);
+
+    const previewText = getDefinitionPreview(definitionList);
+    if (previewText) {
+        const definition = document.createElement('span');
+        definition.classList.add('search-suggestion-definition');
+        definition.textContent = previewText;
+        details.appendChild(definition);
+    }
+    container.appendChild(details);
+}
+
+// TODO: in practice, do we need this? suggestions are generated based on definitions loaded up front iirc
+// also a bit duplicative of the logic in explore.js, but fine for now
+function fetchDefinitionsForSuggestion(suggestion, container) {
+    const activeGraph = getActiveGraph();
+    if (!activeGraph.definitionsAugmentPath || !activeGraph.partitionCount) {
+        return;
+    }
+    const partition = getPartition(suggestion, activeGraph.partitionCount);
+    const partitionKey = `${activeGraph.prefix}-${partition}`;
+    if (!pendingDefinitionFetches[partitionKey]) {
+        pendingDefinitionFetches[partitionKey] = fetch(`/${activeGraph.definitionsAugmentPath}/${partition}.json`)
+            .then(response => response.json())
+            .then(data => {
+                Object.assign(window.definitions, data);
+                return data;
+            })
+            .catch(() => ({}));
+    }
+    pendingDefinitionFetches[partitionKey].then(data => {
+        if (container.isConnected && data[suggestion]) {
+            renderSuggestionDetails(suggestion, container);
+        }
+    });
+}
+
 function renderSuggestion(priorWordsForDisplay, suggestion, container) {
+    let text = document.createElement('div');
+    text.classList.add('search-suggestion-text');
     let prior = document.createElement('span');
     prior.innerText = priorWordsForDisplay;
     prior.classList.add('search-suggestion-stem');
     let current = document.createElement('span');
     current.innerText = suggestion;
     current.classList.add('search-suggestion-current');
-    container.appendChild(prior);
-    container.appendChild(current);
+    text.appendChild(prior);
+    text.appendChild(current);
+    container.appendChild(text);
+    if (window.definitions[suggestion]) {
+        renderSuggestionDetails(suggestion, container);
+    } else {
+        fetchDefinitionsForSuggestion(suggestion, container);
+    }
 }
 function renderSearchSuggestions(query, suggestions, tokens, container) {
     searchControl.style.display = 'none';
