@@ -104,12 +104,6 @@ Promise.all(
         hanziBox.blur();
     });
 
-    // The soft keyboard can trigger a resize when it opens. Skip the next resize event to
-    // avoid relayouting the graph just because the search input gained focus.
-    hanziBox.addEventListener('focus', function () {
-        document.dispatchEvent(new Event('skip-graph-resize'));
-    });
-
     // TODO(refactor): this belongs in explore rather than main?
     let oldState = readExploreState();
     // precedence goes to the direct URL entered first, then to anything hanging around in history, then localstorage.
