@@ -71,6 +71,10 @@
     --button-border-bottom: 3px solid var(--accent-color);
     --graph-expand-button-box-shadow: 2px 2px #444;
     --tag-border: 2px solid #333;
+    --suggestion-background-color: rgba(255, 255, 255, 0.62);
+    --suggestion-hover-background-color: rgba(255, 255, 255, 0.88);
+    --suggestion-definition-color: rgba(0, 0, 0, 0.66);
+    --suggestion-stem-color: rgba(0, 0, 0, 0.48);
     --examples-top-margin: 14px;
     --graph-margin-top: 14px;
     --checked-input-border: 6px solid black;
@@ -178,7 +182,7 @@ ul {
 
 .header {
     display: grid;
-    grid-template-columns: 50px 44px 1fr 50px;
+    grid-template-columns: 50px 44px minmax(0, 1fr) 50px;
     height: var(--primary-header-height);
     text-align: center;
 }
@@ -191,6 +195,10 @@ ul {
     /* keep it centered despite the logo, which gets 44px in the grid template */
     margin-right: 44px;
     line-height: var(--primary-header-height);
+}
+
+#search-form {
+    min-width: 0;
 }
 
 .header .logo {
@@ -1503,24 +1511,85 @@ https://developer.mozilla.org/en-US/docs/Web/API/File_API/Using_files_from_web_a
 
 /* TODO(refactor): get this looking nice */
 .search-suggestions {
-    padding: 2px;
+    box-sizing: border-box;
+    width: 90%;
+    max-width: 600px;
+    min-width: 0;
+    padding: 6px;
     border: var(--border);
-    margin: 0;
-    font-size: var(--target-language-font-size);
-    text-align: center;
+    margin: 0 auto;
+    font-size: var(--target-language-secondary-font-size);
+    text-align: left;
     list-style-type: none;
-    overflow: hidden;
     background-color: var(--background-color);
 }
 
 .search-suggestion {
-    margin: 12px;
+    display: block;
+    min-width: 0;
+    margin: 4px 0;
+    padding: 8px 10px;
+    border-radius: 8px;
     cursor: pointer;
+    background-color: var(--suggestion-background-color);
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.search-suggestion:hover,
+.search-suggestion:focus-within {
+    background-color: var(--suggestion-hover-background-color);
+    transform: translateY(-1px);
+}
+
+.search-suggestion-text {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+}
+
+.search-suggestion-stem {
+    color: var(--suggestion-stem-color);
+    font-size: 0.82em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .search-suggestion-current {
-    margin-left: 8px;
+    margin-left: 0;
     font-weight: var(--target-language-font-weight);
+    font-family: var(--chinese-font);
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.search-suggestion-details {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+    margin-top: 4px;
+    font-size: var(--base-language-font-size);
+    line-height: 1.35;
+}
+
+.search-suggestion-pinyin {
+    display: inline-flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-family: var(--pinyin-font);
+    font-weight: 700;
+}
+
+.search-suggestion-definition {
+    min-width: 0;
+    color: var(--suggestion-definition-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #hourly-graph {
@@ -2410,6 +2479,10 @@ main.auth-form {
         --legend-switch-button-border: 1px solid #ccc;
         --graph-expand-button-box-shadow: 0;
         --tag-border: 2px solid #aaaa;
+        --suggestion-background-color: rgba(255, 255, 255, 0.07);
+        --suggestion-hover-background-color: rgba(255, 255, 255, 0.13);
+        --suggestion-definition-color: rgba(255, 255, 255, 0.68);
+        --suggestion-stem-color: rgba(255, 255, 255, 0.48);
         --checked-input-border: 6px solid #eeee;
         --popover-background-color: #121212;
         --popover-font-color: #eeee;
@@ -2446,6 +2519,22 @@ main.auth-form {
         --example-padding: 4px 0 8px 8px;
         --definitions-margin: 10px 0 6px 4px;
         --legend-font-size: 14px;
+    }
+
+    .search-suggestions {
+        width: 100vw;
+        max-width: none;
+        /* Break out of the search grid column by the fixed menu + logo columns. */
+        margin-left: -94px;
+    }
+
+    .search-suggestion-details {
+        display: block;
+    }
+
+    .search-suggestion-definition {
+        display: block;
+        margin-top: 2px;
     }
 
     /* TODO(refactor): this is a result of oddities with grid + cytoscape + window resize */
