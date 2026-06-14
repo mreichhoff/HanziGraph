@@ -1422,7 +1422,6 @@ let makeSentenceNavigable = function (text, container, optionsOrNoExampleChange)
                     wordSpan.classList.add('word-clicked');
 
                     // Update graph with the word
-                    switchDiagramView(diagramKeys.main);
                     document.dispatchEvent(new CustomEvent('graph-update', { detail: word }));
 
                     // Show inline definition if container is provided
