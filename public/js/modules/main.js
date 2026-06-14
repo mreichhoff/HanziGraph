@@ -101,16 +101,11 @@ Promise.all(
         search(hanziBox.value);
         switchToState(stateKeys.main);
 
-        // we're about to force a blur, which should hide the soft keyboard on android or ios
-        // but in some cases, the keyboard hiding triggers a resize, so you get an annoying graph re-render.
-        // This in very rare cases could cause cause a skipped re-layout on window size change
-        // but that should be rare.
-        document.dispatchEvent(new Event('skip-graph-resize'));
         hanziBox.blur();
     });
 
-    // similar to the blur logic above, the soft keyboard will show. Skip the next resize event.
-    // Same edge case with possible skipped 'real' resizes, but that should be very rare.
+    // The soft keyboard can trigger a resize when it opens. Skip the next resize event to
+    // avoid relayouting the graph just because the search input gained focus.
     hanziBox.addEventListener('focus', function () {
         document.dispatchEvent(new Event('skip-graph-resize'));
     });
