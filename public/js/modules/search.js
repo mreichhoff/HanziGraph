@@ -244,20 +244,13 @@ function sendDataToWorker() {
     });
 }
 
-let lastPointerDown = null;
+let skipBlur = false;
 
-function isInSearchUi(target) {
-    return target && (
-        searchControl.contains(target) ||
-        searchSuggestionsContainer.contains(target) ||
-        hanziBox.contains(target)
-    );
-}
-
-function handleDocumentPointerDown(event) {
-    lastPointerDown = { target: event.target, time: Date.now() };
-    if (!isInSearchUi(event.target)) {
+function clearIfOutsideSearchControl(event) {
+    if (!searchControl.contains(event.target) && !hanziBox.contains(event.target)) {
         clearSuggestions();
+    } else {
+        document.addEventListener('mousedown', clearIfOutsideSearchControl, { once: true });
     }
 }
 
@@ -269,35 +262,17 @@ async function initialize(term, mode) {
     // it sends, so allow waiting.
     const ensureLoaded = new Promise(ready => searchSuggestionsWorker.addEventListener("message", ready, { once: true }));
     hanziBox.addEventListener('input', suggestSearches);
-    hanziBox.addEventListener('blur', function (event) {
-        document.dispatchEvent(new Event('skip-graph-resize'));
-        setTimeout(function () {
-            const recentPointerTarget = lastPointerDown && Date.now() - lastPointerDown.time < 500
-                ? lastPointerDown.target
-                : null;
-            if (
-                isInSearchUi(event.relatedTarget) ||
-                isInSearchUi(document.activeElement) ||
-                isInSearchUi(recentPointerTarget)
-            ) {
-                return;
-            }
-            clearSuggestions();
-        }, 0);
+    hanziBox.addEventListener('blur', function () {
+        if (skipBlur) {
+            skipBlur = false;
+            document.addEventListener('mousedown', clearIfOutsideSearchControl, { once: true });
+            return;
+        }
+        clearSuggestions()
     });
     hanziBox.addEventListener('focus', showControlsIfEligible);
-    document.addEventListener('pointerdown', handleDocumentPointerDown);
-    document.addEventListener('touchstart', function (event) {
-        if (window.PointerEvent) {
-            return;
-        }
-        handleDocumentPointerDown(event);
-    });
-    document.addEventListener('mousedown', function (event) {
-        if (window.PointerEvent) {
-            return;
-        }
-        handleDocumentPointerDown(event);
+    searchControl.addEventListener('mousedown', function () {
+        skipBlur = true;
     });
     if (term) {
         await ensureLoaded;

@@ -1,7 +1,6 @@
 import { switchToState, stateKeys, diagramKeys, switchDiagramView } from "./ui-orchestrator";
 import { getActiveGraph } from "./options";
 import { parsePinyin, trimTone, findPinyinRelationships } from "./pronunciation-parser";
-import { hanziBox } from "./dom.js";
 import cytoscape from "cytoscape";
 import fcose from 'cytoscape-fcose';
 
@@ -456,21 +455,16 @@ function toggleColorCodeVisibility() {
 
 let skipResize = false;
 let pendingSkipResizeTimeout = null;
-function isSearchFocusedOnTouchDevice() {
-    return document.activeElement === hanziBox && window.matchMedia('(pointer: coarse)').matches;
-}
-
 function handleResize() {
     clearTimeout(pendingResizeTimeout);
     pendingResizeTimeout = setTimeout(() => {
-        const shouldSkipLayout = skipResize || isSearchFocusedOnTouchDevice();
         // if the window resizes with the graph collapsed, re-expand it
         // note that switchDiagramView no-ops if we're going main-->main
         if (!window.matchMedia('(max-width:664px)').matches) {
             switchDiagramView(diagramKeys.main);
         }
         // TODO: probably want a sizeDirty bit we can check for when the graph isn't shown and a resize happens
-        if (!shouldSkipLayout && cy && showingGraph) {
+        if (!skipResize && cy && showingGraph) {
             cy.layout(mode === modes.graph ? layout(cy.nodes().length) : bfsLayout(root)).run();
         }
         skipResize = false;
