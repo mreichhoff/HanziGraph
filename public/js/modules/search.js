@@ -197,7 +197,7 @@ function renderSearchSuggestions(query, suggestions, tokens, container) {
         item.classList.add('search-suggestion');
         renderSuggestion('', suggestion, item);
         container.appendChild(item);
-        item.addEventListener('mousedown', function () {
+        item.addEventListener('click', function () {
             notFoundElement.style.display = 'none';
             document.dispatchEvent(new CustomEvent('graph-update', { detail: suggestion }));
             document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [suggestion] } }));
@@ -210,7 +210,7 @@ function renderSearchSuggestions(query, suggestions, tokens, container) {
         item.classList.add('search-suggestion');
         renderSuggestion(priorWordsForDisplay, suggestion, item);
         container.appendChild(item);
-        item.addEventListener('mousedown', function () {
+        item.addEventListener('click', function () {
             multiWordSearch(priorWordsForDisplay + suggestion, allButLastToken.concat(suggestion));
             clearSuggestions();
             switchToState(stateKeys.main);
@@ -261,6 +261,12 @@ function handleDocumentPointerDown(event) {
     }
 }
 
+function refreshSearchUiPointerGesture() {
+    if (lastPointerDown && isInSearchUi(lastPointerDown.target)) {
+        lastPointerDown.time = Date.now();
+    }
+}
+
 async function initialize(term, mode) {
     searchSuggestionsWorker = new Worker('/js/modules/search-suggestions-worker.js');
     sendDataToWorker();
@@ -287,12 +293,19 @@ async function initialize(term, mode) {
     });
     hanziBox.addEventListener('focus', showControlsIfEligible);
     document.addEventListener('pointerdown', handleDocumentPointerDown);
+    document.addEventListener('pointermove', refreshSearchUiPointerGesture, { passive: true });
     document.addEventListener('touchstart', function (event) {
         if (window.PointerEvent) {
             return;
         }
         handleDocumentPointerDown(event);
     });
+    document.addEventListener('touchmove', function () {
+        if (window.PointerEvent) {
+            return;
+        }
+        refreshSearchUiPointerGesture();
+    }, { passive: true });
     document.addEventListener('mousedown', function (event) {
         if (window.PointerEvent) {
             return;
