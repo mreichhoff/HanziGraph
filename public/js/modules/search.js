@@ -197,7 +197,7 @@ function renderSearchSuggestions(query, suggestions, tokens, container) {
         item.classList.add('search-suggestion');
         renderSuggestion('', suggestion, item);
         container.appendChild(item);
-        item.addEventListener('mousedown', function () {
+        item.addEventListener('click', function () {
             notFoundElement.style.display = 'none';
             document.dispatchEvent(new CustomEvent('graph-update', { detail: suggestion }));
             document.dispatchEvent(new CustomEvent('explore-update', { detail: { words: [suggestion] } }));
@@ -210,7 +210,7 @@ function renderSearchSuggestions(query, suggestions, tokens, container) {
         item.classList.add('search-suggestion');
         renderSuggestion(priorWordsForDisplay, suggestion, item);
         container.appendChild(item);
-        item.addEventListener('mousedown', function () {
+        item.addEventListener('click', function () {
             multiWordSearch(priorWordsForDisplay + suggestion, allButLastToken.concat(suggestion));
             clearSuggestions();
             switchToState(stateKeys.main);
@@ -244,13 +244,26 @@ function sendDataToWorker() {
     });
 }
 
-let skipBlur = false;
+let lastPointerDown = null;
 
-function clearIfOutsideSearchControl(event) {
-    if (!searchControl.contains(event.target) && !hanziBox.contains(event.target)) {
+function isInSearchUi(target) {
+    return target && (
+        searchControl.contains(target) ||
+        searchSuggestionsContainer.contains(target) ||
+        hanziBox.contains(target)
+    );
+}
+
+function handleDocumentPointerDown(event) {
+    lastPointerDown = { target: event.target, time: Date.now() };
+    if (!isInSearchUi(event.target)) {
         clearSuggestions();
-    } else {
-        document.addEventListener('mousedown', clearIfOutsideSearchControl, { once: true });
+    }
+}
+
+function refreshSearchUiPointerGesture() {
+    if (lastPointerDown && isInSearchUi(lastPointerDown.target)) {
+        lastPointerDown.time = Date.now();
     }
 }
 
@@ -262,17 +275,42 @@ async function initialize(term, mode) {
     // it sends, so allow waiting.
     const ensureLoaded = new Promise(ready => searchSuggestionsWorker.addEventListener("message", ready, { once: true }));
     hanziBox.addEventListener('input', suggestSearches);
-    hanziBox.addEventListener('blur', function () {
-        if (skipBlur) {
-            skipBlur = false;
-            document.addEventListener('mousedown', clearIfOutsideSearchControl, { once: true });
-            return;
-        }
-        clearSuggestions()
+    hanziBox.addEventListener('blur', function (event) {
+        document.dispatchEvent(new Event('skip-graph-resize'));
+        setTimeout(function () {
+            const recentPointerTarget = lastPointerDown && Date.now() - lastPointerDown.time < 500
+                ? lastPointerDown.target
+                : null;
+            if (
+                isInSearchUi(event.relatedTarget) ||
+                isInSearchUi(document.activeElement) ||
+                isInSearchUi(recentPointerTarget)
+            ) {
+                return;
+            }
+            clearSuggestions();
+        }, 0);
     });
     hanziBox.addEventListener('focus', showControlsIfEligible);
-    searchControl.addEventListener('mousedown', function () {
-        skipBlur = true;
+    document.addEventListener('pointerdown', handleDocumentPointerDown);
+    document.addEventListener('pointermove', refreshSearchUiPointerGesture, { passive: true });
+    document.addEventListener('touchstart', function (event) {
+        if (window.PointerEvent) {
+            return;
+        }
+        handleDocumentPointerDown(event);
+    });
+    document.addEventListener('touchmove', function () {
+        if (window.PointerEvent) {
+            return;
+        }
+        refreshSearchUiPointerGesture();
+    }, { passive: true });
+    document.addEventListener('mousedown', function (event) {
+        if (window.PointerEvent) {
+            return;
+        }
+        handleDocumentPointerDown(event);
     });
     if (term) {
         await ensureLoaded;
