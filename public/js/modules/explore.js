@@ -748,28 +748,33 @@ let renderMeaning = function (word, definitionList, examples, maxExamples, conta
     renderExamples(word, examples, maxExamples, container);
 };
 let renderStats = function (word, container) {
-    let wordFreqHeader = document.createElement('h3');
-    wordFreqHeader.classList.add('explore-stat-header');
-    wordFreqHeader.innerText = 'Word Frequency Stats';
     let renderedWordFreq = false;
     if (coverageGraph && ('words' in coverageGraph) && (word in wordSet)) {
-        container.appendChild(wordFreqHeader);
-        renderCoverageGraph(coverageGraph['words'], word, wordSet[word], 'word', container);
+        let wordSection = document.createElement('div');
+        wordSection.classList.add('stat-section');
+        let wordFreqHeader = document.createElement('h3');
+        wordFreqHeader.classList.add('explore-stat-header');
+        wordFreqHeader.innerText = 'Word Frequency Stats';
+        wordSection.appendChild(wordFreqHeader);
+        container.appendChild(wordSection);
+        renderCoverageGraph(coverageGraph['words'], word, wordSet[word], 'word', wordSection);
         renderedWordFreq = true;
     }
+    let charSection = document.createElement('div');
+    charSection.classList.add('stat-section');
     let charFreqHeader = document.createElement('h3');
     charFreqHeader.classList.add('explore-stat-header');
     charFreqHeader.innerText = 'Character Frequency Stats';
-    container.appendChild(charFreqHeader);
+    charSection.appendChild(charFreqHeader);
     let renderedCharacterFreq = false;
     for (const character of word) {
         if (charFreqs && (character in charFreqs) && coverageGraph && ('chars' in coverageGraph)) {
-            renderCoverageGraph(coverageGraph['chars'], character, charFreqs[character], 'character', container);
+            if (!renderedCharacterFreq) {
+                container.appendChild(charSection);
+            }
+            renderCoverageGraph(coverageGraph['chars'], character, charFreqs[character], 'character', charSection);
             renderedCharacterFreq = true;
         }
-    }
-    if (!renderedCharacterFreq) {
-        charFreqHeader.style.display = 'none';
     }
     if (!renderedWordFreq && !renderedCharacterFreq) {
         let unavailableMessage = document.createElement('p');
@@ -933,7 +938,7 @@ function renderExplore(word, container, definitionList, examples, maxExamples, a
     statsContainer.classList.add('explore-subpane');
     statsContainer.style.display = 'none';
     let flowContainer = document.createElement('div');
-    flowContainer.classList.add('explore-subpane');
+    flowContainer.classList.add('explore-subpane', 'flow-subpane');
     flowContainer.style.display = 'none';
     // TODO: make this smarter
     currentTabs = renderTabs(tabs, ['Meaning', 'Tree', 'Stats', 'Flow'], [meaningContainer, componentsContainer, statsContainer, flowContainer], [() => { }, () => {

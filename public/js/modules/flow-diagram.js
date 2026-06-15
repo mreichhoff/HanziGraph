@@ -243,7 +243,10 @@ async function renderUsageDiagram(term, container) {
         fontSize: getFontSize(container.offsetWidth),
         nodeStroke: null
     });
-    container.appendChild(chart);
+    const sankeyContainer = document.createElement('div');
+    sankeyContainer.classList.add('sankey-container');
+    sankeyContainer.appendChild(chart);
+    container.appendChild(sankeyContainer);
 }
 
 async function getCollocations(word) {
