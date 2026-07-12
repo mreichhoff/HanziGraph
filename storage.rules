@@ -1,0 +1,10 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Storage is reserved for trusted server services such as AgentPond.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

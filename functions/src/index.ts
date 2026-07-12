@@ -1,8 +1,8 @@
 import { onCallGenkit, HttpsError } from "firebase-functions/v2/https";
 import { genkit, z } from "genkit";
 import { vertexAI } from '@genkit-ai/google-genai';
-import * as admin from 'firebase-admin';
 import { isUserAuthorized } from "./auth";
+import { tracePrompt } from "./ai-tracing";
 import {
     explanationSchema,
     englishExplanationSchema,
@@ -13,8 +13,6 @@ import {
     explainWordInContextInputSchema,
     explainWordInContextSchema,
 } from "./schema";
-
-let firebaseApp: admin.app.App;
 
 // according to the docs, there's no need for an API key when using the vertex API,
 // as instead the service principal is granted a vertex API role.
@@ -40,15 +38,12 @@ const explainFlow = ai.defineFlow({
     inputSchema: z.string(),
     outputSchema: explanationSchema,
 }, async (text, { context }) => {
-    if (!firebaseApp) {
-        firebaseApp = admin.initializeApp();
-    }
     // TODO: there's some authorization syntactic sugar with onCallGenkit, but it appears deprecated
     const isAuthorized = await isUserAuthorized(context);
     if (!isAuthorized) {
         throw new HttpsError("permission-denied", "user not authorized");
     }
-    const { output } = await explainChinesePrompt({ text });
+    const { output } = await tracePrompt("explain-chinese", () => explainChinesePrompt({ text }));
     if (!output) {
         throw new HttpsError("internal", 'oh no, the model like, failed?');
     }
@@ -61,14 +56,11 @@ const explainEnglishFlow = ai.defineFlow({
     inputSchema: z.string(),
     outputSchema: englishExplanationSchema,
 }, async (text, { context }) => {
-    if (!firebaseApp) {
-        firebaseApp = admin.initializeApp();
-    }
     const isAuthorized = await isUserAuthorized(context);
     if (!isAuthorized) {
         throw new HttpsError("permission-denied", "user not authorized");
     }
-    const { output } = await explainEnglishPrompt({ text });
+    const { output } = await tracePrompt("explain-english", () => explainEnglishPrompt({ text }));
     if (!output) {
         throw new HttpsError("internal", 'oh no, the model like, failed?');
     }
@@ -87,14 +79,11 @@ const analyzeImageFlow = ai.defineFlow({
     inputSchema: z.string(),
     outputSchema: imageAnalysisSchema,
 }, async (base64ImageUrl, { context }) => {
-    if (!firebaseApp) {
-        firebaseApp = admin.initializeApp();
-    }
     const isAuthorized = await isUserAuthorized(context);
     if (!isAuthorized) {
         throw new HttpsError("permission-denied", "user not authorized");
     }
-    const { output } = await analyzeImagePrompt({ base64ImageUrl });
+    const { output } = await tracePrompt("analyze-image", () => analyzeImagePrompt({ base64ImageUrl }));
     if (!output) {
         throw new HttpsError("internal", 'oh no, the model like, failed?');
     }
@@ -120,14 +109,14 @@ const generateChineseSentencesFlow = ai.defineFlow({
     inputSchema: generateChineseSentencesInputSchema,
     outputSchema: chineseSentenceGenerationSchema,
 }, async (request, { context }) => {
-    if (!firebaseApp) {
-        firebaseApp = admin.initializeApp();
-    }
     const isAuthorized = await isUserAuthorized(context);
     if (!isAuthorized) {
         throw new HttpsError("permission-denied", "user not authorized");
     }
-    const { output } = await generateChineseSentencesPrompt(request);
+    const { output } = await tracePrompt(
+        "generate-chinese-sentences",
+        () => generateChineseSentencesPrompt(request),
+    );
     if (!output) {
         throw new HttpsError("internal", 'oh no, the model like, failed?');
     }
@@ -144,15 +133,15 @@ const analyzeCollocationFlow = ai.defineFlow({
     inputSchema: z.string(),
     outputSchema: analyzeCollocationSchema,
 }, async (collocation, { context }) => {
-    if (!firebaseApp) {
-        firebaseApp = admin.initializeApp();
-    }
     const isAuthorized = await isUserAuthorized(context);
     if (!isAuthorized) {
         throw new HttpsError("permission-denied", "user not authorized");
     }
     collocation = collocation.replaceAll(' ', '');
-    const { output } = await analyzeCollocationPrompt({ collocation });
+    const { output } = await tracePrompt(
+        "analyze-collocation",
+        () => analyzeCollocationPrompt({ collocation }),
+    );
     if (!output) {
         throw new HttpsError("internal", 'oh no, the model like, failed?');
     }
@@ -178,14 +167,14 @@ const explainWordInContextFlow = ai.defineFlow({
     inputSchema: explainWordInContextInputSchema,
     outputSchema: explainWordInContextSchema,
 }, async (request, { context }) => {
-    if (!firebaseApp) {
-        firebaseApp = admin.initializeApp();
-    }
     const isAuthorized = await isUserAuthorized(context);
     if (!isAuthorized) {
         throw new HttpsError("permission-denied", "user not authorized");
     }
-    const { output } = await explainWordInContextPrompt(request);
+    const { output } = await tracePrompt(
+        "explain-word-in-context",
+        () => explainWordInContextPrompt(request),
+    );
     if (!output) {
         throw new HttpsError("internal", 'oh no, the model like, failed?');
     }
