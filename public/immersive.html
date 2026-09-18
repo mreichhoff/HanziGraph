@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f3ee">
+    <title>HanziGraph · Explore</title>
+    <link rel="icon" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/immersive.css?v=quiet-legend">
+    <script defer src="/js/immersive-bundle.js"></script>
+</head>
+<body>
+    <main id="graph" aria-label="Interactive character graph. Use search or the visible characters menu to open details."></main>
+    <header class="toolbar">
+        <a class="brand" href="/" title="Return to classic HanziGraph"><span lang="zh">汉</span><span class="brand-name">HanziGraph<small>EXPLORER</small></span></a>
+        <form id="search-form" role="search">
+            <label class="sr-only" for="search">Search characters, pinyin or English</label>
+            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"></circle><path d="m14.5 14.5 5 5"></path></svg><input id="search" type="search" placeholder="Find a character or word…" autocomplete="off" maxlength="80" enterkeyhint="search" aria-controls="suggestions">
+            <button type="submit" aria-label="Search">↵</button>
+            <div id="suggestions" hidden></div>
+        </form>
+        <details id="settings" class="menu"><summary aria-label="Explorer settings"><svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16" /></svg></summary><div class="menu-content">
+            <h2>Your exploration</h2>
+            <label>Character set<select id="dataset"><option value="simplified">Simplified</option><option value="traditional">Traditional</option><option value="cantonese">Cantonese</option><option value="hsk">HSK</option></select></label>
+            <label>Color by<select id="colors"><option value="tone">Tone</option><option value="frequency">Frequency / HSK</option></select></label>
+            <label class="check"><input id="show-card-pinyin" type="checkbox" checked> <span id="card-pinyin-label">Show pinyin in detail cards</span></label>
+            <label class="check"><input id="auto-expand" type="checkbox" checked> Discover connections as I pan</label>
+            <p>Tap a character for meanings and examples. Tap a labeled link for its word. Drag to wander; scroll or pinch to zoom.</p>
+            <p>One detail card opens where you tap. Tap another character or link to replace it, or tap empty graph space to dismiss it. Panning and zooming keep it open. Pan to discover less common connections. Distant characters leave the canvas to make room and return when you pan back.</p>
+            <a id="classic" href="/">Open classic HanziGraph ↗</a>
+        </div></details>
+    </header>
+    <div id="loading" role="status">Preparing your neighborhood…</div>
+    <aside id="cards" aria-label="Character details"></aside>
+    <footer class="bottom-bar">
+        <div class="context"><span id="status" role="status"></span><div id="legend"></div></div>
+    </footer>
+    <details id="accessible-nodes"><summary>Visible characters</summary><div id="node-list"></div></details>
+    <noscript>This explorer needs JavaScript. <a href="/">Return to HanziGraph.</a></noscript>
+</body>
+</html>
