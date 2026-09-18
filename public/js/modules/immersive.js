@@ -301,11 +301,11 @@ async function openWord(word, anchor) {
     card.setAttribute('aria-label', `Details for ${word}`);
     const header = el('div', undefined, 'card-header');
     const title = el('h2', word, 'character'); title.lang = 'zh';
-    const close = button('×', () => { closeCard(word); $('search').focus(); }, 'close');
+    const close = button('×', () => closeCard(word), 'close');
     close.setAttribute('aria-label', `Close ${word}`);
     header.append(title, close); card.append(header);
     const pronunciation = el('div', 'Loading…', 'transcription card-pinyin'); card.append(pronunciation);
-    if ('speechSynthesis' in window) card.append(button('Listen ↗', () => speak(word)));
+    if ('speechSynthesis' in window) card.append(button('Listen', () => speak(word), 'listen-button'));
     const stats = el('div', undefined, 'stats');
     if (ranks[word]) stats.append(el('span', dataset === 'hsk' ? `HSK ${ranks[word]}` : `Frequency #${ranks[word].toLocaleString()}`));
     if (graph[word]) stats.append(el('span', `${Object.keys(graph[word].edges).length} connections`));
@@ -361,7 +361,7 @@ async function openWord(word, anchor) {
             const block = el('div', undefined, 'example');
             const chinese = el('p', sentence.zh.join(''), 'chinese'); chinese.lang = 'zh';
             block.append(chinese, el('p', sentence.pinyin || '', 'card-pinyin'), el('p', sentence.en));
-            if ('speechSynthesis' in window) block.append(button('Listen', () => speak(sentence.zh.join(''))));
+            if ('speechSynthesis' in window) block.append(button('Listen', () => speak(sentence.zh.join('')), 'listen-button'));
             examples.append(block);
         }
         if (!found.length) examples.textContent = failed ? 'Examples could not be loaded. Close and reopen this card to retry.' : 'No example sentences available yet.';

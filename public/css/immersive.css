@@ -301,10 +301,26 @@ h2 {
     color:var(--ink);
     line-height:1.7;
 }
-.example button {
-    font-size:11px;
-    padding:3px 8px;
-    min-height:30px;
+.card .listen-button {
+    font-size:13px;
+    font-weight:550;
+    line-height:1.2;
+    padding:7px 12px;
+    min-height:34px;
+    border:1px solid var(--line);
+    background:#64847512;
+    border-radius:9px;
+    margin:6px 0 10px;
+}
+.card .listen-button:hover {
+    background:#64847525;
+    border-color:var(--muted);
+}
+.example .listen-button {
+    margin-bottom:0;
+}
+@media (pointer:coarse) {
+    .card .listen-button { min-height:44px; }
 }
 .related {
     display:flex;
@@ -449,7 +465,7 @@ h2 {
         padding-left:9px;
     }
     #search {
-        font-size:12px;
+        font-size:16px;
         height:44px;
     }
     .menu summary {
