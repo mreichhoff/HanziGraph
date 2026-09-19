@@ -15,3 +15,13 @@ export function preferredVoice(voices, language) {
         || google[0]
         || compatible.find(voice => new RegExp(`^${preferredName}(?:$|\\s|\\()`, 'i').test(voice.name));
 }
+
+// Isolated Japanese kanji can be mistaken for names. Use the same first reading
+// shown in the word heading; keep sentence text intact for contextual prosody.
+export function textForSpeech(entry, dataset, isWord) {
+    if (dataset === 'japanese' && isWord) {
+        const reading = entry.reading?.split(' / ')[0]?.trim();
+        if (reading) return reading;
+    }
+    return entry.text;
+}

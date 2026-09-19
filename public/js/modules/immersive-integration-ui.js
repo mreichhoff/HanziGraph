@@ -1,6 +1,8 @@
+import { textForSpeech } from './immersive-speech.mjs';
+import { explorerLink } from './immersive-card.mjs';
 import { defaultPrompts, listModels, askAi, ankiRequest, addToAnki } from './immersive-integrations.mjs';
 
-export function initializeIntegrations(dataset, speak) {
+export function initializeIntegrations(dataset, speak, renderReading) {
     const key = `immersive-integrations-${dataset}`;
     const read = name => { try { return JSON.parse(localStorage.getItem(name)) || {}; } catch { return {}; } };
     const ai = read('localAiSettings'), anki = read('ankiConnectSettings');
@@ -70,7 +72,7 @@ export function initializeIntegrations(dataset, speak) {
     function refresh() {
         for (const row of rows) {
             if (!row.isConnected) { rows.delete(row); continue; }
-            row.querySelectorAll('[data-integration]').forEach(node => { node.hidden = node.dataset.integration === 'ai' ? !settings.aiEnabled : !settings.ankiEnabled; });
+            (row.commandNodes || []).forEach(node => { node.hidden = node.dataset.integration === 'ai' ? !settings.aiEnabled : !settings.ankiEnabled; });
         }
     }
     const open = button('', () => { populate(); document.getElementById('settings').open = false; dialog.showModal(); });
@@ -112,44 +114,77 @@ export function initializeIntegrations(dataset, speak) {
     // Escape closes this modal without also closing the graph's card or focusing search.
     dialog.addEventListener('keydown', event => { if (event.key === 'Escape') event.stopPropagation(); });
 
-    function actions(card, entryProvider, {generate = false} = {}) {
+    function actions(card, entryProvider, {generate = false, toolbarHost} = {}) {
         const row = el('div', '', 'integration-actions'); rows.add(row);
+        const toolbar = el('div', '', 'card-tools');
+        const menu = el('details', '', 'card-more');
+        const summary = el('summary', '•••'); summary.setAttribute('aria-label', generate ? 'Word actions' : 'Sentence actions');
+        const commands = el('div', '', 'card-command-list');
+        menu.append(summary, commands);
+        menu.addEventListener('toggle', () => {
+            if (menu.open) card.querySelectorAll('.card-more').forEach(other => { if (other !== menu) other.open = false; });
+        });
+        menu.addEventListener('keydown', event => { if (event.key === 'Escape' && menu.open) { event.stopPropagation(); menu.open = false; summary.focus(); } });
         const output = el('div', '', 'integration-output'); output.setAttribute('aria-live', 'polite');
         const run = async (control, task, success) => {
+            menu.open = false; summary.focus();
             const controller = new AbortController();
             if (!requests.has(card)) requests.set(card, new Set());
             requests.get(card).add(controller);
-            const controls = [...row.children].filter(node => node.dataset.integration);
-            controls.forEach(node => { node.disabled = true; }); output.textContent = 'Working…';
-            const cancel = button('Cancel', () => controller.abort()); output.append(cancel);
+            const controls = [...commands.querySelectorAll('[data-integration]')];
+            controls.forEach(node => { node.disabled = true; });
+            output.replaceChildren(); output.setAttribute('aria-busy', 'true');
+            const waiting = el('div', '', 'ai-waiting');
+            const pulse = el('span', '', 'waiting-pulse'); pulse.setAttribute('aria-hidden', 'true');
+            const label = el('div'); label.append(el('strong', control.dataset.integration === 'ai' ? 'Asking your local model' : 'Adding to Anki'), el('small', control.dataset.integration === 'ai' ? 'You can keep exploring while it works.' : 'Saving this note to your deck.'));
+            const cancel = button('Cancel', () => controller.abort()); waiting.append(pulse, label, cancel); output.append(waiting);
+            output.scrollIntoView({block:'nearest'});
             try {
                 const result = await task(controller.signal);
                 if (!card.isConnected) return;
                 output.replaceChildren(); success(result);
-            } catch (error) { if (card.isConnected) output.textContent = error.message; }
-            finally { controls.forEach(node => { node.disabled = node.dataset.added === 'true'; }); requests.get(card)?.delete(controller); }
+            } catch (error) { if (card.isConnected) { output.textContent = error.message; } }
+            finally { output.removeAttribute('aria-busy'); controls.forEach(node => { node.disabled = node.dataset.added === 'true'; }); requests.get(card)?.delete(controller); }
         };
-        const add = button('Add to Anki', () => run(add, signal => addToAnki(settings, dataset, entryProvider(), signal), () => { output.textContent = `Added to ${settings.deck}.`; add.dataset.added = 'true'; add.disabled = true; add.textContent = 'Added to Anki'; }));
+        if ('speechSynthesis' in window) {
+            const listen = button('▶', () => speak(textForSpeech(entryProvider(), dataset, generate)));
+            listen.className = 'card-listen'; listen.title = 'Listen'; listen.setAttribute('aria-label', 'Listen'); toolbar.append(listen);
+        }
+        const add = button('Add to Anki', () => run(add, signal => addToAnki(settings, dataset, entryProvider(), signal), () => { output.textContent = `Added to ${settings.deck}.`; add.dataset.added = 'true'; add.textContent = 'Added to Anki'; }));
         add.dataset.integration = 'anki';
-        const explain = button('Explain', () => run(explain, signal => { const entry = entryProvider(); return askAi(settings, dataset, entry.word || entry.text, entry.context || entry.english, false, signal, undefined, Boolean(entry.context)); }, text => { output.append(el('div', 'Local AI · explanation', 'ai-label'), el('p', text)); }));
-        explain.dataset.integration = 'ai';
-        row.append(add, explain);
+        const explain = button(generate ? 'Explain this word' : 'Explain in context', () => run(explain, signal => { const entry = entryProvider(); return askAi(settings, dataset, entry.word || entry.text, entry.context || entry.english, false, signal, undefined, Boolean(entry.context)); }, text => { output.append(el('div', 'Local AI · explanation', 'ai-label'), el('p', text)); }));
+        explain.dataset.integration = 'ai'; commands.append(add, explain);
         if (generate) {
-            const more = button('More examples', () => run(more, signal => { const entry = entryProvider(); return askAi(settings, dataset, entry.text, entry.english, true, signal); }, examples => {
+            const more = button('Generate examples', () => run(more, signal => { const entry = entryProvider(); return askAi(settings, dataset, entry.text, entry.english, true, signal); }, examples => {
                 output.append(el('div', 'Local AI · generated examples', 'ai-label'));
                 for (const example of examples) {
                     const block = el('div', '', 'example');
                     const text = el('p', example.text, 'chinese'); text.lang = dataset === 'japanese' ? 'ja' : 'zh';
-                    block.append(text, el('p', example.reading, 'card-pinyin'), el('p', example.english), button('Listen', () => speak(example.text)));
+                    const reading = el('p', '', 'card-pinyin'); renderReading(reading, example.reading);
+                    block.append(text, reading, el('p', example.english));
                     const entry = {text:example.text, reading:example.reading, english:example.english, source:entryProvider().source, word:entryProvider().text, context:example.text, generated:true};
                     block.append(actions(card, () => entry)); output.append(block);
                 }
                 refresh();
             }));
-            more.dataset.integration = 'ai'; row.append(more);
+            more.dataset.integration = 'ai'; commands.append(more);
+            commands.append(button('Copy link to this word', async () => {
+                menu.open = false; summary.focus();
+                const url = explorerLink(location.href, dataset, entryProvider().text);
+                try { await navigator.clipboard.writeText(url); output.textContent = 'Link copied.'; }
+                catch { const link = el('a', 'Open link to this word'); link.href = url; output.replaceChildren(el('p', 'Copy the link below to share this word.'), link); }
+            }));
         }
-        row.append(output);
-        row.querySelectorAll('[data-integration]').forEach(node => { node.hidden = node.dataset.integration === 'ai' ? !settings.aiEnabled : !settings.ankiEnabled; });
+        if (!generate) commands.append(button('Copy sentence', async () => {
+            menu.open = false; summary.focus();
+            try { await navigator.clipboard.writeText(entryProvider().text); output.textContent = 'Sentence copied.'; }
+            catch { output.textContent = entryProvider().text; }
+        }));
+        toolbar.append(menu);
+        (toolbarHost || row).append(toolbar); row.append(output);
+        // Store menu controls with their result row, even when mounted in the header.
+        row.commandNodes = [...commands.querySelectorAll('[data-integration]')];
+        row.commandNodes.forEach(node => { node.hidden = node.dataset.integration === 'ai' ? !settings.aiEnabled : !settings.ankiEnabled; });
         return row;
     }
     function releaseCard(card) { for (const controller of requests.get(card) || []) controller.abort(); requests.delete(card); for (const row of rows) if (card?.contains(row)) rows.delete(row); }

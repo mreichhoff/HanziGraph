@@ -633,7 +633,7 @@ h2 {
 .integration-dialog button:hover, .card .integration-button:hover { background:#64847525; }
 .integration-dialog [data-save] { background:var(--accent); color:var(--paper); }
 .integration-actions { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
-.integration-actions[hidden], .integration-actions:not(:has(> button:not([hidden]))) { display:none; }
+.integration-actions[hidden] { display:none; }
 .card .integration-button { font-size:12px; min-height:34px; padding:6px 9px; }
 .integration-output { width:100%; font-size:13px; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap; }
 .integration-output:empty { display:none; }
@@ -658,3 +658,58 @@ h2 {
 .prompt-settings code { font-size:12px; }
 .integration-dialog .prompt-settings textarea { margin-top:0; font-size:14px; line-height:1.5; }
 @media(max-width:700px) { .integration-dialog .prompt-settings textarea { font-size:16px; } }
+
+/* Detail cards put reading first; secondary commands live in a compact disclosure. */
+.card { width:340px; padding:18px; }
+.card-header { top:-18px; align-items:flex-start; gap:8px; padding:8px 0 10px; z-index:4; }
+.card-heading { flex:1; min-width:0; }
+.card .character { font-size:36px; line-height:1.35; }
+.card-header-tools, .card-tools { display:flex; align-items:center; gap:3px; }
+.card-header-tools { flex-shrink:0; }
+.card .card-header .close, .card-listen, .card-more > summary {
+    display:flex; align-items:center; justify-content:center; width:32px; height:34px;
+    min-height:34px; padding:0; border-radius:9px; font-size:16px;
+}
+.card .card-header .close { margin:0; }
+.card-listen { border:1px solid var(--line); background:var(--paper); font-size:12px; }
+.card-more { position:relative; }
+.card-more > summary { list-style:none; cursor:pointer; letter-spacing:1px; font-size:12px; }
+.card-more > summary::-webkit-details-marker { display:none; }
+.card-more[open] > summary, .card-more > summary:hover { background:var(--paper); }
+.card-command-list {
+    position:absolute; right:0; top:38px; z-index:8; width:210px; padding:6px;
+    border:1px solid var(--line); border-radius:12px; background:var(--panel); box-shadow:var(--shadow);
+}
+.card .card-command-list .integration-button { display:block; width:100%; text-align:left; border:0; background:none; font-size:13px; padding:10px; min-height:40px; }
+.card .card-command-list .integration-button[hidden] { display:none; }
+.card .card-command-list .integration-button:hover { background:var(--paper); }
+.transcription { margin:4px 0 0; font-size:13px; line-height:1.9; }
+.tone-reading { display:inline; box-decoration-break:clone; -webkit-box-decoration-break:clone; padding:1px 3px; border-radius:4px; background:var(--reading-color); color:var(--reading-ink); }
+.card .card-pinyin:empty { display:none; }
+.card h3 { margin:16px 0 7px; font-size:10px; }
+.card .definitions { margin:6px 0 12px; line-height:1.6; }
+.card .definitions li { margin-bottom:4px; }
+.card .stats { gap:5px; margin:2px 0 10px; }
+.card .stats:empty { display:none; }
+.card .stats span { padding:3px 6px; font-size:10px; background:var(--paper); }
+.card .example { padding:11px 0; }
+.card .example .chinese { font-size:19px; }
+.card .example .card-pinyin { font-size:11px; line-height:2; margin:5px 0; }
+.integration-actions { display:block; margin:4px 0 0; }
+.integration-actions:empty { display:none; }
+.integration-actions > .card-tools { justify-content:flex-end; }
+.integration-output { white-space:normal; }
+.integration-output:not(:empty) { margin:10px 0; padding:10px; border:1px solid var(--line); border-radius:12px; background:var(--paper); }
+.ai-waiting { display:flex; align-items:center; gap:9px; }
+.ai-waiting strong { display:block; font-size:12px; font-weight:600; }
+.ai-waiting small { display:block; font-size:11px; color:var(--muted); line-height:1.5; margin-top:3px; }
+.card .ai-waiting button { margin-left:auto; padding:4px; border:0; background:none; font-size:11px; }
+.waiting-pulse { width:9px; height:9px; flex-shrink:0; border-radius:50%; background:var(--accent); animation:thinking-pulse 1.4s ease-in-out infinite; }
+@keyframes thinking-pulse { 50% { opacity:.3; transform:scale(.75); } }
+@media(prefers-reduced-motion:reduce) { .waiting-pulse { animation:none; } }
+@media(max-width:700px) { .card { width:min(340px, calc(100vw - 24px)); } }
+@media(pointer:coarse) {
+    .card .card-header .close, .card-listen, .card-more > summary { width:38px; height:44px; min-height:44px; }
+    .card-command-list { top:46px; }
+    .card .card-command-list .integration-button { min-height:44px; }
+}

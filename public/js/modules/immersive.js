@@ -1,3 +1,4 @@
+import { readingParts } from './immersive-card.mjs';
 import { initializeIntegrations } from './immersive-integration-ui.js';
 import { preferredVoice } from './immersive-speech.mjs';
 import { parseFurigana, normalizeKana, japaneseReadings, japaneseWordOrder } from './immersive-japanese.mjs';
@@ -80,7 +81,22 @@ function nodeColor(node) {
     const tone = Number(definitions[node.id()]?.[0]?.pinyin?.slice(-1)) || 5;
     return tones[Math.min(4, tone - 1)];
 }
+function renderReading(container, text) {
+    container.replaceChildren();
+    if (japanese || dataset === 'cantonese') { container.textContent = text; return; }
+    for (const part of readingParts(text)) {
+        if (!part.tone) { container.append(document.createTextNode(part.text)); continue; }
+        const token = el('span', part.text, 'tone-reading');
+        token.style.setProperty('--reading-color', `var(--tone-${part.tone})`);
+        token.style.setProperty('--reading-ink', `var(--tone-ink-${part.tone})`);
+        container.append(token);
+    }
+}
 function style() {
+    tones.forEach((tone, i) => {
+        document.documentElement.style.setProperty(`--tone-${i + 1}`, tone);
+        document.documentElement.style.setProperty(`--tone-ink-${i + 1}`, contrastingText(tone));
+    });
     return [
         { selector: 'node', style: { label: 'data(id)', width: 52, height: 52, 'font-size': 28, 'font-family': 'sans-serif', 'text-valign': 'center', 'text-halign': 'center', 'background-color': nodeColor, color: node => contrastingText(nodeColor(node)), 'border-width': 3, 'border-color': dark.matches ? '#142321' : '#fffefb', 'overlay-opacity': 0 } },
         { selector: 'node.inspected', style: { 'border-width': 4, 'border-color': dark.matches ? '#d4eddb' : '#345f50' } },
@@ -321,22 +337,27 @@ async function openWord(word, anchor) {
     while (cards.size) closeCard(cards.keys().next().value);
     const card = el('section', undefined, 'card');
     card.tabIndex = -1;
+    card.addEventListener('click', event => {
+        if (!event.target.closest('.card-more')) card.querySelectorAll('.card-more[open]').forEach(menu => { menu.open = false; });
+    });
     card.setAttribute('aria-label', `Details for ${word}`);
     const header = el('div', undefined, 'card-header');
     const title = el('h2', word, 'character'); title.lang = language;
     const close = button('×', () => closeCard(word), 'close');
     close.setAttribute('aria-label', `Close ${word}`);
-    header.append(title, close); card.append(header);
-    const pronunciation = el('div', 'Loading…', 'transcription card-pinyin'); card.append(pronunciation);
-    if ('speechSynthesis' in window) card.append(button('Listen', () => speak(word), 'listen-button'));
+    const heading = el('div', '', 'card-heading'); heading.append(title);
+    const headerTools = el('div', '', 'card-header-tools');
+    header.append(heading, headerTools); card.append(header);
+    const pronunciation = el('div', 'Loading…', 'transcription card-pinyin'); heading.append(pronunciation);
     const stats = el('div', undefined, 'stats');
     if (!japanese && ranks[word]) stats.append(el('span', `Frequency #${ranks[word].toLocaleString()}`));
     if (graph[word]) stats.append(el('span', `${Object.keys(graph[word].edges).length} connections`));
     card.append(stats, el('h3', 'Meanings'));
     const meanings = el('ol', 'Loading definitions…', 'definitions'); card.append(meanings);
     let wordDefinitions = definitions[word] || [];
-    const wordActions = integrations.actions(card, () => ({text:word, reading:readingsFor(word, wordDefinitions).join(' / '), english:wordDefinitions.map(d => d.en).join('; '), source:classicUrl(word)}), {generate:true});
-    wordActions.hidden = true; card.append(wordActions);
+    const wordActions = integrations.actions(card, () => ({text:word, reading:readingsFor(word, wordDefinitions).join(' / '), english:wordDefinitions.map(d => d.en).join('; '), source:classicUrl(word)}), {generate:true, toolbarHost:headerTools});
+    headerTools.append(close);
+    card.append(wordActions);
     card.append(el('h3', 'In context'));
     const examples = el('div', 'Loading examples…'); card.append(examples);
     if (graph[word]) {
@@ -369,7 +390,7 @@ async function openWord(word, anchor) {
             if (!defs) defs = (await cached(`/data/${dataset}/definitions/${partition(word)}.json`))[word];
             wordDefinitions = defs || [];
             wordActions.hidden = false;
-            pronunciation.textContent = [...new Set(readingsFor(word, defs || []))].join(' / ');
+            renderReading(pronunciation, [...new Set(readingsFor(word, defs || []))].join(' / '));
             if (japanese) {
                 title.replaceChildren();
                 appendJapanese(title, [{ text: word, reading: readingsFor(word)[0] || '' }]);
@@ -397,8 +418,8 @@ async function openWord(word, anchor) {
                 const parts = parseFurigana(sentence.fu);
                 if (parts.map(p => p.text).join('') === sentence.zh.join('')) { chinese.replaceChildren(); appendJapanese(chinese, parts); }
             }
-            block.append(chinese, el('p', sentence.pinyin || '', 'card-pinyin'), el('p', sentence.en));
-            if ('speechSynthesis' in window) block.append(button('Listen', () => speak(sentence.zh.join('')), 'listen-button'));
+            const reading = el('p', '', 'card-pinyin'); renderReading(reading, sentence.pinyin || '');
+            block.append(chinese, reading, el('p', sentence.en));
             const entry = {text:sentence.zh.join(''), reading:japanese && sentence.fu ? parseFurigana(sentence.fu).map(part => part.reading || part.text).join('') : sentence.pinyin || '', english:sentence.en, source:classicUrl(word), word, context:sentence.zh.join('')};
             block.append(integrations.actions(card, () => entry));
             examples.append(block);
@@ -537,7 +558,7 @@ function legend() {
     }
 }
 async function initialize() {
-    integrations = initializeIntegrations(dataset, speak);
+    integrations = initializeIntegrations(dataset, speak, renderReading);
     // Ask early so browsers that load their voice list asynchronously can populate it
     // before the first Listen click. Re-read on every click to include new voices.
     if ('speechSynthesis' in window) speechSynthesis.getVoices();
