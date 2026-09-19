@@ -2,7 +2,7 @@ import { preferredVoice } from './immersive-speech.mjs';
 import { parseFurigana, normalizeKana, japaneseReadings, japaneseWordOrder } from './immersive-japanese.mjs';
 import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
-import { getWordSetFromFrequency, getWordLevelsFromGraph } from './graph-functions.js';
+import { getWordSetFromFrequency } from './graph-functions.js';
 
 import { buildExplorerGraph, isCharacter, placeCard, sparseConnections, evictionOrder, wordConnections, searchPositions } from './immersive-geometry.mjs';
 
@@ -13,7 +13,7 @@ const $ = id => document.getElementById(id);
 const mobile = matchMedia('(max-width:700px)');
 const dark = matchMedia('(prefers-color-scheme:dark)');
 const params = new URLSearchParams(location.search);
-const datasets = ['simplified', 'traditional', 'cantonese', 'hsk', 'japanese'];
+const datasets = ['simplified', 'traditional', 'cantonese', 'japanese'];
 const dataset = datasets.includes(params.get('set')) ? params.get('set') : 'simplified';
 const japanese = dataset === 'japanese';
 const language = japanese ? 'ja' : 'zh';
@@ -326,7 +326,7 @@ async function openWord(word, anchor) {
     const pronunciation = el('div', 'Loading…', 'transcription card-pinyin'); card.append(pronunciation);
     if ('speechSynthesis' in window) card.append(button('Listen', () => speak(word), 'listen-button'));
     const stats = el('div', undefined, 'stats');
-    if (!japanese && ranks[word]) stats.append(el('span', dataset === 'hsk' ? `HSK ${ranks[word]}` : `Frequency #${ranks[word].toLocaleString()}`));
+    if (!japanese && ranks[word]) stats.append(el('span', `Frequency #${ranks[word].toLocaleString()}`));
     if (graph[word]) stats.append(el('span', `${Object.keys(graph[word].edges).length} connections`));
     card.append(stats, el('h3', 'Meanings'));
     const meanings = el('ol', 'Loading definitions…', 'definitions'); card.append(meanings);
@@ -359,7 +359,7 @@ async function openWord(word, anchor) {
     const defsTask = (async () => {
         try {
             let defs = definitions[word];
-            if (!defs && dataset !== 'hsk') defs = (await cached(`/data/${dataset}/definitions/${partition(word)}.json`))[word];
+            if (!defs) defs = (await cached(`/data/${dataset}/definitions/${partition(word)}.json`))[word];
             pronunciation.textContent = [...new Set(readingsFor(word, defs || []))].join(' / ');
             if (japanese) {
                 title.replaceChildren();
@@ -489,7 +489,7 @@ function updateToneReset() {
 function legend() {
     $('legend').replaceChildren();
     const colors = colorMode === 'tone' ? tones : frequencies;
-    const labels = colorMode === 'tone' ? ['1', '2', '3', '4', 'neutral'] : japanese ? ['250', '500', '1k', '1.5k', '2k', '2k+'] : dataset === 'hsk' ? ['HSK1', '2', '3', '4', '5', '6'] : ['1k', '2k', '4k', '7k', '10k', '10k+'];
+    const labels = colorMode === 'tone' ? ['1', '2', '3', '4', 'neutral'] : japanese ? ['250', '500', '1k', '1.5k', '2k', '2k+'] : ['1k', '2k', '4k', '7k', '10k', '10k+'];
     labels.forEach((label, i) => {
         if (colorMode === 'tone') {
             const control = el('label', undefined, 'tone-picker');
@@ -556,13 +556,13 @@ async function initialize() {
     if (japanese || dataset === 'cantonese') $('colors').querySelector('[value="tone"]').disabled = true;
     $('dataset').addEventListener('change', () => { location.href = `/immersive.html?set=${$('dataset').value}`; });
     const data = await Promise.all([
-        json(`/data/${dataset}/${dataset === 'hsk' ? 'graph' : 'wordlist'}.json`),
+        json(`/data/${dataset}/wordlist.json`),
         json(`/data/${dataset}/definitions.json`), json(`/data/${dataset}/sentences.json`),
         japanese ? json('/data/japanese/graph.json') : null,
         japanese ? json('/data/japanese/character_freq_list.json') : null
     ]);
     definitions = data[1]; sentences = data[2];
-    graph = dataset === 'hsk' ? data[0] : buildExplorerGraph(japanese ? japaneseWordOrder(data[0], data[3]) : data[0]);
+    graph = buildExplorerGraph(japanese ? japaneseWordOrder(data[0], data[3]) : data[0]);
     if (japanese) {
         readingIndex = japaneseReadings(sentences);
         for (const [char, value] of Object.entries(graph)) {
@@ -576,7 +576,7 @@ async function initialize() {
     for (const value of Object.values(graph)) {
         value.edges = Object.fromEntries(Object.entries(value.edges).filter(([char]) => graph[char] && value !== graph[char]));
     }
-    ranks = japanese ? {} : dataset === 'hsk' ? getWordLevelsFromGraph(graph) : getWordSetFromFrequency(data[0]);
+    ranks = japanese ? {} : getWordSetFromFrequency(data[0]);
     characterOrder = Object.keys(graph);
     searchIndex = Object.entries(definitions).sort((a, b) => (ranks[a[0]] || 1e9) - (ranks[b[0]] || 1e9)).map(([word, defs]) => ({ word, pinyin: normalize(readingsFor(word, defs).join(' ')), readings: readingsFor(word, defs).map(normalize), numberedReadings: readingsFor(word, defs).map(reading => reading.toLowerCase().replace(/\s/g, '')), glosses: defs.flatMap(d => d.en.toLowerCase().split(';').map(x => x.trim())), english: defs.map(d => d.en).join(' ').toLowerCase() }));
     cy = cytoscape({ container: $('graph'), elements: [], style: style(), layout: { name: 'preset' }, minZoom: .35, maxZoom: 2.5, wheelSensitivity: .22 });
