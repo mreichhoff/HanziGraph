@@ -26,3 +26,9 @@ export function contrastingText(hex) {
     const luminance = .2126 * linear[0] + .7152 * linear[1] + .0722 * linear[2];
     return (luminance + .05) / .05 >= 1.05 / (luminance + .05) ? '#000000' : '#ffffff';
 }
+
+// Warm common characters transition through rose/lavender to cool rare ones.
+export const defaultFrequencies = ['#ff6b5e', '#ee858e', '#d79dbb', '#b2ace0', '#879fec', '#5894ef'];
+export function frequencyPalette(saved) {
+    return defaultFrequencies.map((fallback, index) => Array.isArray(saved) && isColor(saved[index]) ? saved[index].toLowerCase() : fallback);
+}

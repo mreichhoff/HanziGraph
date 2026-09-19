@@ -8,7 +8,7 @@ import { getWordSetFromFrequency } from './graph-functions.js';
 
 import { buildExplorerGraph, isCharacter, placeCard, sparseConnections, evictionOrder, wordConnections, searchPositions } from './immersive-geometry.mjs';
 
-import { toneOverrides, tonePalette, contrastingText } from './immersive-colors.mjs';
+import { toneOverrides, tonePalette, contrastingText, defaultFrequencies, frequencyPalette } from './immersive-colors.mjs';
 
 cytoscape.use(fcose);
 const $ = id => document.getElementById(id);
@@ -29,7 +29,12 @@ let tones = tonePalette(customTones, dark.matches);
 function saveTones() {
     try { localStorage.setItem(toneStorageKey, JSON.stringify({ version: 2, colors: customTones })); } catch { /* Colors still work for this session. */ }
 }
-const frequencies = ['#138957', '#277da8', '#665ac8', '#a747b9', '#cf6330', '#be3f65'];
+const frequencyStorageKey = 'immersive-frequency-colors';
+let frequencies = frequencyPalette(null);
+try { frequencies = frequencyPalette(JSON.parse(localStorage.getItem(frequencyStorageKey))); } catch { /* Use defaults if storage is unavailable. */ }
+function saveFrequencies() {
+    try { localStorage.setItem(frequencyStorageKey, JSON.stringify(frequencies)); } catch { /* Keep session colors. */ }
+}
 let graph, definitions, sentences, ranks, cy, seed = params.get('word') || '学';
 let colorMode = (japanese || dataset === 'cantonese') ? 'frequency' : 'tone';
 let expansionTimer, searchTimer, searchIndex = [];
@@ -514,48 +519,43 @@ function suggestions() {
     $('suggestions').hidden = !results.length;
     return results;
 }
-function updateToneReset() {
+function updateColorReset() {
     const reset = $('legend').querySelector('.reset-tone-colors');
-    if (reset) reset.hidden = tones.every((tone, i) => tone.toLowerCase() === tonePalette(null, dark.matches)[i]);
+    const palette = colorMode === 'tone' ? tones : frequencies;
+    const defaults = colorMode === 'tone' ? tonePalette(null, dark.matches) : defaultFrequencies;
+    if (reset) reset.hidden = palette.every((color, i) => color.toLowerCase() === defaults[i]);
 }
 function legend() {
+    const toneMode = colorMode === 'tone';
     $('legend').replaceChildren();
-    const colors = colorMode === 'tone' ? tones : frequencies;
-    const labels = colorMode === 'tone' ? ['1', '2', '3', '4', 'neutral'] : japanese ? ['250', '500', '1k', '1.5k', '2k', '2k+'] : ['1k', '2k', '4k', '7k', '10k', '10k+'];
+    $('legend').classList.toggle('frequency-legend', !toneMode);
+    $('legend').setAttribute('aria-label', toneMode ? 'Tone colors' : `${japanese ? 'Kanji' : 'Word'} frequency colors, common to rare`);
+    const colors = toneMode ? tones : frequencies;
+    const labels = toneMode ? ['1', '2', '3', '4', 'neutral'] : japanese ? ['250', '500', '1k', '1.5k', '2k', '2k+'] : ['1k', '2k', '4k', '7k', '10k', '10k+'];
+    const limits = japanese ? [250, 500, 1000, 1500, 2000] : [1000, 2000, 4000, 7000, 10000];
     labels.forEach((label, i) => {
-        if (colorMode === 'tone') {
-            const control = el('label', undefined, 'tone-picker');
-            const picker = el('input');
-            picker.type = 'color';
-            picker.value = tones[i];
-            picker.setAttribute('aria-label', i === 4 ? 'Neutral tone color' : `Tone ${i + 1} color`);
-            control.title = `Choose ${i === 4 ? 'neutral tone' : `tone ${i + 1}`} color`;
-            picker.addEventListener('input', () => {
+        const control = el('label', undefined, 'tone-picker');
+        const picker = el('input'); picker.type = 'color'; picker.value = colors[i];
+        const name = toneMode ? i === 4 ? 'Neutral tone' : `Tone ${i + 1}` : `Frequency rank ${i ? limits[i - 1] + 1 : 1}${i === 5 ? ' and beyond' : `–${limits[i]}`}`;
+        picker.setAttribute('aria-label', `${name} color`); control.title = `Choose ${name.toLowerCase()} color`;
+        picker.addEventListener('input', () => {
+            if (toneMode) {
                 customTones[i] = picker.value === tonePalette(null, dark.matches)[i] ? null : picker.value;
-                tones = tonePalette(customTones, dark.matches);
-                cy.style(style());
-                saveTones();
-                updateToneReset();
-            });
-            control.append(picker, document.createTextNode(label));
-            $('legend').append(control);
-        } else {
-            const span = el('span'); const dot = el('i'); dot.style.background = colors[i];
-            span.append(dot, document.createTextNode(label)); $('legend').append(span);
-        }
+                tones = tonePalette(customTones, dark.matches); saveTones();
+            } else { frequencies[i] = picker.value; saveFrequencies(); }
+            cy.style(style()); updateColorReset();
+        });
+        control.append(picker, document.createTextNode(label)); $('legend').append(control);
     });
-    if (colorMode === 'tone') {
-        const reset = button('↺', () => {
-            customTones = toneOverrides(null);
-            tones = tonePalette(customTones, dark.matches); saveTones(); cy.style(style());
-            $('legend').querySelectorAll('input[type="color"]').forEach((picker, i) => { picker.value = tones[i]; });
-            updateToneReset();
-        }, 'reset-tone-colors');
-        reset.title = 'Reset tone colors';
-        reset.setAttribute('aria-label', 'Reset tone colors');
-        $('legend').append(reset);
-        updateToneReset();
-    }
+    const reset = button('↺', () => {
+        if (toneMode) { customTones = toneOverrides(null); tones = tonePalette(customTones, dark.matches); saveTones(); }
+        else { frequencies = frequencyPalette(null); saveFrequencies(); }
+        cy.style(style());
+        $('legend').querySelectorAll('input[type="color"]').forEach((picker, i) => { picker.value = toneMode ? tones[i] : frequencies[i]; });
+        updateColorReset();
+    }, 'reset-tone-colors');
+    reset.title = `Reset ${toneMode ? 'tone' : 'frequency'} colors`; reset.setAttribute('aria-label', reset.title);
+    $('legend').append(reset); updateColorReset();
 }
 async function initialize() {
     integrations = initializeIntegrations(dataset, speak, renderReading);

@@ -713,3 +713,9 @@ h2 {
     .card-command-list { top:46px; }
     .card .card-command-list .integration-button { min-height:44px; }
 }
+
+@media(max-width:700px) {
+    .frequency-legend .tone-picker { flex-direction:column; min-width:34px; gap:2px; font-size:9px; }
+    .frequency-legend .tone-picker input[type="color"] { width:24px; height:24px; }
+    #legend.frequency-legend { gap:3px; }
+}
