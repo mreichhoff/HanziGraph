@@ -82,8 +82,9 @@ function style() {
     return [
         { selector: 'node', style: { label: 'data(id)', width: 52, height: 52, 'font-size': 28, 'font-family': 'sans-serif', 'text-valign': 'center', 'text-halign': 'center', 'background-color': nodeColor, color: node => contrastingText(nodeColor(node)), 'border-width': 3, 'border-color': dark.matches ? '#142321' : '#fffefb', 'overlay-opacity': 0 } },
         { selector: 'node.inspected', style: { 'border-width': 4, 'border-color': dark.matches ? '#d4eddb' : '#345f50' } },
-        { selector: 'edge', style: { width: 1.5, 'line-color': dark.matches ? '#587566' : '#a9beb0', 'curve-style': 'straight', label: 'data(label)', 'font-size': 12, color: dark.matches ? '#d0e4d7' : '#345847', 'text-background-color': dark.matches ? '#142321' : '#f5f3ee', 'text-background-opacity': .98, 'text-background-padding': 4, 'text-rotation': 'autorotate', 'min-zoomed-font-size': 9, 'text-events': 'yes', 'overlay-opacity': 0 } },
-        { selector: 'edge.revealed', style: { label: 'data(label)', width: 2.3, 'line-color': dark.matches ? '#9dc5ab' : '#648f77', 'z-index': 2 } }
+        { selector: 'edge', style: { width: 1.5, 'line-color': dark.matches ? '#587566' : '#a9beb0', 'curve-style': 'straight', 'font-size': 12, color: dark.matches ? '#d0e4d7' : '#345847', 'text-background-color': dark.matches ? '#142321' : '#f5f3ee', 'text-background-opacity': .98, 'text-background-padding': 4, 'text-rotation': 'autorotate', 'min-zoomed-font-size': 9, 'text-events': 'yes', 'overlay-opacity': 0 } },
+        { selector: 'edge[label]', style: { label: 'data(label)' } },
+        { selector: 'edge.revealed', style: { width: 2.3, 'line-color': dark.matches ? '#9dc5ab' : '#648f77', 'z-index': 2 } }
 
     ];
 }
@@ -579,7 +580,7 @@ async function initialize() {
     ranks = japanese ? {} : getWordSetFromFrequency(data[0]);
     characterOrder = Object.keys(graph);
     searchIndex = Object.entries(definitions).sort((a, b) => (ranks[a[0]] || 1e9) - (ranks[b[0]] || 1e9)).map(([word, defs]) => ({ word, pinyin: normalize(readingsFor(word, defs).join(' ')), readings: readingsFor(word, defs).map(normalize), numberedReadings: readingsFor(word, defs).map(reading => reading.toLowerCase().replace(/\s/g, '')), glosses: defs.flatMap(d => d.en.toLowerCase().split(';').map(x => x.trim())), english: defs.map(d => d.en).join(' ').toLowerCase() }));
-    cy = cytoscape({ container: $('graph'), elements: [], style: style(), layout: { name: 'preset' }, minZoom: .35, maxZoom: 2.5, wheelSensitivity: .22 });
+    cy = cytoscape({ container: $('graph'), elements: [], style: style(), layout: { name: 'preset' }, minZoom: .35, maxZoom: 2.5 });
     cy.on('tap', 'node', event => openWord(event.target.id(), event.renderedPosition));
     cy.on('tap', 'edge', event => openWord(event.target.data('words')[0], event.renderedPosition));
     cy.on('mouseover', 'node, edge', event => { event.target.addClass('hovered'); revealConnections(); });
