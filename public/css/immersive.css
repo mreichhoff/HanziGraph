@@ -151,14 +151,14 @@ a {
     margin-left:auto;
     position:relative;
 }
-.menu summary {
+.menu > summary {
     list-style:none;
     background:var(--panel);
     border:1px solid var(--line);
     border-radius:14px;
     padding:13px 17px;
 }
-.menu summary::-webkit-details-marker {
+.menu > summary::-webkit-details-marker {
     display:none;
 }
 .menu-content {
@@ -468,7 +468,7 @@ h2 {
         font-size:16px;
         height:44px;
     }
-    .menu summary {
+    .menu > summary {
         padding:11px 13px;
     }
     .menu-content {
@@ -575,7 +575,7 @@ h2 {
 .tone-picker input::-moz-color-swatch { border:0; border-radius:3px; }
 .reset-tone-colors { min-height:32px; padding:4px 8px; font-size:17px; }
 
-.menu summary {
+.menu > summary {
     display:flex;
     align-items:center;
     justify-content:center;
@@ -605,3 +605,56 @@ h2 {
 .card rt { font-size:.5em; font-weight:400; color:var(--muted); }
 .card .chinese:has(ruby) { line-height:2.2; }
 .hide-card-pinyin .card rt, .hide-card-pinyin .card rp { display:none; }
+
+.integration-dialog {
+    width:min(540px, calc(100vw - 24px));
+    max-height:calc(100dvh - 40px);
+    overflow:auto;
+    color:var(--ink);
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:22px;
+    box-shadow:var(--shadow);
+}
+.integration-dialog::backdrop { background:#10231e66; }
+.integration-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.integration-heading h2 { margin:0; font-size:20px; }
+.integration-dialog p { font-size:13px; line-height:1.5; color:var(--muted); }
+.integration-dialog fieldset { border:1px solid var(--line); border-radius:12px; margin:18px 0; padding:14px; }
+.integration-dialog legend { font-weight:600; }
+.integration-dialog label:not(.check) { display:grid; gap:6px; font-size:13px; margin:12px 0; }
+.integration-dialog input:not([type=checkbox]), .integration-dialog textarea {
+    width:100%; min-width:0; padding:10px; font:inherit; font-size:16px;
+    border:1px solid var(--line); border-radius:8px; background:var(--paper); color:var(--ink);
+}
+.integration-dialog textarea { margin-top:12px; resize:vertical; }
+.integration-dialog button, .card .integration-button { border:1px solid var(--line); background:#64847512; }
+.integration-dialog button:hover, .card .integration-button:hover { background:#64847525; }
+.integration-dialog [data-save] { background:var(--accent); color:var(--paper); }
+.integration-actions { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+.integration-actions[hidden], .integration-actions:not(:has(> button:not([hidden]))) { display:none; }
+.card .integration-button { font-size:12px; min-height:34px; padding:6px 9px; }
+.integration-output { width:100%; font-size:13px; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap; }
+.integration-output:empty { display:none; }
+.integration-output p { white-space:pre-wrap; }
+.ai-label { font-size:11px; color:var(--muted); margin-top:8px; }
+@media (pointer:coarse) { .card .integration-button { min-height:44px; } }
+
+.menu-content h2 { font-size:16px; margin-bottom:20px; }
+.menu .check { display:flex; align-items:flex-start; gap:9px; line-height:1.5; }
+.menu .check input { flex-shrink:0; margin:3px 0 0; }
+.menu-help { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
+.menu-help summary { font-size:12px; color:var(--muted); padding:4px 0; }
+.menu-links { border-top:1px solid var(--line); margin-top:16px; padding-top:12px; display:grid; gap:8px; }
+.menu-integration-link { display:flex; align-items:center; justify-content:space-between; width:100%; text-align:left; padding:12px; border:1px solid var(--line); background:var(--paper); border-radius:12px; }
+.menu-integration-link strong { display:block; font-size:13px; font-weight:600; }
+.menu-integration-link small { display:block; margin-top:4px; color:var(--muted); font-size:11px; }
+.menu-link-arrow { font-size:23px; color:var(--muted); }
+.menu-links > a { display:block; padding:10px 12px; text-decoration:none; border-radius:10px; }
+.menu-links > a:hover { background:var(--paper); }
+.prompt-settings { border-top:1px solid var(--line); margin-top:16px; padding-top:14px; }
+.prompt-settings summary { font-size:13px; font-weight:600; padding:5px 0; }
+.prompt-settings code { font-size:12px; }
+.integration-dialog .prompt-settings textarea { margin-top:0; font-size:14px; line-height:1.5; }
+@media(max-width:700px) { .integration-dialog .prompt-settings textarea { font-size:16px; } }

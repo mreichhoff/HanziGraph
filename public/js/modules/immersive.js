@@ -1,3 +1,4 @@
+import { initializeIntegrations } from './immersive-integration-ui.js';
 import { preferredVoice } from './immersive-speech.mjs';
 import { parseFurigana, normalizeKana, japaneseReadings, japaneseWordOrder } from './immersive-japanese.mjs';
 import cytoscape from 'cytoscape';
@@ -31,6 +32,7 @@ const frequencies = ['#138957', '#277da8', '#665ac8', '#a747b9', '#cf6330', '#be
 let graph, definitions, sentences, ranks, cy, seed = params.get('word') || '学';
 let colorMode = (japanese || dataset === 'cantonese') ? 'frequency' : 'tone';
 let expansionTimer, searchTimer, searchIndex = [];
+let integrations;
 const cache = new Map();
 const cards = new Map();
 const cap = () => mobile.matches ? 90 : 180;
@@ -277,13 +279,14 @@ function positionCard(word, anchor) {
     card.style.top = `${position.y * zoom + pan.y}px`;
 }
 function closeCard(word) {
+    integrations?.releaseCard(cards.get(word));
     cards.get(word)?.remove();
     cards.delete(word);
     cardAnchors.delete(word);
     connect(); refresh();
 }
 function closeAll() {
-    for (const card of cards.values()) card.remove();
+    for (const card of cards.values()) { integrations?.releaseCard(card); card.remove(); }
     cards.clear();
     cardAnchors.clear();
 }
@@ -331,6 +334,9 @@ async function openWord(word, anchor) {
     if (graph[word]) stats.append(el('span', `${Object.keys(graph[word].edges).length} connections`));
     card.append(stats, el('h3', 'Meanings'));
     const meanings = el('ol', 'Loading definitions…', 'definitions'); card.append(meanings);
+    let wordDefinitions = definitions[word] || [];
+    const wordActions = integrations.actions(card, () => ({text:word, reading:readingsFor(word, wordDefinitions).join(' / '), english:wordDefinitions.map(d => d.en).join('; '), source:classicUrl(word)}), {generate:true});
+    wordActions.hidden = true; card.append(wordActions);
     card.append(el('h3', 'In context'));
     const examples = el('div', 'Loading examples…'); card.append(examples);
     if (graph[word]) {
@@ -361,6 +367,8 @@ async function openWord(word, anchor) {
         try {
             let defs = definitions[word];
             if (!defs) defs = (await cached(`/data/${dataset}/definitions/${partition(word)}.json`))[word];
+            wordDefinitions = defs || [];
+            wordActions.hidden = false;
             pronunciation.textContent = [...new Set(readingsFor(word, defs || []))].join(' / ');
             if (japanese) {
                 title.replaceChildren();
@@ -391,6 +399,8 @@ async function openWord(word, anchor) {
             }
             block.append(chinese, el('p', sentence.pinyin || '', 'card-pinyin'), el('p', sentence.en));
             if ('speechSynthesis' in window) block.append(button('Listen', () => speak(sentence.zh.join('')), 'listen-button'));
+            const entry = {text:sentence.zh.join(''), reading:japanese && sentence.fu ? parseFurigana(sentence.fu).map(part => part.reading || part.text).join('') : sentence.pinyin || '', english:sentence.en, source:classicUrl(word), word, context:sentence.zh.join('')};
+            block.append(integrations.actions(card, () => entry));
             examples.append(block);
         }
         if (!found.length) examples.textContent = failed ? 'Examples could not be loaded. Close and reopen this card to retry.' : 'No example sentences available yet.';
@@ -527,6 +537,7 @@ function legend() {
     }
 }
 async function initialize() {
+    integrations = initializeIntegrations(dataset, speak);
     // Ask early so browsers that load their voice list asynchronously can populate it
     // before the first Listen click. Re-read on every click to include new voices.
     if ('speechSynthesis' in window) speechSynthesis.getVoices();

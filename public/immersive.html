@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f5f3ee">
     <title>HanziGraph · Explore</title>
     <link rel="icon" href="/images/favicon-32x32.png">
-    <link rel="stylesheet" href="/css/immersive.css?v=japanese">
+    <link rel="stylesheet" href="/css/immersive.css?v=menu-prompts">
     <script defer src="/js/immersive-bundle.js"></script>
 </head>
 <body>
@@ -25,9 +25,10 @@
             <label>Color by<select id="colors"><option value="tone">Tone</option><option value="frequency">Frequency</option></select></label>
             <label class="check"><input id="show-card-pinyin" type="checkbox" checked> <span id="card-pinyin-label">Show pinyin in detail cards</span></label>
             <label class="check"><input id="auto-expand" type="checkbox" checked> Discover connections as I pan</label>
-            <p>Tap a character for meanings and examples. Tap a labeled link for its word. Drag to wander; scroll or pinch to zoom.</p>
+            <details class="menu-help"><summary>How to explore</summary><p>Tap a character for meanings and examples. Tap a labeled link for its word. Drag to wander; scroll or pinch to zoom.</p>
             <p>One detail card opens where you tap. Tap another character or link to replace it, or tap empty graph space to dismiss it. Panning and zooming keep it open. Pan to discover less common connections. Distant characters leave the canvas to make room and return when you pan back.</p>
-            <a id="classic" href="/">Open classic HanziGraph ↗</a>
+            </details>
+            <div class="menu-links"><a id="classic" href="/">Open classic HanziGraph ↗</a></div>
         </div></details>
     </header>
     <div id="loading" role="status">Preparing your neighborhood…</div>
