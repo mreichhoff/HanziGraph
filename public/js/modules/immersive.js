@@ -1,3 +1,5 @@
+import { preferredVoice } from './immersive-speech.mjs';
+import { parseFurigana, normalizeKana, japaneseReadings, japaneseWordOrder } from './immersive-japanese.mjs';
 import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import { getWordSetFromFrequency, getWordLevelsFromGraph } from './graph-functions.js';
@@ -11,8 +13,13 @@ const $ = id => document.getElementById(id);
 const mobile = matchMedia('(max-width:700px)');
 const dark = matchMedia('(prefers-color-scheme:dark)');
 const params = new URLSearchParams(location.search);
-const datasets = ['simplified', 'traditional', 'cantonese', 'hsk'];
+const datasets = ['simplified', 'traditional', 'cantonese', 'hsk', 'japanese'];
 const dataset = datasets.includes(params.get('set')) ? params.get('set') : 'simplified';
+const japanese = dataset === 'japanese';
+const language = japanese ? 'ja' : 'zh';
+const classicUrl = word => japanese ? `https://japanesegraph.com/japanese/${encodeURIComponent(word || '')}` : `/${dataset}/${encodeURIComponent(word || '')}`;
+let readingIndex = new Map();
+const readingsFor = (word, defs = definitions[word] || []) => japanese ? [...(readingIndex.get(word) || [])] : defs.map(d => d.pinyin).filter(Boolean);
 const toneStorageKey = 'immersive-tone-colors';
 let customTones = toneOverrides(null);
 try { customTones = toneOverrides(JSON.parse(localStorage.getItem(toneStorageKey))); } catch { /* Storage may be unavailable or malformed. */ }
@@ -22,7 +29,7 @@ function saveTones() {
 }
 const frequencies = ['#138957', '#277da8', '#665ac8', '#a747b9', '#cf6330', '#be3f65'];
 let graph, definitions, sentences, ranks, cy, seed = params.get('word') || '学';
-let colorMode = dataset === 'cantonese' ? 'frequency' : 'tone';
+let colorMode = (japanese || dataset === 'cantonese') ? 'frequency' : 'tone';
 let expansionTimer, searchTimer, searchIndex = [];
 const cache = new Map();
 const cards = new Map();
@@ -283,11 +290,23 @@ function speak(word) {
     if (!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = dataset === 'cantonese' ? 'zh-HK' : dataset === 'traditional' ? 'zh-TW' : 'zh-CN';
+    utterance.lang = japanese ? 'ja-JP' : dataset === 'cantonese' ? 'zh-HK' : dataset === 'traditional' ? 'zh-TW' : 'zh-CN';
+    const voice = preferredVoice(speechSynthesis.getVoices(), utterance.lang);
+    if (voice) utterance.voice = voice;
     speechSynthesis.speak(utterance);
 }
+function appendJapanese(container, parts) {
+    for (const part of parts) {
+        if (!part.reading) { container.append(document.createTextNode(part.text)); continue; }
+        const ruby = el('ruby', part.text);
+        ruby.append(el('rp', '('), el('rt', part.reading), el('rp', ')'));
+        container.append(ruby);
+    }
+}
 function findExamples(word, source) {
-    return source.filter(s => s.en && (s.zh.includes(word) || ([...word].length === 1 && s.zh.join('').includes(word)))).slice(0, 3);
+    const matches = source.filter(s => s.en && (s.zh.includes(word) || ([...word].length === 1 && s.zh.join('').includes(word))));
+    if (japanese) matches.sort((a, b) => a.zh.join('').length - b.zh.join('').length);
+    return matches.slice(0, 3);
 }
 async function openWord(word, anchor) {
     clearTimeout(searchTimer);
@@ -300,14 +319,14 @@ async function openWord(word, anchor) {
     card.tabIndex = -1;
     card.setAttribute('aria-label', `Details for ${word}`);
     const header = el('div', undefined, 'card-header');
-    const title = el('h2', word, 'character'); title.lang = 'zh';
+    const title = el('h2', word, 'character'); title.lang = language;
     const close = button('×', () => closeCard(word), 'close');
     close.setAttribute('aria-label', `Close ${word}`);
     header.append(title, close); card.append(header);
     const pronunciation = el('div', 'Loading…', 'transcription card-pinyin'); card.append(pronunciation);
     if ('speechSynthesis' in window) card.append(button('Listen', () => speak(word), 'listen-button'));
     const stats = el('div', undefined, 'stats');
-    if (ranks[word]) stats.append(el('span', dataset === 'hsk' ? `HSK ${ranks[word]}` : `Frequency #${ranks[word].toLocaleString()}`));
+    if (!japanese && ranks[word]) stats.append(el('span', dataset === 'hsk' ? `HSK ${ranks[word]}` : `Frequency #${ranks[word].toLocaleString()}`));
     if (graph[word]) stats.append(el('span', `${Object.keys(graph[word].edges).length} connections`));
     card.append(stats, el('h3', 'Meanings'));
     const meanings = el('ol', 'Loading definitions…', 'definitions'); card.append(meanings);
@@ -334,14 +353,19 @@ async function openWord(word, anchor) {
             if (mobile.matches) closeCard(word);
         }, 'card-action'));
     }
-    const classic = el('a', 'More in classic HanziGraph ↗', 'classic-link');
-    classic.href = `/${dataset}/${encodeURIComponent(word)}`; card.append(classic);
+    const classic = el('a', `More in classic ${japanese ? 'JapaneseGraph' : 'HanziGraph'} ↗`, 'classic-link');
+    classic.href = classicUrl(word); card.append(classic);
     cards.set(word, card); $('cards').append(card); positionCard(word, anchor); card.focus(); refresh();
     const defsTask = (async () => {
         try {
             let defs = definitions[word];
             if (!defs && dataset !== 'hsk') defs = (await cached(`/data/${dataset}/definitions/${partition(word)}.json`))[word];
-            pronunciation.textContent = [...new Set((defs || []).map(d => d.pinyin))].join(' / ');
+            pronunciation.textContent = [...new Set(readingsFor(word, defs || []))].join(' / ');
+            if (japanese) {
+                title.replaceChildren();
+                appendJapanese(title, [{ text: word, reading: readingsFor(word)[0] || '' }]);
+                pronunciation.hidden = true;
+            }
             meanings.replaceChildren(...(defs || []).map(d => el('li', d.en)));
             if (!defs?.length) meanings.textContent = 'No definition available for this word.';
         } catch { pronunciation.textContent = ''; meanings.replaceChildren(el('li', 'Definitions could not be loaded. Close and reopen this card to retry.')); }
@@ -359,7 +383,11 @@ async function openWord(word, anchor) {
         examples.replaceChildren();
         for (const sentence of found.slice(0, 3)) {
             const block = el('div', undefined, 'example');
-            const chinese = el('p', sentence.zh.join(''), 'chinese'); chinese.lang = 'zh';
+            const chinese = el('p', sentence.zh.join(''), 'chinese'); chinese.lang = language;
+            if (japanese && sentence.fu) {
+                const parts = parseFurigana(sentence.fu);
+                if (parts.map(p => p.text).join('') === sentence.zh.join('')) { chinese.replaceChildren(); appendJapanese(chinese, parts); }
+            }
             block.append(chinese, el('p', sentence.pinyin || '', 'card-pinyin'), el('p', sentence.en));
             if ('speechSynthesis' in window) block.append(button('Listen', () => speak(sentence.zh.join('')), 'listen-button'));
             examples.append(block);
@@ -425,7 +453,7 @@ function navigate(word) {
     connect();
     openWord(word, cardAnchor);
 }
-function normalize(value) { return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f0-9\s]/g, ''); }
+function normalize(value) { return (japanese ? normalizeKana(value) : value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f0-9\s]/g, ''); }
 function suggestions() {
     const query = $('search').value.trim();
     const normalized = normalize(query);
@@ -437,6 +465,7 @@ function suggestions() {
         if (item.word.startsWith(query)) return 1;
         if (item.numberedReadings.includes(lower.replace(/\s/g, ''))) return 1.5;
         if (normalized && item.readings.includes(normalized)) return 2;
+        if (item.english === lower) return 2.5;
         if (item.glosses.includes(lower)) return 3;
         if (item.glosses.some(gloss => gloss.startsWith(lower))) return 4;
         if (normalized && item.pinyin.includes(normalized)) return 5;
@@ -447,7 +476,7 @@ function suggestions() {
         .slice(0, 7).map(match => match.item);
     for (const item of results) {
         const choice = button('', () => { $('search').value = item.word; navigate(item.word); });
-        choice.append(el('b', item.word), el('span', `${definitions[item.word][0].pinyin} · ${definitions[item.word][0].en.slice(0, 48)}`));
+        choice.append(el('b', item.word), el('span', `${readingsFor(item.word).join(' / ')}${readingsFor(item.word).length ? ' · ' : ''}${definitions[item.word][0].en.slice(0, 48)}`));
         $('suggestions').append(choice);
     }
     $('suggestions').hidden = !results.length;
@@ -460,7 +489,7 @@ function updateToneReset() {
 function legend() {
     $('legend').replaceChildren();
     const colors = colorMode === 'tone' ? tones : frequencies;
-    const labels = colorMode === 'tone' ? ['1', '2', '3', '4', 'neutral'] : dataset === 'hsk' ? ['HSK1', '2', '3', '4', '5', '6'] : ['1k', '2k', '4k', '7k', '10k', '10k+'];
+    const labels = colorMode === 'tone' ? ['1', '2', '3', '4', 'neutral'] : japanese ? ['250', '500', '1k', '1.5k', '2k', '2k+'] : dataset === 'hsk' ? ['HSK1', '2', '3', '4', '5', '6'] : ['1k', '2k', '4k', '7k', '10k', '10k+'];
     labels.forEach((label, i) => {
         if (colorMode === 'tone') {
             const control = el('label', undefined, 'tone-picker');
@@ -497,33 +526,59 @@ function legend() {
     }
 }
 async function initialize() {
+    // Ask early so browsers that load their voice list asynchronously can populate it
+    // before the first Listen click. Re-read on every click to include new voices.
+    if ('speechSynthesis' in window) speechSynthesis.getVoices();
+    const readingStorageKey = japanese ? 'immersive-show-furigana' : 'immersive-show-pinyin';
     const pinyinToggle = $('show-card-pinyin');
-    try { pinyinToggle.checked = localStorage.getItem('immersive-show-pinyin') !== 'false'; } catch { /* Use the default when storage is unavailable. */ }
+    try { pinyinToggle.checked = localStorage.getItem(readingStorageKey) !== 'false'; } catch { /* Use the default when storage is unavailable. */ }
     const applyPinyinVisibility = () => document.body.classList.toggle('hide-card-pinyin', !pinyinToggle.checked);
     applyPinyinVisibility();
     pinyinToggle.addEventListener('change', () => {
         applyPinyinVisibility();
-        try { localStorage.setItem('immersive-show-pinyin', String(pinyinToggle.checked)); } catch { /* Keep the session preference. */ }
+        try { localStorage.setItem(readingStorageKey, String(pinyinToggle.checked)); } catch { /* Keep the session preference. */ }
     });
     if (dataset === 'cantonese') $('card-pinyin-label').textContent = 'Show jyutping in detail cards';
     $('dataset').value = dataset; $('colors').value = colorMode;
-    $('classic').href = `/${dataset}`;
-    if (dataset === 'cantonese') $('colors').querySelector('[value="tone"]').disabled = true;
+    $('classic').href = classicUrl();
+    if (japanese) {
+        document.title = 'JapaneseGraph · Explore';
+        const brand = document.querySelector('.brand');
+        brand.href = 'https://japanesegraph.com/'; brand.title = 'Open classic JapaneseGraph';
+        brand.firstElementChild.textContent = '字'; brand.firstElementChild.lang = 'ja';
+        brand.querySelector('.brand-name').replaceChildren(document.createTextNode('JapaneseGraph'), el('small', 'EXPLORER'));
+        $('classic').textContent = 'Open classic JapaneseGraph ↗';
+        $('card-pinyin-label').textContent = 'Show furigana in detail cards';
+        $('colors').querySelector('[value="frequency"]').textContent = 'Kanji frequency';
+        $('legend').setAttribute('aria-label', 'Kanji frequency rank: top 250, 500, 1000, 1500, 2000, and beyond');
+        document.querySelector('label[for="search"]').textContent = 'Search kanji, kana or English';
+    }
+    if (japanese || dataset === 'cantonese') $('colors').querySelector('[value="tone"]').disabled = true;
     $('dataset').addEventListener('change', () => { location.href = `/immersive.html?set=${$('dataset').value}`; });
     const data = await Promise.all([
         json(`/data/${dataset}/${dataset === 'hsk' ? 'graph' : 'wordlist'}.json`),
-        json(`/data/${dataset}/definitions.json`), json(`/data/${dataset}/sentences.json`)
+        json(`/data/${dataset}/definitions.json`), json(`/data/${dataset}/sentences.json`),
+        japanese ? json('/data/japanese/graph.json') : null,
+        japanese ? json('/data/japanese/character_freq_list.json') : null
     ]);
     definitions = data[1]; sentences = data[2];
-    graph = dataset === 'hsk' ? data[0] : buildExplorerGraph(data[0]);
-    // Frequency lists include Latin letters and punctuation; keep this canvas Chinese.
+    graph = dataset === 'hsk' ? data[0] : buildExplorerGraph(japanese ? japaneseWordOrder(data[0], data[3]) : data[0]);
+    if (japanese) {
+        readingIndex = japaneseReadings(sentences);
+        for (const [char, value] of Object.entries(graph)) {
+            const rank = data[4].indexOf(char);
+            value.node.level = rank < 0 ? 6 : [250, 500, 1000, 1500, 2000, Infinity].findIndex(limit => rank + 1 <= limit) + 1;
+            for (const [other, edge] of Object.entries(value.edges)) edge.level = data[3][char]?.edges[other]?.word_level || 6;
+        }
+    }
+    // Frequency lists include Latin letters and punctuation; keep only Han characters (hanzi or kanji) on the canvas.
     graph = Object.fromEntries(Object.entries(graph).filter(([char]) => isCharacter(char)));
     for (const value of Object.values(graph)) {
         value.edges = Object.fromEntries(Object.entries(value.edges).filter(([char]) => graph[char] && value !== graph[char]));
     }
-    ranks = dataset === 'hsk' ? getWordLevelsFromGraph(graph) : getWordSetFromFrequency(data[0]);
+    ranks = japanese ? {} : dataset === 'hsk' ? getWordLevelsFromGraph(graph) : getWordSetFromFrequency(data[0]);
     characterOrder = Object.keys(graph);
-    searchIndex = Object.entries(definitions).sort((a, b) => (ranks[a[0]] || 1e9) - (ranks[b[0]] || 1e9)).map(([word, defs]) => ({ word, pinyin: normalize(defs.map(d => d.pinyin).join(' ')), readings: defs.map(d => normalize(d.pinyin)), numberedReadings: defs.map(d => d.pinyin.toLowerCase().replace(/\s/g, '')), glosses: defs.flatMap(d => d.en.toLowerCase().split(';').map(x => x.trim())), english: defs.map(d => d.en).join(' ').toLowerCase() }));
+    searchIndex = Object.entries(definitions).sort((a, b) => (ranks[a[0]] || 1e9) - (ranks[b[0]] || 1e9)).map(([word, defs]) => ({ word, pinyin: normalize(readingsFor(word, defs).join(' ')), readings: readingsFor(word, defs).map(normalize), numberedReadings: readingsFor(word, defs).map(reading => reading.toLowerCase().replace(/\s/g, '')), glosses: defs.flatMap(d => d.en.toLowerCase().split(';').map(x => x.trim())), english: defs.map(d => d.en).join(' ').toLowerCase() }));
     cy = cytoscape({ container: $('graph'), elements: [], style: style(), layout: { name: 'preset' }, minZoom: .35, maxZoom: 2.5, wheelSensitivity: .22 });
     cy.on('tap', 'node', event => openWord(event.target.id(), event.renderedPosition));
     cy.on('tap', 'edge', event => openWord(event.target.data('words')[0], event.renderedPosition));
@@ -565,7 +620,7 @@ async function initialize() {
         event.preventDefault(); const query = $('search').value.trim(); if (!query) return;
         clearTimeout(searchTimer);
         if (definitions[query] || [...query].some(c => isCharacter(c) && graph[c])) navigate(query);
-        else { const matches = suggestions(); if (matches.length) navigate(matches[0].word); else announce('No match. Try a Chinese character, pinyin, or English meaning.'); }
+        else { const matches = suggestions(); if (matches.length) navigate(matches[0].word); else announce(japanese ? 'No match. Try kanji, kana, or an English meaning.' : 'No match. Try a Chinese character, pinyin, or English meaning.'); }
         $('search').blur();
     });
     document.addEventListener('keydown', event => {

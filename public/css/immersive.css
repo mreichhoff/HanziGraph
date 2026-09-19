@@ -600,3 +600,8 @@ h2 {
     .tone-picker input[type="color"] { width:20px; height:24px; }
     .reset-tone-colors { padding:4px 6px; }
 }
+
+.card ruby { ruby-align:center; }
+.card rt { font-size:.5em; font-weight:400; color:var(--muted); }
+.card .chinese:has(ruby) { line-height:2.2; }
+.hide-card-pinyin .card rt, .hide-card-pinyin .card rp { display:none; }
