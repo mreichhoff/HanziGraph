@@ -1,0 +1,128 @@
+// Pure geometry and data helpers shared by the explorer and its regression tests.
+export const isCharacter = value => /^\p{Script=Han}$/u.test(value);
+
+export function buildExplorerGraph(words) {
+    const graph = {};
+    const thresholds = [1000, 2000, 4000, 7000, 10000, Infinity];
+    words.forEach((word, index) => {
+        const chars = [...new Set([...word].filter(isCharacter))];
+        const level = thresholds.findIndex(threshold => index + 1 <= threshold) + 1;
+        for (const char of chars) {
+            graph[char] ||= { node: { level }, edges: {} };
+            for (const other of chars) {
+                if (char === other) continue;
+                // Retain every neighbor, in frequency order, rather than truncating
+                // at eight. Limit only the example words stored for each pair.
+                const edge = graph[char].edges[other] ||= { level, words: [] };
+                if (edge.words.length < 2) edge.words.push(word);
+            }
+        }
+    });
+    return graph;
+}
+
+export function overlapArea(a, b, gap = 12) {
+    return Math.max(0, Math.min(a.x + a.width + gap, b.x + b.width) - Math.max(a.x - gap, b.x)) *
+        Math.max(0, Math.min(a.y + a.height + gap, b.y + b.height) - Math.max(a.y - gap, b.y));
+}
+
+export function placeCard(anchor, size, bounds, obstacles) {
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const desired = { x: anchor.x - 28, y: anchor.y - 28 };
+    const xs = [desired.x, bounds.x, bounds.x + bounds.width - size.width];
+    const ys = [desired.y, bounds.y, bounds.y + bounds.height - size.height];
+    for (const rect of obstacles) {
+        xs.push(rect.x - size.width - 12, rect.x + rect.width + 12);
+        ys.push(rect.y - size.height - 12, rect.y + rect.height + 12);
+    }
+    let best, bestScore = Infinity;
+    for (const x of xs) for (const y of ys) {
+        const rect = { ...size,
+            x: clamp(x, bounds.x, bounds.x + bounds.width - size.width),
+            y: clamp(y, bounds.y, bounds.y + bounds.height - size.height) };
+        const overlap = obstacles.reduce((sum, obstacle) => sum + overlapArea(rect, obstacle), 0);
+        const score = overlap * 1e6 + Math.hypot(rect.x - desired.x, rect.y - desired.y);
+        if (score < bestScore) { best = rect; bestScore = score; }
+    }
+    return best;
+}
+
+export function segmentsCross(a, b, c, d) {
+    const cross = (p, q, r) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+    return cross(a, b, c) * cross(a, b, d) < 0 && cross(c, d, a) * cross(c, d, b) < 0;
+}
+
+// A small degree budget and shortest-first, non-crossing links keep the visible
+// graph readable. This affects the drawing only, not the dictionary adjacency.
+export function sparseConnections(nodes, graph, maxDistance = 270) {
+    const positions = new Map(nodes.map(node => [node.id, node.position]));
+    const candidates = new Map();
+    for (const { id: source, position } of nodes) {
+        for (const [target, edge] of Object.entries(graph[source]?.edges || {})) {
+            const other = positions.get(target);
+            if (!other || target === source) continue;
+            const distance = Math.hypot(position.x - other.x, position.y - other.y);
+            if (distance > maxDistance) continue;
+            const id = `edge:${[source, target].sort().join(':')}`;
+            if (!candidates.has(id)) candidates.set(id, { id, source, target, edge, distance });
+        }
+    }
+    const chosen = [], degrees = new Map();
+    for (const candidate of [...candidates.values()].sort((a, b) => a.distance - b.distance)) {
+        if ((degrees.get(candidate.source) || 0) >= 3 || (degrees.get(candidate.target) || 0) >= 3) continue;
+        const a = positions.get(candidate.source), b = positions.get(candidate.target);
+        if (chosen.some(edge => segmentsCross(a, b, positions.get(edge.source), positions.get(edge.target)))) continue;
+        // Avoid drawing a link through an unrelated character.
+        const dx = b.x - a.x, dy = b.y - a.y, squared = dx * dx + dy * dy;
+        if (!squared) continue;
+        if (nodes.some(node => {
+            if (node.id === candidate.source || node.id === candidate.target) return false;
+            const p = node.position;
+            const t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / squared;
+            return t > 0 && t < 1 && Math.hypot(p.x - a.x - t * dx, p.y - a.y - t * dy) < 35;
+        })) continue;
+        chosen.push(candidate);
+        for (const id of [candidate.source, candidate.target]) degrees.set(id, (degrees.get(id) || 0) + 1);
+    }
+    return chosen;
+}
+
+export function evictionOrder(nodes, extent, protectedIds, margin = 70) {
+    const center = { x: (extent.x1 + extent.x2) / 2, y: (extent.y1 + extent.y2) / 2 };
+    const distance = node => Math.hypot(node.position.x - center.x, node.position.y - center.y);
+    return nodes.filter(node => {
+        const p = node.position;
+        return !protectedIds.has(node.id) &&
+            (p.x < extent.x1 - margin || p.x > extent.x2 + margin || p.y < extent.y1 - margin || p.y > extent.y2 + margin);
+    }).sort((a, b) => distance(b) - distance(a)).map(node => node.id);
+}
+
+// Search is an explicit request for this word, so these edges take precedence
+// over the normal distance, degree, and crossing filters.
+export function wordConnections(word, available) {
+    const chars = [...word];
+    const edges = new Map();
+    for (let i = 1; i < chars.length; i++) {
+        const source = chars[i - 1], target = chars[i];
+        if (source === target || !available.has(source) || !available.has(target)) continue;
+        const id = `edge:${[source, target].sort().join(':')}`;
+        edges.set(id, { id, source, target, words: [word], label: word });
+    }
+    return [...edges.values()];
+}
+
+export function searchPositions(chars, origin, occupied, columns = 3) {
+    const offsets = chars.map((id, index) => ({ id, x: index % columns * 125, y: Math.floor(index / columns) * 125 }));
+    for (let attempt = 0; attempt < 180; attempt++) {
+        const radius = attempt ? 100 + Math.sqrt(attempt) * 90 : 0;
+        const angle = attempt * 2.399963;
+        const result = offsets.map(p => ({ id: p.id, position: {
+            x: origin.x + Math.cos(angle) * radius + p.x,
+            y: origin.y + Math.sin(angle) * radius + p.y
+        } }));
+        if (result.every(p => occupied.every(q => Math.hypot(p.position.x - q.x, p.position.y - q.y) >= 100))) return result;
+    }
+    // A very dense remembered neighborhood still must not prevent a search.
+    const right = Math.max(origin.x, ...occupied.map(p => p.x)) + 150;
+    return offsets.map(p => ({ id: p.id, position: { x: right + p.x, y: origin.y + p.y } }));
+}
