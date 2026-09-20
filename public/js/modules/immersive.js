@@ -1,3 +1,4 @@
+import { searchKind, sentenceWords, dictionaryForm } from './immersive-sentences.mjs';
 import { readingParts } from './immersive-card.mjs';
 import { initializeIntegrations } from './immersive-integration-ui.js';
 import { preferredVoice } from './immersive-speech.mjs';
@@ -21,6 +22,7 @@ const japanese = dataset === 'japanese';
 const language = japanese ? 'ja' : 'zh';
 const classicUrl = word => japanese ? `https://japanesegraph.com/japanese/${encodeURIComponent(word || '')}` : `/${dataset}/${encodeURIComponent(word || '')}`;
 let readingIndex = new Map();
+let knownWords = new Set();
 const readingsFor = (word, defs = definitions[word] || []) => japanese ? [...(readingIndex.get(word) || [])] : defs.map(d => d.pinyin).filter(Boolean);
 const toneStorageKey = 'immersive-tone-colors';
 let customTones = toneOverrides(null);
@@ -35,7 +37,7 @@ try { frequencies = frequencyPalette(JSON.parse(localStorage.getItem(frequencySt
 function saveFrequencies() {
     try { localStorage.setItem(frequencyStorageKey, JSON.stringify(frequencies)); } catch { /* Keep session colors. */ }
 }
-let graph, definitions, sentences, ranks, cy, seed = params.get('word') || '学';
+let graph, definitions, sentences, ranks, cy, seed = '学';
 let colorMode = (japanese || dataset === 'cantonese') ? 'frequency' : 'tone';
 let expansionTimer, searchTimer, searchIndex = [];
 let integrations;
@@ -155,7 +157,7 @@ function connect() {
     revealConnections();
 }
 function protectedCharacters() {
-    return new Set([...cards.keys(), searchedWord].flatMap(word => [...word]));
+    return new Set([...cards.keys()].filter(word => !word.startsWith('\u0000')).concat(searchedWord).flatMap(word => [...word]));
 }
 function makeRoom(count, protectedIds = new Set()) {
     const extent = cy.extent();
@@ -286,6 +288,11 @@ function reset(word = seed) {
 function positionCard(word, anchor, source) {
     const card = cards.get(word);
     if (!card) return;
+    if (card.dataset.centered === 'true') {
+        card.style.left = `${Math.max(12, (innerWidth - card.offsetWidth) / 2)}px`;
+        card.style.top = `${Math.max(82, (innerHeight - card.offsetHeight) / 2)}px`;
+        return;
+    }
     let pan = cy.pan(), zoom = cy.zoom();
     if (anchor) {
         card.style.height = '';
@@ -317,6 +324,7 @@ function positionCard(word, anchor, source) {
     card.style.top = `${position.y * zoom + pan.y}px`;
 }
 function closeCard(word) {
+    cards.get(word)?.cleanup?.();
     integrations?.releaseCard(cards.get(word));
     cards.get(word)?.remove();
     cards.delete(word);
@@ -324,7 +332,7 @@ function closeCard(word) {
     connect(); refresh();
 }
 function closeAll() {
-    for (const card of cards.values()) { integrations?.releaseCard(card); card.remove(); }
+    for (const card of cards.values()) { card.cleanup?.(); integrations?.releaseCard(card); card.remove(); }
     cards.clear();
     cardAnchors.clear();
 }
@@ -358,6 +366,7 @@ async function openWord(word, anchor, source) {
     if (cards.has(word)) { positionCard(word, anchor, source); cards.get(word).focus(); return; }
     while (cards.size) closeCard(cards.keys().next().value);
     const card = el('section', undefined, 'card');
+    if (![...word].some(char => graph[char])) card.dataset.centered = 'true';
     card.tabIndex = -1;
     card.addEventListener('click', event => {
         if (!event.target.closest('.card-more')) card.querySelectorAll('.card-more[open]').forEach(menu => { menu.open = false; });
@@ -405,11 +414,11 @@ async function openWord(word, anchor, source) {
     }
     const classic = el('a', `More in classic ${japanese ? 'JapaneseGraph' : 'HanziGraph'} ↗`, 'classic-link');
     classic.href = classicUrl(word); card.append(classic);
+    if (japanese) card.append(dictionaryCredit());
     cards.set(word, card); $('cards').append(card); positionCard(word, anchor, source); card.focus(); refresh();
     const defsTask = (async () => {
         try {
-            let defs = definitions[word];
-            if (!defs) defs = (await cached(`/data/${dataset}/definitions/${partition(word)}.json`))[word];
+            const defs = await lookupDefinitions(word);
             wordDefinitions = defs || [];
             wordActions.hidden = false;
             renderReading(pronunciation, [...new Set(readingsFor(word, defs || []))].join(' / '));
@@ -450,7 +459,8 @@ async function openWord(word, anchor, source) {
     })();
     await Promise.all([defsTask, examplesTask]);
 }
-function navigate(word) {
+function navigate(word, showCard = true) {
+    if (![...word].some(char => graph[char])) { if (showCard) openWord(word); return; }
     clearTimeout(expansionTimer);
     searchedWord = word;
     searchedWords.add(word);
@@ -505,8 +515,151 @@ function navigate(word) {
         expandNodes(chars.map(c => cy.getElementById(c)).filter(n => n.length), 8);
     }
     connect();
-    openWord(word, cardAnchor);
+    if (showCard) openWord(word, cardAnchor);
 }
+function dictionaryCredit() {
+    const credit = el('a', 'Dictionary: JMdict / EDRDG · CC BY-SA 4.0', 'classic-link');
+    credit.href = 'https://www.edrdg.org/edrdg/licence.html';
+    return credit;
+}
+async function lookupDefinitions(word) {
+    let defs = definitions[word];
+    if (!defs) defs = (await cached(`/data/${dataset}/definitions/${partition(word)}.json`))[word];
+    if (japanese) {
+        try {
+            const extra = (await cached(`/data/japanese/lexicon/${partition(word)}.json`))[word];
+            if (extra?.readings?.length) readingIndex.set(word, new Set(extra.readings));
+            if (extra?.definitions?.length) defs = extra.definitions.map(en => ({en}));
+        } catch (error) { if (!defs?.length) throw error; }
+    }
+    return defs || [];
+}
+
+async function openSentence(text) {
+    clearTimeout(searchTimer); clearTimeout(expansionTimer);
+    $('suggestions').hidden = true;
+    closeAll();
+    // Segment locally before AI returns; never expand every character in a sentence.
+    const first = sentenceWords(text, dataset).find(word => [...word].some(char => graph[char]));
+    if (first) {
+        navigate(first, false);
+        const node = cy.getElementById([...first].find(char => graph[char]));
+        const position = node.renderedPosition(), pan = cy.pan();
+        cy.pan({x:pan.x + innerWidth / 2 - position.x, y:pan.y + 110 - position.y});
+    }
+    const key = '\u0000sentence';
+    const card = el('section', '', 'card sentence-card'); card.dataset.centered = 'true';
+    card.tabIndex = -1; card.setAttribute('aria-label', 'Sentence explorer');
+    const header = el('div', '', 'card-header');
+    header.append(el('h2', 'Sentence', 'sentence-title'));
+    const attribution = el('span', 'AI', 'sentence-ai-credit');
+    attribution.title = 'Translation, readings and explanations generated by your local AI model';
+    header.append(attribution);
+    const tools = el('div', '', 'card-header-tools');
+    const close = button('×', () => closeCard(key), 'close'); close.setAttribute('aria-label', 'Close sentence');
+    tools.append(close); header.append(tools); card.append(header);
+    const sentence = el('p', text, 'sentence-text'); sentence.lang = language;
+    const output = el('div', '', 'sentence-analysis'); output.setAttribute('aria-live', 'polite');
+    const detail = el('div', '', 'sentence-word-detail');
+    const sentenceReading = el('div', '', 'card-pinyin');
+    const overview = el('div');
+    card.append(sentence, sentenceReading, output, detail);
+    cards.set(key, card); $('cards').append(card); positionCard(key); card.focus(); refresh();
+    let controller;
+    const analyze = async () => {
+        controller?.abort(); controller = new AbortController();
+        const current = controller;
+        output.replaceChildren(); output.setAttribute('aria-busy', 'true');
+        const waiting = el('div', '', 'ai-waiting');
+        const pulse = el('span', '', 'waiting-pulse'); pulse.setAttribute('aria-hidden', 'true');
+        const label = el('div'); label.append(el('strong', 'Unpacking your sentence'), el('small', 'Translation, readings, and grammar from your local model.'));
+        waiting.append(pulse, label, button('Cancel', () => current.abort())); output.append(waiting);
+        try {
+            const analysis = await integrations.analyze(card, text, current.signal);
+            if (!card.isConnected || current.signal.aborted) return;
+            sentence.replaceChildren(); output.replaceChildren();
+            let selection = 0, selectedChoice;
+            const dismissWord = () => {
+                ++selection;
+                integrations.releaseCard(detail);
+                detail.replaceChildren(); overview.hidden = false;
+                selectedChoice?.setAttribute('aria-pressed', 'false');
+                selectedChoice?.focus(); selectedChoice = null;
+            };
+            for (const token of analysis.words) {
+                if (!/[\p{L}\p{N}]/u.test(token.text)) { sentence.append(document.createTextNode(token.text)); continue; }
+                const choice = button('', async () => {
+                    if (selectedChoice === choice) { dismissWord(); return; }
+                    selectedChoice = choice;
+                    const selected = ++selection;
+                    const lemma = dictionaryForm(token, dataset);
+                    overview.hidden = true;
+                    sentence.querySelectorAll('button').forEach(node => node.setAttribute('aria-pressed', String(node === choice)));
+                    integrations.releaseCard(detail);
+                    detail.replaceChildren();
+                    const title = el('h3', token.text); title.lang = language;
+                    const wordHeader = el('div', '', 'sentence-word-header');
+                    const wordHeading = el('div'); wordHeading.append(title);
+                    const reading = el('div', '', 'card-pinyin'); renderReading(reading, token.reading); wordHeading.append(reading);
+                    const wordTools = el('div', '', 'card-header-tools');
+                    const dismiss = button('×', dismissWord, 'close');
+                    dismiss.setAttribute('aria-label', 'Close word details');
+                    wordHeader.append(wordHeading, wordTools); detail.append(wordHeader);
+                    if (lemma !== token.text) detail.append(el('p', `Base form: ${lemma}`, 'muted'));
+                    detail.append(el('p', token.meaning, 'sentence-word-meaning'), el('p', token.explanation));
+                    const dictionary = el('details', '', 'sentence-dictionary');
+                    dictionary.append(el('summary', 'Dictionary meanings'));
+                    const defs = el('ul', 'Looking up dictionary meanings…', 'definitions'); dictionary.append(defs); if (japanese) dictionary.append(dictionaryCredit()); detail.append(dictionary);
+                    detail.append(integrations.actions(detail, () => ({text:token.text, word:token.text, reading:token.reading, english:token.meaning, context:text, source:classicUrl(lemma), generated:true}), {word:true, toolbarHost:wordTools}));
+                    wordTools.append(dismiss);
+
+                    try {
+                        let found = await lookupDefinitions(lemma);
+                        if (!found.length && lemma !== token.text) found = await lookupDefinitions(token.text);
+                        if (selection !== selected || !card.isConnected) return;
+                        defs.replaceChildren(...found.map(def => el('li', def.en)));
+                        if (!found.length) defs.textContent = 'No dictionary entry found; the explanation above is from local AI.';
+                    } catch { if (selection === selected) defs.textContent = 'Dictionary lookup failed. Select the word again to retry.'; }
+                }, 'sentence-token');
+                choice.setAttribute('aria-pressed', 'false'); choice.setAttribute('aria-label', `Explain ${token.text}`);
+                if (japanese) appendJapanese(choice, [{text:token.text, reading:token.reading !== token.text ? token.reading : ''}]);
+                else choice.textContent = token.text;
+                sentence.append(choice);
+            }
+            if (!japanese) renderReading(sentenceReading, analysis.reading);
+            overview.append(el('p', analysis.explanation), el('p', 'Tap a word to explore its meaning and grammar.', 'muted'));
+            output.append(el('p', analysis.translation, 'sentence-translation'), overview);
+            card.append(integrations.actions(card, () => ({text, reading:analysis.reading, english:analysis.translation, context:text, source:location.href, generated:true})));
+        } catch (error) {
+            if (card.isConnected && current === controller) output.replaceChildren(el('p', error.message), button('Retry analysis', analyze, 'integration-button'));
+        } finally { if (current === controller) output.removeAttribute('aria-busy'); }
+    };
+    // Child word requests are scoped separately so selecting another word cancels them.
+    card.cleanup = () => { controller?.abort(); integrations.releaseCard(detail); };
+    await analyze();
+}
+
+async function submitSearch(query) {
+    const kind = searchKind(query, knownWords, dataset);
+    if (kind === 'word') { navigate(query); return; }
+    if (kind === 'sentence') {
+        // Less common words may exist only in definition partitions.
+        try {
+            const defs = await lookupDefinitions(query);
+            if (query !== $('search').value.trim()) return;
+            if (defs.length) { navigate(query); return; }
+        }
+        catch { /* Sentence analysis can still work when dictionary data is unavailable. */ }
+        if (query !== $('search').value.trim()) return;
+        if (integrations.aiEnabled()) openSentence(query);
+        else announce('For sentence searches, enable local AI under Menu → Local integrations.');
+        return;
+    }
+    const matches = suggestions();
+    if (matches.length) navigate(matches[0].word);
+    else announce(japanese ? 'No match. Try kanji, kana, or an English meaning.' : 'No match. Try a Chinese character, pinyin, or English meaning.');
+}
+
 function normalize(value) { return (japanese ? normalizeKana(value) : value).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f0-9\s]/g, ''); }
 function suggestions() {
     const query = $('search').value.trim();
@@ -609,9 +762,11 @@ async function initialize() {
         json(`/data/${dataset}/wordlist.json`),
         json(`/data/${dataset}/definitions.json`), json(`/data/${dataset}/sentences.json`),
         japanese ? json('/data/japanese/graph.json') : null,
-        japanese ? json('/data/japanese/character_freq_list.json') : null
+        japanese ? json('/data/japanese/character_freq_list.json') : null,
+        japanese ? json('/data/japanese/lexicon/kana.json') : []
     ]);
     definitions = data[1]; sentences = data[2];
+    knownWords = new Set([...data[0], ...Object.keys(definitions), ...data[5]]);
     graph = buildExplorerGraph(japanese ? japaneseWordOrder(data[0], data[3]) : data[0]);
     if (japanese) {
         readingIndex = japaneseReadings(sentences);
@@ -669,8 +824,7 @@ async function initialize() {
     $('search-form').addEventListener('submit', event => {
         event.preventDefault(); const query = $('search').value.trim(); if (!query) return;
         clearTimeout(searchTimer);
-        if (definitions[query] || [...query].some(c => isCharacter(c) && graph[c])) navigate(query);
-        else { const matches = suggestions(); if (matches.length) navigate(matches[0].word); else announce(japanese ? 'No match. Try kanji, kana, or an English meaning.' : 'No match. Try a Chinese character, pinyin, or English meaning.'); }
+        submitSearch(query);
         $('search').blur();
     });
     document.addEventListener('keydown', event => {
@@ -680,7 +834,7 @@ async function initialize() {
     });
     if (dataset === 'traditional' && seed === '学') seed = '學';
     reset(); legend(); $('loading').hidden = true;
-    if (params.get('word')) navigate(params.get('word'));
+    if (params.get('word')) { $('search').value = params.get('word').slice(0, 1000); await submitSearch($('search').value); }
 }
 initialize().catch(error => {
     console.error(error);

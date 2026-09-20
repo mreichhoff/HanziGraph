@@ -62,3 +62,27 @@ Tests use mocked protocol responses and never write to a real Anki collection or
 Detail cards use a compact header with one-tap audio and a three-dot action disclosure. Anki and AI commands appear there when enabled; word links preserve the explorer dataset and searched word. Sentence actions include copying the sentence. Mandarin readings use the same customizable tone colors as the graph, preserving the original numbered/accented text; Japanese keeps ruby and Cantonese keeps jyutping. Mixed-tone accented strings without syllable boundaries are left uncolored rather than assigning one misleading tone. Local requests show a cancellable status panel with reduced-motion support.
 
 Frequency colors use six discrete warm-to-cool defaults: coral red for common characters through rose/lavender to blue for less common characters. Every frequency swatch is editable, saved under `immersive-frequency-colors` independently of tone preferences, and shared across explorer languages. Reset appears only for a non-default palette. Text contrast updates automatically. On phones frequency labels sit under their swatches to keep all six bands and Reset on one row.
+
+## Sentence exploration and kana vocabulary
+
+Exact Japanese kana vocabulary opens a centered detail card without moving the
+graph. The supplemental JMdict index recognizes kana-only entries and common or
+usually-kana spellings; readings and definitions load from `lexicon/0..99.json`
+on demand. Rebuild with `python3 scripts/build-explorer-japanese.py`; source and
+license notes are in `data/japanese/lexicon/README.md`.
+
+When local AI is enabled, native-language searches that are not dictionary words
+open a centered sentence card (up to 1,000 characters). Local `Intl.Segmenter`
+selects the first graph-bearing word to focus, without expanding the entire
+sentence. English meanings and romanized readings retain dictionary search.
+The model returns translation, reading, explanation and clickable word tokens.
+Japanese tokens use ruby readings; Mandarin uses tone-colored pinyin; Cantonese
+uses jyutping. Clicking a word keeps the sentence and adds an inline inspector
+with its contextual meaning/grammar and dictionary lookup of its lemma. Dictionary
+meanings expand separately. AI annotations are labeled as such.
+
+Sentence analysis uses OpenAI-compatible strict JSON-schema output. Tokens must
+concatenate to exactly the original input; malformed or rewritten responses show
+an error with Retry. Cancel, closing the card, and replacing it abort requests.
+The sentence prompt is configurable alongside the other local AI prompts.
+Tests inject model responses; actual analysis quality depends on the user's model.

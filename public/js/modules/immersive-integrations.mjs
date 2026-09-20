@@ -1,3 +1,4 @@
+import { validateAnalysis } from './immersive-sentences.mjs';
 export const noteModel = 'Graph Explorer';
 export const languageFor = dataset => ({japanese:'ja-JP', cantonese:'zh-HK', traditional:'zh-TW', simplified:'zh-CN'})[dataset];
 export function defaultPrompt(dataset) {
@@ -10,6 +11,7 @@ export function defaultPrompts(dataset) {
         prompt: defaultPrompt(dataset),
         explainPrompt: 'Explain {word}. Dictionary meanings: {context}. Give its meaning and practical usage. Reply in plain text, at most 180 words.',
         contextPrompt: 'Explain how {word} is used in the sentence {context}. Describe its meaning, grammatical role, and any useful nuance. Reply in plain text, at most 180 words.',
+        sentencePrompt: 'Translate and explain the sentence {context} for a beginner. Include a full reading and a concise English explanation. Split the ORIGINAL sentence into words, particles and punctuation, preserving every character and space. For each word include its dictionary form (lemma), reading, English meaning, and a short explanation of its grammatical role in this sentence. Keep inflected verbs together and explain their conjugation. For punctuation use empty annotations.',
         examplesPrompt: 'Generate two short, natural example sentences containing {word}. Dictionary meanings: {context}. Include a reading and an English translation for each sentence.'
     };
 }
@@ -83,4 +85,19 @@ export async function addToAnki(settings, dataset, entry, signal, fetcher) {
     const id = await invoke('addNote', {note});
     if (!id) throw new Error('Anki did not return a note ID.');
     return id;
+}
+
+export async function analyzeSentence(settings, dataset, sentence, signal, fetcher) {
+    const defaults = defaultPrompts(dataset);
+    const fields = keys => Object.fromEntries(keys.map(key => [key, {type:'string'}]));
+    const wordKeys = ['text','lemma','reading','meaning','explanation'];
+    const keys = ['translation','explanation','reading','words'];
+    const schema = {type:'object', properties:{...fields(keys.slice(0, 3)), words:{type:'array', items:{type:'object', properties:fields(wordKeys), required:wordKeys, additionalProperties:false}}}, required:keys, additionalProperties:false};
+    const user = fillPrompt(settings.sentencePrompt?.trim() || defaults.sentencePrompt, sentence, sentence) + '\nReturn JSON with translation, explanation, reading and words. Each word has text, lemma, reading, meaning, explanation strings. The lemma must be the dictionary headword in the ORIGINAL target language, never an English gloss or translation. For example, Japanese 行きました has lemma 行く, not "go". If uncertain, copy the original word into lemma. Concatenating words.text must exactly reproduce the supplied sentence, including punctuation and spaces. Readings must be hiragana for Japanese, pinyin for Mandarin, and jyutping for Cantonese. Explanations and meanings must be English.';
+    const body = {model:settings.aiModel, messages:[{role:'system', content:settings.prompt?.trim() || defaults.prompt}, {role:'user', content:user}], temperature:0.2, response_format:{type:'json_schema', json_schema:{name:'sentence_analysis', strict:true, schema}}};
+    const data = await request(`${base(settings.aiEndpoint)}/chat/completions`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}, signal, fetcher);
+    let result;
+    try { result = JSON.parse(data.choices?.[0]?.message?.content); }
+    catch { throw new Error('The model did not return sentence JSON. Try a model with structured output support.'); }
+    return validateAnalysis(result, sentence);
 }

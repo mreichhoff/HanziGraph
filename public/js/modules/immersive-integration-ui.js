@@ -1,12 +1,12 @@
 import { textForSpeech } from './immersive-speech.mjs';
 import { explorerLink } from './immersive-card.mjs';
-import { defaultPrompts, listModels, askAi, ankiRequest, addToAnki } from './immersive-integrations.mjs';
+import { defaultPrompts, listModels, askAi, analyzeSentence, ankiRequest, addToAnki } from './immersive-integrations.mjs';
 
 export function initializeIntegrations(dataset, speak, renderReading) {
     const key = `immersive-integrations-${dataset}`;
     const read = name => { try { return JSON.parse(localStorage.getItem(name)) || {}; } catch { return {}; } };
     const ai = read('localAiSettings'), anki = read('ankiConnectSettings');
-    let settings = {aiEnabled:false, aiEndpoint:ai.endpoint || 'http://localhost:1234/v1', aiModel:ai.model || '', prompt:'', explainPrompt:'', contextPrompt:'', examplesPrompt:'', ankiEnabled:false, ankiEndpoint:anki.endpoint || 'http://127.0.0.1:8765', ankiKey:anki.apiKey || '', deck:dataset === 'japanese' ? 'JapaneseGraph' : 'HanziGraph', ...read(key)};
+    let settings = {aiEnabled:false, aiEndpoint:ai.endpoint || 'http://localhost:1234/v1', aiModel:ai.model || '', prompt:'', explainPrompt:'', contextPrompt:'', examplesPrompt:'', sentencePrompt:'', ankiEnabled:false, ankiEndpoint:anki.endpoint || 'http://127.0.0.1:8765', ankiKey:anki.apiKey || '', deck:dataset === 'japanese' ? 'JapaneseGraph' : 'HanziGraph', ...read(key)};
     const el = (tag, text, cls) => { const node = document.createElement(tag); if (text) node.textContent = text; if (cls) node.className = cls; return node; };
     const button = (text, action) => { const node = el('button', text, 'integration-button'); node.type = 'button'; node.addEventListener('click', action); return node; };
     const dialog = document.createElement('dialog');
@@ -20,12 +20,13 @@ export function initializeIntegrations(dataset, speak, renderReading) {
         <label>Server URL<input name="aiEndpoint" type="url" placeholder="http://localhost:1234/v1"></label>
         <label>Model<input name="aiModel" list="explorer-models" autocomplete="off"></label><datalist id="explorer-models"></datalist>
         <button type="button" data-test="ai">Connect / load models</button>
-        <p>Use an OpenAI-compatible server, such as LM Studio. Allow this site’s origin in your server’s CORS settings. Examples require structured output support.</p>
+        <p>Use an OpenAI-compatible server, such as LM Studio. Allow this site’s origin in your server’s CORS settings. Examples and sentence searches require structured output support.</p>
         <details class="prompt-settings"><summary>Customize AI prompts</summary>
           <p>Saved for this language. Leave a prompt blank to use its default. In action prompts, <code>{word}</code> inserts the selected word; <code>{context}</code> inserts dictionary meanings or the example sentence.</p>
           <label>System / teacher<textarea name="prompt" rows="5"></textarea></label>
           <label>Explain a word<textarea name="explainPrompt" rows="4"></textarea></label>
           <label>Explain in a sentence<textarea name="contextPrompt" rows="4"></textarea></label>
+          <label>Analyze a sentence<textarea name="sentencePrompt" rows="5"></textarea></label>
           <label>Generate examples<textarea name="examplesPrompt" rows="4"></textarea></label>
           <p>Example responses still use the structured format needed by the cards.</p>
           <button type="button" data-reset-prompts>Restore default prompts</button>
@@ -114,11 +115,11 @@ export function initializeIntegrations(dataset, speak, renderReading) {
     // Escape closes this modal without also closing the graph's card or focusing search.
     dialog.addEventListener('keydown', event => { if (event.key === 'Escape') event.stopPropagation(); });
 
-    function actions(card, entryProvider, {generate = false, toolbarHost} = {}) {
+    function actions(card, entryProvider, {generate = false, toolbarHost, word = false} = {}) {
         const row = el('div', '', 'integration-actions'); rows.add(row);
         const toolbar = el('div', '', 'card-tools');
         const menu = el('details', '', 'card-more');
-        const summary = el('summary', '•••'); summary.setAttribute('aria-label', generate ? 'Word actions' : 'Sentence actions');
+        const summary = el('summary', '•••'); summary.setAttribute('aria-label', generate || word ? 'Word actions' : 'Sentence actions');
         const commands = el('div', '', 'card-command-list');
         menu.append(summary, commands);
         menu.addEventListener('toggle', () => {
@@ -147,7 +148,7 @@ export function initializeIntegrations(dataset, speak, renderReading) {
             finally { output.removeAttribute('aria-busy'); controls.forEach(node => { node.disabled = node.dataset.added === 'true'; }); requests.get(card)?.delete(controller); }
         };
         if ('speechSynthesis' in window) {
-            const listen = button('▶', () => speak(textForSpeech(entryProvider(), dataset, generate)));
+            const listen = button('▶', () => speak(textForSpeech(entryProvider(), dataset, generate || word)));
             listen.className = 'card-listen'; listen.title = 'Listen'; listen.setAttribute('aria-label', 'Listen'); toolbar.append(listen);
         }
         const add = button('Add to Anki', () => run(add, signal => addToAnki(settings, dataset, entryProvider(), signal), () => { output.textContent = `Added to ${settings.deck}.`; add.dataset.added = 'true'; add.textContent = 'Added to Anki'; }));
@@ -188,5 +189,17 @@ export function initializeIntegrations(dataset, speak, renderReading) {
         return row;
     }
     function releaseCard(card) { for (const controller of requests.get(card) || []) controller.abort(); requests.delete(card); for (const row of rows) if (card?.contains(row)) rows.delete(row); }
-    return {actions, releaseCard};
+    return {actions, releaseCard, aiEnabled:() => settings.aiEnabled,
+        analyze:async (card, sentence, signal) => {
+            if (!settings.aiEnabled) throw new Error('Enable local AI in the menu to analyze sentences.');
+            const controller = new AbortController();
+            const abort = () => controller.abort();
+            if (signal?.aborted) abort();
+            signal?.addEventListener('abort', abort, {once:true});
+            if (!requests.has(card)) requests.set(card, new Set());
+            requests.get(card).add(controller);
+            try { return await analyzeSentence(settings, dataset, sentence, controller.signal); }
+            finally { signal?.removeEventListener('abort', abort); requests.get(card)?.delete(controller); }
+        }
+    };
 }

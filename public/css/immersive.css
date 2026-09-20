@@ -719,3 +719,26 @@ h2 {
     .frequency-legend .tone-picker input[type="color"] { width:24px; height:24px; }
     #legend.frequency-legend { gap:3px; }
 }
+
+/* Sentences are a single reading surface, with an inline word inspector. */
+.sentence-card { width:min(540px, calc(100vw - 24px)); height:min(540px, calc(100dvh - 300px)); }
+.card .sentence-title { font-size:18px; margin:0; flex:1; }
+.card .sentence-text { white-space:pre-wrap; overflow-wrap:anywhere; font-size:23px; line-height:2.5; }
+.card .sentence-token { display:inline; font:inherit; line-height:inherit; color:inherit; padding:2px 3px; margin:0 1px; border:0; border-bottom:1px dotted var(--muted); border-radius:5px; background:transparent; }
+.card .sentence-token:hover, .card .sentence-token[aria-pressed="true"] { background:var(--paper); border-bottom:2px solid var(--accent); }
+.sentence-translation { font-weight:600; }
+.sentence-word-detail:not(:empty) { border-top:1px solid var(--line); margin-top:16px; padding-top:8px; }
+.card .sentence-word-detail h3 { font-size:22px; text-transform:none; letter-spacing:normal; }
+.sentence-card .muted { color:var(--muted); font-size:12px; }
+.sentence-analysis { margin-top:16px; }
+.card[data-centered="true"] { max-height:calc(100dvh - 180px); }
+.sentence-dictionary { margin:12px 0; font-size:13px; }
+.sentence-dictionary summary { cursor:pointer; padding:6px 0; color:var(--muted); }
+.sentence-ai-credit { align-self:center; font-size:10px; color:var(--muted); cursor:help; }
+.sentence-word-header { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.card .sentence-word-header h3 { margin:0; font-size:20px; }
+.sentence-word-header .card-pinyin { font-size:12px; line-height:1.8; }
+.sentence-word-header .close { margin:0; width:32px; min-height:34px; padding:0; }
+.card .sentence-word-detail p { margin:7px 0; }
+.sentence-word-meaning { font-weight:600; }
+.sentence-word-detail:not(:empty) { margin-top:12px; padding-top:12px; }
