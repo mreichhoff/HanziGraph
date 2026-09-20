@@ -57,3 +57,25 @@ export function japaneseWordOrder(words, suppliedGraph) {
     }
     return [...words].sort((a, b) => (levels.get(a) || 7) - (levels.get(b) || 7));
 }
+
+// Keep stored word boundaries unless one would cut an annotated compound in half.
+// Furigana is used only when it reconstructs the exact original sentence.
+export function exampleTokens(sentence) {
+    const text = sentence.zh.join('');
+    const parts = sentence.fu ? parseFurigana(sentence.fu) : [];
+    const valid = parts.map(part => part.text).join('') === text;
+    let offset = 0;
+    const spans = valid ? parts.map(part => { const start = offset; offset += part.text.length; return {...part, start, end:offset}; }) : [];
+    const boundaries = [0]; offset = 0;
+    for (const token of sentence.zh) {
+        offset += token.length;
+        if (!spans.some(part => part.reading && offset > part.start && offset < part.end)) boundaries.push(offset);
+    }
+    return boundaries.slice(1).map((end, i) => {
+        const start = boundaries[i];
+        const pieces = spans.filter(part => part.start < end && part.end > start).map(part => ({
+            text:text.slice(Math.max(start, part.start), Math.min(end, part.end)), reading:part.reading
+        }));
+        return {text:text.slice(start, end), parts:pieces.length ? pieces : [{text:text.slice(start, end), reading:''}]};
+    });
+}

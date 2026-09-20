@@ -86,3 +86,40 @@ concatenate to exactly the original input; malformed or rewritten responses show
 an error with Retry. Cancel, closing the card, and replacing it abort requests.
 The sentence prompt is configurable alongside the other local AI prompts.
 Tests inject model responses; actual analysis quality depends on the user's model.
+
+## Japanese vocabulary quality pass
+
+`explorer-word-order.json` contains every word in the original Japanese graph list,
+reordered using direct wordfreq 3.1.1 Japanese vocabulary frequencies, JMdict
+commonness, and modern spelling tags. Missing corpus entries use commonness as a
+fallback, not a fabricated frequency rank. Rare/outdated/search-only/irregular
+spellings and expressions longer than six code points do not create automatic
+edges. Their characters remain in the graph index, and explicit searches still
+force the requested connection. Searching a Han character missing from the graph
+adds it on demand; there is no jōyō cutoff.
+
+`explorer-index.json` supplies stable dictionary readings for base search entries,
+search tie-breaking order, usually-kana flags, and automatic-edge exclusions.
+Example sentences are fetched on the first Japanese card, independently of graph
+startup. All languages' stored example tokens support inline dictionary lookup
+without AI; Japanese token boundaries that bisect ruby annotations are merged.
+Unrecognized inflected surface forms report a missing exact entry rather than
+inventing a lemma. Local AI remains available for contextual explanations.
+
+`kanji.json` is fetched on demand for kanji cards: meanings, on/kun with kana-ending
+boundaries, strokes, elementary-school grade, and up to eight ranked single-kanji
+words with kana. Character colors use KANJIDIC2 newspaper ranks via the small generated
+`explorer-character-ranks.json`, independently of wordfreq vocabulary ordering.
+Fixed bands are 50/150/400/800/1500/beyond, with gray for unranked kanji.
+Panning never changes a character’s band. Isolated nodes remain searchable and
+available to discovery. Edge selection blends distance with a bounded 80px
+logarithmic penalty based on the best word’s position in vocabulary ordering;
+hard geometry constraints and explicit-search overrides remain in effect.
+
+Rebuild with Python in an isolated environment containing `wordfreq==3.1.1`:
+`python scripts/build-explorer-japanese-study.py`. Inputs are the existing JMdict
+JSON and `raw/japanese/kanjidic2.xml.gz`, downloaded from
+https://www.edrdg.org/kanjidic/kanjidic2.xml.gz (2026-09-20 for this build).
+The source dump is ignored by Git; generated outputs are checked in. Refresh the
+source dictionaries before rebuilding. See `data/japanese/explorer-sources.html`
+for credits and the CC BY-SA 4.0 terms applying to the derived data.

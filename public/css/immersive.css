@@ -754,3 +754,15 @@ h2 {
 .card .example .integration-actions > .card-tools { justify-content:flex-start; }
 
 .card .example .card-command-list { left:0; right:auto; }
+.kanji-readings { display:grid; grid-template-columns:30px 1fr; gap:6px 10px; font-size:14px; line-height:1.7; margin:12px 0 4px; }
+.kanji-readings dt { color:var(--muted); font-size:11px; align-self:center; }
+.kanji-readings dd { margin:0; }
+.card .kanji-metadata, .kanji-section > small { color:var(--muted); font-size:11px; }
+.kanji-vocabulary { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.kanji-vocabulary button { text-align:left; min-width:0; padding:8px; background:var(--paper); border-radius:9px; }
+.kanji-vocabulary span { display:block; font-size:19px; line-height:1.8; }
+.kanji-vocabulary small { display:block; font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.card .example-token { display:inline; font:inherit; color:inherit; line-height:inherit; border:0; border-bottom:1px dotted var(--line); padding:0; margin:0; border-radius:3px; background:none; }
+.card .example-token:hover, .card .example-token[aria-pressed="true"] { background:var(--paper); border-color:var(--accent); }
+.example-word-detail:not(:empty) { background:var(--paper); padding:10px; border-radius:10px; margin:8px 0; font-size:13px; }
+.unranked-legend { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:12px; flex-shrink:0; }

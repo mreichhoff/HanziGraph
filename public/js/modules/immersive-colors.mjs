@@ -32,3 +32,10 @@ export const defaultFrequencies = ['#ff6b5e', '#ee858e', '#d79dbb', '#b2ace0', '
 export function frequencyPalette(saved) {
     return defaultFrequencies.map((fallback, index) => Array.isArray(saved) && isColor(saved[index]) ? saved[index].toLowerCase() : fallback);
 }
+
+export const kanjiFrequencyLimits = [50, 150, 400, 800, 1500];
+export function kanjiFrequencyLevel(rank) {
+    if (!Number.isFinite(rank) || rank <= 0) return 0;
+    return [...kanjiFrequencyLimits, Infinity].findIndex(limit => rank <= limit) + 1;
+}
+export const unrankedKanjiColor = dark => dark ? '#858f95' : '#c7cdd1';

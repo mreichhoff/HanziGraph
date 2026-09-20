@@ -1,15 +1,16 @@
+import { englishMatch } from './immersive-search.mjs';
 import { searchKind, sentenceWords, dictionaryForm } from './immersive-sentences.mjs';
 import { readingParts } from './immersive-card.mjs';
 import { initializeIntegrations } from './immersive-integration-ui.js';
 import { preferredVoice } from './immersive-speech.mjs';
-import { parseFurigana, normalizeKana, japaneseReadings, japaneseWordOrder } from './immersive-japanese.mjs';
+import { parseFurigana, normalizeKana, exampleTokens } from './immersive-japanese.mjs';
 import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import { getWordSetFromFrequency } from './graph-functions.js';
 
 import { buildExplorerGraph, isCharacter, placeContextCard, sparseConnections, evictionOrder, wordConnections, searchPositions } from './immersive-geometry.mjs';
 
-import { toneOverrides, tonePalette, contrastingText, defaultFrequencies, frequencyPalette } from './immersive-colors.mjs';
+import { kanjiFrequencyLimits, kanjiFrequencyLevel, unrankedKanjiColor, toneOverrides, tonePalette, contrastingText, defaultFrequencies, frequencyPalette } from './immersive-colors.mjs';
 
 cytoscape.use(fcose);
 const $ = id => document.getElementById(id);
@@ -22,6 +23,11 @@ const japanese = dataset === 'japanese';
 const language = japanese ? 'ja' : 'zh';
 const classicUrl = word => japanese ? `https://japanesegraph.com/japanese/${encodeURIComponent(word || '')}` : `/${dataset}/${encodeURIComponent(word || '')}`;
 let readingIndex = new Map();
+let japaneseIndex;
+let kanjiRanks = {};
+let usuallyKana = new Set();
+let sentencesPromise;
+const loadSentences = () => sentencesPromise ||= cached(`/data/${dataset}/sentences.json`).then(value => { sentences = value; return value; });
 let knownWords = new Set();
 const readingsFor = (word, defs = definitions[word] || []) => japanese ? [...(readingIndex.get(word) || [])] : defs.map(d => d.pinyin).filter(Boolean);
 const toneStorageKey = 'immersive-tone-colors';
@@ -89,6 +95,7 @@ function cached(url) {
     return cache.get(url);
 }
 function nodeColor(node) {
+    if (japanese && !kanjiRanks[node.id()]) return unrankedKanjiColor(dark.matches);
     if (colorMode === 'frequency') return frequencies[Math.min(5, (graph[node.id()]?.node.level || 6) - 1)];
     const tone = Number(definitions[node.id()]?.[0]?.pinyin?.slice(-1)) || 5;
     return tones[Math.min(4, tone - 1)];
@@ -178,7 +185,8 @@ function makeRoom(count, protectedIds = new Set()) {
 }
 function viewportTarget() {
     const extent = cy.extent(), points = cy.nodes().map(n => n.position());
-    let best, score = -Infinity;
+    if (![extent.x1, extent.y1, extent.w, extent.h].every(Number.isFinite)) return {x:0, y:0};
+    let best = {x:extent.x1 + extent.w / 2, y:extent.y1 + extent.h / 2}, score = -Infinity;
     // Aim at the emptiest patch of the viewport, including newly exposed space.
     for (const u of [.2, .4, .6, .8]) for (const v of [.23, .43, .63, .8]) {
         const p = { x: extent.x1 + extent.w * u, y: extent.y1 + extent.h * v };
@@ -358,6 +366,74 @@ function appendJapanese(container, parts) {
         container.append(ruby);
     }
 }
+async function renderKanji(section, char) {
+    try {
+        const entry = (await cached('/data/japanese/kanji.json'))[char];
+        if (!entry || !section.isConnected) return;
+        const readings = el('dl', '', 'kanji-readings card-pinyin');
+        if (entry.on.length) readings.append(el('dt', 'On'), el('dd', entry.on.join(' · ')));
+        if (entry.kun.length) readings.append(el('dt', 'Kun'), el('dd', entry.kun.map(value => value.replaceAll('.', '・')).join(' · ')));
+        section.append(readings);
+        if (entry.kun.some(value => value.includes('.'))) section.append(el('small', '・ marks the kana ending', 'muted'));
+        const metadata = [entry.strokes ? `${entry.strokes} strokes` : '', entry.grade >= 1 && entry.grade <= 6 ? `School grade ${entry.grade}` : ''].filter(Boolean);
+        section.append(el('p', metadata.join(' · '), 'kanji-metadata'));
+        if (entry.words?.length) {
+            section.append(el('h3', 'Words with this kanji'));
+            const list = el('div', '', 'kanji-vocabulary');
+            for (const word of entry.words) {
+                const choice = button('', () => navigate(word));
+                const label = el('span'); appendJapanese(label, [{text:word, reading:readingsFor(word)[0] || ''}]);
+                const gloss = definitions[word]?.[0]?.en.split(';')[0] || '';
+                choice.append(label, el('small', gloss)); list.append(choice);
+            }
+            section.append(list);
+        }
+        const source = el('a', 'Kanji data: KANJIDIC2 / EDRDG', 'classic-link');
+        source.href = 'https://www.edrdg.org/wiki/KANJIDIC_Project.html'; section.append(source);
+    } catch { section.append(el('p', 'Kanji readings could not be loaded. Reopen this card to retry.')); }
+}
+
+function clickableExample(card, container, sentence) {
+    const inspector = el('div', '', 'example-word-detail');
+    let selected, revision = 0;
+    const close = () => {
+        revision++; integrations.releaseCard(inspector); inspector.replaceChildren();
+        selected?.setAttribute('aria-pressed', 'false'); selected?.focus(); selected = null;
+    };
+    const cleanup = card.cleanup;
+    card.cleanup = () => { cleanup?.(); integrations.releaseCard(inspector); };
+    container.replaceChildren();
+    for (const token of exampleTokens(sentence)) {
+        if (!/[\p{L}\p{N}]/u.test(token.text)) { container.append(document.createTextNode(token.text)); continue; }
+        const choice = button('', async () => {
+            if (selected === choice) { close(); return; }
+            selected?.setAttribute('aria-pressed', 'false'); selected = choice; choice.setAttribute('aria-pressed', 'true');
+            const current = ++revision;
+            integrations.releaseCard(inspector); inspector.replaceChildren();
+            const heading = el('div', '', 'sentence-word-header');
+            heading.append(el('strong', token.text));
+            const dismiss = button('×', close, 'close'); dismiss.setAttribute('aria-label', 'Close example word'); heading.append(dismiss);
+            const reading = el('div', '', 'card-pinyin');
+            const meanings = el('ul', 'Looking up…', 'definitions');
+            inspector.append(heading, reading, meanings);
+            try {
+                const defs = await lookupDefinitions(token.text);
+                if (!card.isConnected || current !== revision) return;
+                const pronunciation = japanese ? token.parts.map(part => part.reading || part.text).join('') : readingsFor(token.text, defs).join(' / ');
+                renderReading(reading, pronunciation);
+                meanings.replaceChildren(...defs.map(def => el('li', def.en)));
+                if (!defs.length) meanings.textContent = 'No entry for this exact form. It may be part of an inflected word.';
+                inspector.append(button('Open word →', () => navigate(token.text), 'integration-button'));
+                inspector.append(integrations.actions(inspector, () => ({text:token.text, word:token.text, reading:pronunciation, english:defs.map(def => def.en).join('; '), context:sentence.zh.join(''), source:classicUrl(token.text)}), {word:true}));
+            } catch { if (current === revision) meanings.textContent = 'Lookup failed. Select the word again to retry.'; }
+        }, 'example-token');
+        choice.setAttribute('aria-label', `Look up ${token.text}`); choice.setAttribute('aria-pressed', 'false');
+        if (japanese) appendJapanese(choice, token.parts); else choice.textContent = token.text;
+        container.append(choice);
+    }
+    return inspector;
+}
+
 function findExamples(word, source) {
     const matches = source.filter(s => s.en && (s.zh.includes(word) || ([...word].length === 1 && s.zh.join('').includes(word))));
     if (japanese) matches.sort((a, b) => a.zh.join('').length - b.zh.join('').length);
@@ -394,6 +470,9 @@ async function openWord(word, anchor, source) {
     const wordActions = integrations.actions(card, () => ({text:word, reading:readingsFor(word, wordDefinitions).join(' / '), english:wordDefinitions.map(d => d.en).join('; '), source:classicUrl(word)}), {generate:true, toolbarHost:headerTools});
     headerTools.append(close);
     card.append(wordActions);
+    const kanjiSection = el('div', '', 'kanji-section');
+    if (japanese && [...word].length === 1 && isCharacter(word)) { card.append(kanjiSection); renderKanji(kanjiSection, word); }
+    if (usuallyKana.has(word)) stats.append(el('span', 'Usually written in kana'));
     card.append(el('h3', 'In context'));
     const examples = el('div', 'Loading examples…'); card.append(examples);
     if (graph[word]) {
@@ -423,7 +502,11 @@ async function openWord(word, anchor, source) {
     cards.set(word, card); $('cards').append(card); positionCard(word, anchor, source); card.focus(); refresh();
     const defsTask = (async () => {
         try {
-            const defs = await lookupDefinitions(word);
+            let defs = await lookupDefinitions(word);
+            if (japanese && [...word].length === 1 && isCharacter(word)) {
+                const info = (await cached('/data/japanese/kanji.json'))[word];
+                if (info?.meanings.length) defs = info.meanings.map(en => ({en}));
+            }
             wordDefinitions = defs || [];
             wordActions.hidden = false;
             renderReading(pronunciation, [...new Set(readingsFor(word, defs || []))].join(' / '));
@@ -437,7 +520,9 @@ async function openWord(word, anchor, source) {
         } catch { pronunciation.textContent = ''; meanings.replaceChildren(el('li', 'Definitions could not be loaded. Close and reopen this card to retry.')); }
     })();
     const examplesTask = (async () => {
-        let found = findExamples(word, sentences);
+        let available = sentences;
+        try { available ||= await loadSentences(); } catch { examples.textContent = 'Examples could not be loaded. Reopen this card to retry.'; sentencesPromise = null; return; }
+        let found = findExamples(word, available);
         let failed = false;
         if (found.length < 3 && ['simplified', 'traditional'].includes(dataset)) {
             try {
@@ -450,12 +535,9 @@ async function openWord(word, anchor, source) {
         for (const sentence of found.slice(0, 3)) {
             const block = el('div', undefined, 'example');
             const chinese = el('p', sentence.zh.join(''), 'chinese'); chinese.lang = language;
-            if (japanese && sentence.fu) {
-                const parts = parseFurigana(sentence.fu);
-                if (parts.map(p => p.text).join('') === sentence.zh.join('')) { chinese.replaceChildren(); appendJapanese(chinese, parts); }
-            }
+            const inspector = clickableExample(card, chinese, sentence);
             const reading = el('p', '', 'card-pinyin'); renderReading(reading, sentence.pinyin || '');
-            block.append(chinese, reading, el('p', sentence.en));
+            block.append(chinese, reading, el('p', sentence.en), inspector);
             const entry = {text:sentence.zh.join(''), reading:japanese && sentence.fu ? parseFurigana(sentence.fu).map(part => part.reading || part.text).join('') : sentence.pinyin || '', english:sentence.en, source:classicUrl(word), word, context:sentence.zh.join('')};
             block.append(integrations.actions(card, () => entry));
             examples.append(block);
@@ -465,6 +547,7 @@ async function openWord(word, anchor, source) {
     await Promise.all([defsTask, examplesTask]);
 }
 function navigate(word, showCard = true) {
+    if (japanese) for (const char of word) if (isCharacter(char) && !graph[char]) graph[char] = {node:{level:kanjiFrequencyLevel(kanjiRanks[char])}, edges:{}};
     if (![...word].some(char => graph[char])) { if (showCard) openWord(word); return; }
     clearTimeout(expansionTimer);
     searchedWord = word;
@@ -533,7 +616,7 @@ async function lookupDefinitions(word) {
     if (japanese) {
         try {
             const extra = (await cached(`/data/japanese/lexicon/${partition(word)}.json`))[word];
-            if (extra?.readings?.length) readingIndex.set(word, new Set(extra.readings));
+            if (extra?.readings?.length && !readingIndex.has(word)) readingIndex.set(word, new Set(extra.readings));
             if (extra?.definitions?.length) defs = extra.definitions.map(en => ({en}));
         } catch (error) { if (!defs?.length) throw error; }
     }
@@ -679,11 +762,10 @@ function suggestions() {
         if (item.word.startsWith(query)) return 1;
         if (item.numberedReadings.includes(lower.replace(/\s/g, ''))) return 1.5;
         if (normalized && item.readings.includes(normalized)) return 2;
-        if (item.english === lower) return 2.5;
-        if (item.glosses.includes(lower)) return 3;
-        if (item.glosses.some(gloss => gloss.startsWith(lower))) return 4;
+        const english = englishMatch(item.glosses, lower) + (japanese && [...item.word].length === 1 ? .2 : 0);
+        if (english < 5) return english;
         if (normalized && item.pinyin.includes(normalized)) return 5;
-        return item.english.includes(lower) ? 6 : Infinity;
+        return english;
     };
     const results = searchIndex.map(item => ({ item, score: score(item) }))
         .filter(match => Number.isFinite(match.score)).sort((a, b) => a.score - b.score)
@@ -708,8 +790,8 @@ function legend() {
     $('legend').classList.toggle('frequency-legend', !toneMode);
     $('legend').setAttribute('aria-label', toneMode ? 'Tone colors' : `${japanese ? 'Kanji' : 'Word'} frequency colors, common to rare`);
     const colors = toneMode ? tones : frequencies;
-    const labels = toneMode ? ['1', '2', '3', '4', 'neutral'] : japanese ? ['250', '500', '1k', '1.5k', '2k', '2k+'] : ['1k', '2k', '4k', '7k', '10k', '10k+'];
-    const limits = japanese ? [250, 500, 1000, 1500, 2000] : [1000, 2000, 4000, 7000, 10000];
+    const labels = toneMode ? ['1', '2', '3', '4', 'neutral'] : japanese ? ['50', '150', '400', '800', '1.5k', '1.5k+'] : ['1k', '2k', '4k', '7k', '10k', '10k+'];
+    const limits = japanese ? kanjiFrequencyLimits : [1000, 2000, 4000, 7000, 10000];
     labels.forEach((label, i) => {
         const control = el('label', undefined, 'tone-picker');
         const picker = el('input'); picker.type = 'color'; picker.value = colors[i];
@@ -724,6 +806,14 @@ function legend() {
         });
         control.append(picker, document.createTextNode(label)); $('legend').append(control);
     });
+    if (japanese) {
+        const unknown = el('span', '—', 'unranked-legend');
+        unknown.title = 'Unranked in the KANJIDIC2 frequency corpus';
+        unknown.setAttribute('aria-label', unknown.title);
+        unknown.style.backgroundColor = unrankedKanjiColor(dark.matches);
+        unknown.style.color = contrastingText(unrankedKanjiColor(dark.matches));
+        $('legend').append(unknown);
+    }
     const reset = button('↺', () => {
         if (toneMode) { customTones = toneOverrides(null); tones = tonePalette(customTones, dark.matches); saveTones(); }
         else { frequencies = frequencyPalette(null); saveFrequencies(); }
@@ -758,30 +848,32 @@ async function initialize() {
         brand.firstElementChild.textContent = '字'; brand.firstElementChild.lang = 'ja';
         brand.querySelector('.brand-name').replaceChildren(document.createTextNode('JapaneseGraph'), el('small', 'EXPLORER'));
         $('classic').textContent = 'Open classic JapaneseGraph ↗';
+        const sources = el('a', 'Dictionary & ranking sources');
+        sources.href = '/data/japanese/explorer-sources.html';
+        document.querySelector('.menu-links').append(sources);
         $('card-pinyin-label').textContent = 'Show furigana in detail cards';
         $('colors').querySelector('[value="frequency"]').textContent = 'Kanji frequency';
-        $('legend').setAttribute('aria-label', 'Kanji frequency rank: top 250, 500, 1000, 1500, 2000, and beyond');
+        $('legend').setAttribute('aria-label', 'Kanji frequency rank: top 50, 150, 400, 800, 1500, beyond, and unranked');
         document.querySelector('label[for="search"]').textContent = 'Search kanji, kana or English';
     }
     if (japanese || dataset === 'cantonese') $('colors').querySelector('[value="tone"]').disabled = true;
     $('dataset').addEventListener('change', () => { location.href = `/immersive.html?set=${$('dataset').value}`; });
     const data = await Promise.all([
-        json(`/data/${dataset}/wordlist.json`),
-        json(`/data/${dataset}/definitions.json`), json(`/data/${dataset}/sentences.json`),
-        japanese ? json('/data/japanese/graph.json') : null,
-        japanese ? json('/data/japanese/character_freq_list.json') : null,
+        json(`/data/${dataset}/${japanese ? 'explorer-word-order' : 'wordlist'}.json`),
+        json(`/data/${dataset}/definitions.json`), japanese ? null : json(`/data/${dataset}/sentences.json`),
+        japanese ? json('/data/japanese/explorer-index.json') : null,
+        japanese ? json('/data/japanese/explorer-character-ranks.json') : null,
         japanese ? json('/data/japanese/lexicon/kana.json') : []
     ]);
     definitions = data[1]; sentences = data[2];
     knownWords = new Set([...data[0], ...Object.keys(definitions), ...data[5]]);
-    graph = buildExplorerGraph(japanese ? japaneseWordOrder(data[0], data[3]) : data[0]);
+    japaneseIndex = data[3];
+    graph = buildExplorerGraph(data[0], new Set(japaneseIndex?.excludedEdges || []));
     if (japanese) {
-        readingIndex = japaneseReadings(sentences);
-        for (const [char, value] of Object.entries(graph)) {
-            const rank = data[4].indexOf(char);
-            value.node.level = rank < 0 ? 6 : [250, 500, 1000, 1500, 2000, Infinity].findIndex(limit => rank + 1 <= limit) + 1;
-            for (const [other, edge] of Object.entries(value.edges)) edge.level = data[3][char]?.edges[other]?.word_level || 6;
-        }
+        readingIndex = new Map(Object.entries(japaneseIndex.readings).map(([word, readings]) => [word, new Set(readings)]));
+        kanjiRanks = data[4];
+        usuallyKana = new Set(japaneseIndex.usuallyKana);
+        for (const [char, value] of Object.entries(graph)) value.node.level = kanjiFrequencyLevel(kanjiRanks[char]);
     }
     // Frequency lists include Latin letters and punctuation; keep only Han characters (hanzi or kanji) on the canvas.
     graph = Object.fromEntries(Object.entries(graph).filter(([char]) => isCharacter(char)));
@@ -790,7 +882,8 @@ async function initialize() {
     }
     ranks = japanese ? {} : getWordSetFromFrequency(data[0]);
     characterOrder = Object.keys(graph);
-    searchIndex = Object.entries(definitions).sort((a, b) => (ranks[a[0]] || 1e9) - (ranks[b[0]] || 1e9)).map(([word, defs]) => ({ word, pinyin: normalize(readingsFor(word, defs).join(' ')), readings: readingsFor(word, defs).map(normalize), numberedReadings: readingsFor(word, defs).map(reading => reading.toLowerCase().replace(/\s/g, '')), glosses: defs.flatMap(d => d.en.toLowerCase().split(';').map(x => x.trim())), english: defs.map(d => d.en).join(' ').toLowerCase() }));
+    const searchRanks = japanese ? Object.fromEntries(japaneseIndex.searchOrder.map((word, i) => [word, i + 1])) : ranks;
+    searchIndex = Object.entries(definitions).sort((a, b) => (searchRanks[a[0]] || 1e9) - (searchRanks[b[0]] || 1e9)).map(([word, defs]) => ({ word, pinyin: normalize(readingsFor(word, defs).join(' ')), readings: readingsFor(word, defs).map(normalize), numberedReadings: readingsFor(word, defs).map(reading => reading.toLowerCase().replace(/\s/g, '')), glosses: defs.flatMap(d => d.en.toLowerCase().split(';').map(x => x.trim())), english: defs.map(d => d.en).join(' ').toLowerCase() }));
     cy = cytoscape({ container: $('graph'), elements: [], style: style(), layout: { name: 'preset' }, minZoom: .35, maxZoom: 2.5 });
     cy.on('tap', 'node', event => openWord(event.target.id(), event.renderedPosition, event.target));
     cy.on('tap', 'edge', event => openWord(event.target.data('words')[0], event.renderedPosition, event.target));

@@ -1,7 +1,7 @@
 // Pure geometry and data helpers shared by the explorer and its regression tests.
 export const isCharacter = value => /^\p{Script=Han}$/u.test(value);
 
-export function buildExplorerGraph(words) {
+export function buildExplorerGraph(words, excludedEdges = new Set()) {
     const graph = {};
     const thresholds = [1000, 2000, 4000, 7000, 10000, Infinity];
     words.forEach((word, index) => {
@@ -9,11 +9,12 @@ export function buildExplorerGraph(words) {
         const level = thresholds.findIndex(threshold => index + 1 <= threshold) + 1;
         for (const char of chars) {
             graph[char] ||= { node: { level }, edges: {} };
+            if (excludedEdges.has(word)) continue;
             for (const other of chars) {
                 if (char === other) continue;
                 // Retain every neighbor, in frequency order, rather than truncating
                 // at eight. Limit only the example words stored for each pair.
-                const edge = graph[char].edges[other] ||= { level, words: [] };
+                const edge = graph[char].edges[other] ||= { level, rank:index + 1, words: [] };
                 if (edge.words.length < 2) edge.words.push(word);
             }
         }
@@ -26,7 +27,18 @@ export function overlapArea(a, b, gap = 12) {
         Math.max(0, Math.min(a.y + a.height + gap, b.y + b.height) - Math.max(a.y - gap, b.y));
 }
 
+const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
+const validRect = rect => rect && [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite);
+function safePlacement(anchor, size, bounds) {
+    return {
+        anchor:{x:finite(anchor.x), y:finite(anchor.y)},
+        size:{width:Math.max(0, finite(size.width)), height:Math.max(0, finite(size.height))},
+        bounds:{x:finite(bounds.x), y:finite(bounds.y), width:Math.max(0, finite(bounds.width)), height:Math.max(0, finite(bounds.height))}
+    };
+}
 export function placeCard(anchor, size, bounds, obstacles) {
+    ({anchor, size, bounds} = safePlacement(anchor, size, bounds));
+    obstacles = obstacles.filter(validRect);
     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
     const desired = { x: anchor.x - 28, y: anchor.y - 28 };
     const xs = [desired.x, bounds.x, bounds.x + bounds.width - size.width];
@@ -54,6 +66,12 @@ export function segmentsCross(a, b, c, d) {
 
 // A small degree budget and shortest-first, non-crossing links keep the visible
 // graph readable. This affects the drawing only, not the dictionary adjacency.
+// A bounded penalty gives a common word up to 80px of preference. Geometry
+// remains a hard constraint; frequency never creates long or crossing edges.
+export function edgeScore(distance, rank) {
+    const penalty = Number.isFinite(rank) && rank > 0 ? Math.min(1, Math.log1p(rank / 100) / Math.log1p(300)) * 80 : 0;
+    return distance + penalty;
+}
 export function sparseConnections(nodes, graph, maxDistance = 270) {
     const positions = new Map(nodes.map(node => [node.id, node.position]));
     const candidates = new Map();
@@ -68,7 +86,7 @@ export function sparseConnections(nodes, graph, maxDistance = 270) {
         }
     }
     const chosen = [], degrees = new Map();
-    for (const candidate of [...candidates.values()].sort((a, b) => a.distance - b.distance)) {
+    for (const candidate of [...candidates.values()].sort((a, b) => edgeScore(a.distance, a.edge.rank) - edgeScore(b.distance, b.edge.rank) || a.distance - b.distance)) {
         if ((degrees.get(candidate.source) || 0) >= 3 || (degrees.get(candidate.target) || 0) >= 3) continue;
         const a = positions.get(candidate.source), b = positions.get(candidate.target);
         if (chosen.some(edge => segmentsCross(a, b, positions.get(edge.source), positions.get(edge.target)))) continue;
@@ -130,6 +148,8 @@ export function searchPositions(chars, origin, occupied, columns = 3) {
 // Keep the source node/edge visible beside the card. If a narrow viewport has
 // no room, reserve a strip above the card and move the graph into that strip.
 export function placeContextCard(anchor, size, bounds, context) {
+    ({anchor, size, bounds} = safePlacement(anchor, size, bounds));
+    if (!validRect(context) || context.width <= 0 || context.height <= 0) context = null;
     const rect = placeCard(anchor, size, bounds, context ? [context] : []);
     if (!context || overlapArea(rect, context, 12) === 0) return {rect, scale:1, shift:{x:0,y:0}};
     const height = Math.min(size.height, Math.max(120, bounds.height - 110));
