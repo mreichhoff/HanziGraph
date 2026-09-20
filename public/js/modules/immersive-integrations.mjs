@@ -101,3 +101,15 @@ export async function analyzeSentence(settings, dataset, sentence, signal, fetch
     catch { throw new Error('The model did not return sentence JSON. Try a model with structured output support.'); }
     return validateAnalysis(result, sentence);
 }
+
+// Incomplete drafts are saved, but cannot activate an integration.
+export function integrationProblem(settings, kind) {
+    if (!settings[`${kind}Enabled`]) return '';
+    const name = kind === 'ai' ? 'Local AI' : 'Anki';
+    let url;
+    try { url = new URL(settings[`${kind}Endpoint`]); } catch { return `${name}: enter a valid server URL to enable it.`; }
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return `${name}: use an HTTP or HTTPS URL without embedded credentials.`;
+    if (kind === 'ai' && !settings.aiModel?.trim()) return 'Local AI: select or enter a model to enable it.';
+    if (kind === 'anki' && !settings.deck?.trim()) return 'Anki: enter a deck name to enable it.';
+    return '';
+}

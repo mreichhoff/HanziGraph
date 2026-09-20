@@ -381,7 +381,7 @@ h2 {
 #status:empty {
     display:none;
 }
-#status:empty + #legend {
+#legend {
     margin-top:0;
 }
 #legend {
@@ -631,7 +631,7 @@ h2 {
 .integration-dialog textarea { margin-top:12px; resize:vertical; }
 .integration-dialog button, .card .integration-button { border:1px solid var(--line); background:#64847512; }
 .integration-dialog button:hover, .card .integration-button:hover { background:#64847525; }
-.integration-dialog [data-save] { background:var(--accent); color:var(--paper); }
+
 .integration-actions { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
 .integration-actions[hidden] { display:none; }
 .card .integration-button { font-size:12px; min-height:34px; padding:6px 9px; }
@@ -660,7 +660,7 @@ h2 {
 @media(max-width:700px) { .integration-dialog .prompt-settings textarea { font-size:16px; } }
 
 /* Detail cards put reading first; secondary commands live in a compact disclosure. */
-.card { width:340px; padding:18px; }
+.card { width:390px; padding:18px; }
 .card-header { top:-18px; align-items:flex-start; gap:8px; padding:8px 0 10px; z-index:4; }
 .card-heading { flex:1; min-width:0; }
 .card .character { font-size:36px; line-height:1.35; }
@@ -707,7 +707,7 @@ h2 {
 .waiting-pulse { width:9px; height:9px; flex-shrink:0; border-radius:50%; background:var(--accent); animation:thinking-pulse 1.4s ease-in-out infinite; }
 @keyframes thinking-pulse { 50% { opacity:.3; transform:scale(.75); } }
 @media(prefers-reduced-motion:reduce) { .waiting-pulse { animation:none; } }
-@media(max-width:700px) { .card { width:min(340px, calc(100vw - 24px)); } }
+@media(max-width:700px) { .card { width:min(390px, calc(100vw - 24px)); } }
 @media(pointer:coarse) {
     .card .card-header .close, .card-listen, .card-more > summary { width:38px; height:44px; min-height:44px; }
     .card-command-list { top:46px; }
@@ -742,3 +742,15 @@ h2 {
 .card .sentence-word-detail p { margin:7px 0; }
 .sentence-word-meaning { font-weight:600; }
 .sentence-word-detail:not(:empty) { margin-top:12px; padding-top:12px; }
+
+/* Search feedback stays beside the input rather than in the color legend. */
+#search-form #status {
+    position:absolute; top:calc(100% + 8px); left:0; right:0; z-index:12;
+    padding:12px 14px; border:1px solid var(--line); border-radius:12px;
+    background:var(--panel); color:var(--ink); box-shadow:var(--shadow);
+    font-size:13px; line-height:1.5; font-weight:400;
+}
+#search-form:has(#suggestions:not([hidden])) #status { display:none; }
+.card .example .integration-actions > .card-tools { justify-content:flex-start; }
+
+.card .example .card-command-list { left:0; right:auto; }

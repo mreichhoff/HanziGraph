@@ -1,6 +1,6 @@
 import { textForSpeech } from './immersive-speech.mjs';
 import { explorerLink } from './immersive-card.mjs';
-import { defaultPrompts, listModels, askAi, analyzeSentence, ankiRequest, addToAnki } from './immersive-integrations.mjs';
+import { defaultPrompts, integrationProblem, listModels, askAi, analyzeSentence, ankiRequest, addToAnki } from './immersive-integrations.mjs';
 
 export function initializeIntegrations(dataset, speak, renderReading) {
     const key = `immersive-integrations-${dataset}`;
@@ -14,7 +14,7 @@ export function initializeIntegrations(dataset, speak, renderReading) {
     dialog.setAttribute('aria-labelledby', 'integration-title');
     dialog.innerHTML = `<form method="dialog" novalidate>
       <div class="integration-heading"><h2 id="integration-title">Local integrations</h2><button value="cancel" aria-label="Close integration settings">×</button></div>
-      <p>Optional tools for the word or sentence you’re exploring. Settings are saved for this language.</p>
+      <p>Optional tools for the word or sentence you’re exploring. Changes save automatically for this language.</p>
       <fieldset><legend>Local AI</legend>
         <label class="check"><input name="aiEnabled" type="checkbox"> Enable local AI</label>
         <label>Server URL<input name="aiEndpoint" type="url" placeholder="http://localhost:1234/v1"></label>
@@ -41,39 +41,34 @@ export function initializeIntegrations(dataset, speak, renderReading) {
         <p>Keep Anki open with AnkiConnect installed and this site allowed. Adds recognition notes using the Graph Explorer note type; a new deck is created when needed. Existing notes aren’t overwritten.</p>
       </fieldset>
       <p class="integration-status" role="status"></p>
-      <button type="button" data-save>Save settings</button>
     </form>`;
     document.body.append(dialog);
     const form = dialog.querySelector('form'), status = dialog.querySelector('[role="status"]');
     const field = name => form.elements.namedItem(name);
     const rows = new Set(), requests = new Map();
-    let connectionController;
+    let connectionController, saveTimer, dirty = false;
+    const enabled = kind => settings[`${kind}Enabled`] && !integrationProblem(settings, kind);
+    const savedMessage = () => [integrationProblem(settings, 'ai'), integrationProblem(settings, 'anki')].filter(Boolean).join(' ') || 'All changes saved.';
     function populate() {
         for (const name of Object.keys(settings)) {
             const input = field(name); if (!input) continue;
             if (input.type === 'checkbox') input.checked = settings[name]; else input.value = settings[name];
         }
         for (const [name, value] of Object.entries(defaultPrompts(dataset))) field(name).value = settings[name] || value;
-        status.textContent = '';
+        status.textContent = savedMessage();
     }
     function values() {
         const result = {...settings};
         for (const name of Object.keys(settings)) {
             const input = field(name); if (input) result[name] = input.type === 'checkbox' ? input.checked : input.value.trim();
         }
-        for (const name of ['aiEndpoint','ankiEndpoint']) {
-            let url; try { url = new URL(result[name]); } catch { throw new Error('Enter a valid server URL.'); }
-            if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Use an HTTP or HTTPS server URL without embedded credentials.');
-        }
-        if (result.aiEnabled && !result.aiModel) throw new Error('Select or enter an AI model.');
-        if (result.ankiEnabled && !result.deck) throw new Error('Enter an Anki deck name.');
         for (const [name, value] of Object.entries(defaultPrompts(dataset))) if (result[name] === value) result[name] = '';
         return result;
     }
     function refresh() {
         for (const row of rows) {
             if (!row.isConnected) { rows.delete(row); continue; }
-            (row.commandNodes || []).forEach(node => { node.hidden = node.dataset.integration === 'ai' ? !settings.aiEnabled : !settings.ankiEnabled; });
+            (row.commandNodes || []).forEach(node => { node.hidden = node.dataset.integration === 'ai' ? !enabled('ai') : !enabled('anki'); });
         }
     }
     const open = button('', () => { populate(); document.getElementById('settings').open = false; dialog.showModal(); });
@@ -84,16 +79,26 @@ export function initializeIntegrations(dataset, speak, renderReading) {
     document.querySelector('.menu-links').prepend(open);
     dialog.querySelector('[data-reset-prompts]').addEventListener('click', () => {
         for (const [name, value] of Object.entries(defaultPrompts(dataset))) field(name).value = value;
-        status.textContent = 'Default prompts restored. Save settings to apply.';
+        dirty = true; save();
     });
-    dialog.querySelector('[data-save]').addEventListener('click', () => {
-        try { const next = values(); localStorage.setItem(key, JSON.stringify(next)); settings = next; refresh(); dialog.close(); }
-        catch (error) { status.textContent = error.message; }
+    function save() {
+        clearTimeout(saveTimer);
+        if (!dirty) return;
+        try {
+            const next = values(); localStorage.setItem(key, JSON.stringify(next));
+            settings = next; dirty = false; refresh(); status.textContent = savedMessage();
+        } catch (error) { status.textContent = `Changes could not be saved: ${error.message}`; }
+    }
+    form.addEventListener('input', () => {
+        dirty = true; clearTimeout(saveTimer);
+        saveTimer = setTimeout(save, 400);
     });
+    form.addEventListener('change', () => { dirty = true; save(); });
+    window.addEventListener('pagehide', save);
     for (const kind of ['ai','anki']) {
         const control = dialog.querySelector(`[data-test="${kind}"]`);
         control.addEventListener('click', async () => {
-            // Testing a connection does not enable an integration or write settings.
+            // Connecting is explicit; saving settings never contacts a service.
             const draft = {...settings, aiEndpoint:field('aiEndpoint').value.trim(), ankiEndpoint:field('ankiEndpoint').value.trim(), ankiKey:field('ankiKey').value};
             connectionController?.abort(); connectionController = new AbortController();
             control.disabled = true; status.textContent = 'Connecting…';
@@ -105,13 +110,13 @@ export function initializeIntegrations(dataset, speak, renderReading) {
                 const names = kind === 'ai' ? await listModels(draft, connectionController.signal) : await ankiRequest(draft, 'deckNames', {}, connectionController.signal);
                 if (!Array.isArray(names)) throw new Error('The server returned an invalid list.');
                 dialog.querySelector(kind === 'ai' ? '#explorer-models' : '#explorer-decks').replaceChildren(...names.map(name => { const option = el('option'); option.value = name; return option; }));
-                if (kind === 'ai' && !field('aiModel').value && names.length) field('aiModel').value = names[0];
+                if (kind === 'ai' && !field('aiModel').value && names.length) { field('aiModel').value = names[0]; dirty = true; save(); }
                 status.textContent = `Connected. ${names.length} ${kind === 'ai' ? 'models' : 'decks'} available.`;
             } catch (error) { status.textContent = `Could not connect: ${error.message}`; }
             finally { control.disabled = false; }
         });
     }
-    dialog.addEventListener('close', () => { connectionController?.abort(); document.querySelector('#settings summary').focus(); });
+    dialog.addEventListener('close', () => { save(); connectionController?.abort(); document.querySelector('#settings summary').focus(); });
     // Escape closes this modal without also closing the graph's card or focusing search.
     dialog.addEventListener('keydown', event => { if (event.key === 'Escape') event.stopPropagation(); });
 
@@ -185,13 +190,13 @@ export function initializeIntegrations(dataset, speak, renderReading) {
         (toolbarHost || row).append(toolbar); row.append(output);
         // Store menu controls with their result row, even when mounted in the header.
         row.commandNodes = [...commands.querySelectorAll('[data-integration]')];
-        row.commandNodes.forEach(node => { node.hidden = node.dataset.integration === 'ai' ? !settings.aiEnabled : !settings.ankiEnabled; });
+        row.commandNodes.forEach(node => { node.hidden = node.dataset.integration === 'ai' ? !enabled('ai') : !enabled('anki'); });
         return row;
     }
     function releaseCard(card) { for (const controller of requests.get(card) || []) controller.abort(); requests.delete(card); for (const row of rows) if (card?.contains(row)) rows.delete(row); }
-    return {actions, releaseCard, aiEnabled:() => settings.aiEnabled,
+    return {actions, releaseCard, aiEnabled:() => enabled('ai'),
         analyze:async (card, sentence, signal) => {
-            if (!settings.aiEnabled) throw new Error('Enable local AI in the menu to analyze sentences.');
+            if (!enabled('ai')) throw new Error('Enable local AI in the menu to analyze sentences.');
             const controller = new AbortController();
             const abort = () => controller.abort();
             if (signal?.aborted) abort();

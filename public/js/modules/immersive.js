@@ -39,6 +39,7 @@ function saveFrequencies() {
 }
 let graph, definitions, sentences, ranks, cy, seed = '学';
 let colorMode = (japanese || dataset === 'cantonese') ? 'frequency' : 'tone';
+let announcementTimer;
 let expansionTimer, searchTimer, searchIndex = [];
 let integrations;
 const cache = new Map();
@@ -53,7 +54,11 @@ let characterOrder = [];
 let searchedWord = '';
 const searchedWords = new Set();
 
-const announce = text => { $('status').textContent = text; };
+const announce = text => {
+    clearTimeout(announcementTimer);
+    $('status').textContent = text;
+    if (text) announcementTimer = setTimeout(() => { $('status').textContent = ''; }, 5000);
+};
 const el = (tag, text, className) => {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = text;
@@ -640,6 +645,8 @@ async function openSentence(text) {
 }
 
 async function submitSearch(query) {
+    announce('');
+    $('suggestions').hidden = true;
     const kind = searchKind(query, knownWords, dataset);
     if (kind === 'word') { navigate(query); return; }
     if (kind === 'sentence') {
@@ -820,7 +827,7 @@ async function initialize() {
         for (const word of cards.keys()) positionCard(word);
     });
     mobile.addEventListener('change', () => { if (mobile.matches) { if (cy.nodes().length > cap()) reset(); } });
-    $('search').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(suggestions, 120); });
+    $('search').addEventListener('input', () => { announce(''); clearTimeout(searchTimer); searchTimer = setTimeout(suggestions, 120); });
     $('search-form').addEventListener('submit', event => {
         event.preventDefault(); const query = $('search').value.trim(); if (!query) return;
         clearTimeout(searchTimer);
