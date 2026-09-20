@@ -331,15 +331,14 @@ h2 {
     border:1px solid var(--line);
     font-size:17px;
 }
-.card-action {
-    margin-top:16px;
-    width:100%;
-    background:var(--accent);
-    color:white;
-    font-size:13px;
+.related button.linked {
+    border-color:var(--accent);
+    background:#65857218;
 }
-.card-action:hover {
-    background:#467969;
+.kanji-readings dt[title] {
+    text-decoration:underline dotted;
+    text-underline-offset:3px;
+    cursor:help;
 }
 .classic-link {
     display:block;
@@ -521,10 +520,6 @@ h2 {
         --line:#3a5047;
         --accent:#96c3a4;
         --shadow:0 8px 32px #0003;
-    }
-    .card-action {
-        background:#456c58;
-        color:#fff;
     }
 }
 .card-header {

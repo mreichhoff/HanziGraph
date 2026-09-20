@@ -8,7 +8,7 @@ import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import { getWordSetFromFrequency } from './graph-functions.js';
 
-import { buildExplorerGraph, isCharacter, placeContextCard, sparseConnections, evictionOrder, wordConnections, searchPositions } from './immersive-geometry.mjs';
+import { buildExplorerGraph, isCharacter, placeContextCard, sparseConnections, evictionOrder, wordConnections, searchPositions, neighborPosition } from './immersive-geometry.mjs';
 
 import { kanjiFrequencyLimits, kanjiFrequencyLevel, unrankedKanjiColor, toneOverrides, tonePalette, contrastingText, defaultFrequencies, frequencyPalette } from './immersive-colors.mjs';
 
@@ -59,6 +59,9 @@ let neighborhoodCursor = 0;
 let characterOrder = [];
 let searchedWord = '';
 const searchedWords = new Set();
+// Connections the reader asked for by name, kept drawn while both characters are resident.
+const pinnedPairs = new Set();
+const pairKey = (a, b) => [a, b].sort().join(':');
 
 const announce = text => {
     clearTimeout(announcementTimer);
@@ -157,6 +160,16 @@ function connect() {
     for (const word of words) for (const edge of wordConnections(word, available)) {
         drawing.set(edge.id, edge); forced.add(edge.id);
     }
+    // A tapped connection is an explicit request, so it outranks the distance, degree
+    // and crossing filters for as long as both of its characters stay on the canvas.
+    for (const pair of pinnedPairs) {
+        const [source, target] = pair.split(':');
+        const edge = graph[source]?.edges[target];
+        if (!edge || !available.has(source) || !available.has(target)) continue;
+        const id = `edge:${pair}`;
+        drawing.set(id, { id, source, target, words: edge.words, label: edge.words[0] || '' });
+        forced.add(id);
+    }
     cy.batch(() => {
         cy.edges().filter(edge => !drawing.has(edge.id())).remove();
         for (const data of drawing.values()) {
@@ -182,6 +195,51 @@ function makeRoom(count, protectedIds = new Set()) {
         node.remove();
     }));
     return cap() - cy.nodes().length;
+}
+// makeRoom only recycles characters that have already left the viewport. An explicit
+// request may also displace the on-screen character furthest from what is being read.
+function makeSpaceFor(count, center, protectedIds = new Set()) {
+    if (makeRoom(count, protectedIds) >= count) return true;
+    const safe = new Set([...protectedCharacters(), ...protectedIds]);
+    const candidates = [...cy.nodes()].filter(node => !safe.has(node.id())).sort((a, b) =>
+        Math.hypot(b.position('x') - center.x, b.position('y') - center.y) -
+        Math.hypot(a.position('x') - center.x, a.position('y') - center.y));
+    cy.batch(() => {
+        for (const node of candidates) {
+            if (cap() - cy.nodes().length >= count) break;
+            positions.set(node.id(), { ...node.position() });
+            node.remove();
+        }
+    });
+    return cap() - cy.nodes().length >= count;
+}
+// Tapping a listed connection asks for that one link, so draw it: bring the character
+// alongside, displacing another if the canvas is full, and keep the edge pinned.
+function revealNeighbor(source, target, choice) {
+    const edge = graph[source]?.edges[target];
+    const anchor = cy.getElementById(source);
+    if (!edge || !anchor.length) { navigate(target); return; }
+    const extent = cy.extent();
+    let node = cy.getElementById(target);
+    const offscreen = node.length && (node.position('x') < extent.x1 || node.position('x') > extent.x2 ||
+        node.position('y') < extent.y1 || node.position('y') > extent.y2);
+    if (!node.length || offscreen) {
+        if (!node.length) makeSpaceFor(1, anchor.position(), new Set([source, target]));
+        const blocked = [...cards.values()].map(card => card.getBoundingClientRect())
+            .filter(box => box.width > 0 && box.height > 0)
+            .map(box => ({ x1: (box.left - cy.pan().x) / cy.zoom(), y1: (box.top - cy.pan().y) / cy.zoom(),
+                x2: (box.right - cy.pan().x) / cy.zoom(), y2: (box.bottom - cy.pan().y) / cy.zoom() }));
+        const position = neighborPosition(anchor.position(), cy.nodes().map(n => n.position()), extent, blocked) || viewportTarget();
+        if (node.length) { node.position(position); positions.set(target, { ...position }); }
+        else if (!addNode(target, position)) {
+            announce(`There is no room for ${target} right now. Pan into open space and try again.`);
+            return;
+        }
+    }
+    pinnedPairs.add(pairKey(source, target));
+    connect(); refresh();
+    if (choice) { choice.classList.add('linked'); choice.setAttribute('aria-pressed', 'true'); }
+    announce(`${target} linked to ${source}${edge.words[0] ? ` by ${edge.words[0]}` : ''}. Tap either character on the canvas for details.`);
 }
 function viewportTarget() {
     const extent = cy.extent(), points = cy.nodes().map(n => n.position());
@@ -270,7 +328,7 @@ function reset(word = seed) {
     clearTimeout(expansionTimer);
     closeAll();
     positions.clear(); discovered = new Set(); neighborhoodCursor = 0;
-    searchedWord = ''; searchedWords.clear();
+    searchedWord = ''; searchedWords.clear(); pinnedPairs.clear();
     seed = word;
     cy.elements().remove();
     const roots = [...word].filter(char => graph[char]);
@@ -371,10 +429,16 @@ async function renderKanji(section, char) {
         const entry = (await cached('/data/japanese/kanji.json'))[char];
         if (!entry || !section.isConnected) return;
         const readings = el('dl', '', 'kanji-readings card-pinyin');
-        if (entry.on.length) readings.append(el('dt', 'On'), el('dd', entry.on.join(' · ')));
-        if (entry.kun.length) readings.append(el('dt', 'Kun'), el('dd', entry.kun.map(value => value.replaceAll('.', '・')).join(' · ')));
+        // Dictionaries write on readings in katakana and kun readings in hiragana, so the
+        // script itself says which kind a reading is. ガク and がく are the same sounds.
+        const label = (text, hint) => { const term = el('dt', text); term.title = hint; return term; };
+        if (entry.on.length) readings.append(
+            label('On', 'On reading: borrowed from Chinese and used mostly inside compounds. Shown in katakana by dictionary convention — ガク and がく are the same sounds.'),
+            el('dd', entry.on.join(' · ')));
+        if (entry.kun.length) readings.append(
+            label('Kun', 'Kun reading: the native Japanese reading, used when the kanji stands alone or takes a kana ending. ・ marks where that kana ending begins.'),
+            el('dd', entry.kun.map(value => value.replaceAll('.', '・')).join(' · ')));
         section.append(readings);
-        if (entry.kun.some(value => value.includes('.'))) section.append(el('small', '・ marks the kana ending', 'muted'));
         const metadata = [entry.strokes ? `${entry.strokes} strokes` : '', entry.grade >= 1 && entry.grade <= 6 ? `School grade ${entry.grade}` : ''].filter(Boolean);
         section.append(el('p', metadata.join(' · '), 'kanji-metadata'));
         if (entry.words?.length) {
@@ -482,19 +546,18 @@ async function openWord(word, anchor, source) {
         let shown = 0;
         const more = button('More connections', () => showRelated());
         function showRelated() {
-            for (const char of neighbors.slice(shown, shown + 12)) related.append(button(char, () => navigate(char)));
+            for (const char of neighbors.slice(shown, shown + 12)) {
+                const choice = button(char, () => revealNeighbor(word, char, choice));
+                choice.setAttribute('aria-label', `Link ${char} to ${word} on the canvas`);
+                choice.setAttribute('aria-pressed', String(pinnedPairs.has(pairKey(word, char))));
+                if (pinnedPairs.has(pairKey(word, char))) choice.classList.add('linked');
+                related.append(choice);
+            }
             shown += 12;
             more.hidden = shown >= neighbors.length;
         }
         showRelated();
         card.append(related, more);
-        card.append(button('Explore these connections →', () => {
-            let node = cy.getElementById(word);
-            if (!node.length) { reset(word); node = cy.getElementById(word); }
-            const added = expandNodes([node], 8);
-            if (!added) announce('Pan into open space to make room for more connections.');
-            if (mobile.matches) closeCard(word);
-        }, 'card-action'));
     }
     const classic = el('a', `More in classic ${japanese ? 'JapaneseGraph' : 'HanziGraph'} ↗`, 'classic-link');
     classic.href = classicUrl(word); card.append(classic);

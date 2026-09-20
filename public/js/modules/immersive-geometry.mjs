@@ -105,6 +105,31 @@ export function sparseConnections(nodes, graph, maxDistance = 270) {
     return chosen;
 }
 
+// Place a requested neighbor beside its character: the nearest free ring position,
+// preferring one that is on screen and not hidden behind an open card.
+export function neighborPosition(origin, occupied, extent, blocked = [], spacing = 100, margin = 40) {
+    const inside = point => !extent || (point.x > extent.x1 + margin && point.x < extent.x2 - margin &&
+        point.y > extent.y1 + margin && point.y < extent.y2 - margin);
+    const hidden = point => blocked.some(box => point.x > box.x1 - margin && point.x < box.x2 + margin &&
+        point.y > box.y1 - margin && point.y < box.y2 + margin);
+    let best, score = Infinity;
+    let roomiest, clearest = -Infinity;
+    for (let step = 0; step < 64; step++) {
+        const angle = step * 2.399963;
+        const radius = 120 + Math.floor(step / 16) * 34;
+        const point = { x: origin.x + Math.cos(angle) * radius, y: origin.y + Math.sin(angle) * radius };
+        const clearance = occupied.length ? Math.min(...occupied.map(other => Math.hypot(point.x - other.x, point.y - other.y))) : Infinity;
+        // A crowded neighborhood still keeps the character beside its anchor: the
+        // roomiest nearby gap beats a free spot on the far side of the canvas.
+        if (clearance > clearest) { clearest = clearance; roomiest = point; }
+        if (clearance < spacing) continue;
+        // Off-screen and card-covered spots stay available, but only as a last resort.
+        const candidate = radius + (inside(point) ? 0 : 1200) + (hidden(point) ? 600 : 0);
+        if (candidate < score) { score = candidate; best = point; }
+    }
+    return best || roomiest;
+}
+
 export function evictionOrder(nodes, extent, protectedIds, margin = 70) {
     const center = { x: (extent.x1 + extent.x2) / 2, y: (extent.y1 + extent.y2) / 2 };
     const distance = node => Math.hypot(node.position.x - center.x, node.position.y - center.y);
