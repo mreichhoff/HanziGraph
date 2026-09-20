@@ -126,3 +126,18 @@ export function searchPositions(chars, origin, occupied, columns = 3) {
     const right = Math.max(origin.x, ...occupied.map(p => p.x)) + 150;
     return offsets.map(p => ({ id: p.id, position: { x: right + p.x, y: origin.y + p.y } }));
 }
+
+// Keep the source node/edge visible beside the card. If a narrow viewport has
+// no room, reserve a strip above the card and move the graph into that strip.
+export function placeContextCard(anchor, size, bounds, context) {
+    const rect = placeCard(anchor, size, bounds, context ? [context] : []);
+    if (!context || overlapArea(rect, context, 12) === 0) return {rect, scale:1, shift:{x:0,y:0}};
+    const height = Math.min(size.height, Math.max(120, bounds.height - 110));
+    const dock = {x:bounds.x + (bounds.width - size.width) / 2, y:bounds.y + bounds.height - height, width:size.width, height};
+    const room = {x:bounds.x + 12, y:bounds.y + 12, width:Math.max(1,bounds.width - 24), height:Math.max(1,dock.y - bounds.y - 36)};
+    const scale = Math.min(1, room.width / context.width, room.height / context.height);
+    return {rect:dock, scale, shift:{
+        x:room.x + room.width / 2 - (context.x + context.width / 2) * scale,
+        y:room.y + room.height / 2 - (context.y + context.height / 2) * scale
+    }};
+}

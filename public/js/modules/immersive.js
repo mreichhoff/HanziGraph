@@ -6,7 +6,7 @@ import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import { getWordSetFromFrequency } from './graph-functions.js';
 
-import { buildExplorerGraph, isCharacter, placeCard, sparseConnections, evictionOrder, wordConnections, searchPositions } from './immersive-geometry.mjs';
+import { buildExplorerGraph, isCharacter, placeContextCard, sparseConnections, evictionOrder, wordConnections, searchPositions } from './immersive-geometry.mjs';
 
 import { toneOverrides, tonePalette, contrastingText, defaultFrequencies, frequencyPalette } from './immersive-colors.mjs';
 
@@ -283,19 +283,36 @@ function reset(word = seed) {
     cy.viewport({ zoom, pan: { x: innerWidth / 2 - center.x * zoom, y: innerHeight / 2 - center.y * zoom } });
     refresh();
 }
-function positionCard(word, anchor) {
+function positionCard(word, anchor, source) {
     const card = cards.get(word);
     if (!card) return;
-    const pan = cy.pan(), zoom = cy.zoom();
+    let pan = cy.pan(), zoom = cy.zoom();
     if (anchor) {
+        card.style.height = '';
         const size = { width: card.offsetWidth, height: card.offsetHeight };
-        const rect = placeCard(anchor, size,
-            { x: 12, y: 82, width: innerWidth - 24, height: Math.max(size.height, innerHeight - 182) }, []);
-        // Fit the card when opened, then keep that location in graph coordinates.
-        // Re-clamping during a pan would make it stick to the screen's edge.
+        const nodes = source ? (source.isNode() ? [source] : [source.source(), source.target()]) : [...new Set([...word])].map(char => cy.getElementById(char)).filter(node => node.length);
+        const boxes = nodes.map(node => node.renderedBoundingBox());
+        const context = boxes.length ? {
+            x:Math.min(...boxes.map(box => box.x1)), y:Math.min(...boxes.map(box => box.y1)),
+            width:Math.max(...boxes.map(box => box.x2)) - Math.min(...boxes.map(box => box.x1)),
+            height:Math.max(...boxes.map(box => box.y2)) - Math.min(...boxes.map(box => box.y1))
+        } : null;
+        const placement = placeContextCard(anchor, size,
+            { x:12, y:82, width:innerWidth - 24, height:Math.max(180, innerHeight - 182) }, context);
+        const {rect, scale, shift} = placement;
+        if (scale !== 1 || shift.x || shift.y) {
+            // Remove the previous anchor while viewport events fire during reframing.
+            cardAnchors.delete(word);
+            const nextZoom = zoom * scale;
+            cy.minZoom(Math.min(cy.minZoom(), nextZoom));
+            cy.viewport({zoom:nextZoom, pan:{x:pan.x * scale + shift.x, y:pan.y * scale + shift.y}});
+            pan = cy.pan(); zoom = cy.zoom();
+        }
+        card.style.height = `${rect.height}px`;
         cardAnchors.set(word, { x: (rect.x - pan.x) / zoom, y: (rect.y - pan.y) / zoom });
     }
     const position = cardAnchors.get(word);
+    if (!position) return;
     card.style.left = `${position.x * zoom + pan.x}px`;
     card.style.top = `${position.y * zoom + pan.y}px`;
 }
@@ -333,12 +350,12 @@ function findExamples(word, source) {
     if (japanese) matches.sort((a, b) => a.zh.join('').length - b.zh.join('').length);
     return matches.slice(0, 3);
 }
-async function openWord(word, anchor) {
+async function openWord(word, anchor, source) {
     clearTimeout(searchTimer);
     const node = cy.getElementById([...word].find(char => cy.getElementById(char).length) || '');
     anchor ||= node.length ? node.renderedPosition() : { x: innerWidth / 2, y: innerHeight / 3 };
     $('suggestions').hidden = true;
-    if (cards.has(word)) { positionCard(word, anchor); cards.get(word).focus(); return; }
+    if (cards.has(word)) { positionCard(word, anchor, source); cards.get(word).focus(); return; }
     while (cards.size) closeCard(cards.keys().next().value);
     const card = el('section', undefined, 'card');
     card.tabIndex = -1;
@@ -388,7 +405,7 @@ async function openWord(word, anchor) {
     }
     const classic = el('a', `More in classic ${japanese ? 'JapaneseGraph' : 'HanziGraph'} ↗`, 'classic-link');
     classic.href = classicUrl(word); card.append(classic);
-    cards.set(word, card); $('cards').append(card); positionCard(word, anchor); card.focus(); refresh();
+    cards.set(word, card); $('cards').append(card); positionCard(word, anchor, source); card.focus(); refresh();
     const defsTask = (async () => {
         try {
             let defs = definitions[word];
@@ -613,8 +630,8 @@ async function initialize() {
     characterOrder = Object.keys(graph);
     searchIndex = Object.entries(definitions).sort((a, b) => (ranks[a[0]] || 1e9) - (ranks[b[0]] || 1e9)).map(([word, defs]) => ({ word, pinyin: normalize(readingsFor(word, defs).join(' ')), readings: readingsFor(word, defs).map(normalize), numberedReadings: readingsFor(word, defs).map(reading => reading.toLowerCase().replace(/\s/g, '')), glosses: defs.flatMap(d => d.en.toLowerCase().split(';').map(x => x.trim())), english: defs.map(d => d.en).join(' ').toLowerCase() }));
     cy = cytoscape({ container: $('graph'), elements: [], style: style(), layout: { name: 'preset' }, minZoom: .35, maxZoom: 2.5 });
-    cy.on('tap', 'node', event => openWord(event.target.id(), event.renderedPosition));
-    cy.on('tap', 'edge', event => openWord(event.target.data('words')[0], event.renderedPosition));
+    cy.on('tap', 'node', event => openWord(event.target.id(), event.renderedPosition, event.target));
+    cy.on('tap', 'edge', event => openWord(event.target.data('words')[0], event.renderedPosition, event.target));
     cy.on('mouseover', 'node, edge', event => { event.target.addClass('hovered'); revealConnections(); });
     cy.on('mouseout', 'node, edge', event => { event.target.removeClass('hovered'); revealConnections(); });
     cy.on('dragfree', 'node', event => { positions.set(event.target.id(), { ...event.target.position() }); connect(); });
