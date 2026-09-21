@@ -10,7 +10,7 @@ import { getWordSetFromFrequency } from './graph-functions.js';
 
 import { buildExplorerGraph, isCharacter, placeContextCard, sparseConnections, evictionOrder, wordConnections, searchPositions, neighborPosition } from './immersive-geometry.mjs';
 
-import { kanjiFrequencyLimits, kanjiFrequencyLevel, unrankedKanjiColor, toneOverrides, tonePalette, contrastingText, defaultFrequencies, frequencyPalette } from './immersive-colors.mjs';
+import { kanjiFrequencyLimits, kanjiFrequencyLevel, unrankedKanjiColor, toneOverrides, tonePalette, contrastingText, defaultFrequencies, frequencyOverrides, frequencyPalette } from './immersive-colors.mjs';
 
 cytoscape.use(fcose);
 const $ = id => document.getElementById(id);
@@ -38,10 +38,11 @@ function saveTones() {
     try { localStorage.setItem(toneStorageKey, JSON.stringify({ version: 2, colors: customTones })); } catch { /* Colors still work for this session. */ }
 }
 const frequencyStorageKey = 'immersive-frequency-colors';
-let frequencies = frequencyPalette(null);
-try { frequencies = frequencyPalette(JSON.parse(localStorage.getItem(frequencyStorageKey))); } catch { /* Use defaults if storage is unavailable. */ }
+let customFrequencies = frequencyOverrides(null);
+try { customFrequencies = frequencyOverrides(JSON.parse(localStorage.getItem(frequencyStorageKey))); } catch { /* Use defaults if storage is unavailable. */ }
+let frequencies = frequencyPalette(customFrequencies, dark.matches);
 function saveFrequencies() {
-    try { localStorage.setItem(frequencyStorageKey, JSON.stringify(frequencies)); } catch { /* Keep session colors. */ }
+    try { localStorage.setItem(frequencyStorageKey, JSON.stringify({ version: 2, colors: customFrequencies })); } catch { /* Keep session colors. */ }
 }
 let graph, definitions, sentences, ranks, cy, seed = '学';
 let colorMode = (japanese || dataset === 'cantonese') ? 'frequency' : 'tone';
@@ -844,7 +845,7 @@ function suggestions() {
 function updateColorReset() {
     const reset = $('legend').querySelector('.reset-tone-colors');
     const palette = colorMode === 'tone' ? tones : frequencies;
-    const defaults = colorMode === 'tone' ? tonePalette(null, dark.matches) : defaultFrequencies;
+    const defaults = colorMode === 'tone' ? tonePalette(null, dark.matches) : defaultFrequencies(dark.matches);
     if (reset) reset.hidden = palette.every((color, i) => color.toLowerCase() === defaults[i]);
 }
 function legend() {
@@ -864,7 +865,10 @@ function legend() {
             if (toneMode) {
                 customTones[i] = picker.value === tonePalette(null, dark.matches)[i] ? null : picker.value;
                 tones = tonePalette(customTones, dark.matches); saveTones();
-            } else { frequencies[i] = picker.value; saveFrequencies(); }
+            } else {
+                customFrequencies[i] = picker.value === defaultFrequencies(dark.matches)[i] ? null : picker.value;
+                frequencies = frequencyPalette(customFrequencies, dark.matches); saveFrequencies();
+            }
             cy.style(style()); updateColorReset();
         });
         control.append(picker, document.createTextNode(label)); $('legend').append(control);
@@ -879,7 +883,7 @@ function legend() {
     }
     const reset = button('↺', () => {
         if (toneMode) { customTones = toneOverrides(null); tones = tonePalette(customTones, dark.matches); saveTones(); }
-        else { frequencies = frequencyPalette(null); saveFrequencies(); }
+        else { customFrequencies = frequencyOverrides(null); frequencies = frequencyPalette(customFrequencies, dark.matches); saveFrequencies(); }
         cy.style(style());
         $('legend').querySelectorAll('input[type="color"]').forEach((picker, i) => { picker.value = toneMode ? tones[i] : frequencies[i]; });
         updateColorReset();
@@ -976,7 +980,9 @@ async function initialize() {
     });
     $('colors').addEventListener('change', () => { colorMode = $('colors').value; cy.style(style()); legend(); });
     dark.addEventListener('change', () => {
+        // Each mode has its own ramp steps, so both palettes are re-read on a theme change.
         tones = tonePalette(customTones, dark.matches);
+        frequencies = frequencyPalette(customFrequencies, dark.matches);
         cy.style(style()); legend();
     });
     window.addEventListener('resize', () => {
