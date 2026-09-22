@@ -1,6 +1,6 @@
 import { englishMatch } from './immersive-search.mjs';
 import { searchKind, sentenceWords, dictionaryForm } from './immersive-sentences.mjs';
-import { readingParts } from './immersive-card.mjs';
+import { readingParts, edgeLabel, firstGloss } from './immersive-card.mjs';
 import { initializeIntegrations } from './immersive-integration-ui.js';
 import { preferredVoice } from './immersive-speech.mjs';
 import { parseFurigana, normalizeKana, exampleTokens } from './immersive-japanese.mjs';
@@ -62,6 +62,16 @@ let searchedWord = '';
 const searchedWords = new Set();
 // Connections the reader asked for by name, kept drawn while both characters are resident.
 const pinnedPairs = new Set();
+const meaningStorageKey = 'immersive-edge-meanings';
+let showMeanings = true;
+let edgeGlosses = null;
+// Only the words that can label an edge, and only when the reader wants meanings:
+// roughly 210KB gzipped that never loads for anyone who turns the toggle off.
+const loadGlosses = () => japanese && !edgeGlosses
+    ? cached('/data/japanese/explorer-glosses.json').then(value => { edgeGlosses = value; connect(); }).catch(() => { /* Bare words are a fine fallback. */ })
+    : Promise.resolve();
+const meaningFor = word => edgeGlosses?.[word] || firstGloss(definitions?.[word]?.[0]?.en);
+try { showMeanings = localStorage.getItem(meaningStorageKey) !== 'false'; } catch { /* Default to showing them. */ }
 const pairKey = (a, b) => [a, b].sort().join(':');
 
 const announce = text => {
@@ -123,7 +133,7 @@ function style() {
     return [
         { selector: 'node', style: { label: 'data(id)', width: 52, height: 52, 'font-size': 28, 'font-family': 'sans-serif', 'text-valign': 'center', 'text-halign': 'center', 'background-color': nodeColor, color: node => contrastingText(nodeColor(node)), 'border-width': 3, 'border-color': dark.matches ? '#142321' : '#fffefb', 'overlay-opacity': 0 } },
         { selector: 'node.inspected', style: { 'border-width': 4, 'border-color': dark.matches ? '#d4eddb' : '#345f50' } },
-        { selector: 'edge', style: { width: 1.5, 'line-color': dark.matches ? '#587566' : '#a9beb0', 'curve-style': 'straight', 'font-size': 12, color: dark.matches ? '#d0e4d7' : '#345847', 'text-background-color': dark.matches ? '#142321' : '#f5f3ee', 'text-background-opacity': .98, 'text-background-padding': 4, 'text-rotation': 'autorotate', 'min-zoomed-font-size': 9, 'text-events': 'yes', 'overlay-opacity': 0 } },
+        { selector: 'edge', style: { width: 1.5, 'line-color': dark.matches ? '#587566' : '#a9beb0', 'curve-style': 'straight', 'font-size': 12, color: dark.matches ? '#d0e4d7' : '#345847', 'text-background-color': dark.matches ? '#142321' : '#f5f3ee', 'text-background-opacity': .98, 'text-background-padding': 4, 'text-rotation': 'autorotate', 'text-wrap': 'wrap', 'line-height': 1.15, 'min-zoomed-font-size': 9, 'text-events': 'yes', 'overlay-opacity': 0 } },
         { selector: 'edge[label]', style: { label: 'data(label)' } },
         { selector: 'edge.revealed', style: { width: 2.3, 'line-color': dark.matches ? '#9dc5ab' : '#648f77', 'z-index': 2 } }
 
@@ -171,6 +181,9 @@ function connect() {
         drawing.set(id, { id, source, target, words: edge.words, label: edge.words[0] || '' });
         forced.add(id);
     }
+    // Meanings ride under the word itself. Best effort: a word the loaded dictionary
+    // does not cover, or whose gloss is too long for an edge, keeps the bare word.
+    if (showMeanings) for (const data of drawing.values()) data.label = edgeLabel(data.label, meaningFor(data.label));
     cy.batch(() => {
         cy.edges().filter(edge => !drawing.has(edge.id())).remove();
         for (const data of drawing.values()) {
@@ -978,6 +991,14 @@ async function initialize() {
     cy.on('pan zoom', () => {
         for (const word of cards.keys()) positionCard(word);
     });
+    const meaningToggle = $('show-edge-meanings');
+    meaningToggle.checked = showMeanings;
+    meaningToggle.addEventListener('change', () => {
+        showMeanings = meaningToggle.checked;
+        try { localStorage.setItem(meaningStorageKey, String(showMeanings)); } catch { /* Keep the session preference. */ }
+        connect();
+        if (showMeanings) loadGlosses();
+    });
     $('colors').addEventListener('change', () => { colorMode = $('colors').value; cy.style(style()); legend(); });
     dark.addEventListener('change', () => {
         // Each mode has its own ramp steps, so both palettes are re-read on a theme change.
@@ -1001,6 +1022,7 @@ async function initialize() {
         if (event.key === '/' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) { event.preventDefault(); $('search').focus(); }
         if (event.key === 'ArrowDown' && document.activeElement === $('search') && !$('suggestions').hidden) { event.preventDefault(); $('suggestions').querySelector('button')?.focus(); }
     });
+    if (showMeanings) loadGlosses();
     if (dataset === 'traditional' && seed === '学') seed = '學';
     reset(); legend(); $('loading').hidden = true;
     if (params.get('word')) { $('search').value = params.get('word').slice(0, 1000); await submitSearch($('search').value); }

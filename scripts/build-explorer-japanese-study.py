@@ -4,6 +4,7 @@ No tokenization/phrase-frequency estimates: only direct wordfreq vocabulary matc
 """
 import gzip
 import json
+import re
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
@@ -78,11 +79,33 @@ for char, value in kanji.items():
 def write(name, value):
     (public / name).write_text(json.dumps(value, ensure_ascii=False, separators=(',', ':')) + '\n')
 
+# Edge labels are best-effort English, so only words that can label an edge between two
+# ranked kanji are kept, and only down to the depth a reader realistically explores.
+label_words = set()
+edge_rank = {w: i for i, w in enumerate(ordered)}
+for word in ordered[:40000]:
+    chars = [c for c in dict.fromkeys(word) if c in kanji and kanji[c]['rank']]
+    if len(chars) >= 2:
+        label_words.add(word)
+edge_glosses = {}
+for entry in source['words']:
+    for form in entry['kanji']:
+        text = form['text']
+        if text in label_words and text not in edge_glosses:
+            for sense in entry['sense']:
+                gloss = next((g['text'] for g in sense['gloss'] if g['lang'] == 'eng'), '')
+                if not gloss:
+                    continue
+                gloss = re.sub(r'\s*\([^)]*\)', '', gloss).strip().rstrip(',;.').split(';')[0].strip()
+                if gloss and len(gloss) <= 24:
+                    edge_glosses[text] = gloss
+                break
+write('explorer-glosses.json', edge_glosses)
 write('explorer-word-order.json', ordered)
 write('explorer-index.json', index)
 write('kanji.json', kanji)
 write('explorer-character-ranks.json', {char: value['rank'] for char, value in kanji.items() if value['rank']})
-print(f'{len(ordered)} searchable graph words; {len(excluded)} spellings/long expressions excluded from automatic edges; {len(kanji)} kanji cards')
+print(f'{len(edge_glosses)} edge glosses; {len(ordered)} searchable graph words; {len(excluded)} spellings/long expressions excluded from automatic edges; {len(kanji)} kanji cards')
 print('Top search entries:', index['searchOrder'][:12])
 print('学校 readings:', index['readings'].get('学校'))
 print('学 vocabulary:', kanji['学'].get('words'))

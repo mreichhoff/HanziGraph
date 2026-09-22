@@ -18,3 +18,15 @@ export function explorerLink(location, dataset, word) {
     url.searchParams.set('set', dataset); url.searchParams.set('word', word);
     return url.href;
 }
+
+// An edge can carry the word's meaning under the word itself. Dictionary glosses are
+// written for a card, not an edge, so parentheticals and extra senses are dropped and
+// anything still too long is skipped rather than allowed to swamp the graph.
+export function firstGloss(text, limit = 24) {
+    if (typeof text !== 'string') return '';
+    const gloss = text.replace(/\([^)]*\)/g, ' ').split(';')[0].replace(/\s+/g, ' ').trim().replace(/[,;.]$/, '');
+    return gloss.length && gloss.length <= limit ? gloss : '';
+}
+export function edgeLabel(word, gloss) {
+    return word && gloss ? `${word}\n${gloss}` : word;
+}
