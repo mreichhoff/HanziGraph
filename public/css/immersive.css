@@ -759,5 +759,9 @@ h2 {
 .kanji-vocabulary small { display:block; font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .card .example-token { display:inline; font:inherit; color:inherit; line-height:inherit; border:0; border-bottom:1px dotted var(--line); padding:0; margin:0; border-radius:3px; background:none; }
 .card .example-token:hover, .card .example-token[aria-pressed="true"] { background:var(--paper); border-color:var(--accent); }
+/* Follows the voice where the platform reports word boundaries; simply never
+   applied on the voices that do not. */
+.card .example-token.speaking { background:var(--accent); color:#fff; border-color:transparent; }
+@media(prefers-color-scheme:dark) { .card .example-token.speaking { color:#10201c; } }
 .example-word-detail:not(:empty) { background:var(--paper); padding:10px; border-radius:10px; margin:8px 0; font-size:13px; }
 .unranked-legend { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:12px; flex-shrink:0; }

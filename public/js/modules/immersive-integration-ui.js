@@ -153,7 +153,13 @@ export function initializeIntegrations(dataset, speak, renderReading) {
             finally { output.removeAttribute('aria-busy'); controls.forEach(node => { node.disabled = node.dataset.added === 'true'; }); requests.get(card)?.delete(controller); }
         };
         if ('speechSynthesis' in window) {
-            const listen = button('▶', () => speak(textForSpeech(entryProvider(), dataset, generate || word)));
+            const listen = button('▶', () => {
+                const entry = entryProvider();
+                const spoken = textForSpeech(entry, dataset, generate || word);
+                // Japanese words are spoken as their reading, which no longer lines up
+                // with the sentence spans, so only follow along when they still match.
+                speak(spoken, spoken === entry.text ? entry.spans : null);
+            });
             listen.className = 'card-listen'; listen.title = 'Listen'; listen.setAttribute('aria-label', 'Listen'); toolbar.append(listen);
         }
         const add = button('Add to Anki', () => run(add, signal => addToAnki(settings, dataset, entryProvider(), signal), () => { output.textContent = `Added to ${settings.deck}.`; add.dataset.added = 'true'; add.textContent = 'Added to Anki'; }));

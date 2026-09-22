@@ -421,13 +421,28 @@ function closeAll() {
     cards.clear();
     cardAnchors.clear();
 }
-function speak(word) {
+// Some browsers collect an utterance mid-speech, which silently truncates it.
+const speaking = [];
+function speak(word, spans) {
     if (!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
+    const clear = () => spans?.forEach(span => span.node.classList.remove('speaking'));
+    clear();
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.lang = japanese ? 'ja-JP' : dataset === 'cantonese' ? 'zh-HK' : dataset === 'traditional' ? 'zh-TW' : 'zh-CN';
     const voice = preferredVoice(speechSynthesis.getVoices(), utterance.lang);
     if (voice) utterance.voice = voice;
+    // Plenty of voices never fire boundary events, so following along is a bonus,
+    // never a promise: without them the audio simply plays unhighlighted.
+    if (spans?.length) utterance.addEventListener('boundary', event => {
+        if (typeof event.charIndex !== 'number') return;
+        const from = event.charIndex, to = from + (event.charLength || 1);
+        for (const span of spans) span.node.classList.toggle('speaking', span.start < to && span.end > from);
+    });
+    utterance.addEventListener('end', clear);
+    utterance.addEventListener('error', clear);
+    speaking.push(utterance);
+    if (speaking.length > 4) speaking.shift();
     speechSynthesis.speak(utterance);
 }
 function appendJapanese(container, parts) {
@@ -481,7 +496,11 @@ function clickableExample(card, container, sentence) {
     const cleanup = card.cleanup;
     card.cleanup = () => { cleanup?.(); integrations.releaseCard(inspector); };
     container.replaceChildren();
+    const spans = [];
+    let offset = 0;
     for (const token of exampleTokens(sentence)) {
+        const start = offset;
+        offset += token.text.length;
         if (!/[\p{L}\p{N}]/u.test(token.text)) { container.append(document.createTextNode(token.text)); continue; }
         const choice = button('', async () => {
             if (selected === choice) { close(); return; }
@@ -507,9 +526,10 @@ function clickableExample(card, container, sentence) {
         }, 'example-token');
         choice.setAttribute('aria-label', `Look up ${token.text}`); choice.setAttribute('aria-pressed', 'false');
         if (japanese) appendJapanese(choice, token.parts); else choice.textContent = token.text;
+        spans.push({ start, end: offset, node: choice });
         container.append(choice);
     }
-    return inspector;
+    return { inspector, spans };
 }
 
 function findExamples(word, source) {
@@ -612,10 +632,10 @@ async function openWord(word, anchor, source) {
         for (const sentence of found.slice(0, 3)) {
             const block = el('div', undefined, 'example');
             const chinese = el('p', sentence.zh.join(''), 'chinese'); chinese.lang = language;
-            const inspector = clickableExample(card, chinese, sentence);
+            const { inspector, spans } = clickableExample(card, chinese, sentence);
             const reading = el('p', '', 'card-pinyin'); renderReading(reading, sentence.pinyin || '');
             block.append(chinese, reading, el('p', sentence.en), inspector);
-            const entry = {text:sentence.zh.join(''), reading:japanese && sentence.fu ? parseFurigana(sentence.fu).map(part => part.reading || part.text).join('') : sentence.pinyin || '', english:sentence.en, source:classicUrl(word), word, context:sentence.zh.join('')};
+            const entry = {text:sentence.zh.join(''), reading:japanese && sentence.fu ? parseFurigana(sentence.fu).map(part => part.reading || part.text).join('') : sentence.pinyin || '', english:sentence.en, source:classicUrl(word), word, context:sentence.zh.join(''), spans};
             block.append(integrations.actions(card, () => entry));
             examples.append(block);
         }
