@@ -18,6 +18,10 @@ body {
     margin:0;
     overflow:hidden;
 }
+/* Dragging the graph never pulls to refresh or rubber-bands the page. */
+html,body {
+    overscroll-behavior:none;
+}
 button,input,select {
     font:inherit;
     color:inherit;
@@ -54,6 +58,10 @@ a {
     inset:0;
     background-image:radial-gradient(#83928625 .8px,transparent .8px);
     background-size:24px 24px;
+    /* A long press on the canvas shouldn't select text or open the iOS callout. */
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    user-select:none;
 }
 .toolbar {
     position:fixed;

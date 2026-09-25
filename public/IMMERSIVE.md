@@ -1,8 +1,16 @@
 # Experimental graph explorer
 
-Build with `npm run build`, then open `/immersive.html` using the existing hosting server. This is an independent HTML page, stylesheet, and Rollup entry point; the classic UI is unchanged. Generated bundles follow the repository's existing ignored-bundle convention.
+Build with `npm run build`, then open `/explorer/` using the existing hosting server. This is an independent HTML page (`public/explorer/index.html`), stylesheet, and Rollup entry point; the classic UI is unchanged. Generated bundles follow the repository's existing ignored-bundle convention.
 
-Links can specify a dataset and initial word, for example `/immersive.html?set=traditional&word=學`. Supported sets: simplified (default), traditional, Cantonese, and Japanese. Legacy `set=hsk` explorer URLs fall back to simplified Chinese.
+Links can specify a dataset and initial word, for example `/explorer/?set=traditional&word=學`. Supported sets: simplified (default), traditional, Cantonese, and Japanese. Legacy `set=hsk` explorer URLs fall back to simplified Chinese.
+
+## Installable app
+
+The explorer installs as its own app, separate from classic HanziGraph: `public/explorer/manifest.json` (start URL `/explorer/?set=japanese`, scope `/explorer/`) and its own worker, `public/explorer/sw.js`. Because the worker script sits in `/explorer/`, browsers confine it to that path: it never controls a classic page, and it only deletes caches named `explorer-*`. A `firebase.json` rewrite sends other `/explorer/…` paths here rather than to classic.
+
+Pages load network-first, falling back to the saved copy offline or after 4 seconds on a stalled connection, so a deploy shows on the next launch. Code and data answer from the cache and refresh in the background; a new `?v=` build replaces the old entry. On localhost everything is network-first. Bump `cacheName` in `sw.js` only when the caching scheme itself changes. Offline use covers whatever has been opened online.
+
+Classic's `/asset-service-worker.js` is untouched, which has two harmless side effects. Whenever classic's worker installs or updates, it deletes every cache but its own, including the explorer's; that refills on the next online launch. And in a browser that already has classic's worker, the explorer's very first load goes through it, so classic's cache keeps a copy of those files; the explorer's worker handles every load after that.
 
 ## Interaction
 
@@ -33,7 +41,7 @@ Regression tests: `node --test scripts/tests/immersive.test.mjs` verifies full a
 
 ## Japanese mode
 
-Choose **Japanese** in the language / character set menu, or open `/immersive.html?set=japanese` (optionally `&word=学校`). This uses the same explorer, renderer budget, search connection behavior, and detail cards. Classic links point to `https://japanesegraph.com/japanese/<word>`; speech uses `ja-JP`. The canvas contains kanji only, while dictionary searches and cards may include kana-only words.
+Choose **Japanese** in the language / character set menu, or open `/explorer/?set=japanese` (optionally `&word=学校`). This uses the same explorer, renderer budget, search connection behavior, and detail cards. Classic links point to `https://japanesegraph.com/japanese/<word>`; speech uses `ja-JP`. The canvas contains kanji only, while dictionary searches and cards may include kana-only words.
 
 Data in `public/data/japanese/` was copied from the local `JapaneseGraph` branch at `f2f55d09b6099de8ca77bf0132663c9032e2422a`. Only the word list, base dictionary, sentence examples, supplied graph, character frequency list, and on-demand dictionary partitions were imported (about 44 MB on disk). No branch checkout or classic Japanese application code is required. The initial data is local to this host; classic links are the only dependency on the separate domain.
 

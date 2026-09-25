@@ -57,6 +57,10 @@
         "destination": "/components/index.html"
       },
       {
+        "source": "/explorer/**",
+        "destination": "/explorer/index.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

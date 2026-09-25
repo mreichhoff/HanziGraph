@@ -3,11 +3,19 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#f5f3ee">
+    <meta name="theme-color" content="#f5f3ee" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#142321" media="(prefers-color-scheme: dark)">
     <title>HanziGraph · Explore</title>
-    <link rel="icon" href="/images/favicon-32x32.png">
-    <link rel="stylesheet" href="/css/immersive.css?v=speech-follow">
-    <script defer src="/js/immersive-bundle.js?v=speech-follow"></script>
+    <link rel="icon" href="/explorer/favicon-32.png">
+    <link rel="apple-touch-icon" href="/explorer/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-title" content="Explorer">
+    <link rel="manifest" href="/explorer/manifest.json">
+    <link rel="stylesheet" href="/css/immersive.css?v=pwa">
+    <script defer src="/js/immersive-bundle.js?v=pwa"></script>
+    <script>
+        // The explorer's own worker, separate from classic HanziGraph's; see /explorer/sw.js.
+        if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/explorer/sw.js'));
+    </script>
 </head>
 <body>
     <main id="graph" aria-label="Interactive character graph. Use search or the visible characters menu to open details."></main>

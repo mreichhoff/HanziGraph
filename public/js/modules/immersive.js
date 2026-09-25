@@ -957,7 +957,16 @@ async function initialize() {
         document.querySelector('label[for="search"]').textContent = 'Search kanji, kana or English';
     }
     if (japanese || dataset === 'cantonese') $('colors').querySelector('[value="tone"]').disabled = true;
-    $('dataset').addEventListener('change', () => { location.href = `/immersive.html?set=${$('dataset').value}`; });
+    // Stay on this page's path, which keeps an installed app inside its own scope.
+    $('dataset').addEventListener('change', () => { location.search = `?set=${$('dataset').value}`; });
+    // An installed app window belongs to the explorer: links to classic pages and other
+    // sites open in the browser instead of replacing the app, which has no back button.
+    if (matchMedia('(display-mode: standalone)').matches) document.addEventListener('click', event => {
+        const link = event.target.closest?.('a[href]');
+        if (!link || link.target || (link.origin === location.origin && link.pathname.startsWith('/explorer/'))) return;
+        event.preventDefault();
+        open(link.href, '_blank', 'noopener');
+    });
     const data = await Promise.all([
         json(`/data/${dataset}/${japanese ? 'explorer-word-order' : 'wordlist'}.json`),
         json(`/data/${dataset}/definitions.json`), japanese ? null : json(`/data/${dataset}/sentences.json`),
