@@ -1,6 +1,6 @@
 import { englishMatch } from './immersive-search.mjs';
 import { searchKind, sentenceWords, dictionaryForm } from './immersive-sentences.mjs';
-import { readingParts, edgeLabel, firstGloss } from './immersive-card.mjs';
+import { readingParts, edgeLabel, firstGloss, explorerPath, parseExplorerPath } from './immersive-card.mjs';
 import { initializeIntegrations } from './immersive-integration-ui.js';
 import { preferredVoice } from './immersive-speech.mjs';
 import { parseFurigana, normalizeKana, exampleTokens } from './immersive-japanese.mjs';
@@ -16,9 +16,9 @@ cytoscape.use(fcose);
 const $ = id => document.getElementById(id);
 const mobile = matchMedia('(max-width:700px)');
 const dark = matchMedia('(prefers-color-scheme:dark)');
-const params = new URLSearchParams(location.search);
 const datasets = ['simplified', 'traditional', 'cantonese', 'japanese'];
-const dataset = datasets.includes(params.get('set')) ? params.get('set') : 'simplified';
+const route = parseExplorerPath(location.pathname, datasets, 'simplified');
+const dataset = route.dataset;
 const japanese = dataset === 'japanese';
 const language = japanese ? 'ja' : 'zh';
 const classicUrl = word => japanese ? `https://japanesegraph.com/japanese/${encodeURIComponent(word || '')}` : `/${dataset}/${encodeURIComponent(word || '')}`;
@@ -421,6 +421,42 @@ function closeAll() {
     cards.clear();
     cardAnchors.clear();
 }
+// The address bar follows the open card, so a reload or shared link returns to it and
+// Back steps through what you opened. Opening a card pushes an entry. Restoring one
+// (Back, Forward, the first load) only replaces, so it never erases Forward history.
+// Closing a card opened from the bare graph steps back instead of stacking a second
+// bare-graph entry, so no Back press lands where you already are.
+let baseTitle = document.title;
+let historyMode = 'replace';
+// Each entry remembers its position and the word of the entry before it.
+let shown = { index: 0, word: '' };
+const shownWord = () => parseExplorerPath(location.pathname, datasets, dataset).word;
+function record(word, replace = historyMode === 'replace') {
+    document.title = word ? `${word} · ${baseTitle}` : baseTitle;
+    if (word !== shownWord()) {
+        const index = history.state?.index ?? 0;
+        if (replace) history.replaceState({ ...history.state, index }, '', explorerPath(dataset, word));
+        else history.pushState({ from: shownWord(), index: index + 1 }, '', explorerPath(dataset, word));
+    }
+    shown = { index: history.state?.index ?? 0, word };
+}
+function dismiss(keys) {
+    if (!cards.size) return;
+    for (const key of keys) closeCard(key);
+    if (cards.size) return;
+    if (history.state?.from === '') history.back();
+    else record('', true);
+}
+async function restore(word) {
+    historyMode = 'replace';
+    try {
+        if (!word) { closeAll(); connect(); refresh(); record(''); return; }
+        const chars = [...word].filter(char => graph[char]);
+        // A word already on the canvas reopens in place; anything else is searched again.
+        if (chars.length && chars.every(char => cy.getElementById(char).length) && searchKind(word, knownWords, dataset) === 'word') openWord(word);
+        else { $('search').value = word; await submitSearch(word); }
+    } finally { historyMode = 'push'; }
+}
 // Some browsers collect an utterance mid-speech, which silently truncates it.
 const speaking = [];
 function speak(word, spans) {
@@ -542,6 +578,7 @@ async function openWord(word, anchor, source) {
     const node = cy.getElementById([...word].find(char => cy.getElementById(char).length) || '');
     anchor ||= node.length ? node.renderedPosition() : { x: innerWidth / 2, y: innerHeight / 3 };
     $('suggestions').hidden = true;
+    record(word);
     if (cards.has(word)) { positionCard(word, anchor, source); cards.get(word).focus(); return; }
     while (cards.size) closeCard(cards.keys().next().value);
     const card = el('section', undefined, 'card');
@@ -553,7 +590,7 @@ async function openWord(word, anchor, source) {
     card.setAttribute('aria-label', `Details for ${word}`);
     const header = el('div', undefined, 'card-header');
     const title = el('h2', word, 'character'); title.lang = language;
-    const close = button('×', () => closeCard(word), 'close');
+    const close = button('×', () => dismiss([word]), 'close');
     close.setAttribute('aria-label', `Close ${word}`);
     const heading = el('div', '', 'card-heading'); heading.append(title);
     const headerTools = el('div', '', 'card-header-tools');
@@ -723,6 +760,7 @@ async function lookupDefinitions(word) {
 async function openSentence(text) {
     clearTimeout(searchTimer); clearTimeout(expansionTimer);
     $('suggestions').hidden = true;
+    record(text);
     closeAll();
     // Segment locally before AI returns; never expand every character in a sentence.
     const first = sentenceWords(text, dataset).find(word => [...word].some(char => graph[char]));
@@ -741,7 +779,7 @@ async function openSentence(text) {
     attribution.title = 'Translation, readings and explanations generated by your local AI model';
     header.append(attribution);
     const tools = el('div', '', 'card-header-tools');
-    const close = button('×', () => closeCard(key), 'close'); close.setAttribute('aria-label', 'Close sentence');
+    const close = button('×', () => dismiss([key]), 'close'); close.setAttribute('aria-label', 'Close sentence');
     tools.append(close); header.append(tools); card.append(header);
     const sentence = el('p', text, 'sentence-text'); sentence.lang = language;
     const output = el('div', '', 'sentence-analysis'); output.setAttribute('aria-live', 'polite');
@@ -958,7 +996,8 @@ async function initialize() {
     }
     if (japanese || dataset === 'cantonese') $('colors').querySelector('[value="tone"]').disabled = true;
     // Stay on this page's path, which keeps an installed app inside its own scope.
-    $('dataset').addEventListener('change', () => { location.search = `?set=${$('dataset').value}`; });
+    baseTitle = document.title;
+    $('dataset').addEventListener('change', () => { location.href = explorerPath($('dataset').value); });
     // An installed app window belongs to the explorer: links to classic pages and other
     // sites open in the browser instead of replacing the app, which has no back button.
     if (matchMedia('(display-mode: standalone)').matches) document.addEventListener('click', event => {
@@ -1004,7 +1043,7 @@ async function initialize() {
         if (event.target !== cy) return;
         $('suggestions').hidden = true;
         $('settings').open = false;
-        for (const word of cards.keys()) closeCard(word);
+        dismiss([...cards.keys()]);
     });
     // Trigger only after a user finishes moving the viewport. Programmatic pan/layout
     // does not recursively expand the graph; each gesture adds at most 24 nodes.
@@ -1047,14 +1086,22 @@ async function initialize() {
         $('search').blur();
     });
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape') { $('suggestions').hidden = true; $('settings').open = false; if (cards.size) closeCard([...cards.keys()].pop()); $('search').focus(); }
+        if (event.key === 'Escape') { $('suggestions').hidden = true; $('settings').open = false; if (cards.size) dismiss([[...cards.keys()].pop()]); $('search').focus(); }
         if (event.key === '/' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) { event.preventDefault(); $('search').focus(); }
         if (event.key === 'ArrowDown' && document.activeElement === $('search') && !$('suggestions').hidden) { event.preventDefault(); $('suggestions').querySelector('button')?.focus(); }
     });
     if (showMeanings) loadGlosses();
     if (dataset === 'traditional' && seed === '学') seed = '學';
     reset(); legend(); $('loading').hidden = true;
-    if (params.get('word')) { $('search').value = params.get('word').slice(0, 1000); await submitSearch($('search').value); }
+    history.replaceState({ index: 0, ...history.state }, '', explorerPath(dataset, route.word));
+    addEventListener('popstate', () => {
+        // One step Forward lands just after the entry being left. Closing a card there
+        // may have changed that entry since this one was pushed, so update its memory.
+        const state = history.state;
+        if (state && state.index === shown.index + 1 && state.from !== shown.word) history.replaceState({ ...state, from: shown.word }, '');
+        restore(shownWord());
+    });
+    await restore(route.word);
 }
 initialize().catch(error => {
     console.error(error);

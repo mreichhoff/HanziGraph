@@ -7,6 +7,12 @@ const shell = '/explorer/';
 const cacheable = /^\/(?:css|data|explorer|images|js)\//;
 // Local development always asks the server first, so edits show on the next reload.
 const local = ['localhost', '127.0.0.1'].includes(self.location.hostname);
+// Every request this worker sends checks with the server (a cheap 304 when unchanged).
+// Without it the browser's HTTP cache can answer from its own freshness guess, and a
+// "network first" page would still be stale. Locally it skips the check and refetches:
+// the Firebase hosting emulator answers a conditional request for a rewritten URL, such
+// as /explorer/japanese/学校, with a 304 from a stale ETag after the page is edited.
+const revalidate = request => fetch(new Request(request, { cache: local ? 'no-store' : 'no-cache' }));
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -29,7 +35,7 @@ self.addEventListener('fetch', event => {
 // Every explorer URL serves the same page, so one saved shell covers them all.
 async function networkFirst(event, key, patience = Infinity) {
     const cache = await caches.open(cacheName);
-    const network = fetch(event.request).then(response => {
+    const network = revalidate(event.request).then(response => {
         const page = key !== shell || response.headers.get('content-type')?.includes('text/html');
         if (response.status === 200 && page) event.waitUntil(cache.put(key, response.clone()));
         return response;
@@ -45,7 +51,7 @@ async function networkFirst(event, key, patience = Infinity) {
 // Code and data answer from the cache at once and refresh in the background.
 async function staleWhileRevalidate(event) {
     const cache = await caches.open(cacheName);
-    const network = fetch(event.request).then(response => {
+    const network = revalidate(event.request).then(response => {
         if (response.status === 200) event.waitUntil(store(cache, event.request, response.clone()));
         return response;
     });

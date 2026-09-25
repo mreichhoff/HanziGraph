@@ -3,7 +3,7 @@
     "name": "JapaneseGraph Explorer",
     "short_name": "Explorer",
     "description": "Wander a graph of characters and the words they form, in Japanese or Chinese.",
-    "start_url": "/explorer/?set=japanese",
+    "start_url": "/explorer/japanese/",
     "scope": "/explorer/",
     "display": "standalone",
     "background_color": "#f5f3ee",
@@ -16,9 +16,9 @@
         { "src": "/explorer/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
     ],
     "shortcuts": [
-        { "name": "Japanese", "url": "/explorer/?set=japanese" },
-        { "name": "Simplified Chinese", "url": "/explorer/?set=simplified" },
-        { "name": "Traditional Chinese", "url": "/explorer/?set=traditional" },
-        { "name": "Cantonese", "url": "/explorer/?set=cantonese" }
+        { "name": "Japanese", "url": "/explorer/japanese/" },
+        { "name": "Simplified Chinese", "url": "/explorer/simplified/" },
+        { "name": "Traditional Chinese", "url": "/explorer/traditional/" },
+        { "name": "Cantonese", "url": "/explorer/cantonese/" }
     ]
 }

@@ -12,11 +12,21 @@ export function readingParts(text) {
     if (end < text.length) parts.push({text:text.slice(end)});
     return parts;
 }
+// Explorer addresses are /explorer/{character set}/{word}. The word is one encoded
+// segment, but everything after the set is read as the word, so a "/" inside a
+// sentence survives even if something along the way decodes it.
+export function explorerPath(dataset, word = '') {
+    return `/explorer/${dataset}/${word ? encodeURIComponent(word) : ''}`;
+}
+export function parseExplorerPath(pathname, datasets, fallback) {
+    const rest = pathname.replace(/^\/explorer\/?/, '').replace(/^index\.html$/, '').split('/');
+    const dataset = datasets.includes(rest[0]) ? rest.shift() : fallback;
+    let word = rest.join('/').replace(/\/$/, '');
+    try { word = decodeURIComponent(word); } catch { /* Keep a malformed escape as typed. */ }
+    return { dataset, word: word.trim().slice(0, 1000) };
+}
 export function explorerLink(location, dataset, word) {
-    const url = new URL(location);
-    url.search = ''; url.hash = '';
-    url.searchParams.set('set', dataset); url.searchParams.set('word', word);
-    return url.href;
+    return new URL(explorerPath(dataset, word), location).href;
 }
 
 // An edge can carry the word's meaning under the word itself. Dictionary glosses are
