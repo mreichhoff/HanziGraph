@@ -92,14 +92,19 @@ for entry in source['words']:
     for form in entry['kanji']:
         text = form['text']
         if text in label_words and text not in edge_glosses:
+            # Senses are ordered by prominence, so take the first gloss that is short
+            # enough for an edge rather than the first one overall: many entries lead
+            # with their most verbose wording and carry a usable one a line later.
             for sense in entry['sense']:
-                gloss = next((g['text'] for g in sense['gloss'] if g['lang'] == 'eng'), '')
-                if not gloss:
-                    continue
-                gloss = re.sub(r'\s*\([^)]*\)', '', gloss).strip().rstrip(',;.').split(';')[0].strip()
-                if gloss and len(gloss) <= 24:
-                    edge_glosses[text] = gloss
-                break
+                for raw in sense['gloss']:
+                    if raw['lang'] != 'eng':
+                        continue
+                    gloss = re.sub(r'\s*\([^)]*\)', '', raw['text']).strip().rstrip(',;.').split(';')[0].strip()
+                    if gloss and len(gloss) <= 24:
+                        edge_glosses[text] = gloss
+                        break
+                if text in edge_glosses:
+                    break
 write('explorer-glosses.json', edge_glosses)
 write('explorer-word-order.json', ordered)
 write('explorer-index.json', index)
