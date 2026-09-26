@@ -773,3 +773,7 @@ h2 {
 @media(prefers-color-scheme:dark) { .card .example-token.speaking { color:#10201c; } }
 .example-word-detail:not(:empty) { background:var(--paper); padding:10px; border-radius:10px; margin:8px 0; font-size:13px; }
 .unranked-legend { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; font-size:12px; flex-shrink:0; }
+
+#offline-dictionary p { font-size:12px; line-height:1.5; color:var(--muted); }
+#offline-dictionary button { border:1px solid var(--line); padding:8px 10px; margin:3px 0; font-size:12px; }
+#offline-dictionary [role="status"] { color:var(--ink); }

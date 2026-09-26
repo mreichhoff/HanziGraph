@@ -25,9 +25,10 @@ self.addEventListener('activate', event => event.waitUntil((async () => {
 self.addEventListener('fetch', event => {
     const { request } = event;
     const url = new URL(request.url);
+    if (request.cache === 'no-store') return; // Explicit downloads must reach the server.
     if (request.method !== 'GET' || url.origin !== self.location.origin) return;
     if (request.mode === 'navigate') event.respondWith(networkFirst(event, shell, 4000));
-    else if (cacheable.test(url.pathname)) event.respondWith(local ? networkFirst(event, request) : staleWhileRevalidate(event));
+    else if (cacheable.test(url.pathname)) event.respondWith(dictionaryFirst(event));
 });
 
 // Pages come from the network, so a deploy shows on the next launch. The saved copy
@@ -41,7 +42,7 @@ async function networkFirst(event, key, patience = Infinity) {
         return response;
     });
     event.waitUntil(network.catch(() => {}));
-    const saved = await cache.match(key);
+    const saved = await cache.match(key) || await downloaded(key);
     if (!saved) return network;
     const fallback = network.catch(() => saved);
     if (!Number.isFinite(patience)) return fallback;
@@ -65,4 +66,16 @@ async function store(cache, request, response) {
     if (url.searchParams.has('v')) for (const key of await cache.keys())
         if (new URL(key.url).pathname === url.pathname && key.url !== url.href) await cache.delete(key);
     await cache.put(request, response);
+}
+
+// Explicit dictionaries are stable snapshots, independent of opportunistic caches.
+async function downloaded(request) {
+    for (const key of await caches.keys()) {
+        if (!key.startsWith('dictionary-explorer-v1-')) continue;
+        const saved = await (await caches.open(key)).match(request);
+        if (saved) return saved;
+    }
+}
+async function dictionaryFirst(event) {
+    return await downloaded(event.request) || (local ? networkFirst(event, event.request) : staleWhileRevalidate(event));
 }

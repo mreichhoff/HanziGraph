@@ -133,3 +133,22 @@ https://www.edrdg.org/kanjidic/kanjidic2.xml.gz (2026-09-20 for this build).
 The source dump is ignored by Git; generated outputs are checked in. Refresh the
 source dictionaries before rebuilding. See `data/japanese/explorer-sources.html`
 for credits and the CC BY-SA 4.0 terms applying to the derived data.
+
+## Explicit offline dictionaries
+
+The menu's Offline dictionary section downloads the current language, including
+all definition partitions, example partitions where used, and Japanese kana,
+readings, kanji metadata and edge glosses. Japanese data totals roughly 72 MB
+uncompressed; transfer sizes depend on hosting compression. Downloads use four
+requests at a time, validate JSON, and retain completed files for cancel/retry.
+The page must remain open during download. Completion is checked against cache
+contents, not a saved boolean. The menu can remove the explicit language pack;
+opportunistically cached browsing data may remain.
+
+Packs use `dictionary-explorer-v1-{dataset}`, separate from the shell cache and
+preserved by both service workers' cleanup. They include a fallback Explorer
+page and its JS/CSS, so installation alone is not required. The Explorer service
+worker must control the page (reload once if prompted). Explicit data is served
+cache-first as a snapshot; remove and redownload to refresh dictionaries. Browser
+storage persistence is requested, but users or browsers can still clear data.
+AI requires the configured server and speech depends on the available voice.

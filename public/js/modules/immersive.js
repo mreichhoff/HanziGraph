@@ -1,3 +1,4 @@
+import { initializeOffline } from './immersive-offline.mjs';
 import { englishMatch } from './immersive-search.mjs';
 import { searchKind, sentenceWords, dictionaryForm } from './immersive-sentences.mjs';
 import { readingParts, edgeLabel, firstGloss, explorerPath, parseExplorerPath, rememberedExplorerRoute } from './immersive-card.mjs';
@@ -1117,7 +1118,7 @@ async function initialize() {
     });
     if (showMeanings) loadGlosses();
     if (dataset === 'traditional' && seed === '学') seed = '學';
-    reset(); legend(); $('loading').hidden = true;
+    reset(); legend(); initializeOffline(dataset); $('loading').hidden = true;
     history.replaceState({ index: 0, ...history.state }, '', explorerPath(dataset, route.word));
     addEventListener('popstate', () => {
         // One step Forward lands just after the entry being left. Closing a card there
