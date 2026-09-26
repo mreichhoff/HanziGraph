@@ -189,6 +189,13 @@ function connect() {
         drawing.set(id, { id, source, target, words: edge.words, label: edge.words[0] || '' });
         forced.add(id);
     }
+    // A selected edge can have been revealed only by the previous character card.
+    // Keep that exact connection until its own card closes, without pinning it forever.
+    for (const card of cards.values()) {
+        const edge = card.graphConnection;
+        if (!edge || !available.has(edge.source) || !available.has(edge.target)) continue;
+        drawing.set(edge.id, { ...edge }); forced.add(edge.id);
+    }
     const selected = [...cards.keys()].find(word => [...word].length === 1 && graph[word]);
     if (selected) {
         const visible = visibleNodes().map(node => ({ id: node.id(), position: node.position() }));
@@ -589,6 +596,10 @@ function findExamples(word, source) {
     return matches.slice(0, 3);
 }
 async function openWord(word, anchor, source) {
+    const graphConnection = source?.isEdge?.() ? {
+        id: source.id(), source: source.data('source'), target: source.data('target'),
+        words: [...source.data('words')], label: word
+    } : null;
     clearTimeout(searchTimer);
     const node = cy.getElementById([...word].find(char => cy.getElementById(char).length) || '');
     anchor ||= node.length ? node.renderedPosition() : { x: innerWidth / 2, y: innerHeight / 3 };
@@ -597,6 +608,7 @@ async function openWord(word, anchor, source) {
     if (cards.has(word)) { positionCard(word, anchor, source); cards.get(word).focus(); return; }
     while (cards.size) closeCard(cards.keys().next().value);
     const card = el('section', undefined, 'card');
+    card.graphConnection = graphConnection;
     if (![...word].some(char => graph[char])) card.dataset.centered = 'true';
     card.tabIndex = -1;
     card.addEventListener('click', event => {
