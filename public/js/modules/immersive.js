@@ -1051,8 +1051,19 @@ async function initialize() {
         clearTimeout(expansionTimer);
         expansionTimer = setTimeout(() => {
             if (!$('auto-expand').checked) { refresh(); return; }
-            if (cy.zoom() < .65) { restoreViewport(); connect(); refresh(); return; }
-            discover(Math.min(24, Math.max(8, Math.round(innerWidth * innerHeight / 50000))), true);
+            const existing = cy.elements();
+            if (cy.zoom() < .65) { restoreViewport(); connect(); refresh(); }
+            else discover(Math.min(24, Math.max(8, Math.round(innerWidth * innerHeight / 50000))), true);
+            // Reveal additions in place, including restored nodes and their edges.
+            // Set opacity in this same turn so there is no fully visible first frame.
+            if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                const added = cy.elements().difference(existing);
+                added.style('opacity', 0).animate({ style: { opacity: 1 } }, {
+                    duration: 320,
+                    easing: 'ease-out',
+                    complete: () => added.removeStyle('opacity')
+                });
+            }
         }, 450);
     };
     cy.on('dragpan scrollzoom pinchzoom', scheduleExpansion);
