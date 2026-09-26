@@ -1,9 +1,9 @@
 {
     "id": "/explorer/",
-    "name": "JapaneseGraph Explorer",
+    "name": "HanziGraph Explorer",
     "short_name": "Explorer",
     "description": "Wander a graph of characters and the words they form, in Japanese or Chinese.",
-    "start_url": "/explorer/japanese/",
+    "start_url": "/explorer/",
     "scope": "/explorer/",
     "display": "standalone",
     "background_color": "#f5f3ee",

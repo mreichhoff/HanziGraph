@@ -1,6 +1,6 @@
 import { englishMatch } from './immersive-search.mjs';
 import { searchKind, sentenceWords, dictionaryForm } from './immersive-sentences.mjs';
-import { readingParts, edgeLabel, firstGloss, explorerPath, parseExplorerPath } from './immersive-card.mjs';
+import { readingParts, edgeLabel, firstGloss, explorerPath, parseExplorerPath, rememberedExplorerRoute } from './immersive-card.mjs';
 import { initializeIntegrations } from './immersive-integration-ui.js';
 import { preferredVoice } from './immersive-speech.mjs';
 import { parseFurigana, normalizeKana, exampleTokens } from './immersive-japanese.mjs';
@@ -17,7 +17,10 @@ const $ = id => document.getElementById(id);
 const mobile = matchMedia('(max-width:700px)');
 const dark = matchMedia('(prefers-color-scheme:dark)');
 const datasets = ['simplified', 'traditional', 'cantonese', 'japanese'];
-const route = parseExplorerPath(location.pathname, datasets, 'simplified');
+// Accessing localStorage itself can throw when browser storage is disabled.
+let languageStorage;
+try { languageStorage = localStorage; } catch { /* Use the default language. */ }
+const route = rememberedExplorerRoute(location.pathname, datasets, languageStorage);
 const dataset = route.dataset;
 const japanese = dataset === 'japanese';
 const language = japanese ? 'ja' : 'zh';
@@ -451,10 +454,10 @@ async function restore(word) {
     historyMode = 'replace';
     try {
         if (!word) { closeAll(); connect(); refresh(); record(''); return; }
-        const chars = [...word].filter(char => graph[char]);
-        // A word already on the canvas reopens in place; anything else is searched again.
-        if (chars.length && chars.every(char => cy.getElementById(char).length) && searchKind(word, knownWords, dataset) === 'word') openWord(word);
-        else { $('search').value = word; await submitSearch(word); }
+        // Restore the same framing and exact-word edges as an explicit search,
+        // even when all characters already happen to be on the canvas.
+        $('search').value = word;
+        await submitSearch(word);
     } finally { historyMode = 'push'; }
 }
 // Some browsers collect an utterance mid-speech, which silently truncates it.

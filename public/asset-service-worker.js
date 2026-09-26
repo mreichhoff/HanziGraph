@@ -20,7 +20,7 @@ self.addEventListener("activate", (event) => {
         caches.keys().then((keyList) =>
             Promise.all(
                 keyList.map((key) => {
-                    if (key !== cacheName) {
+                    if (key.startsWith('hanzigraph-') && key !== cacheName) {
                         return caches.delete(key);
                     }
                 })

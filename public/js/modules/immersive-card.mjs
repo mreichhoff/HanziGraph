@@ -29,6 +29,17 @@ export function explorerLink(location, dataset, word) {
     return new URL(explorerPath(dataset, word), location).href;
 }
 
+export function rememberedExplorerRoute(pathname, datasets, storage) {
+    let fallback = 'simplified';
+    try {
+        const saved = storage.getItem('immersive-dataset');
+        if (datasets.includes(saved)) fallback = saved;
+    } catch { /* Storage may be blocked; explicit links still work. */ }
+    const route = parseExplorerPath(pathname, datasets, fallback);
+    try { storage.setItem('immersive-dataset', route.dataset); } catch { /* Session only. */ }
+    return route;
+}
+
 // An edge can carry the word's meaning under the word itself. Dictionary glosses are
 // written for a card, not an edge, so parentheticals and extra senses are dropped and
 // anything still too long is skipped rather than allowed to swamp the graph.
