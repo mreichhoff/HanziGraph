@@ -72,6 +72,30 @@ export function edgeScore(distance, rank) {
     const penalty = Number.isFinite(rank) && rank > 0 ? Math.min(1, Math.log1p(rank / 100) / Math.log1p(300)) * 80 : 0;
     return distance + penalty;
 }
+// Selection may cross other edges, but never unrelated nodes. Only use visible
+// neighbors, and leave the ordinary drawing (including forced words) untouched.
+export function selectionConnections(source, nodes, graph, existing, limit = 4, maxDistance = 420) {
+    const origin = nodes.find(node => node.id === source)?.position;
+    if (!origin) return [];
+    const candidates = [];
+    for (const { id: target, position } of nodes) {
+        const edge = graph[source]?.edges[target];
+        const id = `edge:${[source, target].sort().join(':')}`;
+        if (target === source || !edge?.words?.length || existing.has(id)) continue;
+        const dx = position.x - origin.x, dy = position.y - origin.y;
+        const squared = dx * dx + dy * dy, distance = Math.sqrt(squared);
+        if (!distance || distance > maxDistance) continue;
+        if (nodes.some(node => {
+            if (node.id === source || node.id === target) return false;
+            const px = node.position.x - origin.x, py = node.position.y - origin.y;
+            const t = (px * dx + py * dy) / squared;
+            return t > 0 && t < 1 && Math.hypot(px - t * dx, py - t * dy) < 35;
+        })) continue;
+        candidates.push({ id, source, target, edge, distance });
+    }
+    return candidates.sort((a, b) => edgeScore(a.distance, a.edge.rank) - edgeScore(b.distance, b.edge.rank) || a.id.localeCompare(b.id)).slice(0, limit);
+}
+
 export function sparseConnections(nodes, graph, maxDistance = 270) {
     const positions = new Map(nodes.map(node => [node.id, node.position]));
     const candidates = new Map();

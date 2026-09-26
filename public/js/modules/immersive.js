@@ -8,7 +8,7 @@ import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import { getWordSetFromFrequency } from './graph-functions.js';
 
-import { buildExplorerGraph, isCharacter, placeContextCard, sparseConnections, evictionOrder, wordConnections, searchPositions, neighborPosition } from './immersive-geometry.mjs';
+import { buildExplorerGraph, isCharacter, placeContextCard, sparseConnections, selectionConnections, evictionOrder, wordConnections, searchPositions, neighborPosition } from './immersive-geometry.mjs';
 
 import { kanjiFrequencyLimits, kanjiFrequencyLevel, unrankedKanjiColor, toneOverrides, tonePalette, contrastingText, defaultFrequencies, frequencyOverrides, frequencyPalette } from './immersive-colors.mjs';
 
@@ -138,6 +138,7 @@ function style() {
         { selector: 'node.inspected', style: { 'border-width': 4, 'border-color': dark.matches ? '#d4eddb' : '#345f50' } },
         { selector: 'edge', style: { width: 1.5, 'line-color': dark.matches ? '#587566' : '#a9beb0', 'curve-style': 'straight', 'font-size': 12, color: dark.matches ? '#d0e4d7' : '#345847', 'text-background-color': dark.matches ? '#142321' : '#f5f3ee', 'text-background-opacity': .98, 'text-background-padding': 4, 'text-rotation': 'autorotate', 'text-wrap': 'wrap', 'line-height': 1.15, 'min-zoomed-font-size': 9, 'text-events': 'yes', 'overlay-opacity': 0 } },
         { selector: 'edge[label]', style: { label: 'data(label)' } },
+        { selector: 'edge.context-muted', style: { 'line-opacity': .35, 'text-opacity': .45, 'text-background-opacity': .45 } },
         { selector: 'edge.revealed', style: { width: 2.3, 'line-color': dark.matches ? '#9dc5ab' : '#648f77', 'z-index': 2 } }
 
     ];
@@ -146,6 +147,9 @@ function revealConnections() {
     cy.edges().removeClass('revealed');
     cy.nodes('.inspected, .hovered').connectedEdges().addClass('revealed');
     cy.edges('.hovered, .search-word').addClass('revealed');
+    const focused = [...cards.keys()].some(word => [...word].length === 1 && graph[word]);
+    cy.edges().removeClass('context-muted');
+    if (focused) cy.edges().not('.revealed').addClass('context-muted');
 }
 function refresh() {
     announce('');
@@ -183,6 +187,13 @@ function connect() {
         const id = `edge:${pair}`;
         drawing.set(id, { id, source, target, words: edge.words, label: edge.words[0] || '' });
         forced.add(id);
+    }
+    const selected = [...cards.keys()].find(word => [...word].length === 1 && graph[word]);
+    if (selected) {
+        const visible = visibleNodes().map(node => ({ id: node.id(), position: node.position() }));
+        for (const { id, source, target, edge } of selectionConnections(selected, visible, graph, drawing)) {
+            drawing.set(id, { id, source, target, words: edge.words, label: edge.words[0] });
+        }
     }
     // Meanings ride under the word itself. Best effort: a word the loaded dictionary
     // does not cover, or whose gloss is too long for an edge, keeps the bare word.
@@ -636,7 +647,7 @@ async function openWord(word, anchor, source) {
     const classic = el('a', `More in classic ${japanese ? 'JapaneseGraph' : 'HanziGraph'} ↗`, 'classic-link');
     classic.href = classicUrl(word); card.append(classic);
     if (japanese) card.append(dictionaryCredit());
-    cards.set(word, card); $('cards').append(card); positionCard(word, anchor, source); card.focus(); refresh();
+    cards.set(word, card); $('cards').append(card); positionCard(word, anchor, source); card.focus(); connect(); refresh();
     const defsTask = (async () => {
         try {
             let defs = await lookupDefinitions(word);
@@ -790,7 +801,7 @@ async function openSentence(text) {
     const sentenceReading = el('div', '', 'card-pinyin');
     const overview = el('div');
     card.append(sentence, sentenceReading, output, detail);
-    cards.set(key, card); $('cards').append(card); positionCard(key); card.focus(); refresh();
+    cards.set(key, card); $('cards').append(card); positionCard(key); card.focus(); connect(); refresh();
     let controller;
     const analyze = async () => {
         controller?.abort(); controller = new AbortController();
