@@ -4,6 +4,10 @@ import terser from '@rollup/plugin-terser';
 import commonjs from "@rollup/plugin-commonjs";
 
 export default [{
+    input: './public/js/modules/immersive.js',
+    output: { file: 'public/js/immersive-bundle.js', format: 'iife' },
+    plugins: [nodeResolve(), commonjs(), terser()]
+}, {
     input: './public/js/modules/main.js',
     output: {
         file: 'public/js/bundle.js',

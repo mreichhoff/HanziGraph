@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f3ee" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#142321" media="(prefers-color-scheme: dark)">
+    <title>HanziGraph · Explore</title>
+    <link rel="icon" href="/explorer/favicon-32.png">
+    <link rel="apple-touch-icon" href="/explorer/apple-touch-icon.png?v=2">
+    <meta name="apple-mobile-web-app-title" content="Explorer">
+    <link rel="manifest" href="/explorer/manifest.json">
+    <link rel="stylesheet" href="/css/immersive.css?v=offline-dictionary">
+    <script defer src="/js/immersive-bundle.js?v=offline-dictionary"></script>
+    <script>
+        // The explorer's own worker, separate from classic HanziGraph's; see /explorer/sw.js.
+        if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/explorer/sw.js'));
+    </script>
+</head>
+<body>
+    <main id="graph" aria-label="Interactive character graph. Use search or the visible characters menu to open details."></main>
+    <header class="toolbar">
+        <a class="brand" href="/" title="Return to classic HanziGraph"><span lang="zh">汉</span><span class="brand-name">HanziGraph<small>EXPLORER</small></span></a>
+        <form id="search-form" role="search">
+            <label class="sr-only" for="search">Search characters, pinyin or English</label>
+            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"></circle><path d="m14.5 14.5 5 5"></path></svg><input id="search" type="search" placeholder="Search…" autocomplete="off" maxlength="1000" enterkeyhint="search" aria-controls="suggestions">
+            <button type="submit" aria-label="Search">↵</button>
+            <div id="suggestions" hidden></div>
+            <div id="status" role="status" aria-live="polite"></div>
+        </form>
+        <details id="settings" class="menu"><summary aria-label="Explorer settings"><svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16" /></svg></summary><div class="menu-content">
+            <h2>Your exploration</h2>
+            <label>Language / character set<select id="dataset"><option value="simplified">Simplified</option><option value="traditional">Traditional</option><option value="cantonese">Cantonese</option><option value="japanese">Japanese</option></select></label>
+            <label>Color by<select id="colors"><option value="tone">Tone</option><option value="frequency">Frequency</option></select></label>
+            <label class="check"><input id="show-card-pinyin" type="checkbox" checked> <span id="card-pinyin-label">Show pinyin in detail cards</span></label>
+            <label class="check"><input id="show-edge-meanings" type="checkbox" checked> Show word meanings on the graph</label>
+            <label class="check"><input id="auto-expand" type="checkbox" checked> Discover connections as I pan</label>
+            <details class="menu-help"><summary>How to explore</summary><p>Tap a character for meanings and examples. Tap a labeled link for its word. Drag to wander; scroll or pinch to zoom.</p>
+            <p>One detail card opens where you tap. Tap another character or link to replace it, or tap empty graph space to dismiss it. Panning and zooming keep it open. Pan to discover less common connections. Distant characters leave the canvas to make room and return when you pan back.</p>
+            </details>
+            <details id="offline-dictionary" class="menu-help"><summary>Offline dictionary</summary><p role="status" aria-live="polite">Checking download…</p><button type="button" data-download>Download</button> <button type="button" data-cancel hidden>Cancel</button> <button type="button" data-remove hidden>Remove download</button><p>Keep this page open until complete. AI needs your configured server; audio depends on the voice. Clearing website data removes downloads.</p></details>
+            <div class="menu-links"><a id="classic" href="/">Open classic HanziGraph ↗</a></div>
+        </div></details>
+    </header>
+    <div id="loading" role="status">Preparing your neighborhood…</div>
+    <aside id="cards" aria-label="Character details"></aside>
+    <footer class="bottom-bar">
+        <div class="context"><div id="legend"></div></div>
+    </footer>
+    <details id="accessible-nodes"><summary>Visible characters</summary><div id="node-list"></div></details>
+    <noscript>This explorer needs JavaScript. <a href="/">Return to HanziGraph.</a></noscript>
+</body>
+</html>
