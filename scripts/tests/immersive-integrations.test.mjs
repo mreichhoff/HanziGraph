@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { defaultPrompt, listModels, askAi, makeNote, addToAnki, ankiRequest } from '../../public/js/modules/immersive-integrations.mjs';
+import { defaultPrompt, listModels, askAi, makeNote, addToAnki, ankiRequest, ankiModelFor, ankiTemplates } from '../../public/js/modules/immersive-integrations.mjs';
 const settings = {aiEndpoint:'http://localhost:1234/v1/', aiModel:'local-model', ankiEndpoint:'http://localhost:8765', ankiKey:'test-key', deck:'JapaneseGraph'};
 const response = value => ({ok:true, json:async () => value});
 
@@ -50,7 +50,7 @@ test('duplicate or incompatible Anki notes never overwrite existing content', as
     const calls = [];
     const fetcher = async (url, options) => {
         const {action} = JSON.parse(options.body); calls.push(action);
-        return response({error:null, result:({modelNames:['Graph Explorer'], modelFieldNames:['Text','Reading','Meaning','Source','Language'], createDeck:2, canAddNotes:[false]})[action]});
+        return response({error:null, result:({modelNames:[ankiModelFor('japanese')], modelFieldNames:['Text','Reading','Meaning','Source','Language','Speech'], createDeck:2, canAddNotes:[false]})[action]});
     };
     await assert.rejects(addToAnki(settings, 'japanese', {text:'学校'}, undefined, fetcher), /already exists/);
     assert.ok(!calls.includes('addNote'));
@@ -61,7 +61,7 @@ test('incompatible Anki model stops before creating a deck or adding notes', asy
     const actions = [];
     const fetcher = async (url, options) => {
         const {action} = JSON.parse(options.body); actions.push(action);
-        return response({error:null, result:action === 'modelNames' ? ['Graph Explorer'] : ['Front','Back']});
+        return response({error:null, result:action === 'modelNames' ? [ankiModelFor('japanese')] : ['Front','Back']});
     };
     await assert.rejects(addToAnki(settings, 'japanese', {text:'学校'}, undefined, fetcher), /incompatible fields/);
     assert.deepEqual(actions, ['modelNames','modelFieldNames']);
@@ -99,4 +99,37 @@ test('saved incomplete drafts cannot enable integrations and disabled drafts do 
     assert.match(integrationProblem({aiEnabled:true, aiEndpoint:'file:///tmp', aiModel:'model'}, 'ai'), /HTTP/);
     assert.equal(integrationProblem({aiEnabled:false, aiEndpoint:''}, 'ai'), '');
     assert.equal(integrationProblem({...settings, aiEnabled:true}, 'ai'), '');
+});
+
+
+test('native TTS templates choose the target locale and speak only on the answer', () => {
+    for (const [dataset, locale] of Object.entries({japanese:'ja_JP',simplified:'zh_CN',traditional:'zh_TW',cantonese:'zh_HK'})) {
+        const [template] = ankiTemplates(dataset);
+        assert.ok(template.Back.includes('{{tts '+locale+':Speech}}'));
+        assert.ok(template.Back.includes('{{tts '+locale+':Text}}'));
+        assert.doesNotMatch(template.Front, /tts/);
+        assert.doesNotMatch(template.Back, /tts.*:Meaning/);
+        assert.equal(makeNote(settings,dataset,{text:'学校'}).modelName,ankiModelFor(dataset));
+    }
+    assert.equal(new Set(['japanese','simplified','traditional','cantonese'].map(ankiModelFor)).size,4);
+    assert.throws(() => ankiTemplates('unknown'));
+});
+test('Japanese TTS follows the first reading, Chinese speaks characters, and missing readings fall back', () => {
+    assert.equal(makeNote(settings,'japanese',{text:'丈夫',reading:'じょうぶ / ますらお'}).fields.Speech,'じょうぶ');
+    assert.equal(makeNote(settings,'japanese',{text:'電車が来た。',reading:''}).fields.Speech,'電車が来た。');
+    assert.equal(makeNote(settings,'simplified',{text:'学校',reading:'xue2 xiao4'}).fields.Speech,'学校');
+    assert.equal(makeNote(settings,'japanese',{text:'<script>',reading:'<kana>'}).fields.Speech,'&lt;kana&gt;');
+});
+test('legacy Graph Explorer models are not altered when creating an audio model', async () => {
+    const calls=[];
+    const fetcher=async (url, options)=>{
+        const body=JSON.parse(options.body);calls.push(body);
+        return response({error:null,result:({modelNames:['Graph Explorer'],createModel:1,createDeck:2,canAddNotes:[true],addNote:123})[body.action]});
+    };
+    await addToAnki(settings,'japanese',{text:'丈夫',reading:'じょうぶ'},undefined,fetcher);
+    const model=calls.find(call=>call.action==='createModel').params;
+    assert.equal(model.modelName,ankiModelFor('japanese'));
+    assert.ok(model.inOrderFields.includes('Speech'));
+    assert.deepEqual(model.cardTemplates,ankiTemplates('japanese'));
+    assert.ok(!calls.some(call=>call.action.startsWith('update')));
 });
