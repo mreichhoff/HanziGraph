@@ -1,6 +1,17 @@
 import { validateAnalysis } from './immersive-sentences.mjs';
 export const noteModel = 'Graph Explorer';
 export const languageFor = dataset => ({japanese:'ja-JP', cantonese:'zh-HK', traditional:'zh-TW', simplified:'zh-CN'})[dataset];
+export function ankiModelFor(dataset) {
+    const language = languageFor(dataset);
+    if (!language) throw new Error('Unsupported Anki language.');
+    return `${noteModel} · ${language} · TTS`;
+}
+export function ankiTemplates(dataset) {
+    const language = languageFor(dataset)?.replace('-', '_');
+    if (!language) throw new Error('Unsupported Anki language.');
+    return [{Name:'Recognition', Front:'<div class="text">{{Text}}</div>',
+        Back:`{{FrontSide}}<hr id="answer"><div class="reading">{{Reading}}</div><div>{{Meaning}}</div><div class="audio">{{#Speech}}{{tts ${language}:Speech}}{{/Speech}}{{^Speech}}{{tts ${language}:Text}}{{/Speech}}</div>`}];
+}
 export function defaultPrompt(dataset) {
     const language = dataset === 'japanese' ? 'Japanese' : dataset === 'cantonese' ? 'Cantonese using traditional characters' : dataset === 'traditional' ? 'Mandarin Chinese using traditional characters' : 'Mandarin Chinese using simplified characters';
     const reading = dataset === 'japanese' ? 'hiragana readings (not romaji)' : dataset === 'cantonese' ? 'jyutping' : 'pinyin';
@@ -66,14 +77,16 @@ export async function ankiRequest(settings, action, params = {}, signal, fetcher
     return data.result;
 }
 export function makeNote(settings, dataset, entry) {
-    return {deckName:settings.deck, modelName:noteModel, fields:{Text:escapeHtml(entry.text), Reading:escapeHtml(entry.reading), Meaning:escapeHtml(entry.english).replace(/\n/g, '<br>'), Source:escapeHtml(entry.source), Language:languageFor(dataset)}, tags:['graph-explorer', dataset, ...(entry.generated ? ['ai-generated'] : [])], options:{allowDuplicate:false, duplicateScope:'deck'}};
+    const speech = dataset === 'japanese' ? entry.reading?.split(' / ')[0]?.trim() || entry.text : entry.text;
+    return {deckName:settings.deck, modelName:ankiModelFor(dataset), fields:{Text:escapeHtml(entry.text), Reading:escapeHtml(entry.reading), Meaning:escapeHtml(entry.english).replace(/\n/g, '<br>'), Source:escapeHtml(entry.source), Language:languageFor(dataset), Speech:escapeHtml(speech)}, tags:['graph-explorer', dataset, ...(entry.generated ? ['ai-generated'] : [])], options:{allowDuplicate:false, duplicateScope:'deck'}};
 }
 export async function addToAnki(settings, dataset, entry, signal, fetcher) {
+    const noteModel = ankiModelFor(dataset);
     const invoke = (action, params) => ankiRequest(settings, action, params, signal, fetcher);
-    const fields = ['Text','Reading','Meaning','Source','Language'];
+    const fields = ['Text','Reading','Meaning','Source','Language','Speech'];
     const models = await invoke('modelNames');
     if (!models.includes(noteModel)) {
-        await invoke('createModel', {modelName:noteModel, inOrderFields:fields, css:'.card { font-family: sans-serif; text-align: center; font-size: 22px; } .text { font-size: 32px; } .reading { font-size: 18px; margin: 12px; }', cardTemplates:[{Name:'Recognition', Front:'<div class="text">{{Text}}</div>', Back:'{{FrontSide}}<hr id="answer"><div class="reading">{{Reading}}</div><div>{{Meaning}}</div>'}]});
+        await invoke('createModel', {modelName:noteModel, inOrderFields:fields, css:'.card { font-family: sans-serif; text-align: center; font-size: 22px; } .text { font-size: 32px; } .reading { font-size: 18px; margin: 12px; }', cardTemplates:ankiTemplates(dataset)});
     } else {
         const existing = await invoke('modelFieldNames', {modelName:noteModel});
         if (!fields.every(field => existing.includes(field))) throw new Error('The Graph Explorer note type has incompatible fields. Please rename it in Anki and try again.');

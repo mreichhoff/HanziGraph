@@ -152,3 +152,21 @@ worker must control the page (reload once if prompted). Explicit data is served
 cache-first as a snapshot; remove and redownload to refresh dictionaries. Browser
 storage persistence is requested, but users or browsers can still clear data.
 AI requires the configured server and speech depends on the available voice.
+
+## Anki speech
+
+New exports use language-specific `Graph Explorer · <locale> · TTS` note types
+with Anki's native TTS on the Recognition answer. Locales are ja_JP, zh_CN,
+zh_TW, and zh_HK; Anki chooses an installed system voice. The Speech field uses
+the first supplied Japanese reading (or the text if unavailable), and original
+characters for Chinese. Meaning and romanized Chinese readings are not spoken.
+Native TTS needs a compatible Anki client and voice; this does not embed audio
+files or use the browser's Google voice. Autoplay follows Anki's audio settings.
+
+Existing Graph Explorer cards and customized note types are unchanged. To upgrade
+old cards, export one new card in the desired language to create its note type,
+then select the old notes for that language in Anki's browser and use Change Note
+Type, mapping the five original fields by name. With Speech empty, the new
+answer template speaks Text. Japanese Speech can be filled with a preferred kana
+reading when needed. Because note types differ, re-exporting an old note may
+create a duplicate; changing its note type is preferable.
